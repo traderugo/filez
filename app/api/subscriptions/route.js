@@ -17,7 +17,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
     }
 
-    const { payment_reference, proof_url } = await request.json()
+    const { payment_reference, proof_url, plan_type, total_amount, items } = await request.json()
 
     if (!proof_url) {
       return NextResponse.json({ error: 'Proof URL is required' }, { status: 400 })
@@ -42,12 +42,30 @@ export async function POST(request) {
         status: 'pending',
         payment_reference: payment_reference || null,
         proof_url,
+        plan_type: plan_type || null,
+        total_amount: total_amount ?? null,
       })
       .select()
       .single()
 
     if (error) {
       return NextResponse.json({ error: 'Failed to create subscription' }, { status: 500 })
+    }
+
+    // Insert subscription items if provided
+    if (items && Array.isArray(items) && items.length > 0) {
+      const rows = items
+        .filter((item) => item.service_id && item.service_name)
+        .map((item) => ({
+          subscription_id: data.id,
+          service_id: item.service_id,
+          service_name: item.service_name,
+          price: item.price ?? 0,
+        }))
+
+      if (rows.length > 0) {
+        await supabase.from('subscription_items').insert(rows)
+      }
     }
 
     return NextResponse.json({ subscription: data })

@@ -28,9 +28,12 @@ export default function AdminSettingsPage() {
   const [fieldForm, setFieldForm] = useState({ field_name: '', field_type: 'text', options: '', required: false })
   const [savingField, setSavingField] = useState(false)
 
+  // Plan type
+  const [savingPlanType, setSavingPlanType] = useState(false)
+
   // Service form
   const [showServiceForm, setShowServiceForm] = useState(false)
-  const [serviceForm, setServiceForm] = useState({ name: '', description: '' })
+  const [serviceForm, setServiceForm] = useState({ name: '', description: '', price: '' })
   const [savingService, setSavingService] = useState(false)
 
   const loadData = async () => {
@@ -137,6 +140,20 @@ export default function AdminSettingsPage() {
     loadData()
   }
 
+  const updatePlanType = async (planType) => {
+    setSavingPlanType(true)
+    const res = await fetch('/api/organizations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan_type: planType }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      setOrg(data.org)
+    }
+    setSavingPlanType(false)
+  }
+
   const addService = async (e) => {
     e.preventDefault()
     setSavingService(true)
@@ -144,11 +161,15 @@ export default function AdminSettingsPage() {
     const res = await fetch('/api/organizations/services', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(serviceForm),
+      body: JSON.stringify({
+        name: serviceForm.name,
+        description: serviceForm.description,
+        price: parseFloat(serviceForm.price) || 0,
+      }),
     })
 
     if (res.ok) {
-      setServiceForm({ name: '', description: '' })
+      setServiceForm({ name: '', description: '', price: '' })
       setShowServiceForm(false)
       loadData()
     }
@@ -251,6 +272,34 @@ export default function AdminSettingsPage() {
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-2">Share this link with users to let them sign up for your organization.</p>
+      </div>
+
+      {/* Plan Type */}
+      <div className="mb-8 border-t border-gray-200 pt-6">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Plan Type</h2>
+        <p className="text-xs text-gray-500 mb-3">How users pay for your services.</p>
+        <div className="flex gap-3">
+          {[
+            { value: 'recurring', label: 'Recurring', desc: 'Monthly subscription' },
+            { value: 'one_time', label: 'One-time', desc: 'Single payment' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => updatePlanType(opt.value)}
+              disabled={savingPlanType}
+              className={`flex-1 border rounded-md p-3 text-left transition-colors ${
+                org.plan_type === opt.value
+                  ? 'border-orange-600 bg-orange-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <p className={`text-sm font-medium ${org.plan_type === opt.value ? 'text-orange-700' : 'text-gray-900'}`}>
+                {opt.label}
+              </p>
+              <p className="text-xs text-gray-500">{opt.desc}</p>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Custom Fields */}
@@ -377,6 +426,16 @@ export default function AdminSettingsPage() {
               onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
+            <input
+              type="number"
+              required
+              min="0"
+              step="0.01"
+              placeholder="Price (e.g. 5000)"
+              value={serviceForm.price}
+              onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -404,6 +463,9 @@ export default function AdminSettingsPage() {
                   <p className="text-sm font-medium text-gray-900">{svc.name}</p>
                   {svc.description && <p className="text-xs text-gray-500">{svc.description}</p>}
                 </div>
+                <span className="text-sm font-mono text-gray-700">
+                  {Number(svc.price).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
+                </span>
                 <button onClick={() => deleteService(svc.id)} className="p-1.5 text-gray-400 hover:text-red-600">
                   <Trash2 className="w-4 h-4" />
                 </button>

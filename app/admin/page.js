@@ -29,7 +29,7 @@ export default function AdminSubscriptionsPage() {
   const loadSubs = async () => {
     let query = supabase
       .from('subscriptions')
-      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, users(name, email, phone)')
+      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, total_amount, users(name, email, phone), subscription_items(id, service_name, price)')
       .order('created_at', { ascending: false })
 
     if (filter !== 'all') {
@@ -161,6 +161,29 @@ export default function AdminSubscriptionsPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Selected services */}
+                  {sub.subscription_items?.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-gray-500 text-sm">Services:</span>
+                      {sub.subscription_items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-sm ml-2">
+                          <span className="text-gray-700">{item.service_name}</span>
+                          <span className="text-gray-900 font-mono">
+                            {Number(item.price).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
+                          </span>
+                        </div>
+                      ))}
+                      {sub.total_amount != null && (
+                        <div className="flex justify-between text-sm font-medium pt-1 border-t border-gray-100 ml-2">
+                          <span className="text-gray-700">Total{sub.plan_type === 'recurring' ? '/month' : ''}</span>
+                          <span className="text-gray-900">
+                            {Number(sub.total_amount).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {sub.proof_url && sub.proof_url.startsWith('https://') && (
                     <a

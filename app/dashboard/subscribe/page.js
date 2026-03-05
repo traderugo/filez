@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { CreditCard, Upload, Loader2, CheckCircle, Building2 } from 'lucide-react'
+import { CreditCard, Upload, Loader2, CheckCircle, Building2, ShoppingCart } from 'lucide-react'
+import { supabase, getClientUser } from '@/lib/supabaseClient'
 
 export default function SubscribePage() {
   const [file, setFile] = useState(null)
@@ -12,10 +13,58 @@ export default function SubscribePage() {
   const [error, setError] = useState('')
   const router = useRouter()
 
+  // Org services
+  const [services, setServices] = useState([])
+  const [selectedItems, setSelectedItems] = useState({})
+  const [orgPlanType, setOrgPlanType] = useState('recurring')
+  const [servicesLoading, setServicesLoading] = useState(true)
+
+  useEffect(() => {
+    const loadServices = async () => {
+      const u = await getClientUser()
+      if (!u) return
+
+      const { data: profile } = await supabase
+        .from('users')
+        .select('org_id')
+        .eq('id', u.id)
+        .single()
+
+      if (!profile?.org_id) {
+        setServicesLoading(false)
+        return
+      }
+
+      const [orgRes, servicesRes] = await Promise.all([
+        supabase.from('organizations').select('plan_type').eq('id', profile.org_id).single(),
+        supabase.from('org_services').select('id, name, description, price').eq('org_id', profile.org_id).order('sort_order'),
+      ])
+
+      if (orgRes.data?.plan_type) setOrgPlanType(orgRes.data.plan_type)
+      setServices(servicesRes.data || [])
+      setServicesLoading(false)
+    }
+    loadServices()
+  }, [])
+
+  const toggleItem = (serviceId) => {
+    setSelectedItems((prev) => ({
+      ...prev,
+      [serviceId]: !prev[serviceId],
+    }))
+  }
+
+  const selectedServices = services.filter((s) => selectedItems[s.id])
+  const total = selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!file) {
       setError('Please upload your payment proof')
+      return
+    }
+    if (services.length > 0 && selectedServices.length === 0) {
+      setError('Please select at least one service')
       return
     }
     setLoading(true)
@@ -33,13 +82,20 @@ export default function SubscribePage() {
       return
     }
 
-    // 2. Create subscription
+    // 2. Create subscription with selected items
     const subRes = await fetch('/api/subscriptions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         payment_reference: reference.trim(),
         proof_url: uploadData.url,
+        plan_type: orgPlanType,
+        total_amount: total,
+        items: selectedServices.map((s) => ({
+          service_id: s.id,
+          service_name: s.name,
+          price: Number(s.price),
+        })),
       }),
     })
 
@@ -75,7 +131,52 @@ export default function SubscribePage() {
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Subscribe</h1>
-      <p className="text-sm text-gray-500 mb-8">Make a bank transfer, then upload your proof below.</p>
+      <p className="text-sm text-gray-500 mb-8">
+        {orgPlanType === 'one_time' ? 'Select your services and make a one-time payment.' : 'Select your services, make a bank transfer, then upload your proof below.'}
+      </p>
+
+      {/* Service selection */}
+      {!servicesLoading && services.length > 0 && (
+        <div className="border-t border-gray-200 pt-6 mb-8">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+            <ShoppingCart className="w-4 h-4" /> Select Services
+          </h2>
+          <div className="space-y-2">
+            {services.map((svc) => (
+              <label
+                key={svc.id}
+                className={`flex items-start gap-3 border rounded-md p-3 cursor-pointer transition-colors ${
+                  selectedItems[svc.id] ? 'border-orange-600 bg-orange-50' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={!!selectedItems[svc.id]}
+                  onChange={() => toggleItem(svc.id)}
+                  className="mt-0.5 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{svc.name}</p>
+                  {svc.description && <p className="text-xs text-gray-500 mt-0.5">{svc.description}</p>}
+                </div>
+                <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                  {Number(svc.price).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Total */}
+          {selectedServices.length > 0 && (
+            <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+              <span className="text-sm font-medium text-gray-700">Total{orgPlanType === 'recurring' ? '/month' : ''}</span>
+              <span className="text-lg font-bold text-gray-900">
+                {total.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bank details */}
       <div className="border-t border-gray-200 pt-6 mb-8">
@@ -95,10 +196,14 @@ export default function SubscribePage() {
             <span className="text-gray-500">Account Name</span>
             <span className="text-gray-900 font-medium">FilePortal Ltd</span>
           </div>
-          <div className="flex justify-between py-2">
-            <span className="text-gray-500">Amount</span>
-            <span className="text-gray-900 font-bold">₦10,000/month</span>
-          </div>
+          {selectedServices.length > 0 && (
+            <div className="flex justify-between py-2">
+              <span className="text-gray-500">Amount to pay</span>
+              <span className="text-gray-900 font-bold">
+                {total.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -145,7 +250,7 @@ export default function SubscribePage() {
             className="w-full bg-orange-600 text-white py-2.5 rounded-md font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            Submit subscription
+            Submit {orgPlanType === 'one_time' ? 'payment' : 'subscription'}
           </button>
         </form>
       </div>

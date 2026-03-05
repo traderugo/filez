@@ -52,10 +52,14 @@ export async function POST(request) {
     const { success } = rateLimit(`services:${ctx.adminId}`, 30)
     if (!success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
 
-    const { name, description } = await request.json()
+    const { name, description, price } = await request.json()
 
     if (!name || name.trim().length < 1 || name.length > 200) {
       return NextResponse.json({ error: 'Service name required (max 200 chars)' }, { status: 400 })
+    }
+
+    if (price !== undefined && (isNaN(price) || price < 0)) {
+      return NextResponse.json({ error: 'Invalid price' }, { status: 400 })
     }
 
     const { data: last } = await supabase
@@ -72,6 +76,7 @@ export async function POST(request) {
         org_id: ctx.orgId,
         name: name.trim(),
         description: description?.trim() || null,
+        price: price ?? 0,
         sort_order: (last?.sort_order ?? -1) + 1,
       })
       .select()
@@ -90,7 +95,7 @@ export async function PATCH(request) {
     const ctx = await getAdminOrg(supabase)
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { id, name, description, sort_order } = await request.json()
+    const { id, name, description, price, sort_order } = await request.json()
     if (!id) return NextResponse.json({ error: 'Service id required' }, { status: 400 })
 
     const updates = {}
@@ -101,6 +106,7 @@ export async function PATCH(request) {
       updates.name = name.trim()
     }
     if (description !== undefined) updates.description = description?.trim() || null
+    if (price !== undefined) updates.price = price
     if (sort_order !== undefined) updates.sort_order = sort_order
 
     const { data: service, error } = await supabase

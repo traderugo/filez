@@ -114,14 +114,31 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { name } = await request.json()
-    if (!name || name.trim().length < 1 || name.length > 100) {
-      return NextResponse.json({ error: 'Name is required (max 100 chars)' }, { status: 400 })
+    const { name, plan_type } = await request.json()
+
+    const updates = {}
+
+    if (name !== undefined) {
+      if (!name || name.trim().length < 1 || name.length > 100) {
+        return NextResponse.json({ error: 'Name is required (max 100 chars)' }, { status: 400 })
+      }
+      updates.name = name.trim()
+    }
+
+    if (plan_type !== undefined) {
+      if (!['one_time', 'recurring'].includes(plan_type)) {
+        return NextResponse.json({ error: 'Invalid plan type' }, { status: 400 })
+      }
+      updates.plan_type = plan_type
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
     }
 
     const { data: org, error } = await supabase
       .from('organizations')
-      .update({ name: name.trim() })
+      .update(updates)
       .eq('owner_id', admin.id)
       .select()
       .single()
