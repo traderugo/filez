@@ -79,35 +79,37 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Reports */}
-      <div className="border-t border-gray-200 pt-6 mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
-          <ClipboardList className="w-4 h-4 inline mr-1" />
-          Reports
-        </h2>
-        <div className="grid gap-3">
-          <Link
-            href="/dashboard/reports/dso"
-            className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
-          >
-            <FileSpreadsheet className="w-5 h-5 text-orange-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Daily Sales Operation</p>
-              <p className="text-xs text-gray-500">Sales, inventory, consumption, lodgement</p>
-            </div>
-          </Link>
-          <Link
-            href="/dashboard/reports/lube"
-            className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
-          >
-            <Droplets className="w-5 h-5 text-orange-600 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Lube Logs</p>
-              <p className="text-xs text-gray-500">Lubricant sales, inventory, and lodgement</p>
-            </div>
-          </Link>
+      {/* Reports — only show if user belongs to a station */}
+      {profile?.org_id && (
+        <div className="border-t border-gray-200 pt-6 mb-8">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
+            <ClipboardList className="w-4 h-4 inline mr-1" />
+            Reports
+          </h2>
+          <div className="grid gap-3">
+            <Link
+              href="/dashboard/reports/dso"
+              className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+            >
+              <FileSpreadsheet className="w-5 h-5 text-orange-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Daily Sales Operation</p>
+                <p className="text-xs text-gray-500">Sales, inventory, consumption, lodgement</p>
+              </div>
+            </Link>
+            <Link
+              href="/dashboard/reports/lube"
+              className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+            >
+              <Droplets className="w-5 h-5 text-orange-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">Lube Logs</p>
+                <p className="text-xs text-gray-500">Lubricant sales, inventory, and lodgement</p>
+              </div>
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Quick links */}
       <div className="border-t border-gray-200 pt-6">
