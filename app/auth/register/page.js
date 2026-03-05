@@ -2,60 +2,74 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { FolderOpen, Loader2, CheckCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabaseClient'
+import { FolderOpen, Loader2, CheckCircle, Copy } from 'lucide-react'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [pin, setPin] = useState(null)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    const email = form.email.trim().toLowerCase()
-
-    // Register profile via API, then send magic link
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: form.name.trim(), email, phone: form.phone.trim() }),
+      body: JSON.stringify({ name: form.name.trim(), email: form.email.trim().toLowerCase(), phone: form.phone.trim() }),
     })
 
     const data = await res.json()
+    setLoading(false)
+
     if (!res.ok) {
-      setLoading(false)
       setError(data.error || 'Registration failed')
       return
     }
 
-    // Send magic link
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-
-    setLoading(false)
-    if (authError) {
-      setError(authError.message)
+    if (data.pin) {
+      setPin(data.pin)
     } else {
-      setSent(true)
+      // Existing user — redirect to login
+      setError('An account with this email already exists. Please log in.')
     }
   }
 
-  if (sent) {
+  const copyPin = () => {
+    navigator.clipboard.writeText(pin)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  if (pin) {
     return (
       <div className="max-w-sm mx-auto px-4 py-20 text-center">
         <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-4" />
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Check your email</h1>
-        <p className="text-gray-500 text-sm">
-          We sent a magic link to <strong>{form.email}</strong>. Click the link to complete your registration.
+        <h1 className="text-xl font-bold text-gray-900 mb-2">Account created!</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Your 6-digit PIN is shown below. Save it — you&apos;ll need it to log in.
         </p>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+          <p className="text-3xl font-mono font-bold tracking-[0.3em] text-gray-900">{pin}</p>
+        </div>
+        <button
+          onClick={copyPin}
+          className="inline-flex items-center gap-2 text-sm text-orange-600 hover:underline mb-6"
+        >
+          <Copy className="w-4 h-4" />
+          {copied ? 'Copied!' : 'Copy PIN'}
+        </button>
+        <div>
+          <Link
+            href="/auth/login"
+            className="inline-block bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+          >
+            Go to login
+          </Link>
+        </div>
       </div>
     )
   }

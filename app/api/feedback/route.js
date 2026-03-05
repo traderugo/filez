@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabaseServer'
+import { getPinUserFromRequest } from '@/lib/pinAuth'
+import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request) {
   try {
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
-
+    const user = await getPinUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -26,6 +25,11 @@ export async function POST(request) {
     if (!message || message.trim().length < 1 || message.length > 1000) {
       return NextResponse.json({ error: 'Message is required (max 1000 chars)' }, { status: 400 })
     }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
 
     const { error } = await supabase
       .from('feedback')

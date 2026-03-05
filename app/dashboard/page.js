@@ -3,12 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { FileSpreadsheet, ExternalLink, Clock, CreditCard, MessageSquare, Loader2, Lock, Briefcase, ClipboardList } from 'lucide-react'
-import { supabase, getClientUser } from '@/lib/supabaseClient'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { formatDistanceToNow, format, differenceInDays } from 'date-fns'
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [subscription, setSubscription] = useState(null)
   const [files, setFiles] = useState([])
@@ -18,38 +16,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const load = async () => {
-      const u = await getClientUser()
-      if (!u) return
-      setUser(u)
-
-      const [profileRes, subRes, filesRes] = await Promise.all([
-        supabase.from('users').select('id, name, email, phone, role, org_id').eq('id', u.id).single(),
-        supabase.from('subscriptions').select('id, status, start_date, end_date, created_at').eq('user_id', u.id).order('created_at', { ascending: false }).limit(1),
-        supabase.from('user_files').select('id, file_name, share_link, description, created_at').eq('user_id', u.id).order('created_at', { ascending: false }),
-      ])
-
-      setProfile(profileRes.data)
-      setSubscription(subRes.data?.[0] || null)
-      setFiles(filesRes.data || [])
-
-      // Load custom field values and services if user belongs to an org
-      if (profileRes.data?.org_id) {
-        const [fieldValuesRes, fieldsRes, servicesRes] = await Promise.all([
-          supabase.from('user_field_values').select('field_id, value').eq('user_id', u.id),
-          supabase.from('org_custom_fields').select('id, field_name').eq('org_id', profileRes.data.org_id).order('sort_order'),
-          supabase.from('org_services').select('id, name, description').eq('org_id', profileRes.data.org_id).order('sort_order'),
-        ])
-
-        // Merge field names with values
-        const values = fieldValuesRes.data || []
-        const merged = (fieldsRes.data || []).map((f) => ({
-          label: f.field_name,
-          value: values.find((v) => v.field_id === f.id)?.value || '-',
-        }))
-        setCustomData(merged)
-        setServices(servicesRes.data || [])
-      }
-
+      const res = await fetch('/api/dashboard/data')
+      if (!res.ok) return
+      const data = await res.json()
+      setProfile(data.profile)
+      setSubscription(data.subscription)
+      setFiles(data.files || [])
+      setCustomData(data.customData || [])
+      setServices(data.services || [])
       setLoading(false)
     }
     load()

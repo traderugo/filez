@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { randomInt, createHash } from 'crypto'
 import { rateLimit } from '@/lib/rateLimit'
+
+function generatePin() {
+  return String(randomInt(0, 1000000)).padStart(6, '0')
+}
+
+function hashPin(pin) {
+  return createHash('sha256').update(pin).digest('hex')
+}
 
 function getAdminClient() {
   return createClient(
@@ -102,11 +111,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to create account' }, { status: 500 })
     }
 
+    const pin = generatePin()
+
     const { error: profileError } = await supabaseAdmin.from('users').insert({
       id: authUser.user.id,
       email: email.toLowerCase(),
       name: name.trim(),
       phone: phone?.trim() || null,
+      pin_hash: hashPin(pin),
       ...(org_id ? { org_id } : {}),
     })
 
@@ -129,7 +141,7 @@ export async function POST(request) {
       }
     }
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, pin })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Loader2, CheckCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, CheckCircle, Copy } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function JoinPage() {
@@ -15,12 +16,12 @@ export default function JoinPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '' })
   const [fieldValues, setFieldValues] = useState({})
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [pin, setPin] = useState(null)
   const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const load = async () => {
-      // Fetch org by slug
       const { data: orgData } = await supabase
         .from('organizations')
         .select('id, name, slug')
@@ -35,7 +36,6 @@ export default function JoinPage() {
 
       setOrg(orgData)
 
-      // Fetch custom fields
       const { data: fieldsData } = await supabase
         .from('org_custom_fields')
         .select('*')
@@ -63,7 +63,6 @@ export default function JoinPage() {
     }
 
     try {
-      // Register user with org_id and field values
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,23 +84,21 @@ export default function JoinPage() {
         return
       }
 
-      // Send magic link
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: form.email.toLowerCase(),
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      })
-
-      if (otpError) {
-        setError('Failed to send verification email')
-        setSubmitting(false)
-        return
+      if (data.pin) {
+        setPin(data.pin)
+      } else {
+        setError('An account with this email already exists. Please log in.')
       }
-
-      setSubmitted(true)
     } catch {
       setError('Something went wrong')
     }
     setSubmitting(false)
+  }
+
+  const copyPin = () => {
+    navigator.clipboard.writeText(pin)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   if (loading) {
@@ -121,14 +118,32 @@ export default function JoinPage() {
     )
   }
 
-  if (submitted) {
+  if (pin) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Check your email</h1>
-        <p className="text-sm text-gray-500">
-          We sent a sign-in link to <strong>{form.email}</strong>. Click it to access your account.
+        <h1 className="text-xl font-bold text-gray-900 mb-2">You&apos;re in!</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Your 6-digit PIN is shown below. Save it — you&apos;ll need it to log in.
         </p>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+          <p className="text-3xl font-mono font-bold tracking-[0.3em] text-gray-900">{pin}</p>
+        </div>
+        <button
+          onClick={copyPin}
+          className="inline-flex items-center gap-2 text-sm text-orange-600 hover:underline mb-6"
+        >
+          <Copy className="w-4 h-4" />
+          {copied ? 'Copied!' : 'Copy PIN'}
+        </button>
+        <div>
+          <Link
+            href="/auth/login"
+            className="inline-block bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+          >
+            Go to login
+          </Link>
+        </div>
       </div>
     )
   }

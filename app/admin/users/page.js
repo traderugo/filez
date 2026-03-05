@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Search, FileSpreadsheet, ExternalLink, Trash2, Plus } from 'lucide-react'
+import { Loader2, Search, FileSpreadsheet, ExternalLink, Trash2, Plus, KeyRound, Copy } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format } from 'date-fns'
@@ -18,6 +18,11 @@ export default function AdminUsersPage() {
   const [newFile, setNewFile] = useState({ file_name: '', share_link: '', description: '' })
   const [saving, setSaving] = useState(false)
 
+  // PIN reset
+  const [resetPin, setResetPin] = useState(null)
+  const [resettingPin, setResettingPin] = useState(false)
+  const [pinCopied, setPinCopied] = useState(false)
+
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
@@ -33,8 +38,29 @@ export default function AdminUsersPage() {
 
   const [customData, setCustomData] = useState([])
 
+  const handleResetPin = async (userId) => {
+    if (!confirm('Reset this user\'s PIN? They will need the new PIN to log in.')) return
+    setResettingPin(true)
+    setResetPin(null)
+    const res = await fetch('/api/admin/users/reset-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId }),
+    })
+    const data = await res.json()
+    setResettingPin(false)
+    if (res.ok) setResetPin(data.pin)
+  }
+
+  const copyResetPin = () => {
+    navigator.clipboard.writeText(resetPin)
+    setPinCopied(true)
+    setTimeout(() => setPinCopied(false), 2000)
+  }
+
   const selectUser = async (user) => {
     setSelectedUser(user)
+    setResetPin(null)
     setFilesLoading(true)
     const [filesData, fieldValuesData] = await Promise.all([
       supabase.from('user_files').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
@@ -99,7 +125,28 @@ export default function AdminUsersPage() {
         </button>
 
         <h1 className="text-xl font-bold text-gray-900 mb-1">{selectedUser.name}</h1>
-        <p className="text-sm text-gray-500 mb-2">{selectedUser.email}</p>
+        <p className="text-sm text-gray-500 mb-4">{selectedUser.email}</p>
+
+        {/* Reset PIN */}
+        <div className="mb-6 flex items-center gap-3">
+          <button
+            onClick={() => handleResetPin(selectedUser.id)}
+            disabled={resettingPin}
+            className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 disabled:opacity-50"
+          >
+            {resettingPin ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+            Reset PIN
+          </button>
+          {resetPin && (
+            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded px-3 py-1.5">
+              <span className="font-mono font-bold text-green-800 tracking-widest">{resetPin}</span>
+              <button onClick={copyResetPin} className="text-green-600 hover:text-green-800">
+                <Copy className="w-4 h-4" />
+              </button>
+              {pinCopied && <span className="text-xs text-green-600">Copied!</span>}
+            </div>
+          )}
+        </div>
 
         {/* Custom field values */}
         {customData.length > 0 && (

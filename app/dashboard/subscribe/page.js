@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { CreditCard, Upload, Loader2, CheckCircle, Building2, ShoppingCart } from 'lucide-react'
-import { supabase, getClientUser } from '@/lib/supabaseClient'
 
 export default function SubscribePage() {
   const [file, setFile] = useState(null)
@@ -21,27 +20,14 @@ export default function SubscribePage() {
 
   useEffect(() => {
     const loadServices = async () => {
-      const u = await getClientUser()
-      if (!u) return
-
-      const { data: profile } = await supabase
-        .from('users')
-        .select('org_id')
-        .eq('id', u.id)
-        .single()
-
-      if (!profile?.org_id) {
+      const res = await fetch('/api/dashboard/data')
+      if (!res.ok) {
         setServicesLoading(false)
         return
       }
-
-      const [orgRes, servicesRes] = await Promise.all([
-        supabase.from('organizations').select('plan_type').eq('id', profile.org_id).single(),
-        supabase.from('org_services').select('id, name, description, price').eq('org_id', profile.org_id).order('sort_order'),
-      ])
-
-      if (orgRes.data?.plan_type) setOrgPlanType(orgRes.data.plan_type)
-      setServices(servicesRes.data || [])
+      const data = await res.json()
+      if (data.orgPlanType) setOrgPlanType(data.orgPlanType)
+      setServices(data.services || [])
       setServicesLoading(false)
     }
     loadServices()

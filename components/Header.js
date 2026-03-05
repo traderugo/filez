@@ -4,36 +4,26 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { FolderOpen, LogOut, Menu, X, LayoutDashboard, Shield } from 'lucide-react'
-import { supabase, getClientUser, signOut } from '@/lib/supabaseClient'
 
 export default function Header() {
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
     const load = async () => {
-      const u = await getClientUser()
-      setUser(u)
-      if (u) {
-        const { data } = await supabase.from('users').select('name, role').eq('id', u.id).single()
-        setProfile(data)
-      }
+      const res = await fetch('/api/auth/me')
+      if (!res.ok) return
+      const data = await res.json()
+      setUser(data.user)
     }
     load()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') load()
-    })
-    return () => subscription.unsubscribe()
   }, [])
 
   const handleSignOut = async () => {
-    await signOut()
+    await fetch('/api/auth/pin-logout', { method: 'POST' })
     setUser(null)
-    setProfile(null)
     setMenuOpen(false)
     router.push('/')
   }
@@ -56,13 +46,13 @@ export default function Header() {
               <Link href="/dashboard" className="text-gray-600 hover:text-gray-900">
                 Dashboard
               </Link>
-              {profile?.role === 'admin' && (
+              {user.role === 'admin' && (
                 <Link href="/admin" className="text-gray-600 hover:text-gray-900">
                   Admin
                 </Link>
               )}
               <span className="text-gray-400">|</span>
-              <span className="text-gray-500">{profile?.name || user.email}</span>
+              <span className="text-gray-500">{user.name || 'User'}</span>
               <button onClick={handleSignOut} className="text-gray-500 hover:text-gray-900">
                 <LogOut className="w-4 h-4" />
               </button>
@@ -91,7 +81,7 @@ export default function Header() {
               <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 py-2 text-gray-700">
                 <LayoutDashboard className="w-4 h-4" /> Dashboard
               </Link>
-              {profile?.role === 'admin' && (
+              {user.role === 'admin' && (
                 <Link href="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 py-2 text-gray-700">
                   <Shield className="w-4 h-4" /> Admin
                 </Link>

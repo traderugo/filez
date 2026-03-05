@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabaseServer'
+import { getPinUserFromRequest } from '@/lib/pinAuth'
+import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(request) {
   try {
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
-
+    const user = await getPinUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -22,6 +21,11 @@ export async function POST(request) {
     if (!proof_url) {
       return NextResponse.json({ error: 'Proof URL is required' }, { status: 400 })
     }
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
 
     // Check for existing pending subscription
     const { data: existing } = await supabase
