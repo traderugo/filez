@@ -17,6 +17,7 @@ export default function JoinPage() {
   const [fieldValues, setFieldValues] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [pin, setPin] = useState(null)
+  const [joined, setJoined] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
 
@@ -86,8 +87,10 @@ export default function JoinPage() {
 
       if (data.pin) {
         setPin(data.pin)
+      } else if (data.existing) {
+        setJoined(true)
       } else {
-        setError('An account with this email already exists. Please log in.')
+        setError('Something went wrong. Please try again.')
       }
     } catch {
       setError('Something went wrong')
@@ -114,6 +117,24 @@ export default function JoinPage() {
       <div className="max-w-md mx-auto px-4 py-20 text-center">
         <h1 className="text-xl font-bold text-gray-900 mb-2">Not Found</h1>
         <p className="text-sm text-gray-500">This invite link is invalid or has expired.</p>
+      </div>
+    )
+  }
+
+  if (joined) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+        <h1 className="text-xl font-bold text-gray-900 mb-2">You&apos;ve joined {org.name}!</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Your account has been linked to this station. Log in with your existing PIN to continue.
+        </p>
+        <Link
+          href="/auth/login"
+          className="inline-block bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+        >
+          Go to login
+        </Link>
       </div>
     )
   }
@@ -151,7 +172,7 @@ export default function JoinPage() {
   return (
     <div className="max-w-md mx-auto px-4 py-12">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Join {org.name}</h1>
-      <p className="text-sm text-gray-500 mb-8">Create your account to get started.</p>
+      <p className="text-sm text-gray-500 mb-8">Enter your details to join this station.</p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

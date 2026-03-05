@@ -83,8 +83,14 @@ export async function POST(request) {
       .single()
 
     if (existing) {
-      // Return generic success to prevent email enumeration
-      return NextResponse.json({ ok: true })
+      // Existing user joining a station — update their org_id
+      if (org_id) {
+        await supabaseAdmin
+          .from('users')
+          .update({ org_id })
+          .eq('id', existing.id)
+      }
+      return NextResponse.json({ ok: true, existing: true })
     }
 
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
