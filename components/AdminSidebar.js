@@ -2,13 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ClipboardList, Users, FolderOpen, BarChart3 } from 'lucide-react'
+import { ClipboardList, Users, FolderOpen, BarChart3, Settings } from 'lucide-react'
 
 const links = [
   { href: '/admin', label: 'Subscriptions', icon: ClipboardList },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/files', label: 'Files', icon: FolderOpen },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
 export default function AdminSidebar() {

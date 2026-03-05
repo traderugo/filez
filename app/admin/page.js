@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Check, X, Eye, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, Check, X, Eye, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format } from 'date-fns'
@@ -13,6 +14,17 @@ export default function AdminSubscriptionsPage() {
   const [expandedId, setExpandedId] = useState(null)
   const [notes, setNotes] = useState('')
   const [acting, setActing] = useState(null)
+  const [hasOrg, setHasOrg] = useState(true)
+
+  // Check if admin has an org
+  useEffect(() => {
+    const checkOrg = async () => {
+      const res = await fetch('/api/organizations')
+      const data = await res.json()
+      setHasOrg(!!data.org)
+    }
+    checkOrg()
+  }, [])
 
   const loadSubs = async () => {
     let query = supabase
@@ -61,6 +73,18 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <div className="max-w-3xl">
+      {!hasOrg && (
+        <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-md p-4 mb-6">
+          <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-orange-800">Set up your organization</p>
+            <p className="text-sm text-orange-700 mt-1">Create an organization to start inviting users and managing custom fields.</p>
+            <Link href="/admin/settings" className="text-sm font-medium text-orange-600 hover:underline mt-2 inline-block">
+              Go to Settings →
+            </Link>
+          </div>
+        </div>
+      )}
       <h1 className="text-xl font-bold text-gray-900 mb-6">Subscriptions</h1>
 
       {/* Filter tabs */}

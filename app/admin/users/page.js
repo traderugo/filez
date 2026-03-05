@@ -31,15 +31,22 @@ export default function AdminUsersPage() {
     load()
   }, [])
 
+  const [customData, setCustomData] = useState([])
+
   const selectUser = async (user) => {
     setSelectedUser(user)
     setFilesLoading(true)
-    const { data } = await supabase
-      .from('user_files')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-    setUserFiles(data || [])
+    const [filesData, fieldValuesData] = await Promise.all([
+      supabase.from('user_files').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('user_field_values').select('value, org_custom_fields(field_name)').eq('user_id', user.id),
+    ])
+    setUserFiles(filesData.data || [])
+    setCustomData(
+      (fieldValuesData.data || []).map((fv) => ({
+        label: fv.org_custom_fields?.field_name || 'Field',
+        value: fv.value,
+      }))
+    )
     setFilesLoading(false)
   }
 
@@ -92,7 +99,19 @@ export default function AdminUsersPage() {
         </button>
 
         <h1 className="text-xl font-bold text-gray-900 mb-1">{selectedUser.name}</h1>
-        <p className="text-sm text-gray-500 mb-6">{selectedUser.email}</p>
+        <p className="text-sm text-gray-500 mb-2">{selectedUser.email}</p>
+
+        {/* Custom field values */}
+        {customData.length > 0 && (
+          <div className="mb-6 space-y-1">
+            {customData.map((item, i) => (
+              <div key={i} className="flex gap-2 text-sm">
+                <span className="text-gray-500">{item.label}:</span>
+                <span className="text-gray-900">{item.value}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Assign file form */}
         <div className="border-t border-gray-200 pt-6 mb-6">
