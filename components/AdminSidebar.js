@@ -2,12 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ClipboardList, Users, FolderOpen, BarChart3, Settings, Fuel } from 'lucide-react'
+import { ClipboardList, Users, BarChart3, Settings, Fuel } from 'lucide-react'
 
 const links = [
   { href: '/admin', label: 'Subscriptions', icon: ClipboardList },
-  { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/files', label: 'Files', icon: FolderOpen },
+  { href: '/admin/users', label: 'Staff', icon: Users },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/admin/station-setup', label: 'Station Setup', icon: Fuel },
   { href: '/admin/settings', label: 'Settings', icon: Settings },

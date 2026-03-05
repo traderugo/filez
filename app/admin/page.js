@@ -16,12 +16,12 @@ export default function AdminSubscriptionsPage() {
   const [acting, setActing] = useState(null)
   const [hasOrg, setHasOrg] = useState(true)
 
-  // Check if admin has an org
+  // Check if admin has any stations
   useEffect(() => {
     const checkOrg = async () => {
       const res = await fetch('/api/organizations')
       const data = await res.json()
-      setHasOrg(!!data.org)
+      setHasOrg(data.stations?.length > 0)
     }
     checkOrg()
   }, [])
