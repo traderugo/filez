@@ -18,7 +18,7 @@ export default function LubeReportPage() {
     setLoading(true)
     fetch(`/api/reports/lube?year=${year}&month=${month}`)
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false) })
+      .then((d) => { if (d.products) setData(d); setLoading(false) })
       .catch(() => setLoading(false))
   }, [year, month])
 

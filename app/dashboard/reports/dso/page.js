@@ -18,7 +18,7 @@ export default function DSOReportPage() {
     setLoading(true)
     fetch(`/api/reports/dso?year=${year}&month=${month}`)
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false) })
+      .then((d) => { if (d.config) setData(d); setLoading(false) })
       .catch(() => setLoading(false))
   }, [year, month])
 
