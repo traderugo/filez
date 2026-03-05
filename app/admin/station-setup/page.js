@@ -81,7 +81,7 @@ export default function StationSetupPage() {
   }
 
   if (!data) {
-    return <p className="text-sm text-gray-500 py-8">Failed to load station config. Make sure you have an organization set up.</p>
+    return <p className="text-sm text-gray-500 py-8">Failed to load station config. Make sure you have a station set up in Settings.</p>
   }
 
   return (
