@@ -1,0 +1,154 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { CreditCard, Upload, Loader2, CheckCircle, Building2 } from 'lucide-react'
+
+export default function SubscribePage() {
+  const [file, setFile] = useState(null)
+  const [reference, setReference] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!file) {
+      setError('Please upload your payment proof')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    // 1. Upload proof
+    const formData = new FormData()
+    formData.append('file', file)
+    const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+    const uploadData = await uploadRes.json()
+
+    if (!uploadRes.ok) {
+      setLoading(false)
+      setError(uploadData.error || 'Upload failed')
+      return
+    }
+
+    // 2. Create subscription
+    const subRes = await fetch('/api/subscriptions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_reference: reference.trim(),
+        proof_url: uploadData.url,
+      }),
+    })
+
+    const subData = await subRes.json()
+    setLoading(false)
+
+    if (!subRes.ok) {
+      setError(subData.error || 'Subscription failed')
+      return
+    }
+
+    setDone(true)
+  }
+
+  if (done) {
+    return (
+      <div className="max-w-sm mx-auto px-4 py-20 text-center">
+        <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-4" />
+        <h1 className="text-xl font-bold text-gray-900 mb-2">Subscription submitted</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Your payment is being reviewed. You&apos;ll get access once an admin approves it.
+        </p>
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+        >
+          Back to dashboard
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-lg mx-auto px-4 py-8">
+      <h1 className="text-xl font-bold text-gray-900 mb-1">Subscribe</h1>
+      <p className="text-sm text-gray-500 mb-8">Make a bank transfer, then upload your proof below.</p>
+
+      {/* Bank details */}
+      <div className="border-t border-gray-200 pt-6 mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+          <Building2 className="w-4 h-4" /> Bank Details
+        </h2>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-gray-500">Bank</span>
+            <span className="text-gray-900 font-medium">First Bank of Nigeria</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-gray-500">Account Number</span>
+            <span className="text-gray-900 font-medium font-mono">0123456789</span>
+          </div>
+          <div className="flex justify-between py-2 border-b border-gray-100">
+            <span className="text-gray-500">Account Name</span>
+            <span className="text-gray-900 font-medium">FilePortal Ltd</span>
+          </div>
+          <div className="flex justify-between py-2">
+            <span className="text-gray-500">Amount</span>
+            <span className="text-gray-900 font-bold">₦10,000/month</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Upload form */}
+      <div className="border-t border-gray-200 pt-6">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+          <CreditCard className="w-4 h-4" /> Payment Proof
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Payment reference (optional)</label>
+            <input
+              type="text"
+              value={reference}
+              onChange={(e) => setReference(e.target.value)}
+              placeholder="e.g. TRF-123456"
+              maxLength={100}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Upload proof</label>
+            <label className="flex items-center justify-center gap-2 w-full py-8 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-orange-400 transition-colors">
+              <Upload className="w-5 h-5 text-gray-400" />
+              <span className="text-sm text-gray-500">
+                {file ? file.name : 'Click to upload (image or PDF)'}
+              </span>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+            </label>
+          </div>
+
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-orange-600 text-white py-2.5 rounded-md font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            Submit subscription
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}
