@@ -257,12 +257,21 @@ export default function DashboardPage() {
       <div className="border-t border-gray-200 pt-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Stations</h2>
-          <button
-            onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium"
-          >
-            <Plus className="w-4 h-4" /> Add station
-          </button>
+          {subscription?.status === 'active' ? (
+            <button
+              onClick={() => setShowAdd(!showAdd)}
+              className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium"
+            >
+              <Plus className="w-4 h-4" /> Add station
+            </button>
+          ) : (
+            <Link
+              href="/dashboard/subscribe"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600"
+            >
+              <CreditCard className="w-3.5 h-3.5" /> Subscribe to add stations
+            </Link>
+          )}
         </div>
 
         {showAdd && (

@@ -61,6 +61,19 @@ export async function POST(request) {
 
     const supabase = getAdminClient()
 
+    // Check active subscription
+    const { data: activeSub } = await supabase
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .limit(1)
+      .single()
+
+    if (!activeSub) {
+      return NextResponse.json({ error: 'You need an active subscription to create a station' }, { status: 403 })
+    }
+
     // Generate unique slug
     let slug = slugify(name)
     if (!slug) slug = 'station'
