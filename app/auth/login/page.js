@@ -3,11 +3,11 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { FolderOpen, Mail, Lock, Loader2 } from 'lucide-react'
+import { Fuel, Mail, Lock, Loader2 } from 'lucide-react'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
-  const [pin, setPin] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -21,7 +21,7 @@ function LoginForm() {
     const res = await fetch('/api/auth/pin-login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), pin }),
+      body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
     })
 
     const data = await res.json()
@@ -32,6 +32,11 @@ function LoginForm() {
       return
     }
 
+    if (data.must_change_password) {
+      router.push('/auth/change-password')
+      return
+    }
+
     const next = searchParams.get('next') || '/dashboard'
     router.push(next)
   }
@@ -39,9 +44,9 @@ function LoginForm() {
   return (
     <div className="max-w-sm mx-auto px-4 py-20">
       <div className="text-center mb-8">
-        <FolderOpen className="w-8 h-8 text-orange-600 mx-auto mb-3" />
+        <Fuel className="w-8 h-8 text-orange-600 mx-auto mb-3" />
         <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-        <p className="text-sm text-gray-500 mt-1">Sign in with your email and PIN</p>
+        <p className="text-sm text-gray-500 mt-1">Sign in with your email and password</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -61,19 +66,18 @@ function LoginForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">PIN</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength={6}
+              type="password"
               required
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              placeholder="6-digit PIN"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md text-sm tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              minLength={8}
+              maxLength={128}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
         </div>

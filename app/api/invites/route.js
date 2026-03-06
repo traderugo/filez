@@ -2,14 +2,11 @@ import { NextResponse } from 'next/server'
 import { getPinUserFromRequest } from '@/lib/pinAuth'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rateLimit'
-import { randomInt, createHash } from 'crypto'
+import { randomBytes } from 'crypto'
+import bcrypt from 'bcryptjs'
 
-function generatePin() {
-  return String(randomInt(0, 1000000)).padStart(6, '0')
-}
-
-function hashPin(pin) {
-  return createHash('sha256').update(pin).digest('hex')
+function generateTempPassword() {
+  return randomBytes(6).toString('base64url').slice(0, 10)
 }
 
 function getAdminClient() {
@@ -101,7 +98,7 @@ export async function POST(request) {
       .eq('email', normalizedEmail)
       .single()
 
-    let pin = null
+    let tempPassword = null
 
     if (existingUser) {
       // Existing user — create pending invite (they accept from dashboard)
@@ -121,7 +118,7 @@ export async function POST(request) {
     }
 
     // New user — auto-create account, set org_id, mark invite accepted
-    pin = generatePin()
+    tempPassword = generateTempPassword()
 
     const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
       email: normalizedEmail,
@@ -133,11 +130,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to create staff account' }, { status: 500 })
     }
 
+    const hash = await bcrypt.hash(tempPassword, 12)
+
     const { error: profileError } = await supabase.from('users').insert({
       id: authUser.user.id,
       email: normalizedEmail,
       name: normalizedEmail.split('@')[0],
-      pin_hash: hashPin(pin),
+      password_hash: hash,
+      must_change_password: true,
       org_id,
     })
 
@@ -159,7 +159,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
     }
 
-    return NextResponse.json({ invite, pin })
+    return NextResponse.json({ invite, tempPassword })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

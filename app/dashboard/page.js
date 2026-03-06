@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets,
   ClipboardList, Building2, Check, LogOut, Plus, Pencil, X, Trash2,
-  Mail, UserPlus, Fuel, Copy, Settings, ChevronRight
+  Mail, UserPlus, Fuel, Copy, Settings, ChevronRight, KeyRound
 } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format, differenceInDays } from 'date-fns'
@@ -33,6 +33,7 @@ export default function DashboardPage() {
   const [inviteEmail, setInviteEmail] = useState({})
   const [inviting, setInviting] = useState(null)
   const [copiedId, setCopiedId] = useState(null)
+  const [resetting, setResetting] = useState(null)
 
   const loadInvites = async () => {
     const res = await fetch('/api/invites')
@@ -167,9 +168,9 @@ export default function DashboardPage() {
         const d = await r.json()
         setStationInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
       }
-      // Show PIN for newly created staff
-      if (data.pin) {
-        alert(`Account created for ${data.invite.email}\n\nLogin PIN: ${data.pin}\n\nShare this PIN with them. They will use it to log in.`)
+      // Show temp password for newly created staff
+      if (data.tempPassword) {
+        alert(`Account created for ${data.invite.email}\n\nTemporary password: ${data.tempPassword}\n\nShare this with them. They will be asked to change it on first login.`)
       }
     }
     setInviting(null)
@@ -204,6 +205,24 @@ export default function DashboardPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ invite_id: inviteId, visible_pages: updated }),
     })
+  }
+
+  const resetStaffPassword = async (email) => {
+    if (!confirm(`Reset password for ${email}? A new temporary password will be generated.`)) return
+    setResetting(email)
+    const res = await fetch('/api/auth/reset-staff-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ staff_email: email }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      alert(`Password reset for ${email}\n\nNew temporary password: ${data.tempPassword}\n\nShare this with them. They will be asked to change it on next login.`)
+    } else {
+      const err = await res.json()
+      alert(err.error || 'Failed to reset password')
+    }
+    setResetting(null)
   }
 
   const copyLink = (slug, id) => {
@@ -438,12 +457,23 @@ export default function DashboardPage() {
                                 {inv.status}
                               </span>
                             </div>
-                            <button
-                              onClick={() => removeInvite(inv.id, station.id)}
-                              className="p-1 text-gray-400 hover:text-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => resetStaffPassword(inv.email)}
+                                disabled={resetting === inv.email}
+                                className="p-1 text-gray-400 hover:text-orange-600"
+                                title="Reset password"
+                              >
+                                {resetting === inv.email ? <Loader2 className="w-3 h-3 animate-spin" /> : <KeyRound className="w-3 h-3" />}
+                              </button>
+                              <button
+                                onClick={() => removeInvite(inv.id, station.id)}
+                                className="p-1 text-gray-400 hover:text-red-600"
+                                title="Remove"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                           {/* Page permissions */}
                           <div className="flex items-center gap-3 mt-1">
