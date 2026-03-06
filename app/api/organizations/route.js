@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabaseServer'
+import { getPinUserFromRequest } from '@/lib/pinAuth'
+import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rateLimit'
 
 function slugify(text) {
@@ -12,29 +13,26 @@ function slugify(text) {
     .replace(/^-|-$/g, '')
 }
 
-async function getAdmin(supabase) {
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
-  const { data: profile } = await supabase
-    .from('users')
-    .select('id, role')
-    .eq('id', user.id)
-    .single()
-  return profile?.role === 'admin' ? profile : null
+function getAdminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
 }
 
-export async function GET() {
+// GET — list stations the user manages
+export async function GET(request) {
   try {
-    const supabase = await createServerSupabase()
-    const admin = await getAdmin(supabase)
-    if (!admin) {
+    const user = await getPinUserFromRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const supabase = getAdminClient()
     const { data: stations } = await supabase
       .from('organizations')
       .select('*')
-      .eq('owner_id', admin.id)
+      .eq('owner_id', user.id)
       .order('created_at')
 
     return NextResponse.json({ stations: stations || [] })
@@ -43,15 +41,15 @@ export async function GET() {
   }
 }
 
+// POST — create a new station
 export async function POST(request) {
   try {
-    const supabase = await createServerSupabase()
-    const admin = await getAdmin(supabase)
-    if (!admin) {
+    const user = await getPinUserFromRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { success } = rateLimit(`org:${admin.id}`, 10)
+    const { success } = rateLimit(`org:${user.id}`, 10)
     if (!success) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
@@ -60,6 +58,8 @@ export async function POST(request) {
     if (!name || name.trim().length < 1 || name.length > 100) {
       return NextResponse.json({ error: 'Name is required (max 100 chars)' }, { status: 400 })
     }
+
+    const supabase = getAdminClient()
 
     // Generate unique slug
     let slug = slugify(name)
@@ -76,7 +76,7 @@ export async function POST(request) {
 
     const { data: org, error } = await supabase
       .from('organizations')
-      .insert({ name: name.trim(), slug, owner_id: admin.id })
+      .insert({ name: name.trim(), slug, owner_id: user.id })
       .select()
       .single()
 
@@ -90,49 +90,35 @@ export async function POST(request) {
   }
 }
 
+// PATCH — update a station
 export async function PATCH(request) {
   try {
-    const supabase = await createServerSupabase()
-    const admin = await getAdmin(supabase)
-    if (!admin) {
+    const user = await getPinUserFromRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { success } = rateLimit(`org:${admin.id}`, 10)
+    const { success } = rateLimit(`org:${user.id}`, 10)
     if (!success) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { id, name, plan_type } = await request.json()
+    const { id, name } = await request.json()
     if (!id) {
       return NextResponse.json({ error: 'Station id required' }, { status: 400 })
     }
 
-    const updates = {}
-
-    if (name !== undefined) {
-      if (!name || name.trim().length < 1 || name.length > 100) {
-        return NextResponse.json({ error: 'Name is required (max 100 chars)' }, { status: 400 })
-      }
-      updates.name = name.trim()
+    if (!name || name.trim().length < 1 || name.length > 100) {
+      return NextResponse.json({ error: 'Name is required (max 100 chars)' }, { status: 400 })
     }
 
-    if (plan_type !== undefined) {
-      if (!['one_time', 'recurring'].includes(plan_type)) {
-        return NextResponse.json({ error: 'Invalid plan type' }, { status: 400 })
-      }
-      updates.plan_type = plan_type
-    }
-
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 })
-    }
+    const supabase = getAdminClient()
 
     const { data: org, error } = await supabase
       .from('organizations')
-      .update(updates)
+      .update({ name: name.trim() })
       .eq('id', id)
-      .eq('owner_id', admin.id)
+      .eq('owner_id', user.id)
       .select()
       .single()
 
@@ -146,11 +132,11 @@ export async function PATCH(request) {
   }
 }
 
+// DELETE — delete a station
 export async function DELETE(request) {
   try {
-    const supabase = await createServerSupabase()
-    const admin = await getAdmin(supabase)
-    if (!admin) {
+    const user = await getPinUserFromRequest(request)
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -159,11 +145,13 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Station id required' }, { status: 400 })
     }
 
+    const supabase = getAdminClient()
+
     const { error } = await supabase
       .from('organizations')
       .delete()
       .eq('id', id)
-      .eq('owner_id', admin.id)
+      .eq('owner_id', user.id)
 
     if (error) {
       return NextResponse.json({ error: 'Failed to delete station' }, { status: 500 })

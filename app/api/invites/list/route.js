@@ -1,21 +1,12 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabaseServer'
+import { getPinUserFromRequest } from '@/lib/pinAuth'
+import { createClient } from '@supabase/supabase-js'
 
+// GET — station manager lists invites for a station
 export async function GET(request) {
   try {
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getPinUserFromRequest(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -25,12 +16,17 @@ export async function GET(request) {
       return NextResponse.json({ error: 'org_id required' }, { status: 400 })
     }
 
-    // Verify admin owns this station
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+
+    // Verify user owns this station
     const { data: station } = await supabase
       .from('organizations')
       .select('id')
       .eq('id', orgId)
-      .eq('owner_id', profile.id)
+      .eq('owner_id', user.id)
       .single()
 
     if (!station) {

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabase } from '@/lib/supabaseServer'
 import { getPinUserFromRequest } from '@/lib/pinAuth'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rateLimit'
@@ -11,7 +10,7 @@ function getAdminClient() {
   )
 }
 
-// GET — staff user checks their pending invites
+// GET — user checks their pending invites
 export async function GET(request) {
   try {
     const user = await getPinUserFromRequest(request)
@@ -34,26 +33,15 @@ export async function GET(request) {
   }
 }
 
-// POST — admin adds an email invite to a station
+// POST — station manager adds an email invite
 export async function POST(request) {
   try {
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getPinUserFromRequest(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { success } = rateLimit(`invite:${profile.id}`, 20)
+    const { success } = rateLimit(`invite:${user.id}`, 20)
     if (!success) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
@@ -68,21 +56,21 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 })
     }
 
-    // Verify admin owns this station
+    const supabase = getAdminClient()
+
+    // Verify user owns this station
     const { data: station } = await supabase
       .from('organizations')
       .select('id')
       .eq('id', org_id)
-      .eq('owner_id', profile.id)
+      .eq('owner_id', user.id)
       .single()
 
     if (!station) {
       return NextResponse.json({ error: 'Station not found' }, { status: 404 })
     }
 
-    const adminClient = getAdminClient()
-
-    const { data: invite, error } = await adminClient
+    const { data: invite, error } = await supabase
       .from('org_invites')
       .upsert(
         { org_id, email: email.toLowerCase(), status: 'pending', invited_at: new Date().toISOString(), responded_at: null },
@@ -101,22 +89,11 @@ export async function POST(request) {
   }
 }
 
-// DELETE — admin removes an invite
+// DELETE — station manager removes an invite
 export async function DELETE(request) {
   try {
-    const supabase = await createServerSupabase()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getPinUserFromRequest(request)
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase
-      .from('users')
-      .select('id, role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -125,10 +102,10 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Invite id required' }, { status: 400 })
     }
 
-    const adminClient = getAdminClient()
+    const supabase = getAdminClient()
 
-    // Only delete invites for stations this admin owns
-    const { data: invite } = await adminClient
+    // Only delete invites for stations this user owns
+    const { data: invite } = await supabase
       .from('org_invites')
       .select('id, org_id')
       .eq('id', id)
@@ -142,14 +119,14 @@ export async function DELETE(request) {
       .from('organizations')
       .select('id')
       .eq('id', invite.org_id)
-      .eq('owner_id', profile.id)
+      .eq('owner_id', user.id)
       .single()
 
     if (!station) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await adminClient
+    await supabase
       .from('org_invites')
       .delete()
       .eq('id', id)
