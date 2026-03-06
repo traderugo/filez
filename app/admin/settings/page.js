@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Plus, Trash2, Copy, Check, Pencil, X, Fuel, Link as LinkIcon } from 'lucide-react'
+import { Loader2, Plus, Trash2, Copy, Check, Pencil, X, Fuel, Link as LinkIcon, Mail, UserPlus } from 'lucide-react'
 
 export default function AdminSettingsPage() {
   const [stations, setStations] = useState([])
@@ -20,11 +20,28 @@ export default function AdminSettingsPage() {
   // Copy link
   const [copiedId, setCopiedId] = useState(null)
 
+  // Invites
+  const [invites, setInvites] = useState({}) // { stationId: [invite, ...] }
+  const [inviteEmail, setInviteEmail] = useState({}) // { stationId: 'email' }
+  const [inviting, setInviting] = useState(null)
+
   const loadData = async () => {
     const res = await fetch('/api/organizations')
     const data = await res.json()
-    setStations(data.stations || [])
+    const stationList = data.stations || []
+    setStations(stationList)
     setLoading(false)
+
+    // Load invites for all stations
+    const allInvites = {}
+    await Promise.all(stationList.map(async (s) => {
+      const r = await fetch(`/api/invites/list?org_id=${s.id}`)
+      if (r.ok) {
+        const d = await r.json()
+        allInvites[s.id] = d.invites || []
+      }
+    }))
+    setInvites(allInvites)
   }
 
   useEffect(() => { loadData() }, [])
@@ -80,6 +97,43 @@ export default function AdminSettingsPage() {
     navigator.clipboard.writeText(`${window.location.origin}/join/${slug}`)
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const addInvite = async (stationId) => {
+    const email = inviteEmail[stationId]?.trim()
+    if (!email) return
+    setInviting(stationId)
+
+    const res = await fetch('/api/invites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ org_id: stationId, email }),
+    })
+
+    if (res.ok) {
+      setInviteEmail((prev) => ({ ...prev, [stationId]: '' }))
+      // Reload invites for this station
+      const r = await fetch(`/api/invites/list?org_id=${stationId}`)
+      if (r.ok) {
+        const d = await r.json()
+        setInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
+      }
+    }
+    setInviting(null)
+  }
+
+  const removeInvite = async (inviteId, stationId) => {
+    await fetch('/api/invites', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: inviteId }),
+    })
+    // Reload invites for this station
+    const r = await fetch(`/api/invites/list?org_id=${stationId}`)
+    if (r.ok) {
+      const d = await r.json()
+      setInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
+    }
   }
 
   if (loading) {
@@ -176,7 +230,7 @@ export default function AdminSettingsPage() {
               </div>
 
               {/* Invite link */}
-              <div className="flex items-center gap-2 bg-gray-50 rounded-md px-3 py-2">
+              <div className="flex items-center gap-2 bg-gray-50 rounded-md px-3 py-2 mb-4">
                 <LinkIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 <span className="flex-1 text-xs text-gray-600 font-mono truncate">
                   {typeof window !== 'undefined' ? `${window.location.origin}/join/${station.slug}` : `/join/${station.slug}`}
@@ -188,6 +242,64 @@ export default function AdminSettingsPage() {
                   {copiedId === station.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                   {copiedId === station.id ? 'Copied' : 'Copy'}
                 </button>
+              </div>
+
+              {/* Invite staff by email */}
+              <div>
+                <p className="text-xs font-medium text-gray-700 mb-2 flex items-center gap-1">
+                  <UserPlus className="w-3.5 h-3.5" /> Invite Staff
+                </p>
+                <form
+                  onSubmit={(e) => { e.preventDefault(); addInvite(station.id) }}
+                  className="flex gap-2 mb-2"
+                >
+                  <div className="flex-1 relative">
+                    <Mail className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      placeholder="staff@email.com"
+                      maxLength={254}
+                      value={inviteEmail[station.id] || ''}
+                      onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
+                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={inviting === station.id || !inviteEmail[station.id]?.trim()}
+                    className="px-3 py-1.5 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700 disabled:opacity-50 flex items-center gap-1"
+                  >
+                    {inviting === station.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                    Invite
+                  </button>
+                </form>
+
+                {/* Existing invites */}
+                {(invites[station.id] || []).length > 0 && (
+                  <div className="space-y-1">
+                    {invites[station.id].map((inv) => (
+                      <div key={inv.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-1.5">
+                        <div className="flex items-center gap-2">
+                          <Mail className="w-3 h-3 text-gray-400" />
+                          <span className="text-xs text-gray-700">{inv.email}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                            inv.status === 'declined' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {inv.status}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => removeInvite(inv.id, station.id)}
+                          className="p-1 text-gray-400 hover:text-red-600"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           ))}

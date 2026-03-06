@@ -2,14 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets, ClipboardList } from 'lucide-react'
+import { Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets, ClipboardList, Building2, Check, X, LogOut } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format, differenceInDays } from 'date-fns'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState(null)
   const [subscription, setSubscription] = useState(null)
+  const [invites, setInvites] = useState([])
+  const [accepting, setAccepting] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const loadInvites = async () => {
+    const res = await fetch('/api/invites')
+    if (res.ok) {
+      const data = await res.json()
+      setInvites(data.invites || [])
+    }
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -19,9 +29,52 @@ export default function DashboardPage() {
       setProfile(data.profile)
       setSubscription(data.subscription)
       setLoading(false)
+      loadInvites()
     }
     load()
   }, [])
+
+  const [leaving, setLeaving] = useState(false)
+
+  const leaveStation = async () => {
+    if (!confirm('Leave this station? You will lose access to its reports and data.')) return
+    setLeaving(true)
+    const res = await fetch('/api/invites/leave', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (res.ok) {
+      const r = await fetch('/api/dashboard/data')
+      if (r.ok) {
+        const d = await r.json()
+        setProfile(d.profile)
+      }
+      loadInvites()
+    }
+    setLeaving(false)
+  }
+
+  const acceptInvite = async (inviteId) => {
+    setAccepting(inviteId)
+    const res = await fetch('/api/invites/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invite_id: inviteId }),
+    })
+    if (res.ok) {
+      // Reload profile to get updated org_id
+      const r = await fetch('/api/dashboard/data')
+      if (r.ok) {
+        const d = await r.json()
+        setProfile(d.profile)
+      }
+      setInvites((prev) => prev.filter((i) => i.id !== inviteId))
+    } else {
+      const err = await res.json()
+      alert(err.error || 'Failed to accept invite')
+    }
+    setAccepting(null)
+  }
 
   if (loading) {
     return (
@@ -39,6 +92,37 @@ export default function DashboardPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Welcome, {profile?.name}</h1>
       <p className="text-sm text-gray-500 mb-8">{profile?.email}</p>
+
+      {/* Pending station invites */}
+      {invites.length > 0 && (
+        <div className="mb-8 space-y-3">
+          {invites.map((inv) => (
+            <div key={inv.id} className="border border-orange-200 bg-orange-50 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Building2 className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    You&apos;ve been invited to join <strong>{inv.organizations?.name}</strong>
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Accept to access this station&apos;s reports and data.
+                  </p>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => acceptInvite(inv.id)}
+                      disabled={accepting === inv.id}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+                    >
+                      {accepting === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      Accept
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Subscription status */}
       <div className="border-t border-gray-200 pt-6 mb-8">
@@ -108,6 +192,14 @@ export default function DashboardPage() {
               </div>
             </Link>
           </div>
+          <button
+            onClick={leaveStation}
+            disabled={leaving}
+            className="mt-4 flex items-center gap-1 text-xs text-gray-400 hover:text-red-600"
+          >
+            {leaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <LogOut className="w-3 h-3" />}
+            Leave station
+          </button>
         </div>
       )}
 
