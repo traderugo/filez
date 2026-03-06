@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [invites, setInvites] = useState([])
   const [accepting, setAccepting] = useState(null)
   const [leaving, setLeaving] = useState(false)
+  const [visiblePages, setVisiblePages] = useState(null)
 
   // Stations (manager)
   const [stations, setStations] = useState([])
@@ -38,6 +39,7 @@ export default function DashboardPage() {
     if (res.ok) {
       const data = await res.json()
       setInvites(data.invites || [])
+      if (data.visiblePages) setVisiblePages(data.visiblePages)
     }
   }
 
@@ -179,6 +181,24 @@ export default function DashboardPage() {
       const d = await r.json()
       setStationInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
     }
+  }
+
+  const togglePagePermission = async (inviteId, stationId, pageKey, currentPages) => {
+    const updated = currentPages.includes(pageKey)
+      ? currentPages.filter((p) => p !== pageKey)
+      : [...currentPages, pageKey]
+    // Optimistic update
+    setStationInvites((prev) => ({
+      ...prev,
+      [stationId]: (prev[stationId] || []).map((inv) =>
+        inv.id === inviteId ? { ...inv, visible_pages: updated } : inv
+      ),
+    }))
+    await fetch('/api/invites/permissions', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invite_id: inviteId, visible_pages: updated }),
+    })
   }
 
   const copyLink = (slug, id) => {
@@ -371,26 +391,46 @@ export default function DashboardPage() {
                   </form>
 
                   {(stationInvites[station.id] || []).length > 0 && (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       {stationInvites[station.id].map((inv) => (
-                        <div key={inv.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-1.5">
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-3 h-3 text-gray-400" />
-                            <span className="text-xs text-gray-700">{inv.email}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                              inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                              inv.status === 'declined' ? 'bg-red-100 text-red-700' :
-                              'bg-yellow-100 text-yellow-700'
-                            }`}>
-                              {inv.status}
-                            </span>
+                        <div key={inv.id} className="bg-gray-50 rounded px-3 py-2">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-3 h-3 text-gray-400" />
+                              <span className="text-xs text-gray-700">{inv.email}</span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                inv.status === 'declined' ? 'bg-red-100 text-red-700' :
+                                'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {inv.status}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => removeInvite(inv.id, station.id)}
+                              className="p-1 text-gray-400 hover:text-red-600"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => removeInvite(inv.id, station.id)}
-                            className="p-1 text-gray-400 hover:text-red-600"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          {/* Page permissions */}
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-[10px] text-gray-500">Pages:</span>
+                            {[
+                              { key: 'dso', label: 'DSO' },
+                              { key: 'lube', label: 'Lube' },
+                            ].map((page) => (
+                              <label key={page.key} className="flex items-center gap-1 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={(inv.visible_pages || []).includes(page.key)}
+                                  onChange={() => togglePagePermission(inv.id, station.id, page.key, inv.visible_pages || [])}
+                                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500 w-3 h-3"
+                                />
+                                <span className="text-[10px] text-gray-600">{page.label}</span>
+                              </label>
+                            ))}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -402,34 +442,38 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Reports — only show if user belongs to a station (as staff) */}
-      {profile?.org_id && (
+      {/* Reports — only show if user belongs to a station (as staff) and has visible pages */}
+      {profile?.org_id && visiblePages && visiblePages.length > 0 && (
         <div className="border-t border-gray-200 pt-6 mb-8">
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
             <ClipboardList className="w-4 h-4 inline mr-1" />
             Reports
           </h2>
           <div className="grid gap-3">
-            <Link
-              href="/dashboard/reports/dso"
-              className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
-            >
-              <FileSpreadsheet className="w-5 h-5 text-orange-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Daily Sales Operation</p>
-                <p className="text-xs text-gray-500">Sales, inventory, consumption, lodgement</p>
-              </div>
-            </Link>
-            <Link
-              href="/dashboard/reports/lube"
-              className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
-            >
-              <Droplets className="w-5 h-5 text-orange-600 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">Lube Logs</p>
-                <p className="text-xs text-gray-500">Lubricant sales, inventory, and lodgement</p>
-              </div>
-            </Link>
+            {visiblePages.includes('dso') && (
+              <Link
+                href="/dashboard/reports/dso"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+              >
+                <FileSpreadsheet className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Daily Sales Operation</p>
+                  <p className="text-xs text-gray-500">Sales, inventory, consumption, lodgement</p>
+                </div>
+              </Link>
+            )}
+            {visiblePages.includes('lube') && (
+              <Link
+                href="/dashboard/reports/lube"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+              >
+                <Droplets className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Lube Logs</p>
+                  <p className="text-xs text-gray-500">Lubricant sales, inventory, and lodgement</p>
+                </div>
+              </Link>
+            )}
           </div>
           <button
             onClick={leaveStation}

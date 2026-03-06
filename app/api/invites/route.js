@@ -27,7 +27,20 @@ export async function GET(request) {
       .eq('status', 'pending')
       .order('invited_at', { ascending: false })
 
-    return NextResponse.json({ invites: invites || [] })
+    // Also fetch accepted invite for current station (for page permissions)
+    let visiblePages = null
+    if (user.org_id) {
+      const { data: membership } = await supabase
+        .from('org_invites')
+        .select('visible_pages')
+        .eq('email', user.email)
+        .eq('org_id', user.org_id)
+        .eq('status', 'accepted')
+        .single()
+      visiblePages = membership?.visible_pages ?? ['dso', 'lube']
+    }
+
+    return NextResponse.json({ invites: invites || [], visiblePages })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

@@ -35,7 +35,7 @@ export async function GET(request) {
 
     const { data: invites } = await supabase
       .from('org_invites')
-      .select('id, email, status, invited_at')
+      .select('id, email, status, invited_at, visible_pages')
       .eq('org_id', orgId)
       .order('invited_at', { ascending: false })
 
