@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets,
   ClipboardList, Building2, Check, LogOut, Plus, Pencil, X, Trash2,
-  Mail, UserPlus, Fuel, Copy
+  Mail, UserPlus, Fuel, Copy, Settings, ChevronRight
 } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format, differenceInDays } from 'date-fns'
@@ -334,6 +334,21 @@ export default function DashboardPage() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+
+                {/* Setup notice */}
+                {!station.onboarding_complete && (
+                  <Link
+                    href={`/dashboard/setup/${station.id}`}
+                    className="flex items-center gap-3 border border-orange-200 bg-orange-50 rounded-md p-3 mb-3 hover:bg-orange-100 transition-colors"
+                  >
+                    <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-orange-800">Set up this station</p>
+                      <p className="text-xs text-orange-600">Configure nozzles, tanks, and lodgements</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-orange-400" />
+                  </Link>
+                )}
 
                 {/* Subscribe link */}
                 <div className="mb-3">
