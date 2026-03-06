@@ -160,11 +160,16 @@ export default function DashboardPage() {
       body: JSON.stringify({ org_id: stationId, email }),
     })
     if (res.ok) {
+      const data = await res.json()
       setInviteEmail((prev) => ({ ...prev, [stationId]: '' }))
       const r = await fetch(`/api/invites/list?org_id=${stationId}`)
       if (r.ok) {
         const d = await r.json()
         setStationInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
+      }
+      // Show PIN for newly created staff
+      if (data.pin) {
+        alert(`Account created for ${data.invite.email}\n\nLogin PIN: ${data.pin}\n\nShare this PIN with them. They will use it to log in.`)
       }
     }
     setInviting(null)
@@ -215,6 +220,9 @@ export default function DashboardPage() {
     )
   }
 
+  // Staff = belongs to a station but doesn't own any stations
+  const isStaff = profile?.org_id && stations.length === 0
+
   const daysLeft = subscription?.end_date
     ? differenceInDays(new Date(subscription.end_date), new Date())
     : null
@@ -253,8 +261,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* My Stations (manager) */}
-      <div className="border-t border-gray-200 pt-6 mb-8">
+      {/* My Stations (manager only) */}
+      {!isStaff && <div className="border-t border-gray-200 pt-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Stations</h2>
           {subscription?.status === 'active' ? (
@@ -464,7 +472,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Reports — only show if user belongs to a station (as staff) and has visible pages */}
       {profile?.org_id && visiblePages && visiblePages.length > 0 && (
@@ -510,44 +518,46 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Subscription status */}
-      <div className="border-t border-gray-200 pt-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Subscription</h2>
-          {subscription && <SubscriptionBadge status={subscription.status} />}
-        </div>
+      {/* Subscription status (manager only) */}
+      {!isStaff && (
+        <div className="border-t border-gray-200 pt-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Subscription</h2>
+            {subscription && <SubscriptionBadge status={subscription.status} />}
+          </div>
 
-        {subscription?.status === 'active' ? (
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-gray-600">
-              <Clock className="w-4 h-4" />
-              Expires {format(new Date(subscription.end_date), 'MMM d, yyyy')}
+          {subscription?.status === 'active' ? (
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2 text-gray-600">
+                <Clock className="w-4 h-4" />
+                Expires {format(new Date(subscription.end_date), 'MMM d, yyyy')}
+                {daysLeft !== null && daysLeft <= 7 && (
+                  <span className="text-orange-600 font-medium">({daysLeft} days left)</span>
+                )}
+              </div>
               {daysLeft !== null && daysLeft <= 7 && (
-                <span className="text-orange-600 font-medium">({daysLeft} days left)</span>
+                <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-orange-600 hover:underline text-sm font-medium">
+                  <CreditCard className="w-4 h-4" /> Renew now
+                </Link>
               )}
             </div>
-            {daysLeft !== null && daysLeft <= 7 && (
-              <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-orange-600 hover:underline text-sm font-medium">
-                <CreditCard className="w-4 h-4" /> Renew now
+          ) : subscription?.status === 'pending' ? (
+            <p className="text-sm text-yellow-700">Your payment is being reviewed. You&apos;ll be notified once approved.</p>
+          ) : (
+            <div>
+              <p className="text-sm text-gray-500 mb-3">
+                {subscription?.status === 'expired' ? 'Your subscription has expired.' : 'You don\'t have an active subscription.'}
+              </p>
+              <Link
+                href="/dashboard/subscribe"
+                className="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
+              >
+                <CreditCard className="w-4 h-4" /> Subscribe now
               </Link>
-            )}
-          </div>
-        ) : subscription?.status === 'pending' ? (
-          <p className="text-sm text-yellow-700">Your payment is being reviewed. You&apos;ll be notified once approved.</p>
-        ) : (
-          <div>
-            <p className="text-sm text-gray-500 mb-3">
-              {subscription?.status === 'expired' ? 'Your subscription has expired.' : 'You don\'t have an active subscription.'}
-            </p>
-            <Link
-              href="/dashboard/subscribe"
-              className="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
-            >
-              <CreditCard className="w-4 h-4" /> Subscribe now
-            </Link>
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick links */}
       <div className="border-t border-gray-200 pt-6">

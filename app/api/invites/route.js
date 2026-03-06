@@ -2,6 +2,15 @@ import { NextResponse } from 'next/server'
 import { getPinUserFromRequest } from '@/lib/pinAuth'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rateLimit'
+import { randomInt, createHash } from 'crypto'
+
+function generatePin() {
+  return String(randomInt(0, 1000000)).padStart(6, '0')
+}
+
+function hashPin(pin) {
+  return createHash('sha256').update(pin).digest('hex')
+}
 
 function getAdminClient() {
   return createClient(
@@ -83,20 +92,74 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Station not found' }, { status: 404 })
     }
 
-    const { data: invite, error } = await supabase
-      .from('org_invites')
-      .upsert(
-        { org_id, email: email.toLowerCase(), status: 'pending', invited_at: new Date().toISOString(), responded_at: null },
-        { onConflict: 'org_id,email' }
-      )
-      .select('id, email, status, invited_at')
+    const normalizedEmail = email.toLowerCase()
+
+    // Check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id, org_id')
+      .eq('email', normalizedEmail)
       .single()
 
-    if (error) {
+    let pin = null
+
+    if (existingUser) {
+      // Existing user — create pending invite (they accept from dashboard)
+      const { data: invite, error } = await supabase
+        .from('org_invites')
+        .upsert(
+          { org_id, email: normalizedEmail, status: 'pending', invited_at: new Date().toISOString(), responded_at: null },
+          { onConflict: 'org_id,email' }
+        )
+        .select('id, email, status, invited_at, visible_pages')
+        .single()
+
+      if (error) {
+        return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
+      }
+      return NextResponse.json({ invite })
+    }
+
+    // New user — auto-create account, set org_id, mark invite accepted
+    pin = generatePin()
+
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: normalizedEmail,
+      email_confirm: false,
+      user_metadata: { name: normalizedEmail.split('@')[0] },
+    })
+
+    if (authError) {
+      return NextResponse.json({ error: 'Failed to create staff account' }, { status: 500 })
+    }
+
+    const { error: profileError } = await supabase.from('users').insert({
+      id: authUser.user.id,
+      email: normalizedEmail,
+      name: normalizedEmail.split('@')[0],
+      pin_hash: hashPin(pin),
+      org_id,
+    })
+
+    if (profileError) {
+      return NextResponse.json({ error: 'Failed to create staff profile' }, { status: 500 })
+    }
+
+    // Create invite as accepted
+    const { data: invite, error: inviteError } = await supabase
+      .from('org_invites')
+      .upsert(
+        { org_id, email: normalizedEmail, status: 'accepted', invited_at: new Date().toISOString(), responded_at: new Date().toISOString() },
+        { onConflict: 'org_id,email' }
+      )
+      .select('id, email, status, invited_at, visible_pages')
+      .single()
+
+    if (inviteError) {
       return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
     }
 
-    return NextResponse.json({ invite })
+    return NextResponse.json({ invite, pin })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
