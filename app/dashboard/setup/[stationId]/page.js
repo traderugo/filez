@@ -59,13 +59,44 @@ export default function SetupWizardPage() {
 
   // Nozzle helpers
   const addNozzle = () => {
-    setNozzles((prev) => [...prev, { fuel_type: 'PMS', pump_number: prev.length + 1, initial_reading: 0 }])
+    setNozzles((prev) => {
+      const fuelType = 'PMS'
+      const count = prev.filter((n) => n.fuel_type === fuelType).length
+      return [...prev, { fuel_type: fuelType, pump_number: count + 1, initial_reading: 0 }]
+    })
   }
   const updateNozzle = (i, field, value) => {
-    setNozzles((prev) => prev.map((n, idx) => idx === i ? { ...n, [field]: value } : n))
+    setNozzles((prev) => {
+      const updated = prev.map((n, idx) => idx === i ? { ...n, [field]: value } : n)
+      // Recalculate pump_number when fuel_type changes
+      if (field === 'fuel_type') {
+        const countBefore = updated.slice(0, i).filter((n) => n.fuel_type === value).length
+        updated[i] = { ...updated[i], pump_number: countBefore + 1 }
+        // Renumber all nozzles of the old and new fuel type
+        const oldType = prev[i].fuel_type
+        const typesToFix = new Set([oldType, value])
+        typesToFix.forEach((ft) => {
+          let num = 1
+          for (let j = 0; j < updated.length; j++) {
+            if (updated[j].fuel_type === ft) {
+              updated[j] = { ...updated[j], pump_number: num++ }
+            }
+          }
+        })
+      }
+      return updated
+    })
   }
   const removeNozzle = (i) => {
-    setNozzles((prev) => prev.filter((_, idx) => idx !== i))
+    setNozzles((prev) => {
+      const filtered = prev.filter((_, idx) => idx !== i)
+      // Renumber per fuel type
+      const counts = {}
+      return filtered.map((n) => {
+        counts[n.fuel_type] = (counts[n.fuel_type] || 0) + 1
+        return { ...n, pump_number: counts[n.fuel_type] }
+      })
+    })
   }
 
   // Tank helpers
