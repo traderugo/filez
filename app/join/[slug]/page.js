@@ -131,7 +131,7 @@ export default function JoinPage() {
         </p>
         <Link
           href="/auth/login"
-          className="inline-block bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+          className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700"
         >
           Go to login
         </Link>
@@ -152,7 +152,7 @@ export default function JoinPage() {
         </div>
         <button
           onClick={copyPin}
-          className="inline-flex items-center gap-2 text-sm text-orange-600 hover:underline mb-6"
+          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline mb-6"
         >
           <Copy className="w-4 h-4" />
           {copied ? 'Copied!' : 'Copy PIN'}
@@ -160,7 +160,7 @@ export default function JoinPage() {
         <div>
           <Link
             href="/auth/login"
-            className="inline-block bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+            className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700"
           >
             Go to login
           </Link>
@@ -183,7 +183,7 @@ export default function JoinPage() {
             maxLength={100}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -195,7 +195,7 @@ export default function JoinPage() {
             maxLength={254}
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -206,7 +206,7 @@ export default function JoinPage() {
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             placeholder="+2348012345678"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -221,7 +221,7 @@ export default function JoinPage() {
                 required={field.required}
                 value={fieldValues[field.id] || ''}
                 onChange={(e) => setFieldValues({ ...fieldValues, [field.id]: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select...</option>
                 {(field.options || []).map((opt) => (
@@ -234,7 +234,7 @@ export default function JoinPage() {
                 required={field.required}
                 value={fieldValues[field.id] || ''}
                 onChange={(e) => setFieldValues({ ...fieldValues, [field.id]: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             )}
           </div>
@@ -245,7 +245,7 @@ export default function JoinPage() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full flex items-center justify-center gap-2 bg-orange-600 text-white px-4 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
         >
           {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
           Create account

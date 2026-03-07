@@ -110,14 +110,14 @@ export default function SubscribePage() {
                 <label
                   key={svc.id}
                   className={`flex items-start gap-3 border rounded-md p-3 cursor-pointer transition-colors ${
-                    selectedItems[svc.id] ? 'border-orange-600 bg-orange-50' : 'border-gray-200 hover:border-gray-300'
+                    selectedItems[svc.id] ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={!!selectedItems[svc.id]}
                     onChange={() => toggleItem(svc.id)}
-                    className="mt-0.5 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900">{svc.name}</p>
@@ -145,7 +145,7 @@ export default function SubscribePage() {
           <button
             type="submit"
             disabled={submitting || selectedServices.length === 0}
-            className="w-full bg-orange-600 text-white py-2.5 rounded-md font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 text-white py-2.5 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {submitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

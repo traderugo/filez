@@ -255,9 +255,9 @@ export default function DashboardPage() {
       {invites.length > 0 && (
         <div className="mb-8 space-y-3">
           {invites.map((inv) => (
-            <div key={inv.id} className="border border-orange-200 bg-orange-50 rounded-lg p-4">
+            <div key={inv.id} className="border border-blue-200 bg-blue-50 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <Building2 className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <Building2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     You&apos;ve been invited to join <strong>{inv.organizations?.name}</strong>
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => acceptInvite(inv.id)}
                     disabled={accepting === inv.id}
-                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
                   >
                     {accepting === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     Accept
@@ -287,14 +287,14 @@ export default function DashboardPage() {
           {subscription?.status === 'approved' ? (
             <button
               onClick={() => setShowAdd(!showAdd)}
-              className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium"
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
             >
               <Plus className="w-4 h-4" /> Add station
             </button>
           ) : (
             <Link
               href="/dashboard/subscribe"
-              className="flex items-center gap-1 text-xs text-gray-500 hover:text-orange-600"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600"
             >
               <CreditCard className="w-3.5 h-3.5" /> Subscribe to add stations
             </Link>
@@ -310,14 +310,14 @@ export default function DashboardPage() {
               placeholder="Station name (e.g. MRS Lekki Phase 1)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={adding}
-                className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
               >
                 {adding && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create station
@@ -340,7 +340,7 @@ export default function DashboardPage() {
               <div key={station.id} className="border border-gray-200 rounded-lg p-4">
                 {/* Station name */}
                 <div className="flex items-center gap-3 mb-3">
-                  <Fuel className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                  <Fuel className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   {editingId === station.id ? (
                     <div className="flex-1 flex gap-2">
                       <input
@@ -348,10 +348,10 @@ export default function DashboardPage() {
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         maxLength={100}
-                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         autoFocus
                       />
-                      <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-1.5 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700 disabled:opacity-50">
+                      <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
                       </button>
                       <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:text-gray-600">
@@ -390,7 +390,7 @@ export default function DashboardPage() {
                 <div className="mb-3">
                   <Link
                     href={`/dashboard/subscribe?station=${station.id}`}
-                    className="inline-flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 font-medium"
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
                   >
                     <CreditCard className="w-3.5 h-3.5" /> Subscribe for this station
                   </Link>
@@ -428,13 +428,13 @@ export default function DashboardPage() {
                         maxLength={254}
                         value={inviteEmail[station.id] || ''}
                         onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
-                        className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={inviting === station.id || !inviteEmail[station.id]?.trim()}
-                      className="px-3 py-1.5 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700 disabled:opacity-50 flex items-center gap-1"
+                      className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
                     >
                       {inviting === station.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                       Invite
@@ -461,7 +461,7 @@ export default function DashboardPage() {
                               <button
                                 onClick={() => resetStaffPassword(inv.email)}
                                 disabled={resetting === inv.email}
-                                className="p-1 text-gray-400 hover:text-orange-600"
+                                className="p-1 text-gray-400 hover:text-blue-600"
                                 title="Reset password"
                               >
                                 {resetting === inv.email ? <Loader2 className="w-3 h-3 animate-spin" /> : <KeyRound className="w-3 h-3" />}
@@ -489,7 +489,7 @@ export default function DashboardPage() {
                                   type="checkbox"
                                   checked={(inv.visible_pages || []).includes(page.key)}
                                   onChange={() => togglePagePermission(inv.id, station.id, page.key, inv.visible_pages || [])}
-                                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500 w-3 h-3"
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3 h-3"
                                 />
                                 <span className="text-[10px] text-gray-600">{page.label}</span>
                               </label>
@@ -517,9 +517,9 @@ export default function DashboardPage() {
             {visiblePages.includes('daily-sales') && (
               <Link
                 href="/dashboard/entries/daily-sales"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
-                <FileSpreadsheet className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <FileSpreadsheet className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">Daily Sales</p>
                   <p className="text-xs text-gray-500">Nozzle readings, stock, and pricing</p>
@@ -529,9 +529,9 @@ export default function DashboardPage() {
             {visiblePages.includes('product-receipt') && (
               <Link
                 href="/dashboard/entries/product-receipt"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
-                <ClipboardList className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <ClipboardList className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">Product Receipt</p>
                   <p className="text-xs text-gray-500">Deliveries, waybills, and compartments</p>
@@ -541,9 +541,9 @@ export default function DashboardPage() {
             {visiblePages.includes('lodgements') && (
               <Link
                 href="/dashboard/entries/lodgements"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
-                <CreditCard className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <CreditCard className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">Lodgements</p>
                   <p className="text-xs text-gray-500">Deposits, lube deposits, and POS</p>
@@ -553,9 +553,9 @@ export default function DashboardPage() {
             {visiblePages.includes('lube') && (
               <Link
                 href="/dashboard/entries/lube"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
-                <Droplets className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <Droplets className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">Lube</p>
                   <p className="text-xs text-gray-500">Lube sales and stock entries</p>
@@ -588,11 +588,11 @@ export default function DashboardPage() {
                 <Clock className="w-4 h-4" />
                 Expires {format(new Date(subscription.end_date), 'MMM d, yyyy')}
                 {daysLeft !== null && daysLeft <= 7 && (
-                  <span className="text-orange-600 font-medium">({daysLeft} days left)</span>
+                  <span className="text-orange-500 font-medium">({daysLeft} days left)</span>
                 )}
               </div>
               {daysLeft !== null && daysLeft <= 7 && (
-                <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-orange-600 hover:underline text-sm font-medium">
+                <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
                   <CreditCard className="w-4 h-4" /> Renew now
                 </Link>
               )}
@@ -602,7 +602,7 @@ export default function DashboardPage() {
               <p className="text-sm text-yellow-700 mb-3">You have a subscription awaiting payment.</p>
               <Link
                 href={`/dashboard/subscribe/pay/${subscription.id}`}
-                className="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
               >
                 <CreditCard className="w-4 h-4" /> Complete payment
               </Link>
@@ -618,7 +618,7 @@ export default function DashboardPage() {
               </p>
               <Link
                 href="/dashboard/subscribe"
-                className="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
               >
                 <CreditCard className="w-4 h-4" /> Subscribe now
               </Link>

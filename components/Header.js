@@ -35,7 +35,7 @@ export default function Header() {
     <header className="border-b border-gray-200 bg-white">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-lg">
-          <Fuel className="w-5 h-5 text-orange-600" />
+          <Fuel className="w-5 h-5 text-blue-600" />
           StationVA
         </Link>
 
@@ -60,7 +60,7 @@ export default function Header() {
           ) : (
             <>
               <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">Log in</Link>
-              <Link href="/auth/register" className="bg-orange-600 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-orange-700">
+              <Link href="/auth/register" className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-blue-700">
                 Sign up
               </Link>
             </>
@@ -93,7 +93,7 @@ export default function Header() {
           ) : (
             <>
               <Link href="/auth/login" onClick={() => setMenuOpen(false)} className="block py-2 text-gray-700">Log in</Link>
-              <Link href="/auth/register" onClick={() => setMenuOpen(false)} className="block py-2 text-orange-600 font-medium">Sign up</Link>
+              <Link href="/auth/register" onClick={() => setMenuOpen(false)} className="block py-2 text-blue-600 font-medium">Sign up</Link>
             </>
           )}
         </div>

@@ -88,7 +88,7 @@ export default function AdminAnalyticsPage() {
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip />
-              <Bar dataKey="subscriptions" fill="#ea580c" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="subscriptions" fill="#2563eb" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

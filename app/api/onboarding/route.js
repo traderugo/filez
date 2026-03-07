@@ -59,7 +59,6 @@ export async function POST(request) {
         org_id,
         fuel_type: n.fuel_type,
         pump_number: n.pump_number,
-        nozzle_label: n.nozzle_label,
         initial_reading: n.initial_reading || 0,
         sort_order: i,
       }))

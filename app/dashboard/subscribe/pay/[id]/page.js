@@ -149,7 +149,7 @@ export default function PaymentPage() {
         </p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700"
         >
           Back to dashboard
         </button>
@@ -169,7 +169,7 @@ export default function PaymentPage() {
         </p>
         <button
           onClick={() => router.push('/dashboard/subscribe')}
-          className="bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700"
         >
           Subscribe again
         </button>
@@ -259,13 +259,13 @@ export default function PaymentPage() {
               onChange={(e) => setReference(e.target.value)}
               placeholder="e.g. TRF-123456"
               maxLength={100}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Proof of payment</label>
-            <label className="flex items-center justify-center gap-2 w-full py-8 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-orange-400 transition-colors">
+            <label className="flex items-center justify-center gap-2 w-full py-8 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-blue-400 transition-colors">
               <Upload className="w-5 h-5 text-gray-400" />
               <span className="text-sm text-gray-500">
                 {file ? file.name : 'Click to upload (image or PDF)'}
@@ -284,7 +284,7 @@ export default function PaymentPage() {
           <button
             type="submit"
             disabled={uploading || !file}
-            className="w-full bg-orange-600 text-white py-2.5 rounded-md font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 text-white py-2.5 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {uploading && <Loader2 className="w-4 h-4 animate-spin" />}
             Submit proof

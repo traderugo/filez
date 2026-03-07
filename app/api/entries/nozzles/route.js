@@ -9,7 +9,7 @@ export async function GET(request) {
     const supabase = getServiceClient()
     const { data } = await supabase
       .from('station_pumps')
-      .select('id, fuel_type, pump_number, nozzle_label, initial_reading')
+      .select('id, fuel_type, pump_number, initial_reading')
       .eq('org_id', user.org_id)
       .order('sort_order')
 

@@ -5,8 +5,8 @@ export default function LandingPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-20 text-center">
       <div className="flex justify-center mb-6">
-        <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center">
-          <FolderOpen className="w-7 h-7 text-orange-600" />
+        <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center">
+          <FolderOpen className="w-7 h-7 text-blue-600" />
         </div>
       </div>
 
@@ -20,7 +20,7 @@ export default function LandingPage() {
       <div className="flex justify-center gap-3 mb-16">
         <Link
           href="/auth/register"
-          className="bg-orange-600 text-white px-6 py-2.5 rounded-md font-medium hover:bg-orange-700 transition-colors"
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-md font-medium hover:bg-blue-700 transition-colors"
         >
           Get Started
         </Link>
@@ -35,21 +35,21 @@ export default function LandingPage() {
       <div className="border-t border-gray-200 pt-12">
         <div className="grid sm:grid-cols-3 gap-8 text-left">
           <div>
-            <FileSpreadsheet className="w-5 h-5 text-orange-600 mb-2" />
+            <FileSpreadsheet className="w-5 h-5 text-blue-600 mb-2" />
             <h3 className="font-semibold text-gray-900 mb-1">Custom Files</h3>
             <p className="text-sm text-gray-500">
               Your data in ready-to-use spreadsheets, updated and assigned by our team.
             </p>
           </div>
           <div>
-            <Shield className="w-5 h-5 text-orange-600 mb-2" />
+            <Shield className="w-5 h-5 text-blue-600 mb-2" />
             <h3 className="font-semibold text-gray-900 mb-1">Secure Access</h3>
             <p className="text-sm text-gray-500">
               Your files are private. Only you and admins can see your assigned documents.
             </p>
           </div>
           <div>
-            <Clock className="w-5 h-5 text-orange-600 mb-2" />
+            <Clock className="w-5 h-5 text-blue-600 mb-2" />
             <h3 className="font-semibold text-gray-900 mb-1">Simple Subscription</h3>
             <p className="text-sm text-gray-500">
               Pay monthly via bank transfer, upload your proof, and get approved within hours.

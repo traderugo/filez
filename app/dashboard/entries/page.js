@@ -22,9 +22,9 @@ export default function EntriesIndexPage() {
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-3 border border-gray-200 rounded-md p-4 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+            className="flex items-center gap-3 border border-gray-200 rounded-md p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
           >
-            <Icon className="w-5 h-5 text-orange-600 flex-shrink-0" />
+            <Icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-gray-900">{label}</p>
               <p className="text-xs text-gray-500">{desc}</p>

@@ -59,7 +59,7 @@ export default function SetupWizardPage() {
 
   // Nozzle helpers
   const addNozzle = () => {
-    setNozzles((prev) => [...prev, { fuel_type: 'PMS', pump_number: prev.length + 1, nozzle_label: '', initial_reading: 0 }])
+    setNozzles((prev) => [...prev, { fuel_type: 'PMS', pump_number: prev.length + 1, initial_reading: 0 }])
   }
   const updateNozzle = (i, field, value) => {
     setNozzles((prev) => prev.map((n, idx) => idx === i ? { ...n, [field]: value } : n))
@@ -94,7 +94,7 @@ export default function SetupWizardPage() {
 
   const canNext = () => {
     if (step === 1) return location.trim().length > 0
-    if (step === 2) return nozzles.length > 0 && nozzles.every((n) => n.nozzle_label.trim())
+    if (step === 2) return nozzles.length > 0
     if (step === 3) return tanks.length > 0
     if (step === 4) return true
     if (step === 5) return true
@@ -152,7 +152,7 @@ export default function SetupWizardPage() {
         {Array.from({ length: totalSteps }).map((_, i) => (
           <div
             key={i}
-            className={`h-1 flex-1 rounded-full ${i < step ? 'bg-orange-600' : 'bg-gray-200'}`}
+            className={`h-1 flex-1 rounded-full ${i < step ? 'bg-blue-600' : 'bg-gray-200'}`}
           />
         ))}
       </div>
@@ -161,7 +161,7 @@ export default function SetupWizardPage() {
       {step === 1 && (
         <div>
           <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-orange-600" /> Station Location
+            <MapPin className="w-4 h-4 text-blue-600" /> Station Location
           </h2>
           <input
             type="text"
@@ -169,7 +169,7 @@ export default function SetupWizardPage() {
             maxLength={200}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             autoFocus
           />
         </div>
@@ -179,51 +179,42 @@ export default function SetupWizardPage() {
       {step === 2 && (
         <div>
           <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Fuel className="w-4 h-4 text-orange-600" /> Nozzles
+            <Fuel className="w-4 h-4 text-blue-600" /> Nozzles
           </h2>
-          <p className="text-xs text-gray-500 mb-4">Add each nozzle with its label (e.g. &quot;PUMP 1 N1&quot;) and opening meter reading.</p>
+          <p className="text-xs text-gray-500 mb-4">Add each nozzle with its fuel type and opening meter reading.</p>
 
           <div className="space-y-3 mb-4">
             {nozzles.map((n, i) => (
               <div key={i} className="border border-gray-200 rounded-md p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700">Nozzle {i + 1}</span>
+                  <span className="text-xs font-medium text-gray-700">{n.fuel_type} {n.pump_number}</span>
                   <button onClick={() => removeNozzle(i)} className="p-1 text-gray-400 hover:text-red-600">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Label (e.g. PUMP 1 N1)"
-                    maxLength={50}
-                    value={n.nozzle_label}
-                    onChange={(e) => updateNozzle(i, 'nozzle_label', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
                   <select
                     value={n.fuel_type}
                     onChange={(e) => updateNozzle(i, 'fuel_type', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
-                </div>
-                <input
-                  type="number"
-                  placeholder="Opening meter reading"
-                  min={0}
-                  value={n.initial_reading || ''}
-                  onChange={(e) => updateNozzle(i, 'initial_reading', Number(e.target.value))}
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
+                  <input
+                    type="number"
+                    placeholder="Opening meter reading"
+                    min={0}
+                    value={n.initial_reading || ''}
+                    onChange={(e) => updateNozzle(i, 'initial_reading', Number(e.target.value))}
+                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
               </div>
             ))}
           </div>
 
           <button
             onClick={addNozzle}
-            className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium"
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             <Plus className="w-4 h-4" /> Add nozzle
           </button>
@@ -234,7 +225,7 @@ export default function SetupWizardPage() {
       {step === 3 && (
         <div>
           <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Fuel className="w-4 h-4 text-orange-600" /> Underground Tanks
+            <Fuel className="w-4 h-4 text-blue-600" /> Underground Tanks
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add each tank with its capacity and current stock level.</p>
 
@@ -251,7 +242,7 @@ export default function SetupWizardPage() {
                   <select
                     value={t.fuel_type}
                     onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
@@ -261,7 +252,7 @@ export default function SetupWizardPage() {
                     min={0}
                     value={t.capacity || ''}
                     onChange={(e) => updateTank(i, 'capacity', Number(e.target.value))}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <input
                     type="number"
@@ -269,7 +260,7 @@ export default function SetupWizardPage() {
                     min={0}
                     value={t.opening_stock || ''}
                     onChange={(e) => updateTank(i, 'opening_stock', Number(e.target.value))}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -278,7 +269,7 @@ export default function SetupWizardPage() {
 
           <button
             onClick={addTank}
-            className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium"
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             <Plus className="w-4 h-4" /> Add tank
           </button>
@@ -289,7 +280,7 @@ export default function SetupWizardPage() {
       {step === 4 && (
         <div>
           <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <ArrowRight className="w-4 h-4 text-orange-600" /> Tank to Nozzle Mapping
+            <ArrowRight className="w-4 h-4 text-blue-600" /> Tank to Nozzle Mapping
           </h2>
           <p className="text-xs text-gray-500 mb-4">Select which underground tank feeds each nozzle.</p>
 
@@ -303,14 +294,14 @@ export default function SetupWizardPage() {
                 return (
                   <div key={i} className="flex items-center gap-3 border border-gray-200 rounded-md p-3">
                     <div className="flex-1">
-                      <span className="text-sm font-medium text-gray-900">{n.nozzle_label || `Nozzle ${i + 1}`}</span>
+                      <span className="text-sm font-medium text-gray-900">{n.fuel_type} {n.pump_number}</span>
                       <span className="text-xs text-gray-500 ml-2">({n.fuel_type})</span>
                     </div>
                     <ArrowRight className="w-4 h-4 text-gray-400" />
                     <select
                       value={mappings[key] || ''}
                       onChange={(e) => setMappings((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                      className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select tank</option>
                       {sameFuelTanks.map((t, ti) => (
@@ -331,7 +322,7 @@ export default function SetupWizardPage() {
       {step === 5 && (
         <div>
           <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Landmark className="w-4 h-4 text-orange-600" /> Lodgements
+            <Landmark className="w-4 h-4 text-blue-600" /> Lodgements
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add POS terminals, bank deposit accounts, cash, etc. with their current balances.</p>
 
@@ -348,7 +339,7 @@ export default function SetupWizardPage() {
                   <select
                     value={l.lodgement_type}
                     onChange={(e) => updateLodgement(i, 'lodgement_type', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {LODGEMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
@@ -358,7 +349,7 @@ export default function SetupWizardPage() {
                     maxLength={100}
                     value={l.bank_name}
                     onChange={(e) => updateLodgement(i, 'bank_name', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -369,7 +360,7 @@ export default function SetupWizardPage() {
                       maxLength={50}
                       value={l.terminal_id}
                       onChange={(e) => updateLodgement(i, 'terminal_id', e.target.value)}
-                      className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   )}
                   <input
@@ -378,7 +369,7 @@ export default function SetupWizardPage() {
                     min={0}
                     value={l.balance || ''}
                     onChange={(e) => updateLodgement(i, 'balance', Number(e.target.value))}
-                    className={`px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${l.lodgement_type !== 'pos' ? 'col-span-2' : ''}`}
+                    className={`px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${l.lodgement_type !== 'pos' ? 'col-span-2' : ''}`}
                   />
                 </div>
               </div>
@@ -387,7 +378,7 @@ export default function SetupWizardPage() {
 
           <button
             onClick={addLodgement}
-            className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium"
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             <Plus className="w-4 h-4" /> Add lodgement
           </button>
@@ -414,7 +405,7 @@ export default function SetupWizardPage() {
           <button
             onClick={() => setStep((s) => s + 1)}
             disabled={!canNext()}
-            className="flex items-center gap-1 px-4 py-2 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+            className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>
@@ -422,7 +413,7 @@ export default function SetupWizardPage() {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex items-center gap-1 px-6 py-2 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50"
+            className="flex items-center gap-1 px-6 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             Complete Setup

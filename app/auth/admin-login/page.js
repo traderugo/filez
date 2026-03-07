@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
   return (
     <div className="max-w-sm mx-auto px-4 py-20">
       <div className="text-center mb-8">
-        <Shield className="w-8 h-8 text-orange-600 mx-auto mb-3" />
+        <Shield className="w-8 h-8 text-blue-600 mx-auto mb-3" />
         <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
         <p className="text-sm text-gray-500 mt-1">Sign in with magic link</p>
       </div>
@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@example.com"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-orange-600 text-white py-2.5 rounded-md font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 text-white py-2.5 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Send magic link
@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
 
       <p className="text-center text-sm text-gray-500 mt-6">
         Not an admin?{' '}
-        <Link href="/auth/login" className="text-orange-600 hover:underline">User login</Link>
+        <Link href="/auth/login" className="text-blue-600 hover:underline">User login</Link>
       </p>
     </div>
   )

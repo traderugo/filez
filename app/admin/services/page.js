@@ -97,7 +97,7 @@ export default function AdminServicesPage() {
                 {editingId === svc.id ? (
                   <form onSubmit={handleUpdate} className="space-y-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <Icon className="w-5 h-5 text-orange-600" />
+                      <Icon className="w-5 h-5 text-blue-600" />
                       <p className="text-sm font-medium text-gray-900">{svc.name}</p>
                     </div>
                     <div>
@@ -109,13 +109,13 @@ export default function AdminServicesPage() {
                         min="0"
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         autoFocus
                       />
                     </div>
                     {error && <p className="text-sm text-red-600">{error}</p>}
                     <div className="flex gap-2">
-                      <button type="submit" disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700 disabled:opacity-50">
+                      <button type="submit" disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         Save
                       </button>
@@ -126,7 +126,7 @@ export default function AdminServicesPage() {
                   </form>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                    <Icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-gray-900">{svc.name}</p>
@@ -139,7 +139,7 @@ export default function AdminServicesPage() {
                     <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                       {Number(svc.price).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
                     </span>
-                    <button onClick={() => toggleActive(svc)} className="p-1.5 text-gray-400 hover:text-orange-600" title={svc.is_active ? 'Deactivate' : 'Activate'}>
+                    <button onClick={() => toggleActive(svc)} className="p-1.5 text-gray-400 hover:text-blue-600" title={svc.is_active ? 'Deactivate' : 'Activate'}>
                       {svc.is_active ? <ToggleRight className="w-5 h-5 text-green-600" /> : <ToggleLeft className="w-5 h-5" />}
                     </button>
                     <button onClick={() => startEdit(svc)} className="p-1.5 text-gray-400 hover:text-gray-600" title="Edit price">

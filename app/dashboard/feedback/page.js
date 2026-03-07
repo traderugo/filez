@@ -50,7 +50,7 @@ export default function FeedbackPage() {
         <p className="text-sm text-gray-500 mb-6">Your feedback has been submitted.</p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="bg-orange-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-orange-700"
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700"
         >
           Back to dashboard
         </button>
@@ -96,7 +96,7 @@ export default function FeedbackPage() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Tell us what you think..."
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
         </div>
 
@@ -105,7 +105,7 @@ export default function FeedbackPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-orange-600 text-white px-6 py-2.5 rounded-md font-medium hover:bg-orange-700 disabled:opacity-50 flex items-center gap-2"
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Submit feedback
