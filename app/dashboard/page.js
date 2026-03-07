@@ -371,8 +371,8 @@ export default function DashboardPage() {
                   </button>
                 </div>
 
-                {/* Setup notice */}
-                {!station.onboarding_complete && (
+                {/* Setup notice / settings link */}
+                {!station.onboarding_complete ? (
                   <Link
                     href={`/dashboard/setup/${station.id}`}
                     className="flex items-center gap-3 border border-orange-200 bg-orange-50 rounded-md p-3 mb-3 hover:bg-orange-100 transition-colors"
@@ -383,6 +383,13 @@ export default function DashboardPage() {
                       <p className="text-xs text-orange-600">Configure nozzles, tanks, and lodgements</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-orange-400" />
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/dashboard/setup/${station.id}`}
+                    className="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 mb-3"
+                  >
+                    <Settings className="w-3.5 h-3.5" /> Edit station setup
                   </Link>
                 )}
 
