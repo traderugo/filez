@@ -214,9 +214,9 @@ export default function SetupWizardPage() {
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add each nozzle with its fuel type and opening meter reading.</p>
 
-          <div className="space-y-2 mb-4">
+          <div className="divide-y divide-gray-200 mb-4">
             {nozzles.map((n, i) => (
-              <div key={i} className="flex items-center gap-2">
+              <div key={i} className="flex items-center gap-2 py-3 first:pt-0">
                 <select
                   value={n.fuel_type}
                   onChange={(e) => updateNozzle(i, 'fuel_type', e.target.value)}
@@ -256,9 +256,9 @@ export default function SetupWizardPage() {
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add each tank with its capacity and current stock level.</p>
 
-          <div className="space-y-2 mb-4">
+          <div className="divide-y divide-gray-200 mb-4">
             {tanks.map((t, i) => (
-              <div key={i} className="flex items-center gap-2 flex-wrap">
+              <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <select
                   value={t.fuel_type}
                   onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
@@ -309,12 +309,12 @@ export default function SetupWizardPage() {
           {nozzles.length === 0 || tanks.length === 0 ? (
             <p className="text-sm text-gray-500">Add nozzles and tanks first.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-gray-200">
               {nozzles.map((n, i) => {
                 const key = `${n.fuel_type}-${n.pump_number || i + 1}`
                 const sameFuelTanks = tanks.filter((t) => t.fuel_type === n.fuel_type)
                 return (
-                  <div key={i} className="flex items-center gap-3">
+                  <div key={i} className="flex items-center gap-3 py-3 first:pt-0">
                     <div className="flex-1">
                       <span className="text-sm font-medium text-gray-900">{n.fuel_type} {n.pump_number}</span>
                       <span className="text-xs text-gray-500 ml-2">({n.fuel_type})</span>
@@ -348,9 +348,9 @@ export default function SetupWizardPage() {
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add POS terminals, bank deposit accounts, cash, etc. with their current balances.</p>
 
-          <div className="space-y-2 mb-4">
+          <div className="divide-y divide-gray-200 mb-4">
             {lodgements.map((l, i) => (
-              <div key={i} className="flex items-center gap-2 flex-wrap">
+              <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <select
                   value={l.lodgement_type}
                   onChange={(e) => updateLodgement(i, 'lodgement_type', e.target.value)}
