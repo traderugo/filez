@@ -9,8 +9,8 @@ const geistSans = localFont({
 })
 
 export const metadata = {
-  title: 'FilePortal — Your Files, Organized',
-  description: 'Subscription-based file portal for businesses',
+  title: 'StationVA — Station Virtual Assistant',
+  description: 'Manage your fuel station entries, subscriptions, and operations',
 }
 
 export default function RootLayout({ children }) {

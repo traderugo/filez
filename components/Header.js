@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { FolderOpen, LogOut, Menu, X, LayoutDashboard, Shield } from 'lucide-react'
+import { Fuel, LogOut, Menu, X, LayoutDashboard, Shield } from 'lucide-react'
 
 export default function Header() {
   const [user, setUser] = useState(null)
@@ -35,8 +35,8 @@ export default function Header() {
     <header className="border-b border-gray-200 bg-white">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-lg">
-          <FolderOpen className="w-5 h-5 text-orange-600" />
-          FilePortal
+          <Fuel className="w-5 h-5 text-orange-600" />
+          StationVA
         </Link>
 
         {/* Desktop nav */}

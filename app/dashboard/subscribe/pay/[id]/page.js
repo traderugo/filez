@@ -231,7 +231,7 @@ export default function PaymentPage() {
           </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Account Name</span>
-            <span className="text-gray-900 font-medium">FilePortal Ltd</span>
+            <span className="text-gray-900 font-medium">StationVA</span>
           </div>
           {sub?.total_amount != null && (
             <div className="flex justify-between py-2">
