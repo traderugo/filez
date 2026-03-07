@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Check, X, Eye, ChevronDown, ChevronUp } from 'lucide-react'
-import { supabase } from '@/lib/supabaseClient'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format } from 'date-fns'
 
@@ -15,17 +14,11 @@ export default function AdminSubscriptionsPage() {
   const [acting, setActing] = useState(null)
 
   const loadSubs = async () => {
-    let query = supabase
-      .from('subscriptions')
-      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, total_amount, reference_code, payment_deadline, users(name, email, phone), subscription_items(id, service_name, price)')
-      .order('created_at', { ascending: false })
-
-    if (filter !== 'all') {
-      query = query.eq('status', filter)
+    const res = await fetch(`/api/admin/subscriptions?status=${filter}`)
+    if (res.ok) {
+      const data = await res.json()
+      setSubs(data.subscriptions || [])
     }
-
-    const { data } = await query
-    setSubs(data || [])
     setLoading(false)
   }
 
@@ -36,27 +29,19 @@ export default function AdminSubscriptionsPage() {
 
   const handleAction = async (sub, action) => {
     setActing(sub.id)
-    const today = new Date()
-    const endDate = new Date(today)
-    endDate.setMonth(endDate.getMonth() + 1)
-
-    const updates = action === 'approve'
-      ? {
-          status: 'approved',
-          start_date: today.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
-          notes: notes || null,
-        }
-      : {
-          status: 'rejected',
-          notes: notes || 'Rejected by admin',
-        }
-
-    await supabase.from('subscriptions').update(updates).eq('id', sub.id)
-    setActing(null)
-    setExpandedId(null)
-    setNotes('')
-    loadSubs()
+    const res = await fetch('/api/admin/subscriptions', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: sub.id, action, notes }),
+    })
+    if (res.ok) {
+      setActing(null)
+      setExpandedId(null)
+      setNotes('')
+      loadSubs()
+    } else {
+      setActing(null)
+    }
   }
 
   return (
