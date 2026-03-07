@@ -479,7 +479,9 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-3 mt-1">
                             <span className="text-[10px] text-gray-500">Pages:</span>
                             {[
-                              { key: 'dso', label: 'DSO' },
+                              { key: 'daily-sales', label: 'Daily Sales' },
+                              { key: 'product-receipt', label: 'Product Receipt' },
+                              { key: 'lodgements', label: 'Lodgements' },
                               { key: 'lube', label: 'Lube' },
                             ].map((page) => (
                               <label key={page.key} className="flex items-center gap-1 cursor-pointer">
@@ -504,35 +506,59 @@ export default function DashboardPage() {
         )}
       </div>}
 
-      {/* Reports — only show if user belongs to a station (as staff) and has visible pages */}
+      {/* Entries — only show if user belongs to a station (as staff) and has visible pages */}
       {profile?.org_id && visiblePages && visiblePages.length > 0 && (
         <div className="border-t border-gray-200 pt-6 mb-8">
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
             <ClipboardList className="w-4 h-4 inline mr-1" />
-            Reports
+            Entries
           </h2>
           <div className="grid gap-3">
-            {visiblePages.includes('dso') && (
+            {visiblePages.includes('daily-sales') && (
               <Link
-                href="/dashboard/reports/dso"
+                href="/dashboard/entries/daily-sales"
                 className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
               >
                 <FileSpreadsheet className="w-5 h-5 text-orange-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Daily Sales Operation</p>
-                  <p className="text-xs text-gray-500">Sales, inventory, consumption, lodgement</p>
+                  <p className="text-sm font-medium text-gray-900">Daily Sales</p>
+                  <p className="text-xs text-gray-500">Nozzle readings, stock, and pricing</p>
+                </div>
+              </Link>
+            )}
+            {visiblePages.includes('product-receipt') && (
+              <Link
+                href="/dashboard/entries/product-receipt"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+              >
+                <ClipboardList className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Product Receipt</p>
+                  <p className="text-xs text-gray-500">Deliveries, waybills, and compartments</p>
+                </div>
+              </Link>
+            )}
+            {visiblePages.includes('lodgements') && (
+              <Link
+                href="/dashboard/entries/lodgements"
+                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
+              >
+                <CreditCard className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Lodgements</p>
+                  <p className="text-xs text-gray-500">Deposits, lube deposits, and POS</p>
                 </div>
               </Link>
             )}
             {visiblePages.includes('lube') && (
               <Link
-                href="/dashboard/reports/lube"
+                href="/dashboard/entries/lube"
                 className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-orange-300 hover:bg-orange-50/50 transition-colors"
               >
                 <Droplets className="w-5 h-5 text-orange-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Lube Logs</p>
-                  <p className="text-xs text-gray-500">Lubricant sales, inventory, and lodgement</p>
+                  <p className="text-sm font-medium text-gray-900">Lube</p>
+                  <p className="text-xs text-gray-500">Lube sales and stock entries</p>
                 </div>
               </Link>
             )}
