@@ -77,7 +77,7 @@ export async function POST(request) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Failed to create subscription' }, { status: 500 })
+      return NextResponse.json({ error: 'Failed to create subscription', debug: error.message }, { status: 500 })
     }
 
     // Insert subscription items
@@ -91,11 +91,14 @@ export async function POST(request) {
       }))
 
     if (rows.length > 0) {
-      await supabase.from('subscription_items').insert(rows)
+      const { error: itemsError } = await supabase.from('subscription_items').insert(rows)
+      if (itemsError) {
+        return NextResponse.json({ error: 'Failed to save subscription items', debug: itemsError.message }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ subscription: data })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json({ error: 'Server error', debug: err.message }, { status: 500 })
   }
 }
