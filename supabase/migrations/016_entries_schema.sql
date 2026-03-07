@@ -1,5 +1,5 @@
--- Drop old report tables and create new entries tables
--- Run in Supabase SQL Editor
+-- Entry tables for all 6 entry types
+-- Run in Supabase SQL Editor after 015
 
 -- ============================================
 -- 1. Drop old report tables (order matters for FK deps)
@@ -31,12 +31,6 @@ CREATE TABLE daily_sales_entries (
 
 CREATE INDEX idx_daily_sales_org ON daily_sales_entries(org_id);
 CREATE INDEX idx_daily_sales_date ON daily_sales_entries(entry_date);
-
--- nozzle_readings format:
--- [
---   { "pump_id": "uuid", "nozzle_label": "PMS Pump 1 N1", "closing_meter": 0, "consumption": 0, "pour_back": 0 },
---   ...
--- ]
 
 -- ============================================
 -- 3. Product Receipt Entries
