@@ -17,8 +17,9 @@ DROP TABLE IF EXISTS product_receipt_entries CASCADE;
 DROP TABLE IF EXISTS daily_sales_entries CASCADE;
 
 -- ============================================
--- Drop 015 objects (global services table)
+-- Drop 015 objects (subscription_items + global services)
 -- ============================================
+DROP TABLE IF EXISTS public.subscription_items CASCADE;
 DROP POLICY IF EXISTS "services_select_all" ON public.services;
 DROP POLICY IF EXISTS "services_admin_insert" ON public.services;
 DROP POLICY IF EXISTS "services_admin_update" ON public.services;
