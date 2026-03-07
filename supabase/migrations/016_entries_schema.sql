@@ -129,13 +129,33 @@ CREATE INDEX idx_lube_stock_org ON lube_stock_entries(org_id);
 CREATE INDEX idx_lube_stock_date ON lube_stock_entries(entry_date);
 
 -- ============================================
--- 7. RLS Policies
+-- 7. Customer Payment Entries
+-- ============================================
+CREATE TABLE customer_payment_entries (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  org_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  entry_date date NOT NULL,
+  customer_name text NOT NULL,
+  amount_paid numeric NOT NULL DEFAULT 0,
+  sales_amount numeric NOT NULL DEFAULT 0,
+  notes text,
+  created_by uuid REFERENCES users(id),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX idx_customer_payment_org ON customer_payment_entries(org_id);
+CREATE INDEX idx_customer_payment_date ON customer_payment_entries(entry_date);
+
+-- ============================================
+-- 8. RLS Policies
 -- ============================================
 ALTER TABLE daily_sales_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_receipt_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lodgement_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lube_sales_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lube_stock_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customer_payment_entries ENABLE ROW LEVEL SECURITY;
 
 -- Org members can read entries for their org
 CREATE POLICY "org_read_daily_sales" ON daily_sales_entries FOR SELECT
@@ -147,6 +167,8 @@ CREATE POLICY "org_read_lodgements" ON lodgement_entries FOR SELECT
 CREATE POLICY "org_read_lube_sales" ON lube_sales_entries FOR SELECT
   USING (org_id IN (SELECT org_id FROM users WHERE id = auth.uid()));
 CREATE POLICY "org_read_lube_stock" ON lube_stock_entries FOR SELECT
+  USING (org_id IN (SELECT org_id FROM users WHERE id = auth.uid()));
+CREATE POLICY "org_read_customer_payment" ON customer_payment_entries FOR SELECT
   USING (org_id IN (SELECT org_id FROM users WHERE id = auth.uid()));
 
 -- Org members can insert entries for their org
@@ -160,6 +182,8 @@ CREATE POLICY "org_insert_lube_sales" ON lube_sales_entries FOR INSERT
   WITH CHECK (org_id IN (SELECT org_id FROM users WHERE id = auth.uid()));
 CREATE POLICY "org_insert_lube_stock" ON lube_stock_entries FOR INSERT
   WITH CHECK (org_id IN (SELECT org_id FROM users WHERE id = auth.uid()));
+CREATE POLICY "org_insert_customer_payment" ON customer_payment_entries FOR INSERT
+  WITH CHECK (org_id IN (SELECT org_id FROM users WHERE id = auth.uid()));
 
 -- Org members can update their own entries
 CREATE POLICY "org_update_daily_sales" ON daily_sales_entries FOR UPDATE
@@ -171,6 +195,8 @@ CREATE POLICY "org_update_lodgements" ON lodgement_entries FOR UPDATE
 CREATE POLICY "org_update_lube_sales" ON lube_sales_entries FOR UPDATE
   USING (created_by = auth.uid());
 CREATE POLICY "org_update_lube_stock" ON lube_stock_entries FOR UPDATE
+  USING (created_by = auth.uid());
+CREATE POLICY "org_update_customer_payment" ON customer_payment_entries FOR UPDATE
   USING (created_by = auth.uid());
 
 -- Org members can delete their own entries
@@ -184,6 +210,8 @@ CREATE POLICY "org_delete_lube_sales" ON lube_sales_entries FOR DELETE
   USING (created_by = auth.uid());
 CREATE POLICY "org_delete_lube_stock" ON lube_stock_entries FOR DELETE
   USING (created_by = auth.uid());
+CREATE POLICY "org_delete_customer_payment" ON customer_payment_entries FOR DELETE
+  USING (created_by = auth.uid());
 
 -- Admin can manage all entries for their org
 CREATE POLICY "admin_all_daily_sales" ON daily_sales_entries FOR ALL
@@ -195,4 +223,6 @@ CREATE POLICY "admin_all_lodgements" ON lodgement_entries FOR ALL
 CREATE POLICY "admin_all_lube_sales" ON lube_sales_entries FOR ALL
   USING (org_id = admin_org_id());
 CREATE POLICY "admin_all_lube_stock" ON lube_stock_entries FOR ALL
+  USING (org_id = admin_org_id());
+CREATE POLICY "admin_all_customer_payment" ON customer_payment_entries FOR ALL
   USING (org_id = admin_org_id());

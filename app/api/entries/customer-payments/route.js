@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { authenticateUser, getServiceClient, paginationParams, requireService } from '@/lib/entryHelpers'
 
-const TABLE = 'daily_sales_entries'
-const SERVICE_KEY = 'fuel-operations'
+const TABLE = 'customer_payment_entries'
+const SERVICE_KEY = 'customer-payments'
 
 export async function GET(request) {
   try {
@@ -21,12 +21,7 @@ export async function GET(request) {
       .order('entry_date', { ascending: false })
       .range(from, to)
 
-    return NextResponse.json({
-      entries: data || [],
-      total: count || 0,
-      page,
-      limit,
-    })
+    return NextResponse.json({ entries: data || [], total: count || 0, page, limit })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
@@ -39,25 +34,20 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { entry_date, nozzle_readings, ugt_closing_stock, price, notes } = await request.json()
+    const { entry_date, customer_name, amount_paid, sales_amount, notes } = await request.json()
 
-    if (!entry_date) {
-      return NextResponse.json({ error: 'Date is required' }, { status: 400 })
-    }
-    if (!Array.isArray(nozzle_readings) || nozzle_readings.length === 0) {
-      return NextResponse.json({ error: 'Nozzle readings are required' }, { status: 400 })
-    }
+    if (!entry_date) return NextResponse.json({ error: 'Date is required' }, { status: 400 })
+    if (!customer_name?.trim()) return NextResponse.json({ error: 'Customer name is required' }, { status: 400 })
 
     const supabase = getServiceClient()
-
     const { data, error: dbError } = await supabase
       .from(TABLE)
       .insert({
         org_id: user.org_id,
         entry_date,
-        nozzle_readings,
-        ugt_closing_stock: Number(ugt_closing_stock) || 0,
-        price: Number(price) || 0,
+        customer_name: customer_name.trim(),
+        amount_paid: Number(amount_paid) || 0,
+        sales_amount: Number(sales_amount) || 0,
         notes: notes?.trim() || null,
         created_by: user.id,
       })
@@ -81,18 +71,20 @@ export async function PATCH(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, nozzle_readings, ugt_closing_stock, price, notes } = await request.json()
+    const { id, entry_date, customer_name, amount_paid, sales_amount, notes } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
-
-    const supabase = getServiceClient()
 
     const updates = { updated_at: new Date().toISOString() }
     if (entry_date) updates.entry_date = entry_date
-    if (nozzle_readings) updates.nozzle_readings = nozzle_readings
-    if (ugt_closing_stock !== undefined) updates.ugt_closing_stock = Number(ugt_closing_stock) || 0
-    if (price !== undefined) updates.price = Number(price) || 0
+    if (customer_name !== undefined) {
+      if (!customer_name?.trim()) return NextResponse.json({ error: 'Customer name is required' }, { status: 400 })
+      updates.customer_name = customer_name.trim()
+    }
+    if (amount_paid !== undefined) updates.amount_paid = Number(amount_paid) || 0
+    if (sales_amount !== undefined) updates.sales_amount = Number(sales_amount) || 0
     if (notes !== undefined) updates.notes = notes?.trim() || null
 
+    const supabase = getServiceClient()
     const { data, error: dbError } = await supabase
       .from(TABLE)
       .update(updates)

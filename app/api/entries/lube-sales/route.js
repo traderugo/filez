@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server'
-import { authenticateUser, getServiceClient, paginationParams } from '@/lib/entryHelpers'
+import { authenticateUser, getServiceClient, paginationParams, requireService } from '@/lib/entryHelpers'
 
 const TABLE = 'lube_sales_entries'
+const SERVICE_KEY = 'lube-management'
 
 export async function GET(request) {
   try {
     const { user, error } = await authenticateUser(request)
     if (error) return error
+    const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
+    if (!subscribed) return subError
 
     const { from, to, page, limit } = paginationParams(request)
     const supabase = getServiceClient()
@@ -28,6 +31,8 @@ export async function POST(request) {
   try {
     const { user, error } = await authenticateUser(request)
     if (error) return error
+    const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
+    if (!subscribed) return subError
 
     const { entry_date, product, unit_sold, unit_received, price, notes } = await request.json()
 
@@ -64,6 +69,8 @@ export async function PATCH(request) {
   try {
     const { user, error } = await authenticateUser(request)
     if (error) return error
+    const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
+    if (!subscribed) return subError
 
     const { id, entry_date, product, unit_sold, unit_received, price, notes } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
@@ -99,6 +106,8 @@ export async function DELETE(request) {
   try {
     const { user, error } = await authenticateUser(request)
     if (error) return error
+    const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
+    if (!subscribed) return subError
 
     const { id } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })

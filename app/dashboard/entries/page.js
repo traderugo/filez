@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { FileSpreadsheet, ClipboardList, CreditCard, Droplets } from 'lucide-react'
+import { FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users } from 'lucide-react'
 
 const entries = [
   { href: '/dashboard/entries/daily-sales', label: 'Daily Sales', desc: 'Nozzle readings, stock, and pricing', icon: FileSpreadsheet },
   { href: '/dashboard/entries/product-receipt', label: 'Product Receipt', desc: 'Deliveries, waybills, and compartments', icon: ClipboardList },
   { href: '/dashboard/entries/lodgements', label: 'Lodgements', desc: 'Deposits, lube deposits, and POS', icon: CreditCard },
   { href: '/dashboard/entries/lube', label: 'Lube', desc: 'Lube sales and stock entries', icon: Droplets },
+  { href: '/dashboard/entries/customer-payments', label: 'Customer Payments', desc: 'Customer sales and payment records', icon: Users },
 ]
 
 export default function EntriesIndexPage() {

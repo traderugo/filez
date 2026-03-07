@@ -5,9 +5,9 @@ import { Loader2, Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight, Lock } fro
 import Link from 'next/link'
 import { format } from 'date-fns'
 
-const API = '/api/entries/product-receipt'
+const API = '/api/entries/customer-payments'
 
-export default function ProductReceiptPage() {
+export default function CustomerPaymentsPage() {
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -19,15 +19,11 @@ export default function ProductReceiptPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  // Form fields
-  const [form, setForm] = useState({
-    entry_date: new Date().toISOString().split('T')[0],
-    loaded_date: '', driver_name: '', waybill_number: '', ticket_number: '', truck_number: '',
-    chart_ullage: '', chart_liquid_height: '', depot_ullage: '', depot_liquid_height: '',
-    station_ullage: '', station_liquid_height: '',
-    first_compartment: '', second_compartment: '', third_compartment: '',
-    actual_volume: '', depot_name: '', notes: '',
-  })
+  const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
+  const [customerName, setCustomerName] = useState('')
+  const [amountPaid, setAmountPaid] = useState('')
+  const [salesAmount, setSalesAmount] = useState('')
+  const [notes, setNotes] = useState('')
 
   const limit = 20
   const totalPages = Math.ceil(total / limit)
@@ -46,63 +42,32 @@ export default function ProductReceiptPage() {
   useEffect(() => { loadEntries() }, [])
   useEffect(() => { loadEntries(page) }, [page])
 
-  const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
-
   const resetForm = () => {
-    setShowForm(false)
-    setEditingId(null)
-    setForm({
-      entry_date: new Date().toISOString().split('T')[0],
-      loaded_date: '', driver_name: '', waybill_number: '', ticket_number: '', truck_number: '',
-      chart_ullage: '', chart_liquid_height: '', depot_ullage: '', depot_liquid_height: '',
-      station_ullage: '', station_liquid_height: '',
-      first_compartment: '', second_compartment: '', third_compartment: '',
-      actual_volume: '', depot_name: '', notes: '',
-    })
-    setError('')
+    setShowForm(false); setEditingId(null); setError('')
+    setFormDate(new Date().toISOString().split('T')[0])
+    setCustomerName(''); setAmountPaid(''); setSalesAmount(''); setNotes('')
   }
 
   const openEdit = (entry) => {
     setEditingId(entry.id)
-    setForm({
-      entry_date: entry.entry_date || '',
-      loaded_date: entry.loaded_date || '',
-      driver_name: entry.driver_name || '',
-      waybill_number: entry.waybill_number || '',
-      ticket_number: entry.ticket_number || '',
-      truck_number: entry.truck_number || '',
-      chart_ullage: entry.chart_ullage ?? '',
-      chart_liquid_height: entry.chart_liquid_height ?? '',
-      depot_ullage: entry.depot_ullage ?? '',
-      depot_liquid_height: entry.depot_liquid_height ?? '',
-      station_ullage: entry.station_ullage ?? '',
-      station_liquid_height: entry.station_liquid_height ?? '',
-      first_compartment: entry.first_compartment ?? '',
-      second_compartment: entry.second_compartment ?? '',
-      third_compartment: entry.third_compartment ?? '',
-      actual_volume: entry.actual_volume ?? '',
-      depot_name: entry.depot_name || '',
-      notes: entry.notes || '',
-    })
-    setShowForm(true)
-    setError('')
+    setFormDate(entry.entry_date || '')
+    setCustomerName(entry.customer_name || '')
+    setAmountPaid(String(entry.amount_paid ?? ''))
+    setSalesAmount(String(entry.sales_amount ?? ''))
+    setNotes(entry.notes || '')
+    setShowForm(true); setError('')
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.entry_date) { setError('Date is required'); return }
-    setSaving(true)
-    setError('')
+    if (!formDate) { setError('Date is required'); return }
+    if (!customerName.trim()) { setError('Customer name is required'); return }
+    setSaving(true); setError('')
 
-    const body = { ...form }
+    const body = { entry_date: formDate, customer_name: customerName, amount_paid: Number(amountPaid) || 0, sales_amount: Number(salesAmount) || 0, notes }
     if (editingId) body.id = editingId
 
-    const res = await fetch(API, {
-      method: editingId ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
+    const res = await fetch(API, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     if (res.ok) { resetForm(); loadEntries(page) }
     else { const data = await res.json(); setError(data.error || 'Failed to save') }
     setSaving(false)
@@ -114,20 +79,6 @@ export default function ProductReceiptPage() {
     loadEntries(page)
   }
 
-  const Field = ({ label, name, type = 'text', placeholder }) => (
-    <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
-      <input
-        type={type}
-        value={form[name]}
-        onChange={(e) => setField(name, e.target.value)}
-        placeholder={placeholder}
-        step={type === 'number' ? '0.01' : undefined}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-      />
-    </div>
-  )
-
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
 
   if (locked) return (
@@ -136,7 +87,7 @@ export default function ProductReceiptPage() {
       <div className="text-center py-16">
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
-        <p className="text-sm text-gray-500 mb-4">Subscribe to the Fuel Operations service to access this feature.</p>
+        <p className="text-sm text-gray-500 mb-4">Subscribe to the Customer Payments service to access this feature.</p>
         <Link href="/dashboard/subscribe" className="inline-block bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700">Subscribe Now</Link>
       </div>
     </div>
@@ -147,7 +98,7 @@ export default function ProductReceiptPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <Link href="/dashboard/entries" className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; All Entries</Link>
-          <h1 className="text-xl font-bold text-gray-900">Product Receipt</h1>
+          <h1 className="text-xl font-bold text-gray-900">Customer Payments</h1>
         </div>
         <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1 text-sm bg-orange-600 text-white px-4 py-2 rounded-md font-medium hover:bg-orange-700">
           <Plus className="w-4 h-4" /> New Entry
@@ -160,43 +111,30 @@ export default function ProductReceiptPage() {
             <h2 className="text-sm font-semibold text-gray-900">{editingId ? 'Edit Entry' : 'New Entry'}</h2>
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
           </div>
-
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Entry Date" name="entry_date" type="date" />
-            <Field label="Loaded Date" name="loaded_date" type="date" />
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Transaction Date</label>
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Customer Name</label>
+              <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} maxLength={200} placeholder="e.g. John Doe" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <Field label="Driver Name" name="driver_name" />
-            <Field label="Waybill Number" name="waybill_number" />
-            <Field label="Ticket Number" name="ticket_number" />
-            <Field label="Truck Number" name="truck_number" />
-            <Field label="Depot Name" name="depot_name" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Amount Paid</label>
+              <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} step="0.01" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Sales Amount</label>
+              <input type="number" value={salesAmount} onChange={(e) => setSalesAmount(e.target.value)} step="0.01" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500" />
+            </div>
           </div>
-
-          <p className="text-xs font-semibold text-gray-700 pt-2">Chart / Depot / Station</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <Field label="Chart Ullage" name="chart_ullage" type="number" />
-            <Field label="Chart Liquid Height" name="chart_liquid_height" type="number" />
-            <Field label="Depot Ullage" name="depot_ullage" type="number" />
-            <Field label="Depot Liquid Height" name="depot_liquid_height" type="number" />
-            <Field label="Station Ullage" name="station_ullage" type="number" />
-            <Field label="Station Liquid Height" name="station_liquid_height" type="number" />
-          </div>
-
-          <p className="text-xs font-semibold text-gray-700 pt-2">Compartments</p>
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="1st Compartment" name="first_compartment" type="number" />
-            <Field label="2nd Compartment" name="second_compartment" type="number" />
-            <Field label="3rd Compartment" name="third_compartment" type="number" />
-          </div>
-
-          <Field label="Actual Volume" name="actual_volume" type="number" />
-
           <div>
             <label className="block text-xs text-gray-500 mb-1">Notes</label>
-            <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" />
           </div>
-
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2">
             <button type="submit" disabled={saving} className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700 disabled:opacity-50">
@@ -215,11 +153,12 @@ export default function ProductReceiptPage() {
             {entries.map((entry) => (
               <div key={entry.id} className="py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {entry.customer_name}
+                    <span className="ml-2 text-xs text-gray-400">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</span>
+                  </p>
                   <p className="text-xs text-gray-500">
-                    {entry.driver_name || 'No driver'}
-                    {entry.truck_number ? ` · ${entry.truck_number}` : ''}
-                    {entry.actual_volume ? ` · ${Number(entry.actual_volume).toLocaleString()} vol` : ''}
+                    Paid: &#8358;{Number(entry.amount_paid).toLocaleString()} · Sales: &#8358;{Number(entry.sales_amount).toLocaleString()}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>

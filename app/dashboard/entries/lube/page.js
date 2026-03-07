@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Loader2, Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
@@ -10,6 +10,31 @@ const STOCK_API = '/api/entries/lube-stock'
 
 export default function LubePage() {
   const [tab, setTab] = useState('sales') // 'sales' | 'stock'
+  const [locked, setLocked] = useState(false)
+  const [checkingAccess, setCheckingAccess] = useState(true)
+
+  useEffect(() => {
+    const check = async () => {
+      const res = await fetch(`${SALES_API}?page=1&limit=1`)
+      if (res.status === 403) setLocked(true)
+      setCheckingAccess(false)
+    }
+    check()
+  }, [])
+
+  if (checkingAccess) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+
+  if (locked) return (
+    <div className="max-w-3xl mx-auto px-4 py-8">
+      <Link href="/dashboard/entries" className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; All Entries</Link>
+      <div className="text-center py-16">
+        <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
+        <p className="text-sm text-gray-500 mb-4">Subscribe to the Lube Management service to access this feature.</p>
+        <Link href="/dashboard/subscribe" className="inline-block bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700">Subscribe Now</Link>
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
