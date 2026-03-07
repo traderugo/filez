@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets,
   ClipboardList, Building2, Check, LogOut, Plus, Pencil, X, Trash2,
-  Mail, UserPlus, Fuel, Copy, Settings, ChevronRight, KeyRound
+  Mail, UserPlus, Fuel, Settings, ChevronRight, KeyRound
 } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format, differenceInDays } from 'date-fns'
@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const [stationInvites, setStationInvites] = useState({})
   const [inviteEmail, setInviteEmail] = useState({})
   const [inviting, setInviting] = useState(null)
-  const [copiedId, setCopiedId] = useState(null)
+
   const [resetting, setResetting] = useState(null)
 
   const loadInvites = async () => {
@@ -225,11 +225,6 @@ export default function DashboardPage() {
     setResetting(null)
   }
 
-  const copyLink = (slug, id) => {
-    navigator.clipboard.writeText(`${window.location.origin}/join/${slug}`)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
-  }
 
   if (loading) {
     return (
@@ -400,21 +395,6 @@ export default function DashboardPage() {
                     </Link>
                   </div>
                 )}
-
-                {/* Invite link */}
-                <div className="flex items-center gap-2 bg-gray-50 rounded-md px-3 py-2.5 mb-4">
-                  <Copy className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  <span className="flex-1 text-sm text-gray-600 font-mono truncate">
-                    {typeof window !== 'undefined' ? `${window.location.origin}/join/${station.slug}` : `/join/${station.slug}`}
-                  </span>
-                  <button
-                    onClick={() => copyLink(station.slug, station.id)}
-                    className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-                  >
-                    {copiedId === station.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                    {copiedId === station.id ? 'Copied' : 'Copy'}
-                  </button>
-                </div>
 
                 {/* Invite staff */}
                 <div>
