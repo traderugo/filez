@@ -337,9 +337,9 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-4">
             {stations.map((station) => (
-              <div key={station.id} className="border border-gray-200 rounded-lg p-4">
-                {/* Station name */}
-                <div className="flex items-center gap-3 mb-3">
+              <div key={station.id} className="border border-gray-200 rounded-lg p-5">
+                {/* Station header */}
+                <div className="flex items-center gap-3 mb-4">
                   <Fuel className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   {editingId === station.id ? (
                     <div className="flex-1 flex gap-2">
@@ -348,10 +348,10 @@ export default function DashboardPage() {
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         maxLength={100}
-                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         autoFocus
                       />
-                      <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
+                      <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
                       </button>
                       <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:text-gray-600">
@@ -360,9 +360,9 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="flex-1 flex items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-900">{station.name}</span>
+                      <span className="text-base font-semibold text-gray-900">{station.name}</span>
                       <button onClick={() => { setEditingId(station.id); setEditName(station.name) }} className="p-1 text-gray-400 hover:text-gray-600">
-                        <Pencil className="w-3.5 h-3.5" />
+                        <Pencil className="w-4 h-4" />
                       </button>
                     </div>
                   )}
@@ -371,79 +371,77 @@ export default function DashboardPage() {
                   </button>
                 </div>
 
-                {/* Setup notice / settings link */}
+                {/* Setup notice or settings link */}
                 {!station.onboarding_complete ? (
                   <Link
                     href={`/dashboard/setup/${station.id}`}
-                    className="flex items-center gap-3 border border-orange-200 bg-orange-50 rounded-md p-3 mb-3 hover:bg-orange-100 transition-colors"
+                    className="flex items-center gap-3 border border-orange-200 bg-orange-50 rounded-md p-3 mb-4 hover:bg-orange-100 transition-colors"
                   >
                     <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
                     <div className="flex-1">
                       <p className="text-sm font-medium text-orange-800">Set up this station</p>
-                      <p className="text-xs text-orange-600">Configure nozzles, tanks, and lodgements</p>
+                      <p className="text-sm text-orange-600">Configure nozzles, tanks, and lodgements</p>
                     </div>
                     <ChevronRight className="w-4 h-4 text-orange-400" />
                   </Link>
                 ) : (
-                  <Link
-                    href={`/dashboard/setup/${station.id}`}
-                    className="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 mb-3"
-                  >
-                    <Settings className="w-3.5 h-3.5" /> Edit station setup
-                  </Link>
+                  <div className="flex items-center gap-4 mb-4">
+                    <Link
+                      href={`/dashboard/stations/${station.id}`}
+                      className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                      <Settings className="w-4 h-4" /> Station settings
+                    </Link>
+                    <Link
+                      href={`/dashboard/subscribe?station=${station.id}`}
+                      className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600"
+                    >
+                      <CreditCard className="w-4 h-4" /> Subscribe
+                    </Link>
+                  </div>
                 )}
 
-                {/* Subscribe link */}
-                <div className="mb-3">
-                  <Link
-                    href={`/dashboard/subscribe?station=${station.id}`}
-                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    <CreditCard className="w-3.5 h-3.5" /> Subscribe for this station
-                  </Link>
-                </div>
-
                 {/* Invite link */}
-                <div className="flex items-center gap-2 bg-gray-50 rounded-md px-3 py-2 mb-3">
-                  <Copy className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                  <span className="flex-1 text-xs text-gray-600 font-mono truncate">
+                <div className="flex items-center gap-2 bg-gray-50 rounded-md px-3 py-2.5 mb-4">
+                  <Copy className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  <span className="flex-1 text-sm text-gray-600 font-mono truncate">
                     {typeof window !== 'undefined' ? `${window.location.origin}/join/${station.slug}` : `/join/${station.slug}`}
                   </span>
                   <button
                     onClick={() => copyLink(station.slug, station.id)}
-                    className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
+                    className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
                   >
-                    {copiedId === station.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedId === station.id ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                     {copiedId === station.id ? 'Copied' : 'Copy'}
                   </button>
                 </div>
 
-                {/* Invite staff by email */}
+                {/* Invite staff */}
                 <div>
-                  <p className="text-xs font-medium text-gray-700 mb-2 flex items-center gap-1">
-                    <UserPlus className="w-3.5 h-3.5" /> Invite Staff
+                  <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                    <UserPlus className="w-4 h-4" /> Invite Staff
                   </p>
                   <form
                     onSubmit={(e) => { e.preventDefault(); addInvite(station.id) }}
-                    className="flex gap-2 mb-2"
+                    className="flex gap-2 mb-3"
                   >
                     <div className="flex-1 relative">
-                      <Mail className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                      <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
                       <input
                         type="email"
                         placeholder="staff@email.com"
                         maxLength={254}
                         value={inviteEmail[station.id] || ''}
                         onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
-                        className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={inviting === station.id || !inviteEmail[station.id]?.trim()}
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      {inviting === station.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                      {inviting === station.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                       Invite
                     </button>
                   </form>
@@ -451,12 +449,12 @@ export default function DashboardPage() {
                   {(stationInvites[station.id] || []).length > 0 && (
                     <div className="space-y-2">
                       {stationInvites[station.id].map((inv) => (
-                        <div key={inv.id} className="bg-gray-50 rounded px-3 py-2">
-                          <div className="flex items-center justify-between mb-1">
+                        <div key={inv.id} className="bg-gray-50 rounded-md px-3 py-2.5">
+                          <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
-                              <Mail className="w-3 h-3 text-gray-400" />
-                              <span className="text-xs text-gray-700">{inv.email}</span>
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                              <Mail className="w-4 h-4 text-gray-400" />
+                              <span className="text-sm text-gray-700">{inv.email}</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                 inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
                                 inv.status === 'declined' ? 'bg-red-100 text-red-700' :
                                 'bg-yellow-100 text-yellow-700'
@@ -468,37 +466,37 @@ export default function DashboardPage() {
                               <button
                                 onClick={() => resetStaffPassword(inv.email)}
                                 disabled={resetting === inv.email}
-                                className="p-1 text-gray-400 hover:text-blue-600"
+                                className="p-1.5 text-gray-400 hover:text-blue-600"
                                 title="Reset password"
                               >
-                                {resetting === inv.email ? <Loader2 className="w-3 h-3 animate-spin" /> : <KeyRound className="w-3 h-3" />}
+                                {resetting === inv.email ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
                               </button>
                               <button
                                 onClick={() => removeInvite(inv.id, station.id)}
-                                className="p-1 text-gray-400 hover:text-red-600"
+                                className="p-1.5 text-gray-400 hover:text-red-600"
                                 title="Remove"
                               >
-                                <X className="w-3 h-3" />
+                                <X className="w-4 h-4" />
                               </button>
                             </div>
                           </div>
                           {/* Page permissions */}
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-[10px] text-gray-500">Pages:</span>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-xs text-gray-500">Pages:</span>
                             {[
                               { key: 'daily-sales', label: 'Daily Sales' },
                               { key: 'product-receipt', label: 'Product Receipt' },
                               { key: 'lodgements', label: 'Lodgements' },
                               { key: 'lube', label: 'Lube' },
                             ].map((page) => (
-                              <label key={page.key} className="flex items-center gap-1 cursor-pointer">
+                              <label key={page.key} className="flex items-center gap-1.5 cursor-pointer">
                                 <input
                                   type="checkbox"
                                   checked={(inv.visible_pages || []).includes(page.key)}
                                   onChange={() => togglePagePermission(inv.id, station.id, page.key, inv.visible_pages || [])}
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3 h-3"
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
                                 />
-                                <span className="text-[10px] text-gray-600">{page.label}</span>
+                                <span className="text-xs text-gray-600">{page.label}</span>
                               </label>
                             ))}
                           </div>
