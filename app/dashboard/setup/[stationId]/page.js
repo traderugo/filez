@@ -258,7 +258,7 @@ export default function SetupWizardPage() {
 
           <div className="space-y-2 mb-4">
             {tanks.map((t, i) => (
-              <div key={i} className="flex items-center gap-2">
+              <div key={i} className="flex items-center gap-2 flex-wrap">
                 <select
                   value={t.fuel_type}
                   onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
@@ -272,7 +272,7 @@ export default function SetupWizardPage() {
                   min={0}
                   value={t.capacity || ''}
                   onChange={(e) => updateTank(i, 'capacity', Number(e.target.value))}
-                  className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
                   type="number"
@@ -280,7 +280,7 @@ export default function SetupWizardPage() {
                   min={0}
                   value={t.opening_stock || ''}
                   onChange={(e) => updateTank(i, 'opening_stock', Number(e.target.value))}
-                  className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button onClick={() => removeTank(i)} className="p-1 text-gray-400 hover:text-red-600">
                   <Trash2 className="w-3.5 h-3.5" />
