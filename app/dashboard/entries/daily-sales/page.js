@@ -162,7 +162,7 @@ export default function DailySalesPage() {
       <div className="text-center py-16">
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
-        <p className="text-sm text-gray-500 mb-4">Subscribe to the Fuel Operations service to access this feature.</p>
+        <p className="text-sm text-gray-500 mb-4">Subscribe to the Daily Sales Operations service to access this feature.</p>
         <Link href="/dashboard/subscribe" className="inline-block bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700">Subscribe Now</Link>
       </div>
     </div>

@@ -19,7 +19,7 @@ CREATE POLICY "services_select_all" ON public.services
 
 -- Seed the 3 hardcoded services
 INSERT INTO public.services (key, name, description, price, is_active) VALUES
-  ('fuel-operations', 'Fuel Operations', 'Daily sales, product receipt, and lodgements', 0, true),
+  ('fuel-operations', 'Daily Sales Operations', 'Daily sales, product receipt, and lodgements', 0, true),
   ('lube-management', 'Lube Management', 'Lube sales and stock entries', 0, true),
   ('customer-payments', 'Customer Payments', 'Customer sales and payment records', 0, true);
 
