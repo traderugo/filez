@@ -66,7 +66,7 @@ export async function POST(request) {
       .from('subscriptions')
       .select('id')
       .eq('user_id', user.id)
-      .eq('status', 'active')
+      .eq('status', 'approved')
       .limit(1)
       .single()
 

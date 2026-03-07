@@ -14,28 +14,25 @@ export async function GET(request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-    const subRes = await supabase
-      .from('subscriptions')
-      .select('id, status, start_date, end_date, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    let orgPlanType = 'recurring'
-
-    if (user.org_id) {
-      const orgRes = await supabase
-        .from('organizations')
-        .select('plan_type')
-        .eq('id', user.org_id)
-        .single()
-      orgPlanType = orgRes.data?.plan_type || 'recurring'
-    }
+    // Fetch latest subscription and global services in parallel
+    const [subRes, svcRes] = await Promise.all([
+      supabase
+        .from('subscriptions')
+        .select('id, status, start_date, end_date, created_at, reference_code, payment_deadline, proof_url, plan_type, total_amount')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1),
+      supabase
+        .from('services')
+        .select('id, name, description, price')
+        .eq('is_active', true)
+        .order('name'),
+    ])
 
     return NextResponse.json({
       profile: user,
       subscription: subRes.data?.[0] || null,
-      orgPlanType,
+      services: svcRes.data || [],
     })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

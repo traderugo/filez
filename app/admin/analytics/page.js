@@ -16,11 +16,11 @@ export default function AdminAnalyticsPage() {
     const load = async () => {
       const [usersRes, activeSubs, pendingSubs, expiredSubs, feedbackRes, allSubs] = await Promise.all([
         supabase.from('users').select('id', { count: 'exact', head: true }).eq('role', 'user'),
-        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'active'),
-        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('subscriptions').select('id', { count: 'exact', head: true }).in('status', ['pending_payment', 'pending_approval']),
         supabase.from('subscriptions').select('id', { count: 'exact', head: true }).eq('status', 'expired'),
         supabase.from('feedback').select('*, users(name)').order('submitted_at', { ascending: false }).limit(10),
-        supabase.from('subscriptions').select('created_at, status').eq('status', 'active'),
+        supabase.from('subscriptions').select('created_at, status').eq('status', 'approved'),
       ])
 
       setStats({

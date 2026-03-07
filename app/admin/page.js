@@ -10,13 +10,12 @@ import { format } from 'date-fns'
 export default function AdminSubscriptionsPage() {
   const [subs, setSubs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('pending')
+  const [filter, setFilter] = useState('pending_approval')
   const [expandedId, setExpandedId] = useState(null)
   const [notes, setNotes] = useState('')
   const [acting, setActing] = useState(null)
   const [hasOrg, setHasOrg] = useState(true)
 
-  // Check if admin has any stations
   useEffect(() => {
     const checkOrg = async () => {
       const res = await fetch('/api/organizations')
@@ -29,7 +28,7 @@ export default function AdminSubscriptionsPage() {
   const loadSubs = async () => {
     let query = supabase
       .from('subscriptions')
-      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, total_amount, users(name, email, phone), subscription_items(id, service_name, price)')
+      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, total_amount, reference_code, payment_deadline, users(name, email, phone), subscription_items(id, service_name, price)')
       .order('created_at', { ascending: false })
 
     if (filter !== 'all') {
@@ -54,13 +53,13 @@ export default function AdminSubscriptionsPage() {
 
     const updates = action === 'approve'
       ? {
-          status: 'active',
+          status: 'approved',
           start_date: today.toISOString().split('T')[0],
           end_date: endDate.toISOString().split('T')[0],
           notes: notes || null,
         }
       : {
-          status: 'revoked',
+          status: 'rejected',
           notes: notes || 'Rejected by admin',
         }
 
@@ -88,18 +87,25 @@ export default function AdminSubscriptionsPage() {
       <h1 className="text-xl font-bold text-gray-900 mb-6">Subscriptions</h1>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
-        {['pending', 'active', 'expired', 'revoked', 'all'].map((f) => (
+      <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
+        {[
+          { key: 'pending_approval', label: 'Pending Approval' },
+          { key: 'pending_payment', label: 'Pending Payment' },
+          { key: 'approved', label: 'Approved' },
+          { key: 'expired', label: 'Expired' },
+          { key: 'rejected', label: 'Rejected' },
+          { key: 'all', label: 'All' },
+        ].map((f) => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`px-3 py-2 text-sm font-medium capitalize border-b-2 -mb-px transition-colors ${
-              filter === f
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            className={`px-3 py-2 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors ${
+              filter === f.key
                 ? 'border-orange-600 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            {f}
+            {f.label}
           </button>
         ))}
       </div>
@@ -109,7 +115,7 @@ export default function AdminSubscriptionsPage() {
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
         </div>
       ) : subs.length === 0 ? (
-        <p className="text-sm text-gray-500 py-8 text-center">No {filter} subscriptions.</p>
+        <p className="text-sm text-gray-500 py-8 text-center">No subscriptions found.</p>
       ) : (
         <div className="divide-y divide-gray-100">
           {subs.map((sub) => (
@@ -134,9 +140,15 @@ export default function AdminSubscriptionsPage() {
               {expandedId === sub.id && (
                 <div className="mt-2 ml-0 space-y-3 px-4 pb-2">
                   <div className="space-y-1 text-sm">
+                    {sub.reference_code && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-500">Ref Code:</span>
+                        <span className="text-gray-900 font-mono font-medium">{sub.reference_code}</span>
+                      </div>
+                    )}
                     {sub.payment_reference && (
                       <div className="flex gap-2">
-                        <span className="text-gray-500">Ref:</span>
+                        <span className="text-gray-500">Payment Ref:</span>
                         <span className="text-gray-900 font-mono">{sub.payment_reference}</span>
                       </div>
                     )}
@@ -144,6 +156,12 @@ export default function AdminSubscriptionsPage() {
                       <div className="flex gap-2">
                         <span className="text-gray-500">Phone:</span>
                         <span className="text-gray-900">{sub.users.phone}</span>
+                      </div>
+                    )}
+                    {sub.payment_deadline && sub.status === 'pending_payment' && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-500">Deadline:</span>
+                        <span className="text-gray-900">{format(new Date(sub.payment_deadline), 'MMM d, yyyy h:mm a')}</span>
                       </div>
                     )}
                     {sub.start_date && (
@@ -196,7 +214,7 @@ export default function AdminSubscriptionsPage() {
                     </a>
                   )}
 
-                  {sub.status === 'pending' && (
+                  {sub.status === 'pending_approval' && (
                     <div className="space-y-2 pt-2 border-t border-gray-100">
                       <input
                         type="text"

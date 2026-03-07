@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 export async function GET(request) {
-  // Verify cron secret
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -13,18 +12,28 @@ export async function GET(request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  const today = new Date().toISOString().split('T')[0]
+  const now = new Date().toISOString()
+  const today = now.split('T')[0]
 
-  const { data, error } = await supabaseAdmin
+  // 1. Expire approved subscriptions past end_date
+  const { data: expiredApproved } = await supabaseAdmin
     .from('subscriptions')
     .update({ status: 'expired' })
-    .eq('status', 'active')
+    .eq('status', 'approved')
     .lt('end_date', today)
     .select('id')
 
-  if (error) {
-    return NextResponse.json({ error: 'Failed to expire subscriptions' }, { status: 500 })
-  }
+  // 2. Expire pending_payment subscriptions past payment_deadline
+  const { data: expiredPending } = await supabaseAdmin
+    .from('subscriptions')
+    .update({ status: 'expired' })
+    .eq('status', 'pending_payment')
+    .lt('payment_deadline', now)
+    .select('id')
 
-  return NextResponse.json({ expired: data?.length || 0, date: today })
+  return NextResponse.json({
+    expired_approved: expiredApproved?.length || 0,
+    expired_pending: expiredPending?.length || 0,
+    date: today,
+  })
 }

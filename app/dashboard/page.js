@@ -284,7 +284,7 @@ export default function DashboardPage() {
       {!isStaff && <div className="border-t border-gray-200 pt-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Stations</h2>
-          {subscription?.status === 'active' ? (
+          {subscription?.status === 'approved' ? (
             <button
               onClick={() => setShowAdd(!showAdd)}
               className="flex items-center gap-1 text-sm text-orange-600 hover:text-orange-700 font-medium"
@@ -556,7 +556,7 @@ export default function DashboardPage() {
             {subscription && <SubscriptionBadge status={subscription.status} />}
           </div>
 
-          {subscription?.status === 'active' ? (
+          {subscription?.status === 'approved' ? (
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-gray-600">
                 <Clock className="w-4 h-4" />
@@ -571,12 +571,24 @@ export default function DashboardPage() {
                 </Link>
               )}
             </div>
-          ) : subscription?.status === 'pending' ? (
-            <p className="text-sm text-yellow-700">Your payment is being reviewed. You&apos;ll be notified once approved.</p>
+          ) : subscription?.status === 'pending_payment' ? (
+            <div>
+              <p className="text-sm text-yellow-700 mb-3">You have a subscription awaiting payment.</p>
+              <Link
+                href={`/dashboard/subscribe/pay/${subscription.id}`}
+                className="inline-flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-orange-700"
+              >
+                <CreditCard className="w-4 h-4" /> Complete payment
+              </Link>
+            </div>
+          ) : subscription?.status === 'pending_approval' ? (
+            <p className="text-sm text-blue-700">Your payment proof is being reviewed. You&apos;ll be notified once approved.</p>
           ) : (
             <div>
               <p className="text-sm text-gray-500 mb-3">
-                {subscription?.status === 'expired' ? 'Your subscription has expired.' : 'You don\'t have an active subscription.'}
+                {subscription?.status === 'expired' ? 'Your subscription has expired.' :
+                 subscription?.status === 'rejected' ? 'Your subscription was rejected.' :
+                 'You don\'t have an active subscription.'}
               </p>
               <Link
                 href="/dashboard/subscribe"
