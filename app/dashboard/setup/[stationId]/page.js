@@ -209,6 +209,7 @@ export default function SetupWizardPage() {
                     className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
               </div>
+              </div>
             ))}
           </div>
 
