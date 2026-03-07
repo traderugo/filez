@@ -214,32 +214,27 @@ export default function SetupWizardPage() {
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add each nozzle with its fuel type and opening meter reading.</p>
 
-          <div className="space-y-3 mb-4">
+          <div className="space-y-2 mb-4">
             {nozzles.map((n, i) => (
-              <div key={i} className="border border-gray-200 rounded-md p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700">{n.fuel_type} {n.pump_number}</span>
-                  <button onClick={() => removeNozzle(i)} className="p-1 text-gray-400 hover:text-red-600">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={n.fuel_type}
-                    onChange={(e) => updateNozzle(i, 'fuel_type', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                  <input
-                    type="number"
-                    placeholder="Opening meter reading"
-                    min={0}
-                    value={n.initial_reading || ''}
-                    onChange={(e) => updateNozzle(i, 'initial_reading', Number(e.target.value))}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-              </div>
+              <div key={i} className="flex items-center gap-2">
+                <select
+                  value={n.fuel_type}
+                  onChange={(e) => updateNozzle(i, 'fuel_type', e.target.value)}
+                  className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <input
+                  type="number"
+                  placeholder="Opening reading"
+                  min={0}
+                  value={n.initial_reading || ''}
+                  onChange={(e) => updateNozzle(i, 'initial_reading', Number(e.target.value))}
+                  className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button onClick={() => removeNozzle(i)} className="p-1 text-gray-400 hover:text-red-600">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
@@ -261,40 +256,35 @@ export default function SetupWizardPage() {
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add each tank with its capacity and current stock level.</p>
 
-          <div className="space-y-3 mb-4">
+          <div className="space-y-2 mb-4">
             {tanks.map((t, i) => (
-              <div key={i} className="border border-gray-200 rounded-md p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700">Tank {i + 1}</span>
-                  <button onClick={() => removeTank(i)} className="p-1 text-gray-400 hover:text-red-600">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <select
-                    value={t.fuel_type}
-                    onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                  <input
-                    type="number"
-                    placeholder="Capacity (L)"
-                    min={0}
-                    value={t.capacity || ''}
-                    onChange={(e) => updateTank(i, 'capacity', Number(e.target.value))}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Opening stock (L)"
-                    min={0}
-                    value={t.opening_stock || ''}
-                    onChange={(e) => updateTank(i, 'opening_stock', Number(e.target.value))}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+              <div key={i} className="flex items-center gap-2">
+                <select
+                  value={t.fuel_type}
+                  onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
+                  className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <input
+                  type="number"
+                  placeholder="Capacity (L)"
+                  min={0}
+                  value={t.capacity || ''}
+                  onChange={(e) => updateTank(i, 'capacity', Number(e.target.value))}
+                  className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <input
+                  type="number"
+                  placeholder="Opening stock (L)"
+                  min={0}
+                  value={t.opening_stock || ''}
+                  onChange={(e) => updateTank(i, 'opening_stock', Number(e.target.value))}
+                  className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button onClick={() => removeTank(i)} className="p-1 text-gray-400 hover:text-red-600">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
@@ -324,7 +314,7 @@ export default function SetupWizardPage() {
                 const key = `${n.fuel_type}-${n.pump_number || i + 1}`
                 const sameFuelTanks = tanks.filter((t) => t.fuel_type === n.fuel_type)
                 return (
-                  <div key={i} className="flex items-center gap-3 border border-gray-200 rounded-md p-3">
+                  <div key={i} className="flex items-center gap-3">
                     <div className="flex-1">
                       <span className="text-sm font-medium text-gray-900">{n.fuel_type} {n.pump_number}</span>
                       <span className="text-xs text-gray-500 ml-2">({n.fuel_type})</span>
@@ -358,52 +348,45 @@ export default function SetupWizardPage() {
           </h2>
           <p className="text-xs text-gray-500 mb-4">Add POS terminals, bank deposit accounts, cash, etc. with their current balances.</p>
 
-          <div className="space-y-3 mb-4">
+          <div className="space-y-2 mb-4">
             {lodgements.map((l, i) => (
-              <div key={i} className="border border-gray-200 rounded-md p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700">Lodgement {i + 1}</span>
-                  <button onClick={() => removeLodgement(i)} className="p-1 text-gray-400 hover:text-red-600">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <select
-                    value={l.lodgement_type}
-                    onChange={(e) => updateLodgement(i, 'lodgement_type', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {LODGEMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
+              <div key={i} className="flex items-center gap-2 flex-wrap">
+                <select
+                  value={l.lodgement_type}
+                  onChange={(e) => updateLodgement(i, 'lodgement_type', e.target.value)}
+                  className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {LODGEMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+                <input
+                  type="text"
+                  placeholder="Bank name"
+                  maxLength={100}
+                  value={l.bank_name}
+                  onChange={(e) => updateLodgement(i, 'bank_name', e.target.value)}
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {l.lodgement_type === 'pos' && (
                   <input
                     type="text"
-                    placeholder="Bank name"
-                    maxLength={100}
-                    value={l.bank_name}
-                    onChange={(e) => updateLodgement(i, 'bank_name', e.target.value)}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Terminal ID"
+                    maxLength={50}
+                    value={l.terminal_id}
+                    onChange={(e) => updateLodgement(i, 'terminal_id', e.target.value)}
+                    className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {l.lodgement_type === 'pos' && (
-                    <input
-                      type="text"
-                      placeholder="Terminal ID"
-                      maxLength={50}
-                      value={l.terminal_id}
-                      onChange={(e) => updateLodgement(i, 'terminal_id', e.target.value)}
-                      className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  )}
-                  <input
-                    type="number"
-                    placeholder="Current balance"
-                    min={0}
-                    value={l.balance || ''}
-                    onChange={(e) => updateLodgement(i, 'balance', Number(e.target.value))}
-                    className={`px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${l.lodgement_type !== 'pos' ? 'col-span-2' : ''}`}
-                  />
-                </div>
+                )}
+                <input
+                  type="number"
+                  placeholder="Balance"
+                  min={0}
+                  value={l.balance || ''}
+                  onChange={(e) => updateLodgement(i, 'balance', Number(e.target.value))}
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button onClick={() => removeLodgement(i)} className="p-1 text-gray-400 hover:text-red-600">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>
