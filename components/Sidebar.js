@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Fuel, LayoutDashboard, FileSpreadsheet, CreditCard,
+  Fuel, LayoutDashboard, CreditCard,
   MessageSquare, Shield, LogOut, X
 } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/dashboard/entries', label: 'Entries', icon: FileSpreadsheet },
   { href: '/dashboard/subscribe', label: 'Subscribe', icon: CreditCard },
   { href: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare },
 ]
