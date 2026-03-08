@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets,
-  ClipboardList, Building2, Check, LogOut, Plus, Pencil, X, Trash2,
+  ClipboardList, Building2, Check, LogOut, Plus, X,
   Fuel, ChevronRight
 } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
@@ -26,9 +26,6 @@ export default function DashboardPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [newName, setNewName] = useState('')
   const [adding, setAdding] = useState(false)
-  const [editingId, setEditingId] = useState(null)
-  const [editName, setEditName] = useState('')
-  const [saving, setSaving] = useState(false)
 
   const loadInvites = async () => {
     const res = await fetch('/api/invites')
@@ -111,28 +108,6 @@ export default function DashboardPage() {
       loadStations()
     }
     setAdding(false)
-  }
-
-  const updateStation = async (id) => {
-    if (!editName.trim()) return
-    setSaving(true)
-    const res = await fetch('/api/organizations', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, name: editName }),
-    })
-    if (res.ok) { setEditingId(null); loadStations() }
-    setSaving(false)
-  }
-
-  const deleteStation = async (id, name) => {
-    if (!confirm(`Delete "${name}"? All staff, data, and subscriptions for this station will be permanently removed.`)) return
-    await fetch('/api/organizations', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
-    loadStations()
   }
 
   if (loading) {
@@ -232,49 +207,24 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-3">
             {stations.map((station) => (
-              <div key={station.id} className="border border-gray-200 p-4">
-                <div className="flex items-center gap-3">
+              <div key={station.id} className="border border-gray-200">
+                <div className="flex items-center gap-3 p-4">
                   <Fuel className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                  {editingId === station.id ? (
-                    <div className="flex-1 flex gap-2">
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        maxLength={100}
-                        className="flex-1 px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        autoFocus
-                      />
-                      <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50">
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-                      </button>
-                      <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:text-gray-600">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex-1">
-                        <span className="text-base font-semibold text-gray-900">{station.name}</span>
-                        {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
-                        {!station.onboarding_complete && (
-                          <p className="text-xs text-orange-600 font-medium mt-0.5">Setup required</p>
-                        )}
-                      </div>
-                      <button onClick={() => { setEditingId(station.id); setEditName(station.name) }} className="p-1.5 text-gray-400 hover:text-gray-600">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => deleteStation(station.id, station.name)} className="p-1.5 text-gray-400 hover:text-red-600">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <Link
-                        href={`/dashboard/stations/${station.id}`}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-                      >
-                        Open <ChevronRight className="w-4 h-4" />
-                      </Link>
-                    </>
-                  )}
+                  <div className="flex-1">
+                    <span className="text-base font-semibold text-gray-900">{station.name}</span>
+                    {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
+                    {!station.onboarding_complete && (
+                      <p className="text-xs text-orange-600 font-medium mt-0.5">Setup required</p>
+                    )}
+                  </div>
+                </div>
+                <div className="border-t border-gray-100 px-4 py-2.5 flex justify-end">
+                  <Link
+                    href={`/dashboard/stations/${station.id}`}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                  >
+                    Open <ChevronRight className="w-4 h-4" />
+                  </Link>
                 </div>
               </div>
             ))}

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import {
   Loader2, Fuel, Settings, UserPlus, Mail, X, KeyRound,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
-  ChevronRight, BarChart3, Plus
+  ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2
 } from 'lucide-react'
 
 export default function StationPage() {
@@ -22,6 +22,11 @@ export default function StationPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
   const [resetting, setResetting] = useState(null)
+
+  // Manage station accordion
+  const [showManage, setShowManage] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -92,6 +97,31 @@ export default function StationPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ invite_id: inviteId, visible_pages: updated }),
     })
+  }
+
+  const updateStation = async (e) => {
+    e.preventDefault()
+    if (!editName.trim()) return
+    setSaving(true)
+    const res = await fetch('/api/organizations', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: stationId, name: editName }),
+    })
+    if (res.ok) {
+      setStation((prev) => ({ ...prev, name: editName.trim() }))
+    }
+    setSaving(false)
+  }
+
+  const deleteStation = async () => {
+    if (!confirm(`Delete "${station.name}"? All staff, data, and subscriptions for this station will be permanently removed.`)) return
+    await fetch('/api/organizations', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: stationId }),
+    })
+    router.push('/dashboard')
   }
 
   const resetStaffPassword = async (email) => {
@@ -282,6 +312,52 @@ export default function StationPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </section>
+
+      {/* Manage Station */}
+      <section>
+        <button
+          onClick={() => { setShowManage(!showManage); if (!showManage) setEditName(station.name) }}
+          className="w-full flex items-center justify-between py-3 text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
+        >
+          Manage Station
+          <ChevronDown className={`w-4 h-4 transition-transform ${showManage ? 'rotate-180' : ''}`} />
+        </button>
+
+        {showManage && (
+          <div className="border border-gray-200 p-4 space-y-4">
+            <form onSubmit={updateStation} className="space-y-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Station Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  maxLength={100}
+                  className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={saving || !editName.trim()}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
+                Rename
+              </button>
+            </form>
+
+            <div className="border-t border-gray-200 pt-4">
+              <p className="text-xs text-gray-500 mb-2">Permanently delete this station and all its data.</p>
+              <button
+                onClick={deleteStation}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4" /> Delete Station
+              </button>
+            </div>
           </div>
         )}
       </section>
