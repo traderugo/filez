@@ -11,8 +11,15 @@ export async function GET(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { from, to, page, limit } = paginationParams(request)
+    const { from, to, page, limit, searchParams } = paginationParams(request)
     const supabase = getServiceClient()
+
+    // Single entry by ID
+    const id = searchParams.get('id')
+    if (id) {
+      const { data } = await supabase.from(TABLE).select('*, users:created_by(name)').eq('id', id).eq('org_id', user.org_id).single()
+      return NextResponse.json({ entry: data })
+    }
 
     const { data, count } = await supabase
       .from(TABLE)
