@@ -230,33 +230,6 @@ export default function StationPage() {
         </div>
       </div>
 
-      {/* Setup / Settings */}
-      {!station.onboarding_complete ? (
-        <Link
-          href={`/dashboard/setup/${stationId}`}
-          className="flex items-center gap-3 border border-orange-200 bg-orange-50 p-4 mb-6 hover:bg-orange-100 transition-colors"
-        >
-          <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-orange-800">Set up this station</p>
-            <p className="text-sm text-orange-600">Configure nozzles, tanks, and lodgements</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-orange-400" />
-        </Link>
-      ) : (
-        <Link
-          href={`/dashboard/stations/${stationId}/settings`}
-          className="flex items-center gap-3 border border-gray-200 p-4 mb-6 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-        >
-          <Settings className="w-5 h-5 text-gray-600 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Station Settings</p>
-            <p className="text-sm text-gray-500">Nozzles, tanks, lodgements, products, customers</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
-        </Link>
-      )}
-
       {/* Entries */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Entries</h2>
@@ -387,6 +360,34 @@ export default function StationPage() {
 
         {showManage && (
           <div className="border border-gray-200 p-4 space-y-4">
+            {!station.onboarding_complete ? (
+              <Link
+                href={`/dashboard/setup/${stationId}`}
+                className="flex items-center gap-3 border border-orange-200 bg-orange-50 p-3 hover:bg-orange-100 transition-colors"
+              >
+                <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-800">Set up this station</p>
+                  <p className="text-sm text-orange-600">Configure nozzles, tanks, and lodgements</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-orange-400" />
+              </Link>
+            ) : (
+              <Link
+                href={`/dashboard/stations/${stationId}/settings`}
+                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+              >
+                <Settings className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">Station Settings</p>
+                  <p className="text-sm text-gray-500">Nozzles, tanks, lodgements, products, customers</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </Link>
+            )}
+
+            <div className="border-t border-gray-200 pt-4" />
+
             <form onSubmit={updateStation} className="space-y-3">
               <div>
                 <label className="block text-sm text-gray-500 mb-1">Station Name</label>
