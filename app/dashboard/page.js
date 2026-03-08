@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Clock, CreditCard, MessageSquare, Loader2,
-  Building2, Check, LogOut, Plus,
+  Building2, Check, Plus,
   Fuel, ChevronRight
 } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
@@ -18,7 +18,6 @@ export default function DashboardPage() {
   // Invites (staff)
   const [invites, setInvites] = useState([])
   const [accepting, setAccepting] = useState(null)
-  const [leaving, setLeaving] = useState(false)
   const [visiblePages, setVisiblePages] = useState(null)
 
   // Stations (manager)
@@ -75,21 +74,6 @@ export default function DashboardPage() {
       alert(err.error || 'Failed to accept invite')
     }
     setAccepting(null)
-  }
-
-  const leaveStation = async () => {
-    if (!confirm('Leave this station? You will lose access to its reports and data.')) return
-    setLeaving(true)
-    const res = await fetch('/api/invites/leave', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-    if (res.ok) {
-      const r = await fetch('/api/dashboard/data')
-      if (r.ok) { const d = await r.json(); setProfile(d.profile) }
-      loadInvites()
-    }
-    setLeaving(false)
   }
 
   // Manager actions
@@ -231,20 +215,6 @@ export default function DashboardPage() {
           </div>
         )}
       </div>}
-
-      {/* Leave station (staff only) */}
-      {isStaff && profile?.org_id && (
-        <div className="border-t border-gray-200 pt-6 mb-8">
-          <button
-            onClick={leaveStation}
-            disabled={leaving}
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600"
-          >
-            {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-            Leave station
-          </button>
-        </div>
-      )}
 
       {/* Subscription status (manager only) */}
       {!isStaff && (

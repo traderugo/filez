@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Loader2, Fuel, Settings, UserPlus, Mail, KeyRound,
+  Loader2, Fuel, Settings, UserPlus, Mail, KeyRound, LogOut,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, Copy, Check, AlertTriangle
 } from 'lucide-react'
@@ -50,6 +50,7 @@ export default function StationPage() {
   const [showManage, setShowManage] = useState(false)
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -163,6 +164,19 @@ export default function StationPage() {
       body: JSON.stringify({ id: stationId }),
     })
     router.push('/dashboard')
+  }
+
+  const leaveStation = async () => {
+    if (!confirm('Leave this station? You will lose access to its entries and data.')) return
+    setLeaving(true)
+    const res = await fetch('/api/invites/leave', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    if (res.ok) {
+      router.push('/dashboard')
+    }
+    setLeaving(false)
   }
 
   const resetStaffPassword = async (email) => {
@@ -408,6 +422,17 @@ export default function StationPage() {
                 Rename
               </button>
             </form>
+
+            <div className="border-t border-gray-200 pt-4">
+              <button
+                onClick={leaveStation}
+                disabled={leaving}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
+              >
+                {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                Leave Station
+              </button>
+            </div>
 
             <div className="border-t border-gray-200 pt-4">
               <p className="text-sm text-gray-500 mb-2">Permanently delete this station and all its data.</p>
