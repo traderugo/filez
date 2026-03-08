@@ -165,7 +165,7 @@ export async function POST(request) {
   }
 }
 
-// DELETE — station manager removes an invite
+// DELETE — station manager removes an invite (requires password confirmation)
 export async function DELETE(request) {
   try {
     const user = await getPinUserFromRequest(request)
@@ -173,12 +173,31 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await request.json()
+    const { id, password } = await request.json()
     if (!id) {
       return NextResponse.json({ error: 'Invite id required' }, { status: 400 })
     }
+    if (!password) {
+      return NextResponse.json({ error: 'Password required' }, { status: 400 })
+    }
 
     const supabase = getAdminClient()
+
+    // Verify manager password
+    const { data: manager } = await supabase
+      .from('users')
+      .select('password_hash')
+      .eq('id', user.id)
+      .single()
+
+    if (!manager) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const valid = await bcrypt.compare(password, manager.password_hash)
+    if (!valid) {
+      return NextResponse.json({ error: 'Incorrect password' }, { status: 403 })
+    }
 
     // Only delete invites for stations this user owns
     const { data: invite } = await supabase
