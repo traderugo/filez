@@ -29,12 +29,15 @@ export default function StationPage() {
   // Staff invite state
   const [invites, setInvites] = useState([])
   const [inviteEmail, setInviteEmail] = useState('')
+  const [invitePassword, setInvitePassword] = useState('')
+  const [inviteError, setInviteError] = useState('')
+  const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviting, setInviting] = useState(false)
   const [resetting, setResetting] = useState(null)
   const [expandedStaff, setExpandedStaff] = useState(null)
 
   // Credential modal
-  const [credModal, setCredModal] = useState(null) // { email, password }
+  const [credModal, setCredModal] = useState(null) // { email, password } | { email, existing } | { email, error }
   const [copied, setCopied] = useState(null) // 'email' | 'password'
 
   // Delete staff modal
@@ -77,20 +80,28 @@ export default function StationPage() {
 
   const addInvite = async (e) => {
     e.preventDefault()
-    if (!inviteEmail.trim()) return
+    if (!inviteEmail.trim() || !invitePassword.trim()) return
     setInviting(true)
+    setInviteError('')
     const res = await fetch('/api/invites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ org_id: stationId, email: inviteEmail }),
+      body: JSON.stringify({ org_id: stationId, email: inviteEmail, password: invitePassword }),
     })
     if (res.ok) {
       const data = await res.json()
+      setShowInviteModal(false)
       setInviteEmail('')
+      setInvitePassword('')
       loadInvites()
       if (data.tempPassword) {
         setCredModal({ email: data.invite.email, password: data.tempPassword })
+      } else {
+        setCredModal({ email: data.invite.email, existing: true })
       }
+    } else {
+      const err = await res.json().catch(() => ({}))
+      setInviteError(err.error || 'Failed to invite staff')
     }
     setInviting(false)
   }
@@ -282,27 +293,12 @@ export default function StationPage() {
           <UserPlus className="w-4 h-4" /> Staff
         </h2>
 
-        <form onSubmit={addInvite} className="flex gap-2 mb-4">
-          <div className="flex-1 relative">
-            <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="email"
-              placeholder="staff@email.com"
-              maxLength={254}
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={inviting || !inviteEmail.trim()}
-            className="px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
-          >
-            {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            Invite
-          </button>
-        </form>
+        <button
+          onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInvitePassword(''); setInviteError('') }}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 mb-4"
+        >
+          <Plus className="w-4 h-4" /> Invite Staff
+        </button>
 
         {invites.length > 0 && (
           <div className="space-y-2">
@@ -425,15 +421,69 @@ export default function StationPage() {
         )}
       </section>
 
+      {/* Invite Staff Modal */}
+      <Modal
+        open={showInviteModal}
+        onClose={() => { setShowInviteModal(false); setInviteError('') }}
+        title="Invite Staff"
+      >
+        <form onSubmit={addInvite} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Email</label>
+            <input
+              type="email"
+              placeholder="staff@email.com"
+              maxLength={254}
+              value={inviteEmail}
+              onChange={(e) => { setInviteEmail(e.target.value); setInviteError('') }}
+              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Your Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={invitePassword}
+              onChange={(e) => { setInvitePassword(e.target.value); setInviteError('') }}
+              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          {inviteError && <p className="text-sm text-red-600">{inviteError}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { setShowInviteModal(false); setInviteError('') }}
+              className="flex-1 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={inviting || !inviteEmail.trim() || !invitePassword.trim()}
+              className="flex-1 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              Invite
+            </button>
+          </div>
+        </form>
+      </Modal>
+
       {/* Credential Modal */}
-      <Modal open={!!credModal} onClose={() => setCredModal(null)} title={credModal?.error ? 'Error' : 'Staff Credentials'}>
+      <Modal
+        open={!!credModal}
+        onClose={() => setCredModal(null)}
+        title={credModal?.error ? 'Error' : credModal?.existing ? 'Invite Sent' : 'Staff Credentials'}
+      >
         {credModal && credModal.error ? (
           <div className="space-y-4">
             <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100">
               <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-red-800">{credModal.error}</p>
-                <p className="text-sm text-red-600 mt-1">Could not reset password for {credModal.email}.</p>
+                <p className="text-sm text-red-600 mt-1">Could not complete action for {credModal.email}.</p>
               </div>
             </div>
             <button
@@ -441,6 +491,18 @@ export default function StationPage() {
               className="w-full py-2 bg-gray-600 text-white text-sm font-medium hover:bg-gray-700"
             >
               Close
+            </button>
+          </div>
+        ) : credModal && credModal.existing ? (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              A pending invite has been sent to <strong>{credModal.email}</strong>. They will see it on their dashboard and can accept or decline.
+            </p>
+            <button
+              onClick={() => setCredModal(null)}
+              className="w-full py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+            >
+              Done
             </button>
           </div>
         ) : credModal ? (

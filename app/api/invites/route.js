@@ -65,10 +65,13 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { org_id, email } = await request.json()
+    const { org_id, email, password } = await request.json()
 
     if (!org_id || !email) {
       return NextResponse.json({ error: 'Station and email are required' }, { status: 400 })
+    }
+    if (!password) {
+      return NextResponse.json({ error: 'Password required' }, { status: 400 })
     }
 
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -76,6 +79,22 @@ export async function POST(request) {
     }
 
     const supabase = getAdminClient()
+
+    // Verify manager password
+    const { data: manager } = await supabase
+      .from('users')
+      .select('password_hash')
+      .eq('id', user.id)
+      .single()
+
+    if (!manager) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const valid = await bcrypt.compare(password, manager.password_hash)
+    if (!valid) {
+      return NextResponse.json({ error: 'Incorrect password' }, { status: 403 })
+    }
 
     // Verify user owns this station
     const { data: station } = await supabase
