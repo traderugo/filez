@@ -255,11 +255,11 @@ export default function DailySalesPage() {
           {nozzleReadings.length > 0 && (
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">Nozzle Readings</label>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {nozzleReadings.map((r, idx) => (
-                  <div key={r.pump_id} className="border border-gray-100 p-3">
-                    <p className="text-sm font-medium text-gray-700 mb-2">{r.label}</p>
-                    <div className="grid grid-cols-3 gap-2">
+                  <div key={r.pump_id}>
+                    <p className="text-sm font-medium text-gray-700 mb-1">{r.label}</p>
+                    <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Closing Meter</label>
                         <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
