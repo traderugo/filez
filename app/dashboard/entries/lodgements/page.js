@@ -27,7 +27,7 @@ export default function LodgementsPage() {
   const [salesDate, setSalesDate] = useState('')
   const [notes, setNotes] = useState('')
 
-  const limit = 20
+  const limit = 14
   const totalPages = Math.ceil(total / limit)
 
   const loadBanks = async () => {

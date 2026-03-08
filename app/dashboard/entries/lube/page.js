@@ -92,7 +92,7 @@ function LubeSalesTab({ products }) {
   const [price, setPrice] = useState('')
   const [notes, setNotes] = useState('')
 
-  const limit = 20
+  const limit = 14
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {
@@ -258,7 +258,7 @@ function LubeStockTab({ products }) {
   const [stock, setStock] = useState('')
   const [notes, setNotes] = useState('')
 
-  const limit = 20
+  const limit = 14
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {

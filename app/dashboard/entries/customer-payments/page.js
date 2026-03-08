@@ -26,7 +26,7 @@ export default function CustomerPaymentsPage() {
   const [salesAmount, setSalesAmount] = useState('')
   const [notes, setNotes] = useState('')
 
-  const limit = 20
+  const limit = 14
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {
