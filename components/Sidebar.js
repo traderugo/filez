@@ -31,10 +31,10 @@ export default function Sidebar({ user, open, onClose, onSignOut }) {
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 z-50 h-full w-60 bg-white border-r border-gray-200
-        flex flex-col
+        fixed top-0 left-0 z-50 h-screen w-60 bg-white border-r border-gray-200
+        flex flex-col flex-shrink-0
         transition-transform duration-200 ease-in-out
-        sm:translate-x-0 sm:static sm:z-auto
+        sm:translate-x-0 sm:sticky sm:top-0 sm:z-auto
         ${open ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Logo */}
@@ -49,7 +49,7 @@ export default function Sidebar({ user, open, onClose, onSignOut }) {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-1">
           {navItems.map(({ href, label, icon: Icon, exact }) => (
             <Link
               key={href}
