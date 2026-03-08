@@ -30,7 +30,7 @@ export default function ProductReceiptPage() {
     actual_volume: '', depot_name: '', tank_id: '', notes: '',
   })
 
-  const limit = 14
+  const limit = 10
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {

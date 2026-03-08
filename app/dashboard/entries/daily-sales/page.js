@@ -25,7 +25,7 @@ export default function DailySalesPage() {
   const [price, setPrice] = useState('')
   const [notes, setNotes] = useState('')
 
-  const limit = 14
+  const limit = 10
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {
