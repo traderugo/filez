@@ -31,9 +31,19 @@ export default function AppShell({ children }) {
   }
 
   const isAuth = pathname.startsWith('/auth')
+  const isHome = pathname === '/'
+  const isAdmin = pathname.startsWith('/admin')
 
-  // Auth pages: no shell, just content
-  if (isAuth) return <>{children}</>
+  // Auth pages + homepage: no shell, just content
+  if (isAuth || isHome) return <>{children}</>
+
+  // Admin pages: header only, no main sidebar (admin layout has its own)
+  if (isAdmin) return (
+    <div className="flex flex-col min-h-screen">
+      <Header onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+      <main className="flex-1">{children}</main>
+    </div>
+  )
 
   return (
     <div className="flex min-h-screen">

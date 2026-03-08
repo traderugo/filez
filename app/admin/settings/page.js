@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Plus, Trash2, Copy, Check, Pencil, X, Fuel, Link as LinkIcon, Mail, UserPlus } from 'lucide-react'
+import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus } from 'lucide-react'
 
 export default function AdminSettingsPage() {
   const [stations, setStations] = useState([])
@@ -16,9 +16,6 @@ export default function AdminSettingsPage() {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
-
-  // Copy link
-  const [copiedId, setCopiedId] = useState(null)
 
   // Invites
   const [invites, setInvites] = useState({}) // { stationId: [invite, ...] }
@@ -91,12 +88,6 @@ export default function AdminSettingsPage() {
       body: JSON.stringify({ id }),
     })
     loadData()
-  }
-
-  const copyLink = (slug, id) => {
-    navigator.clipboard.writeText(`${window.location.origin}/join/${slug}`)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
   }
 
   const addInvite = async (stationId) => {
@@ -226,21 +217,6 @@ export default function AdminSettingsPage() {
                 )}
                 <button onClick={() => deleteStation(station.id, station.name)} className="p-1.5 text-gray-400 hover:text-red-600">
                   <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Invite link */}
-              <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 mb-4">
-                <LinkIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                <span className="flex-1 text-xs text-gray-600 font-mono truncate">
-                  {typeof window !== 'undefined' ? `${window.location.origin}/join/${station.slug}` : `/join/${station.slug}`}
-                </span>
-                <button
-                  onClick={() => copyLink(station.slug, station.id)}
-                  className="flex items-center gap-1 text-xs text-gray-600 hover:text-gray-900"
-                >
-                  {copiedId === station.id ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
-                  {copiedId === station.id ? 'Copied' : 'Copy'}
                 </button>
               </div>
 

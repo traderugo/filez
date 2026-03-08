@@ -16,7 +16,7 @@ export default function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-visible border-b sm:border-b-0 sm:border-r border-gray-200 sm:w-48 sm:min-h-[calc(100vh-3.5rem)] px-2 py-2 sm:py-4 bg-white">
+    <nav className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-visible border-b sm:border-b-0 sm:border-r border-gray-200 sm:w-48 sm:min-h-0 px-2 py-2 sm:py-4 bg-white">
       {links.map(({ href, label, icon: Icon }) => {
         const active = pathname === href
         return (
