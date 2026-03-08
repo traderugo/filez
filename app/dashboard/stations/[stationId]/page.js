@@ -156,23 +156,39 @@ export default function StationPage() {
 
   const resetStaffPassword = async (email) => {
     setResetting(email)
-    const res = await fetch('/api/auth/reset-staff-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ staff_email: email }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setCredModal({ email, password: data.tempPassword })
-    } else {
-      const err = await res.json()
-      alert(err.error || 'Failed to reset password')
+    try {
+      const res = await fetch('/api/auth/reset-staff-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_email: email }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setCredModal({ email, password: data.tempPassword })
+      } else {
+        const err = await res.json()
+        setCredModal({ email, error: err.error || 'Failed to reset password' })
+      }
+    } catch {
+      setCredModal({ email, error: 'Network error. Please try again.' })
     }
     setResetting(null)
   }
 
   const copyToClipboard = async (text, field) => {
-    await navigator.clipboard.writeText(text)
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      // Fallback for HTTP or unsupported contexts
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
     setCopied(field)
     setTimeout(() => setCopied(null), 2000)
   }
@@ -410,8 +426,24 @@ export default function StationPage() {
       </section>
 
       {/* Credential Modal */}
-      <Modal open={!!credModal} onClose={() => setCredModal(null)} title="Staff Credentials">
-        {credModal && (
+      <Modal open={!!credModal} onClose={() => setCredModal(null)} title={credModal?.error ? 'Error' : 'Staff Credentials'}>
+        {credModal && credModal.error ? (
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100">
+              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-red-800">{credModal.error}</p>
+                <p className="text-sm text-red-600 mt-1">Could not reset password for {credModal.email}.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setCredModal(null)}
+              className="w-full py-2 bg-gray-600 text-white text-sm font-medium hover:bg-gray-700"
+            >
+              Close
+            </button>
+          </div>
+        ) : credModal ? (
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
               Share these credentials with the staff member. They will be asked to change their password on first login.
@@ -456,7 +488,7 @@ export default function StationPage() {
               Done
             </button>
           </div>
-        )}
+        ) : null}
       </Modal>
 
       {/* Delete Staff Modal */}
