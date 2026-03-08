@@ -14,6 +14,20 @@ export async function GET(request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
+    // Self-heal: if owner has no org_id, find their station and set it
+    if (!user.org_id) {
+      const { data: ownedOrg } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('owner_id', user.id)
+        .limit(1)
+        .single()
+      if (ownedOrg) {
+        await supabase.from('users').update({ org_id: ownedOrg.id }).eq('id', user.id)
+        user.org_id = ownedOrg.id
+      }
+    }
+
     // Fetch latest subscription and global services in parallel
     const [subRes, svcRes] = await Promise.all([
       supabase

@@ -210,11 +210,11 @@ export async function POST(request) {
       }
     }
 
-    // 8. Mark onboarding as complete
-    await supabase
-      .from('organizations')
-      .update({ onboarding_complete: true })
-      .eq('id', org_id)
+    // 8. Mark onboarding as complete + ensure owner's org_id is set
+    await Promise.all([
+      supabase.from('organizations').update({ onboarding_complete: true }).eq('id', org_id),
+      supabase.from('users').update({ org_id }).eq('id', user.id),
+    ])
 
     return NextResponse.json({ ok: true })
   } catch {
