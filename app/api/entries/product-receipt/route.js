@@ -16,7 +16,7 @@ export async function GET(request) {
 
     const { data, count } = await supabase
       .from(TABLE)
-      .select('*, users:created_by(name)', { count: 'exact' })
+      .select('*, users:created_by(name), tank:tank_id(id, fuel_type, tank_number)', { count: 'exact' })
       .eq('org_id', user.org_id)
       .order('entry_date', { ascending: false })
       .range(from, to)
@@ -61,6 +61,7 @@ export async function POST(request) {
         third_compartment: Number(body.third_compartment) || 0,
         actual_volume: Number(body.actual_volume) || 0,
         depot_name: body.depot_name?.trim() || null,
+        tank_id: body.tank_id || null,
         notes: body.notes?.trim() || null,
         created_by: user.id,
       })
@@ -100,6 +101,7 @@ export async function PATCH(request) {
 
     fields.forEach((f) => { if (body[f] !== undefined) updates[f] = body[f]?.trim?.() || body[f] || null })
     numericFields.forEach((f) => { if (body[f] !== undefined) updates[f] = Number(body[f]) || 0 })
+    if (body.tank_id !== undefined) updates.tank_id = body.tank_id || null
 
     const supabase = getServiceClient()
     const { data, error: dbError } = await supabase

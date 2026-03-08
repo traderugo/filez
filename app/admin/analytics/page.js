@@ -69,7 +69,7 @@ export default function AdminAnalyticsPage() {
           { label: 'Pending', value: stats.pendingSubs, icon: TrendingUp, color: 'text-yellow-600' },
           { label: 'Expired', value: stats.expiredSubs, icon: CreditCard, color: 'text-red-600' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="border border-gray-200 rounded-md p-4">
+          <div key={label} className="border border-gray-200 p-4">
             <div className="flex items-center gap-2 mb-1">
               <Icon className={`w-4 h-4 ${color}`} />
               <span className="text-xs text-gray-500">{label}</span>

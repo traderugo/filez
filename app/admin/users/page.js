@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
             Reset PIN
           </button>
           {resetPin && (
-            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-1.5">
               <span className="font-mono font-bold text-green-800 tracking-widest">{resetPin}</span>
               <button onClick={copyResetPin} className="text-green-600 hover:text-green-800">
                 <Copy className="w-4 h-4" />
@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
           placeholder="Search staff..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 

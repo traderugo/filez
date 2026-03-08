@@ -149,7 +149,7 @@ export default function PaymentPage() {
         </p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700"
+          className="bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700"
         >
           Back to dashboard
         </button>
@@ -169,7 +169,7 @@ export default function PaymentPage() {
         </p>
         <button
           onClick={() => router.push('/dashboard/subscribe')}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700"
+          className="bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700"
         >
           Subscribe again
         </button>
@@ -193,7 +193,7 @@ export default function PaymentPage() {
 
       {/* Countdown */}
       {countdown !== null && (
-        <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 rounded-md px-4 py-3 mb-6">
+        <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 px-4 py-3 mb-6">
           <Clock className="w-4 h-4 text-yellow-600 flex-shrink-0" />
           <div className="text-sm">
             <span className="text-yellow-800 font-medium">Payment deadline: </span>
@@ -204,7 +204,7 @@ export default function PaymentPage() {
 
       {/* Reference code */}
       {sub?.reference_code && (
-        <div className="bg-orange-50 border border-orange-200 rounded-md px-4 py-3 mb-6">
+        <div className="bg-orange-50 border border-orange-200 px-4 py-3 mb-6">
           <p className="text-xs text-orange-600 font-medium mb-1">Use this as your transfer narration</p>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold font-mono text-orange-800">{sub.reference_code}</span>
@@ -216,7 +216,7 @@ export default function PaymentPage() {
       )}
 
       {/* Bank details */}
-      <div className="border border-gray-200 rounded-md p-4 mb-6">
+      <div className="border border-gray-200 p-4 mb-6">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
           <Building2 className="w-4 h-4" /> Bank Details
         </h2>
@@ -245,7 +245,7 @@ export default function PaymentPage() {
       </div>
 
       {/* Upload proof form */}
-      <div className="border border-gray-200 rounded-md p-4 mb-6">
+      <div className="border border-gray-200 p-4 mb-6">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
           <Upload className="w-4 h-4" /> Upload Proof
         </h2>
@@ -259,13 +259,13 @@ export default function PaymentPage() {
               onChange={(e) => setReference(e.target.value)}
               placeholder="e.g. TRF-123456"
               maxLength={100}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Proof of payment</label>
-            <label className="flex items-center justify-center gap-2 w-full py-8 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:border-blue-400 transition-colors">
+            <label className="flex items-center justify-center gap-2 w-full py-8 border-2 border-dashed border-gray-300 cursor-pointer hover:border-blue-400 transition-colors">
               <Upload className="w-5 h-5 text-gray-400" />
               <span className="text-sm text-gray-500">
                 {file ? file.name : 'Click to upload (image or PDF)'}
@@ -284,7 +284,7 @@ export default function PaymentPage() {
           <button
             type="submit"
             disabled={uploading || !file}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-md font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {uploading && <Loader2 className="w-4 h-4 animate-spin" />}
             Submit proof

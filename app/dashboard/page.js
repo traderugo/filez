@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets,
   ClipboardList, Building2, Check, LogOut, Plus, Pencil, X, Trash2,
-  Mail, UserPlus, Fuel, Settings, ChevronRight, KeyRound
+  Fuel, ChevronRight
 } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format, differenceInDays } from 'date-fns'
@@ -29,11 +29,6 @@ export default function DashboardPage() {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
-  const [stationInvites, setStationInvites] = useState({})
-  const [inviteEmail, setInviteEmail] = useState({})
-  const [inviting, setInviting] = useState(null)
-
-  const [resetting, setResetting] = useState(null)
 
   const loadInvites = async () => {
     const res = await fetch('/api/invites')
@@ -48,18 +43,7 @@ export default function DashboardPage() {
     const res = await fetch('/api/organizations')
     if (res.ok) {
       const data = await res.json()
-      const list = data.stations || []
-      setStations(list)
-      // Load invites per station
-      const allInvites = {}
-      await Promise.all(list.map(async (s) => {
-        const r = await fetch(`/api/invites/list?org_id=${s.id}`)
-        if (r.ok) {
-          const d = await r.json()
-          allInvites[s.id] = d.invites || []
-        }
-      }))
-      setStationInvites(allInvites)
+      setStations(data.stations || [])
     }
   }
 
@@ -151,81 +135,6 @@ export default function DashboardPage() {
     loadStations()
   }
 
-  const addInvite = async (stationId) => {
-    const email = inviteEmail[stationId]?.trim()
-    if (!email) return
-    setInviting(stationId)
-    const res = await fetch('/api/invites', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ org_id: stationId, email }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      setInviteEmail((prev) => ({ ...prev, [stationId]: '' }))
-      const r = await fetch(`/api/invites/list?org_id=${stationId}`)
-      if (r.ok) {
-        const d = await r.json()
-        setStationInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
-      }
-      // Show temp password for newly created staff
-      if (data.tempPassword) {
-        alert(`Account created for ${data.invite.email}\n\nTemporary password: ${data.tempPassword}\n\nShare this with them. They will be asked to change it on first login.`)
-      }
-    }
-    setInviting(null)
-  }
-
-  const removeInvite = async (inviteId, stationId) => {
-    await fetch('/api/invites', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: inviteId }),
-    })
-    const r = await fetch(`/api/invites/list?org_id=${stationId}`)
-    if (r.ok) {
-      const d = await r.json()
-      setStationInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
-    }
-  }
-
-  const togglePagePermission = async (inviteId, stationId, pageKey, currentPages) => {
-    const updated = currentPages.includes(pageKey)
-      ? currentPages.filter((p) => p !== pageKey)
-      : [...currentPages, pageKey]
-    // Optimistic update
-    setStationInvites((prev) => ({
-      ...prev,
-      [stationId]: (prev[stationId] || []).map((inv) =>
-        inv.id === inviteId ? { ...inv, visible_pages: updated } : inv
-      ),
-    }))
-    await fetch('/api/invites/permissions', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ invite_id: inviteId, visible_pages: updated }),
-    })
-  }
-
-  const resetStaffPassword = async (email) => {
-    if (!confirm(`Reset password for ${email}? A new temporary password will be generated.`)) return
-    setResetting(email)
-    const res = await fetch('/api/auth/reset-staff-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ staff_email: email }),
-    })
-    if (res.ok) {
-      const data = await res.json()
-      alert(`Password reset for ${email}\n\nNew temporary password: ${data.tempPassword}\n\nShare this with them. They will be asked to change it on next login.`)
-    } else {
-      const err = await res.json()
-      alert(err.error || 'Failed to reset password')
-    }
-    setResetting(null)
-  }
-
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -250,7 +159,7 @@ export default function DashboardPage() {
       {invites.length > 0 && (
         <div className="mb-8 space-y-3">
           {invites.map((inv) => (
-            <div key={inv.id} className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+            <div key={inv.id} className="border border-blue-200 bg-blue-50 p-4">
               <div className="flex items-start gap-3">
                 <Building2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
@@ -263,7 +172,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => acceptInvite(inv.id)}
                     disabled={accepting === inv.id}
-                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
                   >
                     {accepting === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     Accept
@@ -297,7 +206,7 @@ export default function DashboardPage() {
         </div>
 
         {showAdd && (
-          <form onSubmit={addStation} className="border border-gray-200 rounded-md p-4 mb-4 space-y-3">
+          <form onSubmit={addStation} className="border border-gray-200 p-4 mb-4 space-y-3">
             <input
               type="text"
               required
@@ -305,19 +214,19 @@ export default function DashboardPage() {
               placeholder="Station name (e.g. MRS Lekki Phase 1)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={adding}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
               >
                 {adding && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create station
               </button>
-              <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
                 Cancel
               </button>
             </div>
@@ -330,11 +239,10 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-500">No stations yet. Create one to get started.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {stations.map((station) => (
-              <div key={station.id} className="border border-gray-200 rounded-lg p-5">
-                {/* Station header */}
-                <div className="flex items-center gap-3 mb-4">
+              <div key={station.id} className="border border-gray-200 p-4">
+                <div className="flex items-center gap-3">
                   <Fuel className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   {editingId === station.id ? (
                     <div className="flex-1 flex gap-2">
@@ -343,10 +251,10 @@ export default function DashboardPage() {
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
                         maxLength={100}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         autoFocus
                       />
-                      <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
+                      <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
                       </button>
                       <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:text-gray-600">
@@ -354,135 +262,27 @@ export default function DashboardPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex-1 flex items-center gap-2">
-                      <span className="text-base font-semibold text-gray-900">{station.name}</span>
-                      <button onClick={() => { setEditingId(station.id); setEditName(station.name) }} className="p-1 text-gray-400 hover:text-gray-600">
+                    <>
+                      <div className="flex-1">
+                        <span className="text-base font-semibold text-gray-900">{station.name}</span>
+                        {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
+                        {!station.onboarding_complete && (
+                          <p className="text-xs text-orange-600 font-medium mt-0.5">Setup required</p>
+                        )}
+                      </div>
+                      <button onClick={() => { setEditingId(station.id); setEditName(station.name) }} className="p-1.5 text-gray-400 hover:text-gray-600">
                         <Pencil className="w-4 h-4" />
                       </button>
-                    </div>
-                  )}
-                  <button onClick={() => deleteStation(station.id, station.name)} className="p-1.5 text-gray-400 hover:text-red-600">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Setup notice or settings link */}
-                {!station.onboarding_complete ? (
-                  <Link
-                    href={`/dashboard/setup/${station.id}`}
-                    className="flex items-center gap-3 border border-orange-200 bg-orange-50 rounded-md p-3 mb-4 hover:bg-orange-100 transition-colors"
-                  >
-                    <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-orange-800">Set up this station</p>
-                      <p className="text-sm text-orange-600">Configure nozzles, tanks, and lodgements</p>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-orange-400" />
-                  </Link>
-                ) : (
-                  <div className="flex items-center gap-4 mb-4">
-                    <Link
-                      href={`/dashboard/stations/${station.id}`}
-                      className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600"
-                    >
-                      <Settings className="w-4 h-4" /> Station settings
-                    </Link>
-                    <Link
-                      href={`/dashboard/subscribe?station=${station.id}`}
-                      className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-blue-600"
-                    >
-                      <CreditCard className="w-4 h-4" /> Subscribe
-                    </Link>
-                  </div>
-                )}
-
-                {/* Invite staff */}
-                <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
-                    <UserPlus className="w-4 h-4" /> Invite Staff
-                  </p>
-                  <form
-                    onSubmit={(e) => { e.preventDefault(); addInvite(station.id) }}
-                    className="flex gap-2 mb-3"
-                  >
-                    <div className="flex-1 relative">
-                      <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-                      <input
-                        type="email"
-                        placeholder="staff@email.com"
-                        maxLength={254}
-                        value={inviteEmail[station.id] || ''}
-                        onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
-                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={inviting === station.id || !inviteEmail[station.id]?.trim()}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
-                    >
-                      {inviting === station.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                      Invite
-                    </button>
-                  </form>
-
-                  {(stationInvites[station.id] || []).length > 0 && (
-                    <div className="space-y-2">
-                      {stationInvites[station.id].map((inv) => (
-                        <div key={inv.id} className="bg-gray-50 rounded-md px-3 py-2.5">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <Mail className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-700">{inv.email}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                                inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                                inv.status === 'declined' ? 'bg-red-100 text-red-700' :
-                                'bg-yellow-100 text-yellow-700'
-                              }`}>
-                                {inv.status}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => resetStaffPassword(inv.email)}
-                                disabled={resetting === inv.email}
-                                className="p-1.5 text-gray-400 hover:text-blue-600"
-                                title="Reset password"
-                              >
-                                {resetting === inv.email ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-                              </button>
-                              <button
-                                onClick={() => removeInvite(inv.id, station.id)}
-                                className="p-1.5 text-gray-400 hover:text-red-600"
-                                title="Remove"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                          {/* Page permissions */}
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <span className="text-xs text-gray-500">Pages:</span>
-                            {[
-                              { key: 'daily-sales', label: 'Daily Sales' },
-                              { key: 'product-receipt', label: 'Product Receipt' },
-                              { key: 'lodgements', label: 'Lodgements' },
-                              { key: 'lube', label: 'Lube' },
-                            ].map((page) => (
-                              <label key={page.key} className="flex items-center gap-1.5 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={(inv.visible_pages || []).includes(page.key)}
-                                  onChange={() => togglePagePermission(inv.id, station.id, page.key, inv.visible_pages || [])}
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
-                                />
-                                <span className="text-xs text-gray-600">{page.label}</span>
-                              </label>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                      <button onClick={() => deleteStation(station.id, station.name)} className="p-1.5 text-gray-400 hover:text-red-600">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <Link
+                        href={`/dashboard/stations/${station.id}`}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                      >
+                        Open <ChevronRight className="w-4 h-4" />
+                      </Link>
+                    </>
                   )}
                 </div>
               </div>
@@ -502,7 +302,7 @@ export default function DashboardPage() {
             {visiblePages.includes('daily-sales') && (
               <Link
                 href="/dashboard/entries/daily-sales"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
                 <FileSpreadsheet className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
@@ -514,7 +314,7 @@ export default function DashboardPage() {
             {visiblePages.includes('product-receipt') && (
               <Link
                 href="/dashboard/entries/product-receipt"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
                 <ClipboardList className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
@@ -526,7 +326,7 @@ export default function DashboardPage() {
             {visiblePages.includes('lodgements') && (
               <Link
                 href="/dashboard/entries/lodgements"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
                 <CreditCard className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
@@ -538,7 +338,7 @@ export default function DashboardPage() {
             {visiblePages.includes('lube') && (
               <Link
                 href="/dashboard/entries/lube"
-                className="flex items-center gap-3 border border-gray-200 rounded-md p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
               >
                 <Droplets className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
@@ -587,7 +387,7 @@ export default function DashboardPage() {
               <p className="text-sm text-yellow-700 mb-3">You have a subscription awaiting payment.</p>
               <Link
                 href={`/dashboard/subscribe/pay/${subscription.id}`}
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
               >
                 <CreditCard className="w-4 h-4" /> Complete payment
               </Link>
@@ -603,7 +403,7 @@ export default function DashboardPage() {
               </p>
               <Link
                 href="/dashboard/subscribe"
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
               >
                 <CreditCard className="w-4 h-4" /> Subscribe now
               </Link>

@@ -16,7 +16,7 @@ export async function GET(request) {
 
     const { data, count } = await supabase
       .from(TABLE)
-      .select('*, users:created_by(name)', { count: 'exact' })
+      .select('*, users:created_by(name), customer:customer_id(id, name, phone)', { count: 'exact' })
       .eq('org_id', user.org_id)
       .order('entry_date', { ascending: false })
       .range(from, to)
@@ -34,10 +34,10 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { entry_date, customer_name, amount_paid, sales_amount, notes } = await request.json()
+    const { entry_date, customer_id, amount_paid, sales_amount, notes } = await request.json()
 
     if (!entry_date) return NextResponse.json({ error: 'Date is required' }, { status: 400 })
-    if (!customer_name?.trim()) return NextResponse.json({ error: 'Customer name is required' }, { status: 400 })
+    if (!customer_id) return NextResponse.json({ error: 'Customer is required' }, { status: 400 })
 
     const supabase = getServiceClient()
     const { data, error: dbError } = await supabase
@@ -45,7 +45,7 @@ export async function POST(request) {
       .insert({
         org_id: user.org_id,
         entry_date,
-        customer_name: customer_name.trim(),
+        customer_id,
         amount_paid: Number(amount_paid) || 0,
         sales_amount: Number(sales_amount) || 0,
         notes: notes?.trim() || null,
@@ -71,15 +71,12 @@ export async function PATCH(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, customer_name, amount_paid, sales_amount, notes } = await request.json()
+    const { id, entry_date, customer_id, amount_paid, sales_amount, notes } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
 
     const updates = { updated_at: new Date().toISOString() }
     if (entry_date) updates.entry_date = entry_date
-    if (customer_name !== undefined) {
-      if (!customer_name?.trim()) return NextResponse.json({ error: 'Customer name is required' }, { status: 400 })
-      updates.customer_name = customer_name.trim()
-    }
+    if (customer_id !== undefined) updates.customer_id = customer_id
     if (amount_paid !== undefined) updates.amount_paid = Number(amount_paid) || 0
     if (sales_amount !== undefined) updates.sales_amount = Number(sales_amount) || 0
     if (notes !== undefined) updates.notes = notes?.trim() || null

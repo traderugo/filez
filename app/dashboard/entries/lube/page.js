@@ -9,14 +9,22 @@ const SALES_API = '/api/entries/lube-sales'
 const STOCK_API = '/api/entries/lube-stock'
 
 export default function LubePage() {
-  const [tab, setTab] = useState('sales') // 'sales' | 'stock'
+  const [tab, setTab] = useState('sales')
   const [locked, setLocked] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
+  const [products, setProducts] = useState([])
 
   useEffect(() => {
     const check = async () => {
-      const res = await fetch(`${SALES_API}?page=1&limit=1`)
-      if (res.status === 403) setLocked(true)
+      const [accessRes, prodRes] = await Promise.all([
+        fetch(`${SALES_API}?page=1&limit=1`),
+        fetch('/api/entries/lube-products'),
+      ])
+      if (accessRes.status === 403) setLocked(true)
+      if (prodRes.ok) {
+        const prodData = await prodRes.json()
+        setProducts(prodData.products || [])
+      }
       setCheckingAccess(false)
     }
     check()
@@ -31,7 +39,7 @@ export default function LubePage() {
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
         <p className="text-sm text-gray-500 mb-4">Subscribe to the Lube Management service to access this feature.</p>
-        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
+        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
       </div>
     </div>
   )
@@ -45,7 +53,6 @@ export default function LubePage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-6">
         <button
           onClick={() => setTab('sales')}
@@ -61,13 +68,13 @@ export default function LubePage() {
         </button>
       </div>
 
-      {tab === 'sales' ? <LubeSalesTab /> : <LubeStockTab />}
+      {tab === 'sales' ? <LubeSalesTab products={products} /> : <LubeStockTab products={products} />}
     </div>
   )
 }
 
-/* ── Lube Sales Tab ── */
-function LubeSalesTab() {
+/* -- Lube Sales Tab -- */
+function LubeSalesTab({ products }) {
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -79,7 +86,7 @@ function LubeSalesTab() {
   const [error, setError] = useState('')
 
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
-  const [product, setProduct] = useState('')
+  const [productId, setProductId] = useState('')
   const [unitSold, setUnitSold] = useState('')
   const [unitReceived, setUnitReceived] = useState('')
   const [price, setPrice] = useState('')
@@ -104,13 +111,13 @@ function LubeSalesTab() {
   const resetForm = () => {
     setShowForm(false); setEditingId(null); setError('')
     setFormDate(new Date().toISOString().split('T')[0])
-    setProduct(''); setUnitSold(''); setUnitReceived(''); setPrice(''); setNotes('')
+    setProductId(''); setUnitSold(''); setUnitReceived(''); setPrice(''); setNotes('')
   }
 
   const openEdit = (entry) => {
     setEditingId(entry.id)
     setFormDate(entry.entry_date || '')
-    setProduct(entry.product || '')
+    setProductId(entry.product_id || '')
     setUnitSold(String(entry.unit_sold ?? ''))
     setUnitReceived(String(entry.unit_received ?? ''))
     setPrice(String(entry.price ?? ''))
@@ -121,10 +128,10 @@ function LubeSalesTab() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formDate) { setError('Date is required'); return }
-    if (!product.trim()) { setError('Product is required'); return }
+    if (!productId) { setError('Product is required'); return }
     setSaving(true); setError('')
 
-    const body = { entry_date: formDate, product, unit_sold: Number(unitSold) || 0, unit_received: Number(unitReceived) || 0, price: Number(price) || 0, notes }
+    const body = { entry_date: formDate, product_id: productId, unit_sold: Number(unitSold) || 0, unit_received: Number(unitReceived) || 0, price: Number(price) || 0, notes }
     if (editingId) body.id = editingId
 
     const res = await fetch(SALES_API, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -144,51 +151,56 @@ function LubeSalesTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700">
+        <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
           <Plus className="w-4 h-4" /> New Sale
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 rounded-md p-4 mb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="border border-gray-200 p-4 mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">{editingId ? 'Edit Sale' : 'New Sale'}</h2>
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Entry Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Product</label>
-              <input type="text" value={product} onChange={(e) => setProduct(e.target.value)} maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Select product</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>{p.product_name}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Unit Sold</label>
-              <input type="number" value={unitSold} onChange={(e) => setUnitSold(e.target.value)} step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="number" value={unitSold} onChange={(e) => setUnitSold(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Unit Received</label>
-              <input type="number" value={unitReceived} onChange={(e) => setUnitReceived(e.target.value)} step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="number" value={unitReceived} onChange={(e) => setUnitReceived(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Price</label>
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />} {editingId ? 'Update' : 'Create'}
             </button>
-            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       )}
@@ -203,10 +215,10 @@ function LubeSalesTab() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
                     {format(new Date(entry.entry_date), 'MMM d, yyyy')}
-                    <span className="ml-2 text-xs text-gray-600">{entry.product}</span>
+                    <span className="ml-2 text-xs text-gray-600">{entry.product?.product_name || 'Unknown'}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    Sold: {entry.unit_sold} · Received: {entry.unit_received} · ₦{Number(entry.price).toLocaleString()}
+                    Sold: {entry.unit_sold} · Received: {entry.unit_received} · &#8358;{Number(entry.price).toLocaleString()}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>
@@ -228,8 +240,8 @@ function LubeSalesTab() {
   )
 }
 
-/* ── Lube Stock Tab ── */
-function LubeStockTab() {
+/* -- Lube Stock Tab -- */
+function LubeStockTab({ products }) {
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -241,7 +253,7 @@ function LubeStockTab() {
   const [error, setError] = useState('')
 
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
-  const [product, setProduct] = useState('')
+  const [productId, setProductId] = useState('')
   const [stock, setStock] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -264,13 +276,13 @@ function LubeStockTab() {
   const resetForm = () => {
     setShowForm(false); setEditingId(null); setError('')
     setFormDate(new Date().toISOString().split('T')[0])
-    setProduct(''); setStock(''); setNotes('')
+    setProductId(''); setStock(''); setNotes('')
   }
 
   const openEdit = (entry) => {
     setEditingId(entry.id)
     setFormDate(entry.entry_date || '')
-    setProduct(entry.product || '')
+    setProductId(entry.product_id || '')
     setStock(String(entry.stock ?? ''))
     setNotes(entry.notes || '')
     setShowForm(true); setError('')
@@ -279,10 +291,10 @@ function LubeStockTab() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formDate) { setError('Date is required'); return }
-    if (!product.trim()) { setError('Product is required'); return }
+    if (!productId) { setError('Product is required'); return }
     setSaving(true); setError('')
 
-    const body = { entry_date: formDate, product, stock: Number(stock) || 0, notes }
+    const body = { entry_date: formDate, product_id: productId, stock: Number(stock) || 0, notes }
     if (editingId) body.id = editingId
 
     const res = await fetch(STOCK_API, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -302,41 +314,46 @@ function LubeStockTab() {
   return (
     <>
       <div className="flex justify-end mb-4">
-        <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700">
+        <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
           <Plus className="w-4 h-4" /> New Stock Entry
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 rounded-md p-4 mb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="border border-gray-200 p-4 mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">{editingId ? 'Edit Stock Entry' : 'New Stock Entry'}</h2>
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Entry Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-xs text-gray-500 mb-1">Product</label>
-              <input type="text" value={product} onChange={(e) => setProduct(e.target.value)} maxLength={200} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Select product</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>{p.product_name}</option>
+                ))}
+              </select>
             </div>
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Stock</label>
-            <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} step="0.01" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />} {editingId ? 'Update' : 'Create'}
             </button>
-            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       )}
@@ -351,7 +368,7 @@ function LubeStockTab() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
                     {format(new Date(entry.entry_date), 'MMM d, yyyy')}
-                    <span className="ml-2 text-xs text-gray-600">{entry.product}</span>
+                    <span className="ml-2 text-xs text-gray-600">{entry.product?.product_name || 'Unknown'}</span>
                   </p>
                   <p className="text-xs text-gray-500">
                     Stock: {Number(entry.stock).toLocaleString()}

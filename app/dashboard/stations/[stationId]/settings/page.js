@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import Link from 'next/link'
 import {
-  Loader2, MapPin, Fuel, ChevronRight, ChevronLeft, Check,
-  Plus, Trash2, ArrowRight, Landmark, CreditCard, Banknote,
-  Droplets, Users
+  Loader2, Fuel, Plus, Trash2, ArrowRight, Landmark,
+  CreditCard, Banknote, MapPin, Save, Droplets, Users
 } from 'lucide-react'
 
 const FUEL_TYPES = ['PMS', 'AGO', 'DPK']
@@ -16,53 +16,78 @@ const LODGEMENT_TYPES = [
   { value: 'other', label: 'Other' },
 ]
 
-export default function SetupWizardPage() {
+export default function StationSettingsPage() {
   const router = useRouter()
   const params = useParams()
   const stationId = params.stationId
 
-  const [step, setStep] = useState(1)
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [stationName, setStationName] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  // Step 1: Location
   const [location, setLocation] = useState('')
 
-  // Step 2: Nozzles
   const [nozzles, setNozzles] = useState([])
-
-  // Step 3: Tanks
   const [tanks, setTanks] = useState([])
-
-  // Step 4: Mappings (auto-built from nozzles + tanks)
-  const [mappings, setMappings] = useState({}) // { "PMS-1": tank_number }
-
-  // Step 5: Lodgements
+  const [mappings, setMappings] = useState({})
   const [lodgements, setLodgements] = useState([])
-
-  // Step 6: Lube Products
   const [lubeProducts, setLubeProducts] = useState([])
-
-  // Step 7: Credit Customers
   const [customers, setCustomers] = useState([])
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch('/api/organizations')
-      if (res.ok) {
-        const data = await res.json()
-        const station = (data.stations || []).find((s) => s.id === stationId)
-        if (station) {
-          if (station.onboarding_complete) {
-            router.push(`/dashboard/stations/${stationId}`)
-            return
+      const res = await fetch(`/api/stations/${stationId}/config`)
+      if (!res.ok) {
+        router.push('/dashboard')
+        return
+      }
+      const data = await res.json()
+      setStationName(data.station.name)
+      setLocation(data.station.location || '')
+      setNozzles(data.nozzles.map((n) => ({
+        id: n.id,
+        fuel_type: n.fuel_type,
+        pump_number: n.pump_number,
+        initial_reading: n.initial_reading || 0,
+      })))
+      setTanks(data.tanks.map((t) => ({
+        id: t.id,
+        fuel_type: t.fuel_type,
+        tank_number: t.tank_number,
+        capacity: t.capacity || 0,
+        opening_stock: t.opening_stock || 0,
+      })))
+      // Build mappings from nozzle tank_id
+      const mappingObj = {}
+      for (const n of data.nozzles) {
+        if (n.tank_id) {
+          const tank = data.tanks.find((t) => t.id === n.tank_id)
+          if (tank) {
+            mappingObj[`${n.fuel_type}-${n.pump_number}`] = tank.tank_number
           }
-          setStationName(station.name)
-          if (station.location) setLocation(station.location)
         }
       }
+      setMappings(mappingObj)
+      setLodgements(data.lodgements.map((l) => ({
+        id: l.id,
+        lodgement_type: l.lodgement_type,
+        bank_name: l.bank_name || '',
+        terminal_id: l.terminal_id || '',
+        opening_balance: l.opening_balance || 0,
+      })))
+      setLubeProducts((data.lube_products || []).map((lp) => ({
+        id: lp.id,
+        product_name: lp.product_name || '',
+        unit_price: lp.unit_price || 0,
+        opening_stock: lp.opening_stock || 0,
+      })))
+      setCustomers((data.customers || []).map((c) => ({
+        id: c.id,
+        name: c.name || '',
+        phone: c.phone || '',
+        opening_balance: c.opening_balance || 0,
+      })))
       setLoading(false)
     }
     load()
@@ -79,11 +104,7 @@ export default function SetupWizardPage() {
   const updateNozzle = (i, field, value) => {
     setNozzles((prev) => {
       const updated = prev.map((n, idx) => idx === i ? { ...n, [field]: value } : n)
-      // Recalculate pump_number when fuel_type changes
       if (field === 'fuel_type') {
-        const countBefore = updated.slice(0, i).filter((n) => n.fuel_type === value).length
-        updated[i] = { ...updated[i], pump_number: countBefore + 1 }
-        // Renumber all nozzles of the old and new fuel type
         const oldType = prev[i].fuel_type
         const typesToFix = new Set([oldType, value])
         typesToFix.forEach((ft) => {
@@ -101,7 +122,6 @@ export default function SetupWizardPage() {
   const removeNozzle = (i) => {
     setNozzles((prev) => {
       const filtered = prev.filter((_, idx) => idx !== i)
-      // Renumber per fuel type
       const counts = {}
       return filtered.map((n) => {
         counts[n.fuel_type] = (counts[n.fuel_type] || 0) + 1
@@ -118,7 +138,7 @@ export default function SetupWizardPage() {
     setTanks((prev) => prev.map((t, idx) => idx === i ? { ...t, [field]: value } : t))
   }
   const removeTank = (i) => {
-    setTanks((prev) => prev.filter((_, idx) => idx !== i))
+    setTanks((prev) => prev.filter((_, idx) => idx !== i).map((t, idx) => ({ ...t, tank_number: idx + 1 })))
   }
 
   // Lodgement helpers
@@ -154,29 +174,11 @@ export default function SetupWizardPage() {
     setCustomers((prev) => prev.filter((_, idx) => idx !== i))
   }
 
-  const totalSteps = 7
-
-  const canNext = () => {
-    if (step === 1) return location.trim().length > 0
-    if (step === 2) return nozzles.length > 0
-    if (step === 3) return tanks.length > 0
-    if (step === 4) {
-      // Every nozzle must be mapped to a tank
-      if (nozzles.length === 0 || tanks.length === 0) return false
-      return nozzles.every((n) => {
-        const key = `${n.fuel_type}-${n.pump_number}`
-        return mappings[key] && mappings[key] > 0
-      })
-    }
-    if (step === 5) return true
-    return true
-  }
-
-  const handleSubmit = async () => {
+  const handleSave = async () => {
     setSaving(true)
     setError('')
+    setSuccess('')
 
-    // Build mapping array from state
     const mappingArr = Object.entries(mappings).map(([key, tankNum]) => {
       const [fuelType, pumpNum] = key.split('-')
       return { fuel_type: fuelType, nozzle_pump_number: Number(pumpNum), tank_number: Number(tankNum) }
@@ -197,14 +199,14 @@ export default function SetupWizardPage() {
       }),
     })
 
-    if (!res.ok) {
+    if (res.ok) {
+      setSuccess('Settings saved')
+      setTimeout(() => setSuccess(''), 3000)
+    } else {
       const data = await res.json()
       setError(data.error || 'Failed to save')
-      setSaving(false)
-      return
     }
-
-    router.push(`/dashboard/stations/${stationId}`)
+    setSaving(false)
   }
 
   if (loading) {
@@ -217,46 +219,31 @@ export default function SetupWizardPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-1">Set up {stationName || 'Station'}</h1>
-      <p className="text-sm text-gray-500 mb-6">Step {step} of {totalSteps}</p>
+      <Link href={`/dashboard/stations/${stationId}`} className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; Back</Link>
+      <h1 className="text-xl font-bold text-gray-900 mb-6">{stationName} Settings</h1>
 
-      {/* Progress bar */}
-      <div className="flex gap-1 mb-8">
-        {Array.from({ length: totalSteps }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-1 flex-1 rounded-full ${i < step ? 'bg-blue-600' : 'bg-gray-200'}`}
-          />
-        ))}
-      </div>
+      {/* Location */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-blue-600" /> Location
+        </h2>
+        <input
+          type="text"
+          placeholder="e.g. 12 Lekki-Epe Expressway, Lagos"
+          maxLength={200}
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </section>
 
-      {/* Step 1: Location */}
-      {step === 1 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-blue-600" /> Station Location
-          </h2>
-          <input
-            type="text"
-            placeholder="e.g. 12 Lekki-Epe Expressway, Lagos"
-            maxLength={200}
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            autoFocus
-          />
-        </div>
-      )}
-
-      {/* Step 2: Nozzles */}
-      {step === 2 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Fuel className="w-4 h-4 text-blue-600" /> Nozzles
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">Add each nozzle with its fuel type and opening meter reading.</p>
-
-          <div className="divide-y divide-gray-200 mb-4">
+      {/* Nozzles */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Fuel className="w-4 h-4 text-blue-600" /> Nozzles
+        </h2>
+        {nozzles.length > 0 && (
+          <div className="divide-y divide-gray-200 mb-3">
             {nozzles.map((n, i) => (
               <div key={i} className="flex items-center gap-2 py-3 first:pt-0">
                 <select
@@ -266,6 +253,7 @@ export default function SetupWizardPage() {
                 >
                   {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
+                <span className="text-sm text-gray-500 w-6 text-center">{n.pump_number}</span>
                 <input
                   type="number"
                   placeholder="Opening reading"
@@ -275,30 +263,24 @@ export default function SetupWizardPage() {
                   className="flex-1 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button onClick={() => removeNozzle(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
+        )}
+        <button onClick={addNozzle} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus className="w-4 h-4" /> Add nozzle
+        </button>
+      </section>
 
-          <button
-            onClick={addNozzle}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            <Plus className="w-4 h-4" /> Add nozzle
-          </button>
-        </div>
-      )}
-
-      {/* Step 3: Tanks */}
-      {step === 3 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Fuel className="w-4 h-4 text-blue-600" /> Underground Tanks
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">Add each tank with its capacity and current stock level.</p>
-
-          <div className="divide-y divide-gray-200 mb-4">
+      {/* Tanks */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Fuel className="w-4 h-4 text-blue-600" /> Underground Tanks
+        </h2>
+        {tanks.length > 0 && (
+          <div className="divide-y divide-gray-200 mb-3">
             {tanks.map((t, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <select
@@ -325,72 +307,57 @@ export default function SetupWizardPage() {
                   className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button onClick={() => removeTank(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
+        )}
+        <button onClick={addTank} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus className="w-4 h-4" /> Add tank
+        </button>
+      </section>
 
-          <button
-            onClick={addTank}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            <Plus className="w-4 h-4" /> Add tank
-          </button>
-        </div>
-      )}
-
-      {/* Step 4: Tank to Nozzle Mapping */}
-      {step === 4 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      {/* Tank to Nozzle Mapping */}
+      {nozzles.length > 0 && tanks.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
             <ArrowRight className="w-4 h-4 text-blue-600" /> Tank to Nozzle Mapping
           </h2>
-          <p className="text-xs text-gray-500 mb-4">Select which underground tank feeds each nozzle.</p>
-
-          {nozzles.length === 0 || tanks.length === 0 ? (
-            <p className="text-sm text-gray-500">Add nozzles and tanks first.</p>
-          ) : (
-            <div className="divide-y divide-gray-200">
-              {nozzles.map((n, i) => {
-                const key = `${n.fuel_type}-${n.pump_number || i + 1}`
-                const sameFuelTanks = tanks.filter((t) => t.fuel_type === n.fuel_type)
-                return (
-                  <div key={i} className="flex items-center gap-3 py-3 first:pt-0">
-                    <div className="flex-1">
-                      <span className="text-sm font-medium text-gray-900">{n.fuel_type} {n.pump_number}</span>
-                      <span className="text-xs text-gray-500 ml-2">({n.fuel_type})</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-gray-400" />
-                    <select
-                      value={mappings[key] || ''}
-                      onChange={(e) => setMappings((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                      className="px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select tank</option>
-                      {sameFuelTanks.map((t, ti) => (
-                        <option key={ti} value={t.tank_number}>
-                          Tank {t.tank_number} ({t.fuel_type})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
+          <div className="divide-y divide-gray-200">
+            {nozzles.map((n, i) => {
+              const key = `${n.fuel_type}-${n.pump_number}`
+              const sameFuelTanks = tanks.filter((t) => t.fuel_type === n.fuel_type)
+              return (
+                <div key={i} className="flex items-center gap-3 py-3 first:pt-0">
+                  <span className="flex-1 text-sm font-medium text-gray-900">{n.fuel_type} {n.pump_number}</span>
+                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                  <select
+                    value={mappings[key] || ''}
+                    onChange={(e) => setMappings((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
+                    className="px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select tank</option>
+                    {sameFuelTanks.map((t, ti) => (
+                      <option key={ti} value={t.tank_number}>
+                        Tank {t.tank_number} ({t.fuel_type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )
+            })}
+          </div>
+        </section>
       )}
 
-      {/* Step 5: Lodgements */}
-      {step === 5 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Landmark className="w-4 h-4 text-blue-600" /> Lodgements
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">Add POS terminals, bank deposit accounts, cash, etc. with their current balances.</p>
-
-          <div className="divide-y divide-gray-200 mb-4">
+      {/* Lodgements */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Landmark className="w-4 h-4 text-blue-600" /> Lodgements
+        </h2>
+        {lodgements.length > 0 && (
+          <div className="divide-y divide-gray-200 mb-3">
             {lodgements.map((l, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <select
@@ -427,30 +394,27 @@ export default function SetupWizardPage() {
                   className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button onClick={() => removeLodgement(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
+        )}
+        <button onClick={addLodgement} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus className="w-4 h-4" /> Add lodgement
+        </button>
+      </section>
 
-          <button
-            onClick={addLodgement}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            <Plus className="w-4 h-4" /> Add lodgement
-          </button>
-        </div>
-      )}
-
-      {/* Step 6: Lube Products */}
-      {step === 6 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Droplets className="w-4 h-4 text-blue-600" /> Lube Products
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">Add lubricant products with their current stock levels. Skip if not applicable.</p>
-
-          <div className="divide-y divide-gray-200 mb-4">
+      {/* Lube Products */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Droplets className="w-4 h-4 text-blue-600" /> Lube Products
+        </h2>
+        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
+          Opening stock values are automatically adjusted when old entries (&gt;3 months) are consolidated to keep current balances accurate.
+        </p>
+        {lubeProducts.length > 0 && (
+          <div className="divide-y divide-gray-200 mb-3">
             {lubeProducts.map((lp, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <input
@@ -479,30 +443,27 @@ export default function SetupWizardPage() {
                   className="w-28 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button onClick={() => removeLubeProduct(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
+        )}
+        <button onClick={addLubeProduct} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus className="w-4 h-4" /> Add product
+        </button>
+      </section>
 
-          <button
-            onClick={addLubeProduct}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            <Plus className="w-4 h-4" /> Add product
-          </button>
-        </div>
-      )}
-
-      {/* Step 7: Credit Customers */}
-      {step === 7 && (
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4 text-blue-600" /> Credit Customers
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">Add customers who buy on credit with their outstanding balance. Skip if not applicable.</p>
-
-          <div className="divide-y divide-gray-200 mb-4">
+      {/* Credit Customers */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+          <Users className="w-4 h-4 text-blue-600" /> Credit Customers
+        </h2>
+        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
+          Opening balances are automatically adjusted when old entries (&gt;3 months) are consolidated to keep current balances accurate.
+        </p>
+        {customers.length > 0 && (
+          <div className="divide-y divide-gray-200 mb-3">
             {customers.map((c, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <input
@@ -531,56 +492,29 @@ export default function SetupWizardPage() {
                   className="w-32 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <button onClick={() => removeCustomer(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
-
-          <button
-            onClick={addCustomer}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
-            <Plus className="w-4 h-4" /> Add customer
-          </button>
-        </div>
-      )}
-
-      {/* Error */}
-      {error && <p className="text-sm text-red-600 mt-4">{error}</p>}
-
-      {/* Navigation */}
-      <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-        {step > 1 ? (
-          <button
-            onClick={() => setStep((s) => s - 1)}
-            className="flex items-center gap-1 px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            <ChevronLeft className="w-4 h-4" /> Back
-          </button>
-        ) : (
-          <div />
         )}
+        <button onClick={addCustomer} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+          <Plus className="w-4 h-4" /> Add customer
+        </button>
+      </section>
 
-        {step < totalSteps ? (
-          <button
-            onClick={() => setStep((s) => s + 1)}
-            disabled={!canNext()}
-            className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-          >
-            Next <ChevronRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="flex items-center gap-1 px-6 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            Complete Setup
-          </button>
-        )}
-      </div>
+      {/* Save */}
+      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+      {success && <p className="text-sm text-green-600 mb-4">{success}</p>}
+
+      <button
+        onClick={handleSave}
+        disabled={saving}
+        className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+      >
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+        Save changes
+      </button>
     </div>
   )
 }

@@ -13,6 +13,7 @@ export default function ProductReceiptPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [locked, setLocked] = useState(false)
+  const [tanks, setTanks] = useState([])
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -26,7 +27,7 @@ export default function ProductReceiptPage() {
     chart_ullage: '', chart_liquid_height: '', depot_ullage: '', depot_liquid_height: '',
     station_ullage: '', station_liquid_height: '',
     first_compartment: '', second_compartment: '', third_compartment: '',
-    actual_volume: '', depot_name: '', notes: '',
+    actual_volume: '', depot_name: '', tank_id: '', notes: '',
   })
 
   const limit = 20
@@ -43,7 +44,17 @@ export default function ProductReceiptPage() {
     setLoading(false)
   }
 
-  useEffect(() => { loadEntries() }, [])
+  useEffect(() => {
+    const init = async () => {
+      const tankRes = await fetch('/api/entries/tanks')
+      if (tankRes.ok) {
+        const tankData = await tankRes.json()
+        setTanks(tankData.tanks || [])
+      }
+      loadEntries()
+    }
+    init()
+  }, [])
   useEffect(() => { loadEntries(page) }, [page])
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
@@ -57,7 +68,7 @@ export default function ProductReceiptPage() {
       chart_ullage: '', chart_liquid_height: '', depot_ullage: '', depot_liquid_height: '',
       station_ullage: '', station_liquid_height: '',
       first_compartment: '', second_compartment: '', third_compartment: '',
-      actual_volume: '', depot_name: '', notes: '',
+      actual_volume: '', depot_name: '', tank_id: '', notes: '',
     })
     setError('')
   }
@@ -82,6 +93,7 @@ export default function ProductReceiptPage() {
       third_compartment: entry.third_compartment ?? '',
       actual_volume: entry.actual_volume ?? '',
       depot_name: entry.depot_name || '',
+      tank_id: entry.tank_id || '',
       notes: entry.notes || '',
     })
     setShowForm(true)
@@ -123,7 +135,8 @@ export default function ProductReceiptPage() {
         onChange={(e) => setField(name, e.target.value)}
         placeholder={placeholder}
         step={type === 'number' ? '0.01' : undefined}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        min={type === 'number' ? '0' : undefined}
+        className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   )
@@ -137,7 +150,7 @@ export default function ProductReceiptPage() {
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
         <p className="text-sm text-gray-500 mb-4">Subscribe to the Daily Sales Operations service to access this feature.</p>
-        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
+        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
       </div>
     </div>
   )
@@ -149,19 +162,19 @@ export default function ProductReceiptPage() {
           <Link href="/dashboard/entries" className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; All Entries</Link>
           <h1 className="text-xl font-bold text-gray-900">Product Receipt</h1>
         </div>
-        <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700">
+        <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
           <Plus className="w-4 h-4" /> New Entry
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 rounded-md p-4 mb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="border border-gray-200 p-4 mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">{editingId ? 'Edit Entry' : 'New Entry'}</h2>
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Entry Date" name="entry_date" type="date" />
             <Field label="Loaded Date" name="loaded_date" type="date" />
           </div>
@@ -184,25 +197,36 @@ export default function ProductReceiptPage() {
           </div>
 
           <p className="text-xs font-semibold text-gray-700 pt-2">Compartments</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Field label="1st Compartment" name="first_compartment" type="number" />
             <Field label="2nd Compartment" name="second_compartment" type="number" />
             <Field label="3rd Compartment" name="third_compartment" type="number" />
           </div>
 
-          <Field label="Actual Volume" name="actual_volume" type="number" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Actual Volume" name="actual_volume" type="number" />
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Receiving Tank</label>
+              <select value={form.tank_id} onChange={(e) => setField('tank_id', e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Select tank</option>
+                {tanks.map((t) => (
+                  <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           <div>
             <label className="block text-xs text-gray-500 mb-1">Notes</label>
-            <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />} {editingId ? 'Update' : 'Create'}
             </button>
-            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       )}
@@ -220,6 +244,7 @@ export default function ProductReceiptPage() {
                     {entry.driver_name || 'No driver'}
                     {entry.truck_number ? ` · ${entry.truck_number}` : ''}
                     {entry.actual_volume ? ` · ${Number(entry.actual_volume).toLocaleString()} vol` : ''}
+                    {entry.tank ? ` · Tank ${entry.tank.tank_number} (${entry.tank.fuel_type})` : ''}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>

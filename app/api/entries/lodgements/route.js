@@ -16,7 +16,7 @@ export async function GET(request) {
 
     const { data, count } = await supabase
       .from(TABLE)
-      .select('*, users:created_by(name)', { count: 'exact' })
+      .select('*, users:created_by(name), bank:bank_id(id, bank_name, lodgement_type)', { count: 'exact' })
       .eq('org_id', user.org_id)
       .order('entry_date', { ascending: false })
       .range(from, to)
@@ -34,10 +34,10 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { entry_date, amount, bank_name, lodgement_type, sales_date, notes } = await request.json()
+    const { entry_date, amount, bank_id, lodgement_type, sales_date, notes } = await request.json()
 
     if (!entry_date) return NextResponse.json({ error: 'Date is required' }, { status: 400 })
-    if (!bank_name?.trim()) return NextResponse.json({ error: 'Bank name is required' }, { status: 400 })
+    if (!bank_id) return NextResponse.json({ error: 'Bank account is required' }, { status: 400 })
     if (!['deposit', 'lube-deposit', 'pos'].includes(lodgement_type)) {
       return NextResponse.json({ error: 'Invalid lodgement type' }, { status: 400 })
     }
@@ -49,7 +49,7 @@ export async function POST(request) {
         org_id: user.org_id,
         entry_date,
         amount: Number(amount) || 0,
-        bank_name: bank_name.trim(),
+        bank_id,
         lodgement_type,
         sales_date: sales_date || null,
         notes: notes?.trim() || null,
@@ -75,13 +75,13 @@ export async function PATCH(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, amount, bank_name, lodgement_type, sales_date, notes } = await request.json()
+    const { id, entry_date, amount, bank_id, lodgement_type, sales_date, notes } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
 
     const updates = { updated_at: new Date().toISOString() }
     if (entry_date) updates.entry_date = entry_date
     if (amount !== undefined) updates.amount = Number(amount) || 0
-    if (bank_name !== undefined) updates.bank_name = bank_name.trim()
+    if (bank_id !== undefined) updates.bank_id = bank_id
     if (lodgement_type !== undefined) {
       if (!['deposit', 'lube-deposit', 'pos'].includes(lodgement_type)) {
         return NextResponse.json({ error: 'Invalid lodgement type' }, { status: 400 })

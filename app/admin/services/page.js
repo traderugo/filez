@@ -109,13 +109,13 @@ export default function AdminServicesPage() {
                         min="0"
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         autoFocus
                       />
                     </div>
                     {error && <p className="text-sm text-red-600">{error}</p>}
                     <div className="flex gap-2">
-                      <button type="submit" disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
+                      <button type="submit" disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50">
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         Save
                       </button>

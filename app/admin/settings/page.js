@@ -158,7 +158,7 @@ export default function AdminSettingsPage() {
 
       {/* Add station form */}
       {showAdd && (
-        <form onSubmit={addStation} className="border border-gray-200 rounded-md p-4 mb-6 space-y-3">
+        <form onSubmit={addStation} className="border border-gray-200 p-4 mb-6 space-y-3">
           <input
             type="text"
             required
@@ -166,19 +166,19 @@ export default function AdminSettingsPage() {
             placeholder="Station name (e.g. MRS Lekki Phase 1)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             autoFocus
           />
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={adding}
-              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
             >
               {adding && <Loader2 className="w-4 h-4 animate-spin" />}
               Create station
             </button>
-            <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">
+            <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
               Cancel
             </button>
           </div>
@@ -195,7 +195,7 @@ export default function AdminSettingsPage() {
       ) : (
         <div className="space-y-4">
           {stations.map((station) => (
-            <div key={station.id} className="border border-gray-200 rounded-lg p-4">
+            <div key={station.id} className="border border-gray-200 p-4">
               {/* Station name row */}
               <div className="flex items-center gap-3 mb-3">
                 <Fuel className="w-5 h-5 text-blue-600 flex-shrink-0" />
@@ -206,10 +206,10 @@ export default function AdminSettingsPage() {
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       maxLength={100}
-                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       autoFocus
                     />
-                    <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50">
+                    <button onClick={() => updateStation(station.id)} disabled={saving} className="px-3 py-1.5 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50">
                       {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
                     </button>
                     <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:text-gray-600">
@@ -230,7 +230,7 @@ export default function AdminSettingsPage() {
               </div>
 
               {/* Invite link */}
-              <div className="flex items-center gap-2 bg-gray-50 rounded-md px-3 py-2 mb-4">
+              <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 mb-4">
                 <LinkIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 <span className="flex-1 text-xs text-gray-600 font-mono truncate">
                   {typeof window !== 'undefined' ? `${window.location.origin}/join/${station.slug}` : `/join/${station.slug}`}
@@ -261,13 +261,13 @@ export default function AdminSettingsPage() {
                       maxLength={254}
                       value={inviteEmail[station.id] || ''}
                       onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
-                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full pl-8 pr-3 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={inviting === station.id || !inviteEmail[station.id]?.trim()}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
+                    className="px-3 py-1.5 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
                   >
                     {inviting === station.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                     Invite
@@ -278,7 +278,7 @@ export default function AdminSettingsPage() {
                 {(invites[station.id] || []).length > 0 && (
                   <div className="space-y-1">
                     {invites[station.id].map((inv) => (
-                      <div key={inv.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-1.5">
+                      <div key={inv.id} className="flex items-center justify-between bg-gray-50 px-3 py-1.5">
                         <div className="flex items-center gap-2">
                           <Mail className="w-3 h-3 text-gray-400" />
                           <span className="text-xs text-gray-700">{inv.email}</span>

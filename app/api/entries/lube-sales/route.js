@@ -16,7 +16,7 @@ export async function GET(request) {
 
     const { data, count } = await supabase
       .from(TABLE)
-      .select('*, users:created_by(name)', { count: 'exact' })
+      .select('*, users:created_by(name), product:product_id(id, product_name)', { count: 'exact' })
       .eq('org_id', user.org_id)
       .order('entry_date', { ascending: false })
       .range(from, to)
@@ -34,10 +34,10 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { entry_date, product, unit_sold, unit_received, price, notes } = await request.json()
+    const { entry_date, product_id, unit_sold, unit_received, price, notes } = await request.json()
 
     if (!entry_date) return NextResponse.json({ error: 'Date is required' }, { status: 400 })
-    if (!product?.trim()) return NextResponse.json({ error: 'Product is required' }, { status: 400 })
+    if (!product_id) return NextResponse.json({ error: 'Product is required' }, { status: 400 })
 
     const supabase = getServiceClient()
     const { data, error: dbError } = await supabase
@@ -45,7 +45,7 @@ export async function POST(request) {
       .insert({
         org_id: user.org_id,
         entry_date,
-        product: product.trim(),
+        product_id,
         unit_sold: Number(unit_sold) || 0,
         unit_received: Number(unit_received) || 0,
         price: Number(price) || 0,
@@ -72,12 +72,12 @@ export async function PATCH(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, product, unit_sold, unit_received, price, notes } = await request.json()
+    const { id, entry_date, product_id, unit_sold, unit_received, price, notes } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
 
     const updates = { updated_at: new Date().toISOString() }
     if (entry_date) updates.entry_date = entry_date
-    if (product !== undefined) updates.product = product.trim()
+    if (product_id !== undefined) updates.product_id = product_id
     if (unit_sold !== undefined) updates.unit_sold = Number(unit_sold) || 0
     if (unit_received !== undefined) updates.unit_received = Number(unit_received) || 0
     if (price !== undefined) updates.price = Number(price) || 0

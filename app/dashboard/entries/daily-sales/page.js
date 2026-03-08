@@ -101,6 +101,13 @@ export default function DailySalesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formDate) { setError('Date is required'); return }
+
+    // Validate all fields are filled
+    if (!price || Number(price) <= 0) { setError('Price is required'); return }
+    if (!ugtClosingStock && ugtClosingStock !== '0') { setError('UGT closing stock is required'); return }
+    const missingReading = nozzleReadings.find((r) => r.closing_meter === '' || r.closing_meter === undefined)
+    if (missingReading) { setError(`Closing meter is required for ${missingReading.label}`); return }
+
     setSaving(true)
     setError('')
 
@@ -163,7 +170,7 @@ export default function DailySalesPage() {
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
         <p className="text-sm text-gray-500 mb-4">Subscribe to the Daily Sales Operations service to access this feature.</p>
-        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
+        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
       </div>
     </div>
   )
@@ -175,27 +182,27 @@ export default function DailySalesPage() {
           <Link href="/dashboard/entries" className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; All Entries</Link>
           <h1 className="text-xl font-bold text-gray-900">Daily Sales</h1>
         </div>
-        <button onClick={openNew} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700">
+        <button onClick={openNew} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
           <Plus className="w-4 h-4" /> New Entry
         </button>
       </div>
 
       {/* Form */}
       {showForm && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 rounded-md p-4 mb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="border border-gray-200 p-4 mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">{editingId ? 'Edit Entry' : 'New Entry'}</h2>
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
@@ -205,20 +212,20 @@ export default function DailySalesPage() {
               <label className="block text-sm font-semibold text-gray-900 mb-2">Nozzle Readings</label>
               <div className="space-y-3">
                 {nozzleReadings.map((r, idx) => (
-                  <div key={r.pump_id} className="border border-gray-100 rounded-md p-3">
+                  <div key={r.pump_id} className="border border-gray-100 p-3">
                     <p className="text-sm font-medium text-gray-700 mb-2">{r.label}</p>
                     <div className="grid grid-cols-3 gap-2">
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Closing Meter</label>
-                        <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Consumption</label>
-                        <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-500 mb-1">Pour Back</label>
-                        <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
                       </div>
                     </div>
                   </div>
@@ -228,29 +235,29 @@ export default function DailySalesPage() {
           )}
 
           {nozzles.length === 0 && (
-            <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-3">
+            <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 p-3">
               No nozzles configured. Set up your station first.
             </p>
           )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">UGT Closing Stock</label>
-            <input type="number" value={ugtClosingStock} onChange={(e) => setUgtClosingStock(e.target.value)} step="0.01" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="number" value={ugtClosingStock} onChange={(e) => setUgtClosingStock(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <div className="flex gap-2">
-            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+            <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingId ? 'Update' : 'Create'}
             </button>
-            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+            <button type="button" onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
           </div>
         </form>
       )}

@@ -4,168 +4,112 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Loader2, Fuel, Plus, Trash2, ArrowRight, Landmark,
-  CreditCard, Banknote, MapPin, Save
+  Loader2, Fuel, Settings, UserPlus, Mail, X, KeyRound,
+  FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
+  ChevronRight, BarChart3, Plus
 } from 'lucide-react'
 
-const FUEL_TYPES = ['PMS', 'AGO', 'DPK']
-const LODGEMENT_TYPES = [
-  { value: 'pos', label: 'POS' },
-  { value: 'bank_deposit', label: 'Bank Deposit' },
-  { value: 'cash', label: 'Cash' },
-  { value: 'other', label: 'Other' },
-]
-
-export default function StationSettingsPage() {
+export default function StationPage() {
   const router = useRouter()
   const params = useParams()
   const stationId = params.stationId
 
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [stationName, setStationName] = useState('')
-  const [location, setLocation] = useState('')
+  const [station, setStation] = useState(null)
 
-  const [nozzles, setNozzles] = useState([])
-  const [tanks, setTanks] = useState([])
-  const [mappings, setMappings] = useState({})
-  const [lodgements, setLodgements] = useState([])
+  // Staff invite state
+  const [invites, setInvites] = useState([])
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviting, setInviting] = useState(false)
+  const [resetting, setResetting] = useState(null)
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch(`/api/stations/${stationId}/config`)
-      if (!res.ok) {
-        router.push('/dashboard')
-        return
-      }
+      const res = await fetch('/api/organizations')
+      if (!res.ok) { router.push('/dashboard'); return }
       const data = await res.json()
-      setStationName(data.station.name)
-      setLocation(data.station.location || '')
-      setNozzles(data.nozzles.map((n) => ({
-        fuel_type: n.fuel_type,
-        pump_number: n.pump_number,
-        initial_reading: n.initial_reading || 0,
-      })))
-      setTanks(data.tanks.map((t) => ({
-        fuel_type: t.fuel_type,
-        tank_number: t.tank_number,
-        capacity: t.capacity || 0,
-        opening_stock: t.opening_stock || 0,
-      })))
-      // Build mappings from nozzle tank_id
-      const mappingObj = {}
-      for (const n of data.nozzles) {
-        if (n.tank_id) {
-          const tank = data.tanks.find((t) => t.id === n.tank_id)
-          if (tank) {
-            mappingObj[`${n.fuel_type}-${n.pump_number}`] = tank.tank_number
-          }
-        }
+      const s = (data.stations || []).find((st) => st.id === stationId)
+      if (!s) { router.push('/dashboard'); return }
+      setStation(s)
+
+      // Load invites
+      const invRes = await fetch(`/api/invites/list?org_id=${stationId}`)
+      if (invRes.ok) {
+        const invData = await invRes.json()
+        setInvites(invData.invites || [])
       }
-      setMappings(mappingObj)
-      setLodgements(data.lodgements.map((l) => ({
-        lodgement_type: l.lodgement_type,
-        bank_name: l.bank_name || '',
-        terminal_id: l.terminal_id || '',
-        balance: l.balance || 0,
-      })))
       setLoading(false)
     }
     load()
   }, [stationId, router])
 
-  // Nozzle helpers
-  const addNozzle = () => {
-    setNozzles((prev) => {
-      const fuelType = 'PMS'
-      const count = prev.filter((n) => n.fuel_type === fuelType).length
-      return [...prev, { fuel_type: fuelType, pump_number: count + 1, initial_reading: 0 }]
-    })
-  }
-  const updateNozzle = (i, field, value) => {
-    setNozzles((prev) => {
-      const updated = prev.map((n, idx) => idx === i ? { ...n, [field]: value } : n)
-      if (field === 'fuel_type') {
-        const oldType = prev[i].fuel_type
-        const typesToFix = new Set([oldType, value])
-        typesToFix.forEach((ft) => {
-          let num = 1
-          for (let j = 0; j < updated.length; j++) {
-            if (updated[j].fuel_type === ft) {
-              updated[j] = { ...updated[j], pump_number: num++ }
-            }
-          }
-        })
-      }
-      return updated
-    })
-  }
-  const removeNozzle = (i) => {
-    setNozzles((prev) => {
-      const filtered = prev.filter((_, idx) => idx !== i)
-      const counts = {}
-      return filtered.map((n) => {
-        counts[n.fuel_type] = (counts[n.fuel_type] || 0) + 1
-        return { ...n, pump_number: counts[n.fuel_type] }
-      })
-    })
+  const loadInvites = async () => {
+    const res = await fetch(`/api/invites/list?org_id=${stationId}`)
+    if (res.ok) {
+      const data = await res.json()
+      setInvites(data.invites || [])
+    }
   }
 
-  // Tank helpers
-  const addTank = () => {
-    setTanks((prev) => [...prev, { fuel_type: 'PMS', tank_number: prev.length + 1, capacity: 0, opening_stock: 0 }])
-  }
-  const updateTank = (i, field, value) => {
-    setTanks((prev) => prev.map((t, idx) => idx === i ? { ...t, [field]: value } : t))
-  }
-  const removeTank = (i) => {
-    setTanks((prev) => prev.filter((_, idx) => idx !== i).map((t, idx) => ({ ...t, tank_number: idx + 1 })))
-  }
-
-  // Lodgement helpers
-  const addLodgement = () => {
-    setLodgements((prev) => [...prev, { lodgement_type: 'pos', bank_name: '', terminal_id: '', balance: 0 }])
-  }
-  const updateLodgement = (i, field, value) => {
-    setLodgements((prev) => prev.map((l, idx) => idx === i ? { ...l, [field]: value } : l))
-  }
-  const removeLodgement = (i) => {
-    setLodgements((prev) => prev.filter((_, idx) => idx !== i))
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    setError('')
-    setSuccess('')
-
-    const mappingArr = Object.entries(mappings).map(([key, tankNum]) => {
-      const [fuelType, pumpNum] = key.split('-')
-      return { fuel_type: fuelType, nozzle_pump_number: Number(pumpNum), tank_number: Number(tankNum) }
-    }).filter((m) => m.tank_number > 0)
-
-    const res = await fetch('/api/onboarding', {
+  const addInvite = async (e) => {
+    e.preventDefault()
+    if (!inviteEmail.trim()) return
+    setInviting(true)
+    const res = await fetch('/api/invites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        org_id: stationId,
-        location,
-        nozzles,
-        tanks,
-        mappings: mappingArr,
-        lodgements,
-      }),
+      body: JSON.stringify({ org_id: stationId, email: inviteEmail }),
     })
-
     if (res.ok) {
-      setSuccess('Settings saved')
-      setTimeout(() => setSuccess(''), 3000)
-    } else {
       const data = await res.json()
-      setError(data.error || 'Failed to save')
+      setInviteEmail('')
+      loadInvites()
+      if (data.tempPassword) {
+        alert(`Account created for ${data.invite.email}\n\nTemporary password: ${data.tempPassword}\n\nShare this with them. They will be asked to change it on first login.`)
+      }
     }
-    setSaving(false)
+    setInviting(false)
+  }
+
+  const removeInvite = async (inviteId) => {
+    await fetch('/api/invites', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: inviteId }),
+    })
+    loadInvites()
+  }
+
+  const togglePagePermission = async (inviteId, pageKey, currentPages) => {
+    const updated = currentPages.includes(pageKey)
+      ? currentPages.filter((p) => p !== pageKey)
+      : [...currentPages, pageKey]
+    setInvites((prev) => prev.map((inv) =>
+      inv.id === inviteId ? { ...inv, visible_pages: updated } : inv
+    ))
+    await fetch('/api/invites/permissions', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invite_id: inviteId, visible_pages: updated }),
+    })
+  }
+
+  const resetStaffPassword = async (email) => {
+    if (!confirm(`Reset password for ${email}? A new temporary password will be generated.`)) return
+    setResetting(email)
+    const res = await fetch('/api/auth/reset-staff-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ staff_email: email }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      alert(`Password reset for ${email}\n\nNew temporary password: ${data.tempPassword}\n\nShare this with them. They will be asked to change it on next login.`)
+    } else {
+      const err = await res.json()
+      alert(err.error || 'Failed to reset password')
+    }
+    setResetting(null)
   }
 
   if (loading) {
@@ -176,206 +120,171 @@ export default function StationSettingsPage() {
     )
   }
 
+  const entryLinks = [
+    { href: '/dashboard/entries/daily-sales', icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, and pricing' },
+    { href: '/dashboard/entries/product-receipt', icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries, waybills, and compartments' },
+    { href: '/dashboard/entries/lodgements', icon: CreditCard, label: 'Lodgements', desc: 'Deposits, lube deposits, and POS' },
+    { href: '/dashboard/entries/lube', icon: Droplets, label: 'Lube', desc: 'Lube sales and stock entries' },
+    { href: '/dashboard/entries/customer-payments', icon: Users, label: 'Customer Payments', desc: 'Credit sales and payments' },
+  ]
+
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
       <Link href="/dashboard" className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; Dashboard</Link>
-      <h1 className="text-xl font-bold text-gray-900 mb-6">{stationName} Settings</h1>
 
-      {/* Location */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <MapPin className="w-4 h-4 text-blue-600" /> Location
-        </h2>
-        <input
-          type="text"
-          placeholder="e.g. 12 Lekki-Epe Expressway, Lagos"
-          maxLength={200}
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </section>
+      <div className="flex items-center gap-3 mb-8">
+        <Fuel className="w-6 h-6 text-blue-600" />
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">{station.name}</h1>
+          {station.location && <p className="text-sm text-gray-500">{station.location}</p>}
+        </div>
+      </div>
 
-      {/* Nozzles */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Fuel className="w-4 h-4 text-blue-600" /> Nozzles
-        </h2>
-        {nozzles.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
-            {nozzles.map((n, i) => (
-              <div key={i} className="flex items-center gap-2 py-3 first:pt-0">
-                <select
-                  value={n.fuel_type}
-                  onChange={(e) => updateNozzle(i, 'fuel_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <span className="text-sm text-gray-500 w-6 text-center">{n.pump_number}</span>
-                <input
-                  type="number"
-                  placeholder="Opening reading"
-                  min={0}
-                  value={n.initial_reading || ''}
-                  onChange={(e) => updateNozzle(i, 'initial_reading', Number(e.target.value))}
-                  className="flex-1 px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button onClick={() => removeNozzle(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+      {/* Setup / Settings */}
+      {!station.onboarding_complete ? (
+        <Link
+          href={`/dashboard/setup/${stationId}`}
+          className="flex items-center gap-3 border border-orange-200 bg-orange-50 p-4 mb-6 hover:bg-orange-100 transition-colors"
+        >
+          <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-orange-800">Set up this station</p>
+            <p className="text-xs text-orange-600">Configure nozzles, tanks, and lodgements</p>
           </div>
-        )}
-        <button onClick={addNozzle} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
-          <Plus className="w-4 h-4" /> Add nozzle
-        </button>
-      </section>
-
-      {/* Tanks */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Fuel className="w-4 h-4 text-blue-600" /> Underground Tanks
-        </h2>
-        {tanks.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
-            {tanks.map((t, i) => (
-              <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
-                <select
-                  value={t.fuel_type}
-                  onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
-                </select>
-                <input
-                  type="number"
-                  placeholder="Capacity (L)"
-                  min={0}
-                  value={t.capacity || ''}
-                  onChange={(e) => updateTank(i, 'capacity', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="number"
-                  placeholder="Opening stock (L)"
-                  min={0}
-                  value={t.opening_stock || ''}
-                  onChange={(e) => updateTank(i, 'opening_stock', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button onClick={() => removeTank(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+          <ChevronRight className="w-4 h-4 text-orange-400" />
+        </Link>
+      ) : (
+        <Link
+          href={`/dashboard/stations/${stationId}/settings`}
+          className="flex items-center gap-3 border border-gray-200 p-4 mb-6 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+        >
+          <Settings className="w-5 h-5 text-gray-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-900">Station Settings</p>
+            <p className="text-xs text-gray-500">Nozzles, tanks, lodgements, products, customers</p>
           </div>
-        )}
-        <button onClick={addTank} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
-          <Plus className="w-4 h-4" /> Add tank
-        </button>
-      </section>
-
-      {/* Tank to Nozzle Mapping */}
-      {nozzles.length > 0 && tanks.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <ArrowRight className="w-4 h-4 text-blue-600" /> Tank to Nozzle Mapping
-          </h2>
-          <div className="divide-y divide-gray-200">
-            {nozzles.map((n, i) => {
-              const key = `${n.fuel_type}-${n.pump_number}`
-              const sameFuelTanks = tanks.filter((t) => t.fuel_type === n.fuel_type)
-              return (
-                <div key={i} className="flex items-center gap-3 py-3 first:pt-0">
-                  <span className="flex-1 text-sm font-medium text-gray-900">{n.fuel_type} {n.pump_number}</span>
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
-                  <select
-                    value={mappings[key] || ''}
-                    onChange={(e) => setMappings((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                    className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select tank</option>
-                    {sameFuelTanks.map((t, ti) => (
-                      <option key={ti} value={t.tank_number}>
-                        Tank {t.tank_number} ({t.fuel_type})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )
-            })}
-          </div>
-        </section>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </Link>
       )}
 
-      {/* Lodgements */}
+      {/* Entries */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Landmark className="w-4 h-4 text-blue-600" /> Lodgements
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Entries</h2>
+        <div className="grid gap-2">
+          {entryLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+            >
+              <link.icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">{link.label}</p>
+                <p className="text-xs text-gray-500">{link.desc}</p>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-300" />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Reports (coming soon) */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Reports</h2>
+        <div className="border border-dashed border-gray-300 p-6 text-center">
+          <BarChart3 className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-sm text-gray-400">Reports coming soon</p>
+        </div>
+      </section>
+
+      {/* Staff */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <UserPlus className="w-4 h-4" /> Staff
         </h2>
-        {lodgements.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
-            {lodgements.map((l, i) => (
-              <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
-                <select
-                  value={l.lodgement_type}
-                  onChange={(e) => updateLodgement(i, 'lodgement_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {LODGEMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-                <input
-                  type="text"
-                  placeholder="Bank name"
-                  maxLength={100}
-                  value={l.bank_name}
-                  onChange={(e) => updateLodgement(i, 'bank_name', e.target.value)}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                {l.lodgement_type === 'pos' && (
-                  <input
-                    type="text"
-                    placeholder="Terminal ID"
-                    maxLength={50}
-                    value={l.terminal_id}
-                    onChange={(e) => updateLodgement(i, 'terminal_id', e.target.value)}
-                    className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                )}
-                <input
-                  type="number"
-                  placeholder="Balance"
-                  min={0}
-                  value={l.balance || ''}
-                  onChange={(e) => updateLodgement(i, 'balance', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button onClick={() => removeLodgement(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+
+        <form onSubmit={addInvite} className="flex gap-2 mb-4">
+          <div className="flex-1 relative">
+            <Mail className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="email"
+              placeholder="staff@email.com"
+              maxLength={254}
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={inviting || !inviteEmail.trim()}
+            className="px-4 py-2 bg-blue-600 text-white text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Invite
+          </button>
+        </form>
+
+        {invites.length > 0 && (
+          <div className="space-y-2">
+            {invites.map((inv) => (
+              <div key={inv.id} className="bg-gray-50 px-3 py-2.5">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-700">{inv.email}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                      inv.status === 'declined' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {inv.status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => resetStaffPassword(inv.email)}
+                      disabled={resetting === inv.email}
+                      className="p-1.5 text-gray-400 hover:text-blue-600"
+                      title="Reset password"
+                    >
+                      {resetting === inv.email ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => removeInvite(inv.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-600"
+                      title="Remove"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                {/* Page permissions */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs text-gray-500">Pages:</span>
+                  {[
+                    { key: 'daily-sales', label: 'Daily Sales' },
+                    { key: 'product-receipt', label: 'Product Receipt' },
+                    { key: 'lodgements', label: 'Lodgements' },
+                    { key: 'lube', label: 'Lube' },
+                    { key: 'customer-payments', label: 'Customer Payments' },
+                  ].map((page) => (
+                    <label key={page.key} className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={(inv.visible_pages || []).includes(page.key)}
+                        onChange={() => togglePagePermission(inv.id, page.key, inv.visible_pages || [])}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                      />
+                      <span className="text-xs text-gray-600">{page.label}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         )}
-        <button onClick={addLodgement} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
-          <Plus className="w-4 h-4" /> Add lodgement
-        </button>
       </section>
-
-      {/* Save */}
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
-      {success && <p className="text-sm text-green-600 mb-4">{success}</p>}
-
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-      >
-        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-        Save changes
-      </button>
     </div>
   )
 }

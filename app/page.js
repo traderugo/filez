@@ -20,13 +20,13 @@ export default function LandingPage() {
       <div className="flex justify-center gap-3 mb-16">
         <Link
           href="/auth/register"
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-md font-medium hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 text-white px-6 py-2.5 font-medium hover:bg-blue-700 transition-colors"
         >
           Get Started
         </Link>
         <Link
           href="/auth/login"
-          className="border border-gray-300 text-gray-700 px-6 py-2.5 rounded-md font-medium hover:bg-gray-50 transition-colors"
+          className="border border-gray-300 text-gray-700 px-6 py-2.5 font-medium hover:bg-gray-50 transition-colors"
         >
           Log in
         </Link>
