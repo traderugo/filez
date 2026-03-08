@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  Clock, CreditCard, MessageSquare, Loader2, FileSpreadsheet, Droplets,
-  ClipboardList, Building2, Check, LogOut, Plus, X,
+  Clock, CreditCard, MessageSquare, Loader2,
+  Building2, Check, LogOut, Plus,
   Fuel, ChevronRight
 } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
@@ -232,69 +232,15 @@ export default function DashboardPage() {
         )}
       </div>}
 
-      {/* Entries — only show if user belongs to a station (as staff) and has visible pages */}
-      {profile?.org_id && visiblePages && visiblePages.length > 0 && (
+      {/* Leave station (staff only) */}
+      {isStaff && profile?.org_id && (
         <div className="border-t border-gray-200 pt-6 mb-8">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">
-            <ClipboardList className="w-4 h-4 inline mr-1" />
-            Entries
-          </h2>
-          <div className="grid gap-3">
-            {visiblePages.includes('daily-sales') && (
-              <Link
-                href="/dashboard/entries/daily-sales"
-                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-              >
-                <FileSpreadsheet className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Daily Sales</p>
-                  <p className="text-xs text-gray-500">Nozzle readings, stock, and pricing</p>
-                </div>
-              </Link>
-            )}
-            {visiblePages.includes('product-receipt') && (
-              <Link
-                href="/dashboard/entries/product-receipt"
-                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-              >
-                <ClipboardList className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Product Receipt</p>
-                  <p className="text-xs text-gray-500">Deliveries, waybills, and compartments</p>
-                </div>
-              </Link>
-            )}
-            {visiblePages.includes('lodgements') && (
-              <Link
-                href="/dashboard/entries/lodgements"
-                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-              >
-                <CreditCard className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Lodgements</p>
-                  <p className="text-xs text-gray-500">Deposits, lube deposits, and POS</p>
-                </div>
-              </Link>
-            )}
-            {visiblePages.includes('lube') && (
-              <Link
-                href="/dashboard/entries/lube"
-                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-              >
-                <Droplets className="w-5 h-5 text-blue-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Lube</p>
-                  <p className="text-xs text-gray-500">Lube sales and stock entries</p>
-                </div>
-              </Link>
-            )}
-          </div>
           <button
             onClick={leaveStation}
             disabled={leaving}
-            className="mt-4 flex items-center gap-1 text-xs text-gray-400 hover:text-red-600"
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-red-600"
           >
-            {leaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <LogOut className="w-3 h-3" />}
+            {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
             Leave station
           </button>
         </div>
