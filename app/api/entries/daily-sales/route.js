@@ -39,7 +39,7 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { entry_date, nozzle_readings, tank_readings, ugt_closing_stock, price, notes } = await request.json()
+    const { entry_date, nozzle_readings, tank_readings, ugt_closing_stock, prices, notes } = await request.json()
 
     if (!entry_date) {
       return NextResponse.json({ error: 'Date is required' }, { status: 400 })
@@ -54,6 +54,13 @@ export async function POST(request) {
       ? tankArr.reduce((sum, t) => sum + (Number(t.closing_stock) || 0), 0)
       : Number(ugt_closing_stock) || 0
 
+    // Normalize prices object { PMS: number, AGO: number, DPK: number }
+    const safePrices = {
+      PMS: Number(prices?.PMS) || 0,
+      AGO: Number(prices?.AGO) || 0,
+      DPK: Number(prices?.DPK) || 0,
+    }
+
     const supabase = getServiceClient()
 
     const { data, error: dbError } = await supabase
@@ -64,7 +71,7 @@ export async function POST(request) {
         nozzle_readings,
         tank_readings: tankArr,
         ugt_closing_stock: totalUgt,
-        price: Number(price) || 0,
+        prices: safePrices,
         notes: notes?.trim() || null,
         created_by: user.id,
       })
@@ -88,7 +95,7 @@ export async function PATCH(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, nozzle_readings, tank_readings, ugt_closing_stock, price, notes } = await request.json()
+    const { id, entry_date, nozzle_readings, tank_readings, ugt_closing_stock, prices, notes } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
 
     const supabase = getServiceClient()
@@ -103,7 +110,13 @@ export async function PATCH(request) {
     } else if (ugt_closing_stock !== undefined) {
       updates.ugt_closing_stock = Number(ugt_closing_stock) || 0
     }
-    if (price !== undefined) updates.price = Number(price) || 0
+    if (prices !== undefined) {
+      updates.prices = {
+        PMS: Number(prices?.PMS) || 0,
+        AGO: Number(prices?.AGO) || 0,
+        DPK: Number(prices?.DPK) || 0,
+      }
+    }
     if (notes !== undefined) updates.notes = notes?.trim() || null
 
     const { data, error: dbError } = await supabase

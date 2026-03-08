@@ -26,7 +26,7 @@ export default function DailySalesPage() {
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
   const [nozzleReadings, setNozzleReadings] = useState([])
   const [tankReadings, setTankReadings] = useState([])
-  const [price, setPrice] = useState('')
+  const [prices, setPrices] = useState({ PMS: '', AGO: '', DPK: '' })
   const [notes, setNotes] = useState('')
 
   const limit = 10
@@ -80,7 +80,7 @@ export default function DailySalesPage() {
     setFormDate(new Date().toISOString().split('T')[0])
     setNozzleReadings([])
     setTankReadings([])
-    setPrice('')
+    setPrices({ PMS: '', AGO: '', DPK: '' })
     setNotes('')
     setError('')
   }
@@ -105,7 +105,8 @@ export default function DailySalesPage() {
   const openEdit = (entry) => {
     setEditingId(entry.id)
     setFormDate(entry.entry_date)
-    setPrice(String(entry.price || ''))
+    const p = entry.prices || {}
+    setPrices({ PMS: String(p.PMS || ''), AGO: String(p.AGO || ''), DPK: String(p.DPK || '') })
     setNotes(entry.notes || '')
     // Merge saved nozzle readings with current nozzle config
     const savedNozzles = entry.nozzle_readings || []
@@ -145,7 +146,7 @@ export default function DailySalesPage() {
     e.preventDefault()
     if (!formDate) { setError('Date is required'); return }
 
-    if (!price || Number(price) <= 0) { setError('Price is required'); return }
+    if (!prices.PMS && !prices.AGO && !prices.DPK) { setError('At least one fuel price is required'); return }
     const missingTank = tankReadings.find((r) => r.closing_stock === '' || r.closing_stock === undefined)
     if (missingTank) { setError(`Closing stock is required for ${missingTank.label}`); return }
     const missingReading = nozzleReadings.find((r) => r.closing_meter === '' || r.closing_meter === undefined)
@@ -172,7 +173,11 @@ export default function DailySalesPage() {
       entry_date: formDate,
       nozzle_readings: readings,
       tank_readings: tankData,
-      price: Number(price) || 0,
+      prices: {
+        PMS: Number(prices.PMS) || 0,
+        AGO: Number(prices.AGO) || 0,
+        DPK: Number(prices.DPK) || 0,
+      },
       notes,
     }
 
@@ -244,14 +249,26 @@ export default function DailySalesPage() {
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full sm:w-48 px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Fuel Prices (₦/litre)</label>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">PMS</label>
+                <input type="number" value={prices.PMS} onChange={(e) => setPrices((p) => ({ ...p, PMS: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">AGO</label>
+                <input type="number" value={prices.AGO} onChange={(e) => setPrices((p) => ({ ...p, AGO: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">DPK</label>
+                <input type="number" value={prices.DPK} onChange={(e) => setPrices((p) => ({ ...p, DPK: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
             </div>
           </div>
 
@@ -343,7 +360,9 @@ export default function DailySalesPage() {
                   <p className="text-sm font-medium text-gray-900">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</p>
                   <p className="text-xs text-gray-500">
                     {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
-                    {entry.price ? ` · ₦${Number(entry.price).toLocaleString()}` : ''}
+                    {entry.prices?.PMS ? ` · PMS ₦${Number(entry.prices.PMS).toLocaleString()}` : ''}
+                    {entry.prices?.AGO ? ` · AGO ₦${Number(entry.prices.AGO).toLocaleString()}` : ''}
+                    {entry.prices?.DPK ? ` · DPK ₦${Number(entry.prices.DPK).toLocaleString()}` : ''}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>
