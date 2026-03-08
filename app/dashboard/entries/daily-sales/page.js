@@ -338,7 +338,7 @@ export default function DailySalesPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</p>
                   <p className="text-xs text-gray-500">
-                    {(entry.nozzle_readings || []).length} nozzle{(entry.nozzle_readings || []).length !== 1 ? 's' : ''}
+                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
                     {entry.price ? ` · ₦${Number(entry.price).toLocaleString()}` : ''}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
