@@ -93,7 +93,7 @@ export default function CustomerPaymentsPage() {
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
 
   if (locked) return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-3xl px-4 sm:px-8 py-8">
 
       <div className="text-center py-16">
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
@@ -105,7 +105,7 @@ export default function CustomerPaymentsPage() {
   )
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
 

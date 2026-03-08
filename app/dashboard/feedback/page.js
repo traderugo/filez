@@ -44,7 +44,7 @@ export default function FeedbackPage() {
 
   if (done) {
     return (
-      <div className="max-w-sm mx-auto px-4 py-20 text-center">
+      <div className="max-w-sm px-4 sm:px-8 py-20 text-center">
         <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-4" />
         <h1 className="text-xl font-bold text-gray-900 mb-2">Thank you!</h1>
         <p className="text-sm text-gray-500 mb-6">Your feedback has been submitted.</p>
@@ -59,7 +59,7 @@ export default function FeedbackPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8">
+    <div className="max-w-lg px-4 sm:px-8 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Feedback</h1>
       <p className="text-sm text-gray-500 mb-8">Let us know how we can improve.</p>
 

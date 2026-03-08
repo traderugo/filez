@@ -216,7 +216,7 @@ export default function SetupWizardPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8">
+    <div className="max-w-lg px-4 sm:px-8 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Set up {stationName || 'Station'}</h1>
       <p className="text-sm text-gray-500 mb-6">Step {step} of {totalSteps}</p>
 

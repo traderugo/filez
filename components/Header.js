@@ -68,7 +68,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
-      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="px-4 sm:px-8 h-14 flex items-center justify-between">
 
         {/* Left side: back button or logo */}
         {pageInfo ? (

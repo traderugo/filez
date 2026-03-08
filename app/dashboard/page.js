@@ -126,7 +126,7 @@ export default function DashboardPage() {
     : null
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl px-4 sm:px-8 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Welcome, {profile?.name}</h1>
       <p className="text-sm text-gray-500 mb-8">{profile?.email}</p>
 

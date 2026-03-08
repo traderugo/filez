@@ -159,7 +159,7 @@ export default function StationPage() {
   ]
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-8">
+    <div className="max-w-lg px-4 sm:px-8 py-8">
       <div className="flex items-center gap-3 mb-8">
         <Fuel className="w-6 h-6 text-blue-600" />
         <div>
