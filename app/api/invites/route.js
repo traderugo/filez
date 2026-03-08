@@ -2,12 +2,6 @@ import { NextResponse } from 'next/server'
 import { getPinUserFromRequest } from '@/lib/pinAuth'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit } from '@/lib/rateLimit'
-import { randomBytes } from 'crypto'
-import bcrypt from 'bcryptjs'
-
-function generateTempPassword() {
-  return randomBytes(6).toString('base64url').slice(0, 10)
-}
 
 function getAdminClient() {
   return createClient(
@@ -54,7 +48,7 @@ export async function GET(request) {
   }
 }
 
-// POST — station manager adds an email invite
+// POST — station manager invites a user by email (creates pending invite)
 export async function POST(request) {
   try {
     const user = await getPinUserFromRequest(request)
@@ -67,13 +61,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { org_id, email, password } = await request.json()
+    const { org_id, email } = await request.json()
 
     if (!org_id || !email) {
       return NextResponse.json({ error: 'Station and email are required' }, { status: 400 })
-    }
-    if (!password) {
-      return NextResponse.json({ error: 'Password required' }, { status: 400 })
     }
 
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -81,22 +72,6 @@ export async function POST(request) {
     }
 
     const supabase = getAdminClient()
-
-    // Verify manager password
-    const { data: manager } = await supabase
-      .from('users')
-      .select('password_hash')
-      .eq('id', user.id)
-      .single()
-
-    if (!manager) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    const valid = await bcrypt.compare(password, manager.password_hash)
-    if (!valid) {
-      return NextResponse.json({ error: 'Incorrect password' }, { status: 403 })
-    }
 
     // Verify user owns this station
     const { data: station } = await supabase
@@ -112,81 +87,27 @@ export async function POST(request) {
 
     const normalizedEmail = email.toLowerCase()
 
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id, org_id')
-      .eq('email', normalizedEmail)
-      .single()
-
-    let tempPassword = null
-
-    if (existingUser) {
-      // Existing user — create pending invite (they accept from dashboard)
-      const { data: invite, error } = await supabase
-        .from('org_invites')
-        .upsert(
-          { org_id, email: normalizedEmail, status: 'pending', invited_at: new Date().toISOString(), responded_at: null },
-          { onConflict: 'org_id,email' }
-        )
-        .select('id, email, status, invited_at, visible_pages')
-        .single()
-
-      if (error) {
-        return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
-      }
-      return NextResponse.json({ invite })
-    }
-
-    // New user — auto-create account, set org_id, mark invite accepted
-    tempPassword = generateTempPassword()
-
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email: normalizedEmail,
-      email_confirm: false,
-      user_metadata: { name: normalizedEmail.split('@')[0] },
-    })
-
-    if (authError) {
-      return NextResponse.json({ error: 'Failed to create staff account' }, { status: 500 })
-    }
-
-    const hash = await bcrypt.hash(tempPassword, 12)
-
-    const { error: profileError } = await supabase.from('users').insert({
-      id: authUser.user.id,
-      email: normalizedEmail,
-      name: normalizedEmail.split('@')[0],
-      password_hash: hash,
-      must_change_password: true,
-      org_id,
-    })
-
-    if (profileError) {
-      return NextResponse.json({ error: 'Failed to create staff profile' }, { status: 500 })
-    }
-
-    // Create invite as accepted
-    const { data: invite, error: inviteError } = await supabase
+    // Create pending invite — user will see it on their dashboard after signup/login
+    const { data: invite, error } = await supabase
       .from('org_invites')
       .upsert(
-        { org_id, email: normalizedEmail, status: 'accepted', invited_at: new Date().toISOString(), responded_at: new Date().toISOString() },
+        { org_id, email: normalizedEmail, status: 'pending', invited_at: new Date().toISOString(), responded_at: null },
         { onConflict: 'org_id,email' }
       )
       .select('id, email, status, invited_at, visible_pages')
       .single()
 
-    if (inviteError) {
+    if (error) {
       return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
     }
 
-    return NextResponse.json({ invite, tempPassword })
+    return NextResponse.json({ invite })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
 
-// DELETE — station manager removes an invite (requires password confirmation)
+// DELETE — station manager removes an invite
 export async function DELETE(request) {
   try {
     const user = await getPinUserFromRequest(request)
@@ -194,31 +115,12 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id, password } = await request.json()
+    const { id } = await request.json()
     if (!id) {
       return NextResponse.json({ error: 'Invite id required' }, { status: 400 })
     }
-    if (!password) {
-      return NextResponse.json({ error: 'Password required' }, { status: 400 })
-    }
 
     const supabase = getAdminClient()
-
-    // Verify manager password
-    const { data: manager } = await supabase
-      .from('users')
-      .select('password_hash')
-      .eq('id', user.id)
-      .single()
-
-    if (!manager) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    const valid = await bcrypt.compare(password, manager.password_hash)
-    if (!valid) {
-      return NextResponse.json({ error: 'Incorrect password' }, { status: 403 })
-    }
 
     // Only delete invites for stations this user owns
     const { data: invite } = await supabase

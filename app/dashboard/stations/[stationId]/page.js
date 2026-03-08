@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Loader2, Fuel, Settings, UserPlus, Mail, KeyRound, LogOut,
+  Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
-  ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, Copy, Check, AlertTriangle
+  ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle
 } from 'lucide-react'
 import Modal from '@/components/Modal'
+import SubscriptionBadge from '@/components/SubscriptionBadge'
+import { format, differenceInDays } from 'date-fns'
 
 const PAGE_OPTIONS = [
   { key: 'daily-sales', label: 'Daily Sales' },
@@ -30,22 +32,17 @@ export default function StationPage() {
   // Staff invite state
   const [invites, setInvites] = useState([])
   const [inviteEmail, setInviteEmail] = useState('')
-  const [invitePassword, setInvitePassword] = useState('')
   const [inviteError, setInviteError] = useState('')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [inviting, setInviting] = useState(false)
-  const [resetting, setResetting] = useState(null)
   const [expandedStaff, setExpandedStaff] = useState(null)
-
-  // Credential modal
-  const [credModal, setCredModal] = useState(null) // { email, password } | { email, existing } | { email, error }
-  const [copied, setCopied] = useState(null) // 'email' | 'password'
 
   // Delete staff modal
   const [deleteModal, setDeleteModal] = useState(null) // { id, email }
-  const [deletePassword, setDeletePassword] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState('')
+
+  // Subscription (owner only)
+  const [subscription, setSubscription] = useState(null)
 
   // Manage station accordion
   const [showManage, setShowManage] = useState(false)
@@ -66,10 +63,17 @@ export default function StationPage() {
       setIsOwner(!!owned)
 
       if (owned) {
-        const invRes = await fetch(`/api/invites/list?org_id=${stationId}`)
+        const [invRes, dashRes] = await Promise.all([
+          fetch(`/api/invites/list?org_id=${stationId}`),
+          fetch('/api/dashboard/data'),
+        ])
         if (invRes.ok) {
           const invData = await invRes.json()
           setInvites(invData.invites || [])
+        }
+        if (dashRes.ok) {
+          const dashData = await dashRes.json()
+          setSubscription(dashData.subscription || null)
         }
       }
       setLoading(false)
@@ -87,25 +91,18 @@ export default function StationPage() {
 
   const addInvite = async (e) => {
     e.preventDefault()
-    if (!inviteEmail.trim() || !invitePassword.trim()) return
+    if (!inviteEmail.trim()) return
     setInviting(true)
     setInviteError('')
     const res = await fetch('/api/invites', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ org_id: stationId, email: inviteEmail, password: invitePassword }),
+      body: JSON.stringify({ org_id: stationId, email: inviteEmail }),
     })
     if (res.ok) {
-      const data = await res.json()
       setShowInviteModal(false)
       setInviteEmail('')
-      setInvitePassword('')
       loadInvites()
-      if (data.tempPassword) {
-        setCredModal({ email: data.invite.email, password: data.tempPassword })
-      } else {
-        setCredModal({ email: data.invite.email, existing: true })
-      }
     } else {
       const err = await res.json().catch(() => ({}))
       setInviteError(err.error || 'Failed to invite staff')
@@ -114,21 +111,16 @@ export default function StationPage() {
   }
 
   const confirmRemoveInvite = async () => {
-    if (!deleteModal || !deletePassword.trim()) return
+    if (!deleteModal) return
     setDeleting(true)
-    setDeleteError('')
     const res = await fetch('/api/invites', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: deleteModal.id, password: deletePassword }),
+      body: JSON.stringify({ id: deleteModal.id }),
     })
     if (res.ok) {
       setDeleteModal(null)
-      setDeletePassword('')
       loadInvites()
-    } else {
-      const err = await res.json()
-      setDeleteError(err.error || 'Failed to remove staff')
     }
     setDeleting(false)
   }
@@ -184,45 +176,6 @@ export default function StationPage() {
       router.push('/dashboard')
     }
     setLeaving(false)
-  }
-
-  const resetStaffPassword = async (email) => {
-    setResetting(email)
-    try {
-      const res = await fetch('/api/auth/reset-staff-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staff_email: email }),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setCredModal({ email, password: data.tempPassword })
-      } else {
-        const err = await res.json()
-        setCredModal({ email, error: err.error || 'Failed to reset password' })
-      }
-    } catch {
-      setCredModal({ email, error: 'Network error. Please try again.' })
-    }
-    setResetting(null)
-  }
-
-  const copyToClipboard = async (text, field) => {
-    try {
-      await navigator.clipboard.writeText(text)
-    } catch {
-      // Fallback for HTTP or unsupported contexts
-      const textarea = document.createElement('textarea')
-      textarea.value = text
-      textarea.style.position = 'fixed'
-      textarea.style.opacity = '0'
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
-    }
-    setCopied(field)
-    setTimeout(() => setCopied(null), 2000)
   }
 
   if (loading) {
@@ -281,6 +234,64 @@ export default function StationPage() {
         </div>
       </section>
 
+      {/* Subscription (owner only) */}
+      {isOwner && (() => {
+        const daysLeft = subscription?.end_date
+          ? differenceInDays(new Date(subscription.end_date), new Date())
+          : null
+        return (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Subscription</h2>
+              {subscription && <SubscriptionBadge status={subscription.status} />}
+            </div>
+
+            {subscription?.status === 'approved' ? (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  Expires {format(new Date(subscription.end_date), 'MMM d, yyyy')}
+                  {daysLeft !== null && daysLeft <= 7 && (
+                    <span className="text-orange-500 font-medium">({daysLeft} days left)</span>
+                  )}
+                </div>
+                {daysLeft !== null && daysLeft <= 7 && (
+                  <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
+                    <CreditCard className="w-4 h-4" /> Renew now
+                  </Link>
+                )}
+              </div>
+            ) : subscription?.status === 'pending_payment' ? (
+              <div>
+                <p className="text-sm text-yellow-700 mb-3">You have a subscription awaiting payment.</p>
+                <Link
+                  href={`/dashboard/subscribe/pay/${subscription.id}`}
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
+                >
+                  <CreditCard className="w-4 h-4" /> Complete payment
+                </Link>
+              </div>
+            ) : subscription?.status === 'pending_approval' ? (
+              <p className="text-sm text-blue-700">Your payment proof is being reviewed. You&apos;ll be notified once approved.</p>
+            ) : (
+              <div>
+                <p className="text-sm text-gray-500 mb-3">
+                  {subscription?.status === 'expired' ? 'Your subscription has expired.' :
+                   subscription?.status === 'rejected' ? 'Your subscription was rejected.' :
+                   'You don\'t have an active subscription.'}
+                </p>
+                <Link
+                  href="/dashboard/subscribe"
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
+                >
+                  <CreditCard className="w-4 h-4" /> Subscribe now
+                </Link>
+              </div>
+            )}
+          </section>
+        )
+      })()}
+
       {/* Staff (owner only) */}
       {isOwner && (
         <section className="mb-8">
@@ -289,7 +300,7 @@ export default function StationPage() {
           </h2>
 
           <button
-            onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInvitePassword(''); setInviteError('') }}
+            onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInviteError('') }}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 mb-4"
           >
             <Plus className="w-4 h-4" /> Invite Staff
@@ -319,23 +330,13 @@ export default function StationPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => resetStaffPassword(inv.email)}
-                          disabled={resetting === inv.email}
-                          className="p-2 text-gray-400 hover:text-blue-600"
-                          title="Reset password"
-                        >
-                          {resetting === inv.email ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => setExpandedStaff(isExpanded ? null : inv.id)}
-                          className="p-2 text-gray-400 hover:text-gray-600"
-                          title="Page access"
-                        >
-                          <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => setExpandedStaff(isExpanded ? null : inv.id)}
+                        className="p-2 text-gray-400 hover:text-gray-600"
+                        title="Page access"
+                      >
+                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
                     </div>
 
                     {/* Expanded: page permissions + delete */}
@@ -356,7 +357,7 @@ export default function StationPage() {
                           ))}
                         </div>
                         <button
-                          onClick={() => { setDeleteModal({ id: inv.id, email: inv.email }); setDeletePassword(''); setDeleteError('') }}
+                          onClick={() => setDeleteModal({ id: inv.id, email: inv.email })}
                           className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded hover:bg-red-50"
                         >
                           <Trash2 className="w-4 h-4" /> Remove Staff
@@ -466,6 +467,9 @@ export default function StationPage() {
         title="Invite Staff"
       >
         <form onSubmit={addInvite} className="space-y-4">
+          <p className="text-sm text-gray-500">
+            Enter the email of the person you want to invite. They will see the invite on their dashboard after signing up or logging in.
+          </p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Staff Email</label>
             <input
@@ -476,16 +480,6 @@ export default function StationPage() {
               onChange={(e) => { setInviteEmail(e.target.value); setInviteError('') }}
               className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Your Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={invitePassword}
-              onChange={(e) => { setInvitePassword(e.target.value); setInviteError('') }}
-              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           {inviteError && <p className="text-sm text-red-600">{inviteError}</p>}
@@ -499,102 +493,23 @@ export default function StationPage() {
             </button>
             <button
               type="submit"
-              disabled={inviting || !inviteEmail.trim() || !invitePassword.trim()}
+              disabled={inviting || !inviteEmail.trim()}
               className="flex-1 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Invite
             </button>
           </div>
+          <p className="text-sm text-gray-400">
+            Not signed up yet? Share the <Link href="/auth/register" className="text-blue-600 underline">signup link</Link> with them.
+          </p>
         </form>
-      </Modal>
-
-      {/* Credential Modal */}
-      <Modal
-        open={!!credModal}
-        onClose={() => setCredModal(null)}
-        title={credModal?.error ? 'Error' : credModal?.existing ? 'Invite Sent' : 'Staff Credentials'}
-      >
-        {credModal && credModal.error ? (
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100">
-              <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-red-800">{credModal.error}</p>
-                <p className="text-sm text-red-600 mt-1">Could not complete action for {credModal.email}.</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setCredModal(null)}
-              className="w-full py-2 bg-gray-600 text-white text-sm font-medium hover:bg-gray-700"
-            >
-              Close
-            </button>
-          </div>
-        ) : credModal && credModal.existing ? (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              A pending invite has been sent to <strong>{credModal.email}</strong>. They will see it on their dashboard and can accept or decline.
-            </p>
-            <button
-              onClick={() => setCredModal(null)}
-              className="w-full py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-            >
-              Done
-            </button>
-          </div>
-        ) : credModal ? (
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Share these credentials with the staff member. They will be asked to change their password on first login.
-            </p>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 text-sm text-gray-900 select-all">
-                  {credModal.email}
-                </div>
-                <button
-                  onClick={() => copyToClipboard(credModal.email, 'email')}
-                  className="p-2 border border-gray-200 hover:bg-gray-50"
-                  title="Copy email"
-                >
-                  {copied === 'email' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-500" />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 text-sm text-gray-900 font-mono select-all">
-                  {credModal.password}
-                </div>
-                <button
-                  onClick={() => copyToClipboard(credModal.password, 'password')}
-                  className="p-2 border border-gray-200 hover:bg-gray-50"
-                  title="Copy password"
-                >
-                  {copied === 'password' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-500" />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setCredModal(null)}
-              className="w-full py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-            >
-              Done
-            </button>
-          </div>
-        ) : null}
       </Modal>
 
       {/* Delete Staff Modal */}
       <Modal
         open={!!deleteModal}
-        onClose={() => { setDeleteModal(null); setDeletePassword(''); setDeleteError('') }}
+        onClose={() => setDeleteModal(null)}
         title="Remove Staff"
       >
         {deleteModal && (
@@ -609,29 +524,16 @@ export default function StationPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
-              <input
-                type="password"
-                value={deletePassword}
-                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError('') }}
-                placeholder="Your password"
-                className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                autoFocus
-              />
-              {deleteError && <p className="text-sm text-red-600 mt-1">{deleteError}</p>}
-            </div>
-
             <div className="flex gap-2">
               <button
-                onClick={() => { setDeleteModal(null); setDeletePassword(''); setDeleteError('') }}
+                onClick={() => setDeleteModal(null)}
                 className="flex-1 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmRemoveInvite}
-                disabled={deleting || !deletePassword.trim()}
+                disabled={deleting}
                 className="flex-1 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}

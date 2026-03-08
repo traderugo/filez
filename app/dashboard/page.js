@@ -3,16 +3,13 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  Clock, CreditCard, MessageSquare, Loader2,
+  MessageSquare, Loader2,
   Building2, Check, Plus,
   Fuel, ChevronRight
 } from 'lucide-react'
-import SubscriptionBadge from '@/components/SubscriptionBadge'
-import { format, differenceInDays } from 'date-fns'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState(null)
-  const [subscription, setSubscription] = useState(null)
   const [loading, setLoading] = useState(true)
 
   // Invites (staff)
@@ -51,7 +48,6 @@ export default function DashboardPage() {
       if (!res.ok) return
       const data = await res.json()
       setProfile(data.profile)
-      setSubscription(data.subscription)
       setLoading(false)
       loadInvites()
       loadStations()
@@ -103,10 +99,6 @@ export default function DashboardPage() {
       </div>
     )
   }
-
-  const daysLeft = subscription?.end_date
-    ? differenceInDays(new Date(subscription.end_date), new Date())
-    : null
 
   return (
     <div className="max-w-2xl px-4 sm:px-8 py-8">
@@ -240,59 +232,6 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* Subscription status */}
-      {stations.length > 0 && (
-        <div className="border-t border-gray-200 pt-6 mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Subscription</h2>
-            {subscription && <SubscriptionBadge status={subscription.status} />}
-          </div>
-
-          {subscription?.status === 'approved' ? (
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-4 h-4" />
-                Expires {format(new Date(subscription.end_date), 'MMM d, yyyy')}
-                {daysLeft !== null && daysLeft <= 7 && (
-                  <span className="text-orange-500 font-medium">({daysLeft} days left)</span>
-                )}
-              </div>
-              {daysLeft !== null && daysLeft <= 7 && (
-                <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
-                  <CreditCard className="w-4 h-4" /> Renew now
-                </Link>
-              )}
-            </div>
-          ) : subscription?.status === 'pending_payment' ? (
-            <div>
-              <p className="text-sm text-yellow-700 mb-3">You have a subscription awaiting payment.</p>
-              <Link
-                href={`/dashboard/subscribe/pay/${subscription.id}`}
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
-              >
-                <CreditCard className="w-4 h-4" /> Complete payment
-              </Link>
-            </div>
-          ) : subscription?.status === 'pending_approval' ? (
-            <p className="text-sm text-blue-700">Your payment proof is being reviewed. You&apos;ll be notified once approved.</p>
-          ) : (
-            <div>
-              <p className="text-sm text-gray-500 mb-3">
-                {subscription?.status === 'expired' ? 'Your subscription has expired.' :
-                 subscription?.status === 'rejected' ? 'Your subscription was rejected.' :
-                 'You don\'t have an active subscription.'}
-              </p>
-              <Link
-                href="/dashboard/subscribe"
-                className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
-              >
-                <CreditCard className="w-4 h-4" /> Subscribe now
-              </Link>
-            </div>
-          )}
         </div>
       )}
 

@@ -10,7 +10,7 @@ const geistSans = localFont({
 
 export const metadata = {
   title: 'StationVA — Station Virtual Assistant',
-  description: 'Manage your fuel station entries, subscriptions, and operations',
+  description: 'Manage your station entries, subscriptions, and operations',
 }
 
 export default function RootLayout({ children }) {

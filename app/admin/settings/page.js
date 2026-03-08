@@ -190,7 +190,7 @@ export default function AdminSettingsPage() {
         <div className="text-center py-12">
           <Fuel className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-sm text-gray-500 mb-1">No stations yet</p>
-          <p className="text-xs text-gray-400">Add your first fuel station to get started.</p>
+          <p className="text-xs text-gray-400">Add your first station to get started.</p>
         </div>
       ) : (
         <div className="space-y-4">

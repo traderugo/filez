@@ -11,7 +11,9 @@ export async function GET(request) {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   )
 
-  const debug = { user_id: user.id, org_id: user.org_id }
+  const { searchParams } = new URL(request.url)
+  const org_id = searchParams.get('org_id') || user.org_id
+  const debug = { user_id: user.id, org_id }
 
   // Step 1: Find service
   const { data: services } = await supabase.from('services').select('id, key, name')
@@ -21,7 +23,7 @@ export async function GET(request) {
   const { data: org } = await supabase
     .from('organizations')
     .select('id, owner_id, name')
-    .eq('id', user.org_id)
+    .eq('id', org_id)
     .single()
   debug.org = org
 
