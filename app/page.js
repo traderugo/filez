@@ -4,6 +4,7 @@ import Footer from '@/components/Footer'
 
 export default function LandingPage() {
   return (
+    <>
     <div className="max-w-3xl mx-auto px-4 py-20 text-center">
       <div className="flex justify-center mb-6">
         <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center">
@@ -60,5 +61,6 @@ export default function LandingPage() {
       </div>
     </div>
     <Footer />
+    </>
   )
 }
