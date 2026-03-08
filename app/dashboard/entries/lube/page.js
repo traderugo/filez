@@ -157,7 +157,7 @@ function LubeSalesTab({ products }) {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 p-4 mb-6 space-y-4">
+        <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); const inputs = Array.from(e.currentTarget.querySelectorAll('input, select')); const idx = inputs.indexOf(e.target); if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus() } }} className="border border-gray-200 p-4 mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">{editingId ? 'Edit Sale' : 'New Sale'}</h2>
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
@@ -320,7 +320,7 @@ function LubeStockTab({ products }) {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="border border-gray-200 p-4 mb-6 space-y-4">
+        <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); const inputs = Array.from(e.currentTarget.querySelectorAll('input, select')); const idx = inputs.indexOf(e.target); if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus() } }} className="border border-gray-200 p-4 mb-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">{editingId ? 'Edit Stock Entry' : 'New Stock Entry'}</h2>
             <button type="button" onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
