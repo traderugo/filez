@@ -242,10 +242,10 @@ export default function ProductReceiptPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</p>
                   <p className="text-xs text-gray-500">
-                    {entry.driver_name || 'No driver'}
+                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
+                    {entry.driver_name ? ` · ${entry.driver_name}` : ''}
                     {entry.truck_number ? ` · ${entry.truck_number}` : ''}
                     {entry.actual_volume ? ` · ${Number(entry.actual_volume).toLocaleString()} vol` : ''}
-                    {entry.tank ? ` · Tank ${entry.tank.tank_number} (${entry.tank.fuel_type})` : ''}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>

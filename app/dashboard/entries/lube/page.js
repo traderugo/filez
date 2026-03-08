@@ -219,7 +219,8 @@ function LubeSalesTab({ products }) {
                     <span className="ml-2 text-xs text-gray-600">{entry.product?.product_name || 'Unknown'}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    Sold: {entry.unit_sold} · Received: {entry.unit_received} · &#8358;{Number(entry.price).toLocaleString()}
+                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
+                    {' · '}Sold: {entry.unit_sold} · Received: {entry.unit_received} · &#8358;{Number(entry.price).toLocaleString()}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>
@@ -372,7 +373,8 @@ function LubeStockTab({ products }) {
                     <span className="ml-2 text-xs text-gray-600">{entry.product?.product_name || 'Unknown'}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    Stock: {Number(entry.stock).toLocaleString()}
+                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
+                    {' · '}Stock: {Number(entry.stock).toLocaleString()}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>

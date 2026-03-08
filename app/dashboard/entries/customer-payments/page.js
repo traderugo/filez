@@ -175,7 +175,8 @@ export default function CustomerPaymentsPage() {
                     <span className="ml-2 text-xs text-gray-400">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    Paid: &#8358;{Number(entry.amount_paid).toLocaleString()} · Sales: &#8358;{Number(entry.sales_amount).toLocaleString()}
+                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
+                    {' · '}Paid: &#8358;{Number(entry.amount_paid).toLocaleString()} · Sales: &#8358;{Number(entry.sales_amount).toLocaleString()}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>

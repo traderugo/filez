@@ -194,7 +194,8 @@ export default function LodgementsPage() {
                     <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{typeLabel[entry.lodgement_type] || entry.lodgement_type}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    &#8358;{Number(entry.amount).toLocaleString()} · {entry.bank?.bank_name || 'Unknown'}
+                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
+                    {' · '}&#8358;{Number(entry.amount).toLocaleString()} · {entry.bank?.bank_name || 'Unknown'}
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>
