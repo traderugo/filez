@@ -69,6 +69,14 @@ export async function POST(request) {
           .from('users')
           .update({ org_id })
           .eq('id', existing.id)
+
+        // Create accepted invite for multi-station membership
+        await supabaseAdmin
+          .from('org_invites')
+          .upsert(
+            { org_id, email: email.toLowerCase(), status: 'accepted', invited_at: new Date().toISOString(), responded_at: new Date().toISOString() },
+            { onConflict: 'org_id,email' }
+          )
       }
       return NextResponse.json({ ok: true, existing: true })
     }
@@ -93,6 +101,14 @@ export async function POST(request) {
             password_hash: hash,
             ...(org_id ? { org_id } : {}),
           })
+          if (org_id) {
+            await supabaseAdmin
+              .from('org_invites')
+              .upsert(
+                { org_id, email: email.toLowerCase(), status: 'accepted', invited_at: new Date().toISOString(), responded_at: new Date().toISOString() },
+                { onConflict: 'org_id,email' }
+              )
+          }
           return NextResponse.json({ ok: true })
         }
       }
@@ -112,6 +128,15 @@ export async function POST(request) {
 
     if (profileError) {
       return NextResponse.json({ error: 'Failed to create profile' }, { status: 500 })
+    }
+
+    if (org_id) {
+      await supabaseAdmin
+        .from('org_invites')
+        .upsert(
+          { org_id, email: email.toLowerCase(), status: 'accepted', invited_at: new Date().toISOString(), responded_at: new Date().toISOString() },
+          { onConflict: 'org_id,email' }
+        )
     }
 
     return NextResponse.json({ ok: true })

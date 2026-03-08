@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2, Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
-const API = '/api/entries/lodgements'
-
 export default function LodgementsPage() {
+  const searchParams = useSearchParams()
+  const orgId = searchParams.get('org_id') || ''
+  const qs = `org_id=${orgId}`
+  const API = '/api/entries/lodgements'
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -31,13 +34,13 @@ export default function LodgementsPage() {
   const totalPages = Math.ceil(total / limit)
 
   const loadBanks = async () => {
-    const res = await fetch('/api/entries/nozzles')
+    const res = await fetch(`/api/entries/nozzles?${qs}`)
     // Banks aren't returned from nozzles endpoint, so we use the config endpoint
     // We need to get org_id first — we'll fetch banks alongside entries
   }
 
   const loadEntries = async (p = page) => {
-    const res = await fetch(`${API}?page=${p}&limit=${limit}`)
+    const res = await fetch(`${API}?page=${p}&limit=${limit}&${qs}`)
     if (res.status === 403) { setLocked(true); setLoading(false); return }
     if (res.ok) {
       const data = await res.json()
@@ -50,7 +53,7 @@ export default function LodgementsPage() {
   useEffect(() => {
     const init = async () => {
       // Load bank accounts for dropdown
-      const bankRes = await fetch('/api/entries/banks')
+      const bankRes = await fetch(`/api/entries/banks?${qs}`)
       if (bankRes.ok) {
         const bankData = await bankRes.json()
         setBanks(bankData.banks || [])
@@ -87,7 +90,7 @@ export default function LodgementsPage() {
     const body = { entry_date: formDate, amount: Number(amount) || 0, bank_id: bankId, lodgement_type: lodgementType, sales_date: salesDate || null, notes }
     if (editingId) body.id = editingId
 
-    const res = await fetch(API, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const res = await fetch(`${API}?${qs}`, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     if (res.ok) { resetForm(); loadEntries(page) }
     else { const data = await res.json(); setError(data.error || 'Failed to save') }
     setSaving(false)
@@ -95,7 +98,7 @@ export default function LodgementsPage() {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return
-    await fetch(API, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    await fetch(`${API}?${qs}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     loadEntries(page)
   }
 

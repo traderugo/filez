@@ -33,14 +33,16 @@ export async function GET(request) {
       .eq('status', 'pending')
       .order('invited_at', { ascending: false })
 
-    // Also fetch accepted invite for current station (for page permissions)
+    // Also fetch accepted invite for a specific station (for page permissions)
+    const { searchParams } = new URL(request.url)
+    const org_id = searchParams.get('org_id') || user.org_id
     let visiblePages = null
-    if (user.org_id) {
+    if (org_id) {
       const { data: membership } = await supabase
         .from('org_invites')
         .select('visible_pages')
         .eq('email', user.email)
-        .eq('org_id', user.org_id)
+        .eq('org_id', org_id)
         .eq('status', 'accepted')
         .single()
       visiblePages = membership?.visible_pages ?? ['dso', 'lube']

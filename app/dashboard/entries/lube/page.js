@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2, Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -9,6 +10,9 @@ const SALES_API = '/api/entries/lube-sales'
 const STOCK_API = '/api/entries/lube-stock'
 
 export default function LubePage() {
+  const searchParams = useSearchParams()
+  const orgId = searchParams.get('org_id') || ''
+  const qs = `org_id=${orgId}`
   const [tab, setTab] = useState('sales')
   const [locked, setLocked] = useState(false)
   const [checkingAccess, setCheckingAccess] = useState(true)
@@ -17,8 +21,8 @@ export default function LubePage() {
   useEffect(() => {
     const check = async () => {
       const [accessRes, prodRes] = await Promise.all([
-        fetch(`${SALES_API}?page=1&limit=1`),
-        fetch('/api/entries/lube-products'),
+        fetch(`${SALES_API}?page=1&limit=1&${qs}`),
+        fetch(`/api/entries/lube-products?${qs}`),
       ])
       if (accessRes.status === 403) setLocked(true)
       if (prodRes.ok) {
@@ -68,13 +72,13 @@ export default function LubePage() {
         </button>
       </div>
 
-      {tab === 'sales' ? <LubeSalesTab products={products} /> : <LubeStockTab products={products} />}
+      {tab === 'sales' ? <LubeSalesTab products={products} qs={qs} /> : <LubeStockTab products={products} qs={qs} />}
     </div>
   )
 }
 
 /* -- Lube Sales Tab -- */
-function LubeSalesTab({ products }) {
+function LubeSalesTab({ products, qs }) {
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -96,7 +100,7 @@ function LubeSalesTab({ products }) {
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {
-    const res = await fetch(`${SALES_API}?page=${p}&limit=${limit}`)
+    const res = await fetch(`${SALES_API}?page=${p}&limit=${limit}&${qs}`)
     if (res.ok) {
       const data = await res.json()
       setEntries(data.entries || [])
@@ -134,7 +138,7 @@ function LubeSalesTab({ products }) {
     const body = { entry_date: formDate, product_id: productId, unit_sold: Number(unitSold) || 0, unit_received: Number(unitReceived) || 0, price: Number(price) || 0, notes }
     if (editingId) body.id = editingId
 
-    const res = await fetch(SALES_API, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const res = await fetch(`${SALES_API}?${qs}`, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     if (res.ok) { resetForm(); loadEntries(page) }
     else { const data = await res.json(); setError(data.error || 'Failed to save') }
     setSaving(false)
@@ -142,7 +146,7 @@ function LubeSalesTab({ products }) {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return
-    await fetch(SALES_API, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    await fetch(`${SALES_API}?${qs}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     loadEntries(page)
   }
 
@@ -242,7 +246,7 @@ function LubeSalesTab({ products }) {
 }
 
 /* -- Lube Stock Tab -- */
-function LubeStockTab({ products }) {
+function LubeStockTab({ products, qs }) {
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -262,7 +266,7 @@ function LubeStockTab({ products }) {
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {
-    const res = await fetch(`${STOCK_API}?page=${p}&limit=${limit}`)
+    const res = await fetch(`${STOCK_API}?page=${p}&limit=${limit}&${qs}`)
     if (res.ok) {
       const data = await res.json()
       setEntries(data.entries || [])
@@ -298,7 +302,7 @@ function LubeStockTab({ products }) {
     const body = { entry_date: formDate, product_id: productId, stock: Number(stock) || 0, notes }
     if (editingId) body.id = editingId
 
-    const res = await fetch(STOCK_API, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const res = await fetch(`${STOCK_API}?${qs}`, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     if (res.ok) { resetForm(); loadEntries(page) }
     else { const data = await res.json(); setError(data.error || 'Failed to save') }
     setSaving(false)
@@ -306,7 +310,7 @@ function LubeStockTab({ products }) {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return
-    await fetch(STOCK_API, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    await fetch(`${STOCK_API}?${qs}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     loadEntries(page)
   }
 

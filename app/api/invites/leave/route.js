@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getPinUserFromRequest } from '@/lib/pinAuth'
 import { createClient } from '@supabase/supabase-js'
 
-// POST — user leaves their current station
+// POST — user leaves a station (updates invite status, clears org_id if it matches)
 export async function POST(request) {
   try {
     const user = await getPinUserFromRequest(request)
@@ -10,8 +10,9 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!user.org_id) {
-      return NextResponse.json({ error: 'You are not in a station' }, { status: 400 })
+    const { org_id } = await request.json()
+    if (!org_id) {
+      return NextResponse.json({ error: 'Station is required' }, { status: 400 })
     }
 
     const supabase = createClient(
@@ -19,13 +20,20 @@ export async function POST(request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-    const { error } = await supabase
-      .from('users')
-      .update({ org_id: null })
-      .eq('id', user.id)
+    // Update invite status to 'left'
+    await supabase
+      .from('org_invites')
+      .update({ status: 'left', responded_at: new Date().toISOString() })
+      .eq('org_id', org_id)
+      .eq('email', user.email)
+      .eq('status', 'accepted')
 
-    if (error) {
-      return NextResponse.json({ error: 'Failed to leave station' }, { status: 500 })
+    // Clear org_id if it matches this station
+    if (user.org_id === org_id) {
+      await supabase
+        .from('users')
+        .update({ org_id: null })
+        .eq('id', user.id)
     }
 
     return NextResponse.json({ ok: true })

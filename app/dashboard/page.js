@@ -20,8 +20,9 @@ export default function DashboardPage() {
   const [accepting, setAccepting] = useState(null)
   const [visiblePages, setVisiblePages] = useState(null)
 
-  // Stations (manager)
+  // Stations (manager + member)
   const [stations, setStations] = useState([])
+  const [memberStations, setMemberStations] = useState([])
   const [showAdd, setShowAdd] = useState(false)
   const [newName, setNewName] = useState('')
   const [adding, setAdding] = useState(false)
@@ -40,6 +41,7 @@ export default function DashboardPage() {
     if (res.ok) {
       const data = await res.json()
       setStations(data.stations || [])
+      setMemberStations(data.memberStations || [])
     }
   }
 
@@ -102,9 +104,6 @@ export default function DashboardPage() {
     )
   }
 
-  // Staff = belongs to a station but doesn't own any stations
-  const isStaff = profile?.org_id && stations.length === 0
-
   const daysLeft = subscription?.end_date
     ? differenceInDays(new Date(subscription.end_date), new Date())
     : null
@@ -143,8 +142,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* My Stations (manager only) */}
-      {!isStaff && <div className="border-t border-gray-200 pt-6 mb-8">
+      {/* My Stations */}
+      <div className="border-t border-gray-200 pt-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Stations</h2>
           <button
@@ -214,10 +213,38 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-      </div>}
+      </div>
 
-      {/* Subscription status (manager only) */}
-      {!isStaff && (
+      {/* Member Stations (joined via invite) */}
+      {memberStations.length > 0 && (
+        <div className="border-t border-gray-200 pt-6 mb-8">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Stations I&apos;ve Joined</h2>
+          <div className="space-y-3">
+            {memberStations.map((station) => (
+              <div key={station.id} className="border border-gray-200">
+                <div className="flex items-center gap-3 p-4">
+                  <Fuel className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-base font-semibold text-gray-900">{station.name}</span>
+                    {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
+                  </div>
+                </div>
+                <div className="border-t border-gray-100 px-4 py-2.5 flex justify-end">
+                  <Link
+                    href={`/dashboard/stations/${station.id}`}
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                  >
+                    Open <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Subscription status */}
+      {stations.length > 0 && (
         <div className="border-t border-gray-200 pt-6 mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Subscription</h2>

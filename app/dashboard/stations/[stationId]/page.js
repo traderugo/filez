@@ -25,6 +25,7 @@ export default function StationPage() {
 
   const [loading, setLoading] = useState(true)
   const [station, setStation] = useState(null)
+  const [isOwner, setIsOwner] = useState(false)
 
   // Staff invite state
   const [invites, setInvites] = useState([])
@@ -57,14 +58,19 @@ export default function StationPage() {
       const res = await fetch('/api/organizations')
       if (!res.ok) { router.push('/dashboard'); return }
       const data = await res.json()
-      const s = (data.stations || []).find((st) => st.id === stationId)
+      const owned = (data.stations || []).find((st) => st.id === stationId)
+      const member = (data.memberStations || []).find((st) => st.id === stationId)
+      const s = owned || member
       if (!s) { router.push('/dashboard'); return }
       setStation(s)
+      setIsOwner(!!owned)
 
-      const invRes = await fetch(`/api/invites/list?org_id=${stationId}`)
-      if (invRes.ok) {
-        const invData = await invRes.json()
-        setInvites(invData.invites || [])
+      if (owned) {
+        const invRes = await fetch(`/api/invites/list?org_id=${stationId}`)
+        if (invRes.ok) {
+          const invData = await invRes.json()
+          setInvites(invData.invites || [])
+        }
       }
       setLoading(false)
     }
@@ -172,6 +178,7 @@ export default function StationPage() {
     const res = await fetch('/api/invites/leave', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ org_id: stationId }),
     })
     if (res.ok) {
       router.push('/dashboard')
@@ -227,11 +234,11 @@ export default function StationPage() {
   }
 
   const entryLinks = [
-    { href: '/dashboard/entries/daily-sales', icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, and pricing' },
-    { href: '/dashboard/entries/product-receipt', icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries, waybills, and compartments' },
-    { href: '/dashboard/entries/lodgements', icon: CreditCard, label: 'Lodgements', desc: 'Deposits, lube deposits, and POS' },
-    { href: '/dashboard/entries/lube', icon: Droplets, label: 'Lube', desc: 'Lube sales and stock entries' },
-    { href: '/dashboard/entries/customer-payments', icon: Users, label: 'Customer Payments', desc: 'Credit sales and payments' },
+    { href: `/dashboard/entries/daily-sales?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, and pricing' },
+    { href: `/dashboard/entries/product-receipt?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries, waybills, and compartments' },
+    { href: `/dashboard/entries/lodgements?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits, lube deposits, and POS' },
+    { href: `/dashboard/entries/lube?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock entries' },
+    { href: `/dashboard/entries/customer-payments?org_id=${stationId}`, icon: Users, label: 'Customer Payments', desc: 'Credit sales and payments' },
   ]
 
   return (
@@ -274,177 +281,182 @@ export default function StationPage() {
         </div>
       </section>
 
-      {/* Staff */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
-          <UserPlus className="w-4 h-4" /> Staff
-        </h2>
+      {/* Staff (owner only) */}
+      {isOwner && (
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <UserPlus className="w-4 h-4" /> Staff
+          </h2>
 
-        <button
-          onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInvitePassword(''); setInviteError('') }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 mb-4"
-        >
-          <Plus className="w-4 h-4" /> Invite Staff
-        </button>
+          <button
+            onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInvitePassword(''); setInviteError('') }}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 mb-4"
+          >
+            <Plus className="w-4 h-4" /> Invite Staff
+          </button>
 
-        {invites.length > 0 && (
-          <div className="space-y-2">
-            {invites.map((inv) => {
-              const isExpanded = expandedStaff === inv.id
-              const pages = inv.visible_pages || []
-              return (
-                <div key={inv.id} className="border border-gray-200">
-                  {/* Staff header row */}
-                  <div className="flex items-center justify-between p-3">
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Mail className="w-4 h-4 text-blue-600" />
+          {invites.length > 0 && (
+            <div className="space-y-2">
+              {invites.map((inv) => {
+                const isExpanded = expandedStaff === inv.id
+                const pages = inv.visible_pages || []
+                return (
+                  <div key={inv.id} className="border border-gray-200">
+                    {/* Staff header row */}
+                    <div className="flex items-center justify-between p-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Mail className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-gray-900 truncate">{inv.email}</p>
+                          <span className={`inline-block text-sm px-2 py-0.5 rounded-full font-medium mt-0.5 ${
+                            inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                            inv.status === 'declined' ? 'bg-red-100 text-red-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {inv.status}
+                          </span>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-gray-900 truncate">{inv.email}</p>
-                        <span className={`inline-block text-sm px-2 py-0.5 rounded-full font-medium mt-0.5 ${
-                          inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                          inv.status === 'declined' ? 'bg-red-100 text-red-700' :
-                          'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {inv.status}
-                        </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => resetStaffPassword(inv.email)}
+                          disabled={resetting === inv.email}
+                          className="p-2 text-gray-400 hover:text-blue-600"
+                          title="Reset password"
+                        >
+                          {resetting === inv.email ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                        </button>
+                        <button
+                          onClick={() => setExpandedStaff(isExpanded ? null : inv.id)}
+                          className="p-2 text-gray-400 hover:text-gray-600"
+                          title="Page access"
+                        >
+                          <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => resetStaffPassword(inv.email)}
-                        disabled={resetting === inv.email}
-                        className="p-2 text-gray-400 hover:text-blue-600"
-                        title="Reset password"
-                      >
-                        {resetting === inv.email ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-                      </button>
-                      <button
-                        onClick={() => setExpandedStaff(isExpanded ? null : inv.id)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
-                        title="Page access"
-                      >
-                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                      </button>
-                    </div>
+
+                    {/* Expanded: page permissions + delete */}
+                    {isExpanded && (
+                      <div className="border-t border-gray-100 px-3 py-3 bg-gray-50">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Page Access</p>
+                        <div className="space-y-2 mb-4">
+                          {PAGE_OPTIONS.map((page) => (
+                            <label key={page.key} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={pages.includes(page.key)}
+                                onChange={() => togglePagePermission(inv.id, page.key, pages)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                              />
+                              <span className="text-sm text-gray-700">{page.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => { setDeleteModal({ id: inv.id, email: inv.email }); setDeletePassword(''); setDeleteError('') }}
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" /> Remove Staff
+                        </button>
+                      </div>
+                    )}
                   </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
-                  {/* Expanded: page permissions + delete */}
-                  {isExpanded && (
-                    <div className="border-t border-gray-100 px-3 py-3 bg-gray-50">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Page Access</p>
-                      <div className="space-y-2 mb-4">
-                        {PAGE_OPTIONS.map((page) => (
-                          <label key={page.key} className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={pages.includes(page.key)}
-                              onChange={() => togglePagePermission(inv.id, page.key, pages)}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                            />
-                            <span className="text-sm text-gray-700">{page.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => { setDeleteModal({ id: inv.id, email: inv.email }); setDeletePassword(''); setDeleteError('') }}
-                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" /> Remove Staff
-                      </button>
-                    </div>
-                  )}
+      {/* Manage Station (owner only) */}
+      {isOwner && (
+        <section className="mb-8">
+          <button
+            onClick={() => { setShowManage(!showManage); if (!showManage) setEditName(station.name) }}
+            className="w-full flex items-center justify-between py-3 text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
+          >
+            Manage Station
+            <ChevronDown className={`w-4 h-4 transition-transform ${showManage ? 'rotate-180' : ''}`} />
+          </button>
+
+          {showManage && (
+            <div className="border border-gray-200 p-4 space-y-4">
+              {!station.onboarding_complete ? (
+                <Link
+                  href={`/dashboard/setup/${stationId}`}
+                  className="flex items-center gap-3 border border-orange-200 bg-orange-50 p-3 hover:bg-orange-100 transition-colors"
+                >
+                  <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-orange-800">Set up this station</p>
+                    <p className="text-sm text-orange-600">Configure nozzles, tanks, and lodgements</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-orange-400" />
+                </Link>
+              ) : (
+                <Link
+                  href={`/dashboard/stations/${stationId}/settings`}
+                  className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                >
+                  <Settings className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Station Settings</p>
+                    <p className="text-sm text-gray-500">Nozzles, tanks, lodgements, products, customers</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                </Link>
+              )}
+
+              <div className="border-t border-gray-200 pt-4" />
+
+              <form onSubmit={updateStation} className="space-y-3">
+                <div>
+                  <label className="block text-sm text-gray-500 mb-1">Station Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    maxLength={100}
+                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
+                <button
+                  type="submit"
+                  disabled={saving || !editName.trim()}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
+                  Rename
+                </button>
+              </form>
 
-      {/* Manage Station */}
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-sm text-gray-500 mb-2">Permanently delete this station and all its data.</p>
+                <button
+                  onClick={deleteStation}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700"
+                >
+                  <Trash2 className="w-4 h-4" /> Delete Station
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Leave Station (members and owners) */}
       <section>
         <button
-          onClick={() => { setShowManage(!showManage); if (!showManage) setEditName(station.name) }}
-          className="w-full flex items-center justify-between py-3 text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
+          onClick={leaveStation}
+          disabled={leaving}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
         >
-          Manage Station
-          <ChevronDown className={`w-4 h-4 transition-transform ${showManage ? 'rotate-180' : ''}`} />
+          {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+          Leave Station
         </button>
-
-        {showManage && (
-          <div className="border border-gray-200 p-4 space-y-4">
-            {!station.onboarding_complete ? (
-              <Link
-                href={`/dashboard/setup/${stationId}`}
-                className="flex items-center gap-3 border border-orange-200 bg-orange-50 p-3 hover:bg-orange-100 transition-colors"
-              >
-                <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-orange-800">Set up this station</p>
-                  <p className="text-sm text-orange-600">Configure nozzles, tanks, and lodgements</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-orange-400" />
-              </Link>
-            ) : (
-              <Link
-                href={`/dashboard/stations/${stationId}/settings`}
-                className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-              >
-                <Settings className="w-5 h-5 text-gray-600 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">Station Settings</p>
-                  <p className="text-sm text-gray-500">Nozzles, tanks, lodgements, products, customers</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </Link>
-            )}
-
-            <div className="border-t border-gray-200 pt-4" />
-
-            <form onSubmit={updateStation} className="space-y-3">
-              <div>
-                <label className="block text-sm text-gray-500 mb-1">Station Name</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  maxLength={100}
-                  className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={saving || !editName.trim()}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-              >
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
-                Rename
-              </button>
-            </form>
-
-            <div className="border-t border-gray-200 pt-4">
-              <button
-                onClick={leaveStation}
-                disabled={leaving}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
-              >
-                {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
-                Leave Station
-              </button>
-            </div>
-
-            <div className="border-t border-gray-200 pt-4">
-              <p className="text-sm text-gray-500 mb-2">Permanently delete this station and all its data.</p>
-              <button
-                onClick={deleteStation}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700"
-              >
-                <Trash2 className="w-4 h-4" /> Delete Station
-              </button>
-            </div>
-          </div>
-        )}
       </section>
 
       {/* Invite Staff Modal */}

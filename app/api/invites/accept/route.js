@@ -37,20 +37,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invite not found or already used' }, { status: 404 })
     }
 
-    // Block if user already belongs to a station
-    if (user.org_id) {
-      return NextResponse.json({ error: 'You already belong to a station. Leave your current station first.' }, { status: 400 })
-    }
-
-    // Update user's org_id to join the station
-    const { error: userError } = await supabase
+    // Update user's org_id to latest accepted station (convenience field)
+    await supabase
       .from('users')
       .update({ org_id: invite.org_id })
       .eq('id', user.id)
-
-    if (userError) {
-      return NextResponse.json({ error: 'Failed to join station' }, { status: 500 })
-    }
 
     // Mark invite as accepted
     await supabase

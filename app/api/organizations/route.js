@@ -35,7 +35,20 @@ export async function GET(request) {
       .eq('owner_id', user.id)
       .order('created_at')
 
-    return NextResponse.json({ stations: stations || [] })
+    // Fetch stations the user is a member of (via accepted invites, not owner)
+    const { data: invites } = await supabase
+      .from('org_invites')
+      .select('org_id, organizations(id, name, slug, location, onboarding_complete)')
+      .eq('email', user.email)
+      .eq('status', 'accepted')
+
+    const ownedIds = new Set((stations || []).map(s => s.id))
+    const memberStations = (invites || [])
+      .map(i => i.organizations)
+      .filter(Boolean)
+      .filter(org => !ownedIds.has(org.id))
+
+    return NextResponse.json({ stations: stations || [], memberStations })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

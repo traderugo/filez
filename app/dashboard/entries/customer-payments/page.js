@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2, Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
-const API = '/api/entries/customer-payments'
-
 export default function CustomerPaymentsPage() {
+  const searchParams = useSearchParams()
+  const orgId = searchParams.get('org_id') || ''
+  const qs = `org_id=${orgId}`
+  const API = '/api/entries/customer-payments'
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -30,7 +33,7 @@ export default function CustomerPaymentsPage() {
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {
-    const res = await fetch(`${API}?page=${p}&limit=${limit}`)
+    const res = await fetch(`${API}?page=${p}&limit=${limit}&${qs}`)
     if (res.status === 403) { setLocked(true); setLoading(false); return }
     if (res.ok) {
       const data = await res.json()
@@ -42,7 +45,7 @@ export default function CustomerPaymentsPage() {
 
   useEffect(() => {
     const init = async () => {
-      const custRes = await fetch('/api/entries/customers')
+      const custRes = await fetch(`/api/entries/customers?${qs}`)
       if (custRes.ok) {
         const custData = await custRes.json()
         setCustomers(custData.customers || [])
@@ -78,7 +81,7 @@ export default function CustomerPaymentsPage() {
     const body = { entry_date: formDate, customer_id: customerId, amount_paid: Number(amountPaid) || 0, sales_amount: Number(salesAmount) || 0, notes }
     if (editingId) body.id = editingId
 
-    const res = await fetch(API, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    const res = await fetch(`${API}?${qs}`, { method: editingId ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     if (res.ok) { resetForm(); loadEntries(page) }
     else { const data = await res.json(); setError(data.error || 'Failed to save') }
     setSaving(false)
@@ -86,7 +89,7 @@ export default function CustomerPaymentsPage() {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return
-    await fetch(API, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    await fetch(`${API}?${qs}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     loadEntries(page)
   }
 

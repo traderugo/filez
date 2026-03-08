@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2, Plus, Pencil, Trash2, X, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 
-const API = '/api/entries/product-receipt'
-
 export default function ProductReceiptPage() {
+  const searchParams = useSearchParams()
+  const orgId = searchParams.get('org_id') || ''
+  const qs = `org_id=${orgId}`
+  const API = '/api/entries/product-receipt'
   const [entries, setEntries] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -34,7 +37,7 @@ export default function ProductReceiptPage() {
   const totalPages = Math.ceil(total / limit)
 
   const loadEntries = async (p = page) => {
-    const res = await fetch(`${API}?page=${p}&limit=${limit}`)
+    const res = await fetch(`${API}?page=${p}&limit=${limit}&${qs}`)
     if (res.status === 403) { setLocked(true); setLoading(false); return }
     if (res.ok) {
       const data = await res.json()
@@ -46,7 +49,7 @@ export default function ProductReceiptPage() {
 
   useEffect(() => {
     const init = async () => {
-      const tankRes = await fetch('/api/entries/tanks')
+      const tankRes = await fetch(`/api/entries/tanks?${qs}`)
       if (tankRes.ok) {
         const tankData = await tankRes.json()
         setTanks(tankData.tanks || [])
@@ -109,7 +112,7 @@ export default function ProductReceiptPage() {
     const body = { ...form }
     if (editingId) body.id = editingId
 
-    const res = await fetch(API, {
+    const res = await fetch(`${API}?${qs}`, {
       method: editingId ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -122,7 +125,7 @@ export default function ProductReceiptPage() {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return
-    await fetch(API, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    await fetch(`${API}?${qs}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     loadEntries(page)
   }
 
