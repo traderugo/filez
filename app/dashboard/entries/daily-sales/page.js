@@ -12,6 +12,7 @@ export default function DailySalesPage() {
   const [loading, setLoading] = useState(true)
   const [locked, setLocked] = useState(false)
   const [nozzles, setNozzles] = useState([])
+  const [tanks, setTanks] = useState([])
 
   // Form state
   const [showForm, setShowForm] = useState(false)
@@ -20,7 +21,7 @@ export default function DailySalesPage() {
   const [error, setError] = useState('')
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
   const [nozzleReadings, setNozzleReadings] = useState([])
-  const [ugtClosingStock, setUgtClosingStock] = useState('')
+  const [tankReadings, setTankReadings] = useState([])
   const [price, setPrice] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -39,14 +40,34 @@ export default function DailySalesPage() {
   }
 
   const loadNozzles = async () => {
-    const res = await fetch('/api/entries/nozzles')
-    if (res.ok) {
+    try {
+      const res = await fetch('/api/entries/nozzles')
+      if (!res.ok) {
+        console.error('Failed to load nozzles:', res.status, await res.text())
+        return
+      }
       const data = await res.json()
       setNozzles(data.nozzles || [])
+    } catch (err) {
+      console.error('Error loading nozzles:', err)
     }
   }
 
-  useEffect(() => { loadEntries(); loadNozzles() }, [])
+  const loadTanks = async () => {
+    try {
+      const res = await fetch('/api/entries/tanks')
+      if (!res.ok) {
+        console.error('Failed to load tanks:', res.status, await res.text())
+        return
+      }
+      const data = await res.json()
+      setTanks(data.tanks || [])
+    } catch (err) {
+      console.error('Error loading tanks:', err)
+    }
+  }
+
+  useEffect(() => { loadEntries(); loadNozzles(); loadTanks() }, [])
   useEffect(() => { loadEntries(page) }, [page])
 
   const resetForm = () => {
@@ -54,7 +75,7 @@ export default function DailySalesPage() {
     setEditingId(null)
     setFormDate(new Date().toISOString().split('T')[0])
     setNozzleReadings([])
-    setUgtClosingStock('')
+    setTankReadings([])
     setPrice('')
     setNotes('')
     setError('')
@@ -69,25 +90,39 @@ export default function DailySalesPage() {
       consumption: '',
       pour_back: '',
     })))
+    setTankReadings(tanks.map((t) => ({
+      tank_id: t.id,
+      label: `${t.fuel_type} Tank ${t.tank_number}`,
+      closing_stock: String(t.opening_stock || 0),
+    })))
     setShowForm(true)
   }
 
   const openEdit = (entry) => {
     setEditingId(entry.id)
     setFormDate(entry.entry_date)
-    setUgtClosingStock(String(entry.ugt_closing_stock || ''))
     setPrice(String(entry.price || ''))
     setNotes(entry.notes || '')
-    // Merge saved readings with current nozzle config
-    const saved = entry.nozzle_readings || []
+    // Merge saved nozzle readings with current nozzle config
+    const savedNozzles = entry.nozzle_readings || []
     setNozzleReadings(nozzles.map((n) => {
-      const match = saved.find((r) => r.pump_id === n.id)
+      const match = savedNozzles.find((r) => r.pump_id === n.id)
       return {
         pump_id: n.id,
         label: `${n.fuel_type} ${n.pump_number}`,
         closing_meter: match ? String(match.closing_meter || '') : '',
         consumption: match ? String(match.consumption || '') : '',
         pour_back: match ? String(match.pour_back || '') : '',
+      }
+    }))
+    // Merge saved tank readings with current tank config
+    const savedTanks = entry.tank_readings || []
+    setTankReadings(tanks.map((t) => {
+      const match = savedTanks.find((r) => r.tank_id === t.id)
+      return {
+        tank_id: t.id,
+        label: `${t.fuel_type} Tank ${t.tank_number}`,
+        closing_stock: match ? String(match.closing_stock || '') : String(t.opening_stock || 0),
       }
     }))
     setShowForm(true)
@@ -98,13 +133,17 @@ export default function DailySalesPage() {
     setNozzleReadings((prev) => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r))
   }
 
+  const updateTankReading = (idx, value) => {
+    setTankReadings((prev) => prev.map((r, i) => i === idx ? { ...r, closing_stock: value } : r))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!formDate) { setError('Date is required'); return }
 
-    // Validate all fields are filled
     if (!price || Number(price) <= 0) { setError('Price is required'); return }
-    if (!ugtClosingStock && ugtClosingStock !== '0') { setError('UGT closing stock is required'); return }
+    const missingTank = tankReadings.find((r) => r.closing_stock === '' || r.closing_stock === undefined)
+    if (missingTank) { setError(`Closing stock is required for ${missingTank.label}`); return }
     const missingReading = nozzleReadings.find((r) => r.closing_meter === '' || r.closing_meter === undefined)
     if (missingReading) { setError(`Closing meter is required for ${missingReading.label}`); return }
 
@@ -119,10 +158,16 @@ export default function DailySalesPage() {
       pour_back: Number(r.pour_back) || 0,
     }))
 
+    const tankData = tankReadings.map((r) => ({
+      tank_id: r.tank_id,
+      tank_label: r.label,
+      closing_stock: Number(r.closing_stock) || 0,
+    }))
+
     const body = {
       entry_date: formDate,
       nozzle_readings: readings,
-      ugt_closing_stock: Number(ugtClosingStock) || 0,
+      tank_readings: tankData,
       price: Number(price) || 0,
       notes,
     }
@@ -236,14 +281,33 @@ export default function DailySalesPage() {
 
           {nozzles.length === 0 && (
             <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 p-3">
-              No nozzles configured. Set up your station first.
+              No nozzles found. Please check your station setup or try refreshing the page.
             </p>
           )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">UGT Closing Stock</label>
-            <input type="number" value={ugtClosingStock} onChange={(e) => setUgtClosingStock(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
+          {/* Tank readings */}
+          {tankReadings.length > 0 && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">UGT Closing Stock</label>
+              <div className="space-y-3">
+                {tankReadings.map((r, idx) => (
+                  <div key={r.tank_id} className="border border-gray-100 p-3">
+                    <p className="text-sm font-medium text-gray-700 mb-2">{r.label}</p>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Closing Stock (litres)</label>
+                      <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(idx, e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tanks.length === 0 && (
+            <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 p-3">
+              No tanks found. Please check your station setup or try refreshing the page.
+            </p>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
