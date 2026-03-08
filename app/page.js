@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { FolderOpen, FileSpreadsheet, Shield, Clock } from 'lucide-react'
+import Footer from '@/components/Footer'
 
 export default function LandingPage() {
   return (
@@ -58,5 +59,6 @@ export default function LandingPage() {
         </div>
       </div>
     </div>
+    <Footer />
   )
 }
