@@ -160,8 +160,6 @@ export default function StationPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      <Link href="/dashboard" className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; Dashboard</Link>
-
       <div className="flex items-center gap-3 mb-8">
         <Fuel className="w-6 h-6 text-blue-600" />
         <div>

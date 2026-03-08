@@ -219,7 +219,6 @@ export default function StationSettingsPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      <Link href={`/dashboard/stations/${stationId}`} className="text-xs text-gray-500 hover:text-gray-700 mb-1 inline-block">&larr; Back</Link>
       <h1 className="text-xl font-bold text-gray-900 mb-6">{stationName} Settings</h1>
 
       {/* Location */}
