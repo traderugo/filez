@@ -93,7 +93,7 @@ export default function DailySalesPage() {
     setTankReadings(tanks.map((t) => ({
       tank_id: t.id,
       label: `${t.fuel_type} Tank ${t.tank_number}`,
-      closing_stock: String(t.opening_stock || 0),
+      closing_stock: '',
     })))
     setShowForm(true)
   }
@@ -122,7 +122,7 @@ export default function DailySalesPage() {
       return {
         tank_id: t.id,
         label: `${t.fuel_type} Tank ${t.tank_number}`,
-        closing_stock: match ? String(match.closing_stock || '') : String(t.opening_stock || 0),
+        closing_stock: match ? String(match.closing_stock || '') : '',
       }
     }))
     setShowForm(true)
@@ -289,10 +289,10 @@ export default function DailySalesPage() {
           {tankReadings.length > 0 && (
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">UGT Closing Stock</label>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {tankReadings.map((r, idx) => (
-                  <div key={r.tank_id} className="border border-gray-100 p-3">
-                    <p className="text-sm font-medium text-gray-700 mb-2">{r.label}</p>
+                  <div key={r.tank_id}>
+                    <p className="text-sm font-medium text-gray-700 mb-1">{r.label}</p>
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">Closing Stock (litres)</label>
                       <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(idx, e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
