@@ -199,7 +199,7 @@ export default function LodgementsPage() {
                     {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>
-                <button onClick={() => openEdit(entry)} className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"><Pencil className="w-3.5 h-3.5" /> Edit</button>
+                <button onClick={() => openEdit(entry)} className="flex items-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded hover:bg-blue-50"><Pencil className="w-3.5 h-3.5" /> Edit</button>
               </div>
             ))}
           </div>
