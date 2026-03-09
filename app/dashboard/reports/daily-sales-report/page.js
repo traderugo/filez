@@ -114,7 +114,8 @@ function DailySalesReportContent() {
       } : null,
     })
 
-    const fuelTypes = [...new Set(nozzles.map(n => n.fuel_type))]
+    // Force fuel type order: PMS first, then AGO, then DPK
+    const fuelTypes = ['PMS', 'AGO', 'DPK'].filter(ft => nozzles.some(n => n.fuel_type === ft))
 
     // Build per-entry groups — each entry gets its own nozzle rows
     const entryGroups = []
@@ -125,13 +126,14 @@ function DailySalesReportContent() {
 
     for (let eIdx = 0; eIdx < todayEntries.length; eIdx++) {
       const currentEntry = todayEntries[eIdx]
-      const prevEntry = eIdx === 0 ? prevDayEntry : todayEntries[eIdx - 1]
+      // All entries on the same day use previous DAY's last closing as opening (not chained)
+      const prevEntry = prevDayEntry
 
       const nozzleRows = []
       const entryFuelTotals = {}
 
       for (const ft of fuelTypes) {
-        const ftNozzles = nozzles.filter(n => n.fuel_type === ft)
+        const ftNozzles = nozzles.filter(n => n.fuel_type === ft).sort((a, b) => Number(a.pump_number) - Number(b.pump_number))
         let ftDispensed = 0
         let ftConsumed = 0
         let ftActual = 0
@@ -183,7 +185,7 @@ function DailySalesReportContent() {
     if (todayEntries.length === 0) {
       const nozzleRows = []
       for (const ft of fuelTypes) {
-        const ftNozzles = nozzles.filter(n => n.fuel_type === ft)
+        const ftNozzles = nozzles.filter(n => n.fuel_type === ft).sort((a, b) => Number(a.pump_number) - Number(b.pump_number))
         const rows = ftNozzles.map(n => {
           const prevReadings = prevDayEntry?.nozzleReadings || []
           const prevR = prevReadings.find(r => r.pump_id === n.id)
@@ -201,7 +203,7 @@ function DailySalesReportContent() {
     const tanksByFuel = {}
 
     for (const ft of fuelTypes) {
-      const ftTanks = tanks.filter(t => t.fuel_type === ft)
+      const ftTanks = tanks.filter(t => t.fuel_type === ft).sort((a, b) => Number(a.tank_number) - Number(b.tank_number))
       tanksByFuel[ft] = { tanks: [], totalOpening: 0, totalClosing: 0, totalWaybill: 0, totalActualSupply: 0 }
 
       for (const t of ftTanks) {
