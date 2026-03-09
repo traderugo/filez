@@ -34,6 +34,7 @@ function DailySalesReportContent() {
   const today = new Date()
   const [startDate, setStartDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0])
   const [endDate, setEndDate] = useState(today.toISOString().split('T')[0])
+  const [viewDate, setViewDate] = useState(today.toISOString().split('T')[0])
 
   // Config
   const [nozzles, setNozzles] = useState([])
@@ -244,13 +245,17 @@ function DailySalesReportContent() {
   }, [loading, buildReport])
 
   const changeDate = (delta) => {
-    const s = new Date(startDate)
-    const e = new Date(endDate)
-    s.setDate(s.getDate() + delta)
-    e.setDate(e.getDate() + delta)
-    setStartDate(s.toISOString().split('T')[0])
-    setEndDate(e.toISOString().split('T')[0])
+    const d = new Date(viewDate)
+    d.setDate(d.getDate() + delta)
+    const next = d.toISOString().split('T')[0]
+    if (next >= startDate && next <= endDate) setViewDate(next)
   }
+
+  // Clamp viewDate when range changes
+  useEffect(() => {
+    if (viewDate < startDate) setViewDate(startDate)
+    else if (viewDate > endDate) setViewDate(endDate)
+  }, [startDate, endDate])
 
   if (loading) {
     return (
@@ -275,6 +280,8 @@ function DailySalesReportContent() {
   const bdr = 'border border-[#8DB4E2]'
   const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
+
+  const currentDayReport = report?.dateReports.find(r => r.date === viewDate) || null
 
   return (
     <div className="max-w-[1200px] px-4 sm:px-6 py-6">
@@ -302,9 +309,6 @@ function DailySalesReportContent() {
               </>
             )}
           </div>
-          <button onClick={() => changeDate(-1)} className="p-1.5 border border-gray-300 hover:bg-gray-50">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
           <input
             type="date"
             value={startDate}
@@ -318,19 +322,25 @@ function DailySalesReportContent() {
             onChange={(e) => setEndDate(e.target.value)}
             className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <button onClick={() => changeDate(1)} className="p-1.5 border border-gray-300 hover:bg-gray-50">
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
-      {report?.dateReports.map((dayReport) => (
-        <div key={dayReport.date} className="mb-8">
-          {/* Date header */}
-          <div className={`${hdr} px-2 py-1 font-bold text-sm mb-1`}>
-            {new Date(dayReport.date + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
-            {!dayReport.hasEntry && <span className="ml-2 text-yellow-300 font-normal text-xs">(no entry)</span>}
-          </div>
+      {/* Day navigation */}
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <div className={`${hdr} px-3 py-1 font-bold text-sm flex-1 text-center`}>
+          {new Date(viewDate + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          {currentDayReport && !currentDayReport.hasEntry && <span className="ml-2 text-yellow-300 font-normal text-xs">(no entry)</span>}
+        </div>
+        <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+
+      {currentDayReport && (
+        <div>
 
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
             {/* ===== LEFT: DAILY SALES OPERATION ===== */}
@@ -350,33 +360,33 @@ function DailySalesReportContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dayReport.entryGroups.map((group) => (
+                    {currentDayReport.entryGroups.map((group) => (
                       <EntryGroup
                         key={group.entryIndex}
                         group={group}
-                        showHeader={dayReport.entryCount > 1}
+                        showHeader={currentDayReport.entryCount > 1}
                         cell={cell}
                         cellR={cellR}
                         hdr={hdr}
                       />
                     ))}
-                    {dayReport.entryCount > 1 && (
+                    {currentDayReport.entryCount > 1 && (
                       <tr className={`${hdr} font-bold`}>
                         <td className={cell}>DAY TOTAL</td>
                         <td className={cellR}></td>
                         <td className={cellR}></td>
                         <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].dispensed, 0))}
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].dispensed, 0))}
                         </td>
                         <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].consumed, 0))}
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].consumed, 0))}
                         </td>
                         <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].actual, 0))}
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].actual, 0))}
                         </td>
                         <td className={cellR}></td>
                         <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].amount, 0))}
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].amount, 0))}
                         </td>
                       </tr>
                     )}
@@ -401,7 +411,7 @@ function DailySalesReportContent() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dayReport.tankSummaryRows.map((row) => (
+                    {currentDayReport.tankSummaryRows.map((row) => (
                       <TankRow key={row.fuelType} row={row} cell={cell} cellR={cellR} subHdr={subHdr} />
                     ))}
                   </tbody>
@@ -413,13 +423,13 @@ function DailySalesReportContent() {
                 <div>
                   <table className="w-full border-collapse text-sm">
                     <tbody>
-                      {dayReport.posEntries.filter(p => p.lodgementType === 'pos').map((p, i) => (
+                      {currentDayReport.posEntries.filter(p => p.lodgementType === 'pos').map((p, i) => (
                         <tr key={i}>
                           <td className={cell}>{p.bankName}</td>
                           <td className={cellR}>{fmt(p.amount)}</td>
                         </tr>
                       ))}
-                      {(!dayReport.posEntries.filter(p => p.lodgementType === 'pos').length) && (
+                      {(!currentDayReport.posEntries.filter(p => p.lodgementType === 'pos').length) && (
                         <tr><td colSpan={2} className={`${cell} text-gray-400`}>No POS entries</td></tr>
                       )}
                     </tbody>
@@ -428,13 +438,13 @@ function DailySalesReportContent() {
                 <div>
                   <table className="w-full border-collapse text-sm">
                     <tbody>
-                      {dayReport.todayConsumption.map((c, i) => (
+                      {currentDayReport.todayConsumption.map((c, i) => (
                         <tr key={i}>
                           <td className={cell}>{c.fuelType || ''}</td>
                           <td className={cellR}>{fmt(c.quantity)}</td>
                         </tr>
                       ))}
-                      {(!dayReport.todayConsumption?.length) && (
+                      {(!currentDayReport.todayConsumption?.length) && (
                         <tr><td colSpan={2} className={`${cell} text-gray-400`}>No consumption</td></tr>
                       )}
                     </tbody>
@@ -456,29 +466,29 @@ function DailySalesReportContent() {
                   {report.fuelTypes.map(ft => (
                     <tr key={ft}>
                       <td className={`${cell} font-bold`}>{ft}</td>
-                      <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.pourBack)}</td>
-                      <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.actual)}</td>
-                      <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.amount)}</td>
+                      <td className={cellR}>{fmt(currentDayReport.dayFuelTotals[ft]?.pourBack)}</td>
+                      <td className={cellR}>{fmt(currentDayReport.dayFuelTotals[ft]?.actual)}</td>
+                      <td className={cellR}>{fmt(currentDayReport.dayFuelTotals[ft]?.amount)}</td>
                     </tr>
                   ))}
                   <tr className={`${subHdr} font-bold`}>
                     <td colSpan={3} className={cell}>SALES</td>
-                    <td className={cellR}>{fmt(dayReport.totalSales)}</td>
+                    <td className={cellR}>{fmt(currentDayReport.totalSales)}</td>
                   </tr>
                   <tr className="font-bold">
                     <td colSpan={3} className={cell}>POS</td>
-                    <td className={cellR}>{fmt(dayReport.totalPOS)}</td>
+                    <td className={cellR}>{fmt(currentDayReport.totalPOS)}</td>
                   </tr>
                   <tr className={`${subHdr} font-bold`}>
                     <td colSpan={3} className={cell}>CASH</td>
-                    <td className={cellR}>{fmt(dayReport.totalCash)}</td>
+                    <td className={cellR}>{fmt(currentDayReport.totalCash)}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </div>
         </div>
-      ))}
+      )}
     </div>
   )
 }
