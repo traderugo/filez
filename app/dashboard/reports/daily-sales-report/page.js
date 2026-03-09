@@ -65,93 +65,111 @@ function DailySalesReportContent() {
   const buildReport = useCallback(async () => {
     if (!orgId || !nozzles.length) return
 
-    // Get all daily sales entries sorted by date ascending
+    // Get all daily sales entries sorted by date, then createdAt
     const allEntries = await db.dailySales
       .where('orgId').equals(orgId)
       .toArray()
-    allEntries.sort((a, b) => (a.entryDate || '').localeCompare(b.entryDate || ''))
+    allEntries.sort((a, b) =>
+      (a.entryDate || '').localeCompare(b.entryDate || '') ||
+      (a.createdAt || '').localeCompare(b.createdAt || '')
+    )
 
-    // Find the entry for selected date and the previous entry
-    const currentEntry = allEntries.find(e => e.entryDate === date) || null
-    const currentIdx = currentEntry ? allEntries.indexOf(currentEntry) : -1
-    let prevEntry = null
-    if (currentIdx > 0) {
-      prevEntry = allEntries[currentIdx - 1]
-    } else if (!currentEntry) {
-      // No entry for this date — find the most recent entry before this date
-      for (let i = allEntries.length - 1; i >= 0; i--) {
-        if (allEntries[i].entryDate < date) {
-          prevEntry = allEntries[i]
-          break
-        }
+    // All entries for the selected date (could be multiple)
+    const todayEntries = allEntries.filter(e => e.entryDate === date)
+
+    // Find the last entry before this date (for opening values of first entry)
+    let prevDayEntry = null
+    for (let i = allEntries.length - 1; i >= 0; i--) {
+      if (allEntries[i].entryDate < date) {
+        prevDayEntry = allEntries[i]
+        break
       }
     }
 
-    // Build nozzle rows grouped by fuel type
     const fuelTypes = [...new Set(nozzles.map(n => n.fuel_type))]
-    const nozzleRows = []
-    const fuelTotals = {}
 
+    // Build per-entry groups — each entry gets its own nozzle rows
+    const entryGroups = []
+    const dayFuelTotals = {}
     for (const ft of fuelTypes) {
-      const ftNozzles = nozzles.filter(n => n.fuel_type === ft)
-      let ftDispensed = 0
-      let ftConsumed = 0
-      let ftActual = 0
-      let ftAmount = 0
-      let price = 0
-
-      if (currentEntry?.prices) {
-        price = Number(currentEntry.prices[ft]) || 0
-      }
-
-      const rows = ftNozzles.map(n => {
-        // Closing from current entry (or opening if no entry — holiday)
-        const currentReadings = currentEntry?.nozzleReadings || []
-        const currentR = currentReadings.find(r => r.pump_id === n.id)
-
-        // Opening: from previous entry's closing, or config initial_reading
-        const prevReadings = prevEntry?.nozzleReadings || []
-        const prevR = prevReadings.find(r => r.pump_id === n.id)
-        const opening = prevR ? Number(prevR.closing_meter || 0) : Number(n.initial_reading || 0)
-
-        // If no entry for this date, closing = opening (holiday)
-        const closing = currentR ? Number(currentR.closing_meter || 0) : opening
-        const consumption = currentR ? Number(currentR.consumption || 0) : 0
-        const pourBack = currentR ? Number(currentR.pour_back || 0) : 0
-        const dispensed = closing - opening
-        const actual = dispensed - consumption
-
-        ftDispensed += dispensed
-        ftConsumed += consumption
-        ftActual += actual
-
-        return {
-          label: `${ft} ${n.pump_number}`,
-          opening,
-          closing,
-          dispensed,
-          consumption,
-          actual,
-          pourBack,
-        }
-      })
-
-      ftAmount = ftActual * price
-
-      fuelTotals[ft] = {
-        dispensed: ftDispensed,
-        consumed: ftConsumed,
-        actual: ftActual,
-        price,
-        amount: ftAmount,
-        pourBack: rows.reduce((s, r) => s + r.pourBack, 0),
-      }
-
-      nozzleRows.push({ fuelType: ft, rows, totals: fuelTotals[ft] })
+      dayFuelTotals[ft] = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
     }
 
-    // Build tank rows
-    const tankRows = []
+    for (let eIdx = 0; eIdx < todayEntries.length; eIdx++) {
+      const currentEntry = todayEntries[eIdx]
+      const prevEntry = eIdx === 0 ? prevDayEntry : todayEntries[eIdx - 1]
+
+      const nozzleRows = []
+      const entryFuelTotals = {}
+
+      for (const ft of fuelTypes) {
+        const ftNozzles = nozzles.filter(n => n.fuel_type === ft)
+        let ftDispensed = 0
+        let ftConsumed = 0
+        let ftActual = 0
+        let price = Number(currentEntry.prices?.[ft]) || 0
+
+        const rows = ftNozzles.map(n => {
+          const currentReadings = currentEntry.nozzleReadings || []
+          const currentR = currentReadings.find(r => r.pump_id === n.id)
+
+          const prevReadings = prevEntry?.nozzleReadings || []
+          const prevR = prevReadings.find(r => r.pump_id === n.id)
+          const opening = prevR ? Number(prevR.closing_meter || 0) : Number(n.initial_reading || 0)
+          const closing = currentR ? Number(currentR.closing_meter || 0) : opening
+          const consumption = currentR ? Number(currentR.consumption || 0) : 0
+          const pourBack = currentR ? Number(currentR.pour_back || 0) : 0
+          const dispensed = closing - opening
+          const actual = dispensed - consumption - pourBack
+
+          ftDispensed += dispensed
+          ftConsumed += consumption
+          ftActual += actual
+
+          return { label: `${ft} ${n.pump_number}`, opening, closing, dispensed, consumption, actual, pourBack }
+        })
+
+        const ftAmount = ftActual * price
+
+        entryFuelTotals[ft] = {
+          dispensed: ftDispensed, consumed: ftConsumed, actual: ftActual,
+          price, amount: ftAmount,
+          pourBack: rows.reduce((s, r) => s + r.pourBack, 0),
+        }
+
+        // Accumulate day totals
+        dayFuelTotals[ft].dispensed += ftDispensed
+        dayFuelTotals[ft].consumed += ftConsumed
+        dayFuelTotals[ft].actual += ftActual
+        dayFuelTotals[ft].pourBack += entryFuelTotals[ft].pourBack
+        dayFuelTotals[ft].price = price // use latest price
+        dayFuelTotals[ft].amount += ftAmount
+
+        nozzleRows.push({ fuelType: ft, rows, totals: entryFuelTotals[ft] })
+      }
+
+      entryGroups.push({ entryIndex: eIdx + 1, nozzleRows, fuelTotals: entryFuelTotals })
+    }
+
+    // If no entries for this date, build a single empty group with carried-forward values
+    if (todayEntries.length === 0) {
+      const nozzleRows = []
+      for (const ft of fuelTypes) {
+        const ftNozzles = nozzles.filter(n => n.fuel_type === ft)
+        const rows = ftNozzles.map(n => {
+          const prevReadings = prevDayEntry?.nozzleReadings || []
+          const prevR = prevReadings.find(r => r.pump_id === n.id)
+          const opening = prevR ? Number(prevR.closing_meter || 0) : Number(n.initial_reading || 0)
+          return { label: `${ft} ${n.pump_number}`, opening, closing: opening, dispensed: 0, consumption: 0, actual: 0, pourBack: 0 }
+        })
+        const totals = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
+        nozzleRows.push({ fuelType: ft, rows, totals })
+      }
+      entryGroups.push({ entryIndex: 1, nozzleRows, fuelTotals: Object.fromEntries(fuelTypes.map(ft => [ft, { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }])) })
+    }
+
+    // Build tank rows — day-level (opening from prev day, closing from last entry)
+    const lastEntry = todayEntries.length > 0 ? todayEntries[todayEntries.length - 1] : null
     const tanksByFuel = {}
 
     for (const ft of fuelTypes) {
@@ -159,22 +177,17 @@ function DailySalesReportContent() {
       tanksByFuel[ft] = { tanks: [], totalOpening: 0, totalClosing: 0, totalWaybill: 0, totalActualSupply: 0 }
 
       for (const t of ftTanks) {
-        const currentTankReadings = currentEntry?.tankReadings || []
-        const currentTR = currentTankReadings.find(r => r.tank_id === t.id)
-
-        const prevTankReadings = prevEntry?.tankReadings || []
+        const prevTankReadings = prevDayEntry?.tankReadings || []
         const prevTR = prevTankReadings.find(r => r.tank_id === t.id)
         const opening = prevTR ? Number(prevTR.closing_stock || 0) : Number(t.opening_stock || 0)
-        const closing = currentTR ? Number(currentTR.closing_stock || 0) : opening
+
+        const lastTankReadings = lastEntry?.tankReadings || []
+        const lastTR = lastTankReadings.find(r => r.tank_id === t.id)
+        const closing = lastTR ? Number(lastTR.closing_stock || 0) : opening
 
         tanksByFuel[ft].totalOpening += opening
         tanksByFuel[ft].totalClosing += closing
-
-        tanksByFuel[ft].tanks.push({
-          label: `${ft} ${t.tank_number}`,
-          opening,
-          closing,
-        })
+        tanksByFuel[ft].tanks.push({ label: `${ft} ${t.tank_number}`, opening, closing })
       }
     }
 
@@ -184,7 +197,6 @@ function DailySalesReportContent() {
       .toArray()
     const todayReceipts = allReceipts.filter(r => r.entryDate === date)
 
-    // Sum waybill and actual supply per tank
     for (const receipt of todayReceipts) {
       const tankConfig = tanks.find(t => t.id === receipt.tankId)
       if (tankConfig && tanksByFuel[tankConfig.fuel_type]) {
@@ -194,50 +206,28 @@ function DailySalesReportContent() {
       }
     }
 
-    // Compute stock summary per fuel type
-    for (const ft of fuelTypes) {
-      const tb = tanksByFuel[ft]
-      const dispensed = fuelTotals[ft]?.dispensed || 0
-      tb.difference = tb.totalClosing - tb.totalOpening - tb.totalActualSupply
-      tb.dispensed = dispensed
-      tb.ovsh = tb.difference + dispensed // OV/SH = difference + dispensed (negative = shortage)
-    }
-
-    // Also build a "Total" row if PMS has multiple tanks
+    // OV/SH = (Opening + Supply - Closing) - Dispensed
     const tankSummaryRows = fuelTypes.map(ft => {
       const tb = tanksByFuel[ft]
+      const dispensed = dayFuelTotals[ft].dispensed
       return {
-        fuelType: ft,
-        tanks: tb.tanks,
-        opening: tb.totalOpening,
-        waybillSupply: tb.totalWaybill,
-        actualSupply: tb.totalActualSupply,
-        closing: tb.totalClosing,
-        difference: tb.totalClosing - tb.totalOpening,
-        dispensed: fuelTotals[ft]?.dispensed || 0,
-        ovsh: (tb.totalClosing - tb.totalOpening) - (-(fuelTotals[ft]?.dispensed || 0)) + (tb.totalActualSupply),
+        fuelType: ft, tanks: tb.tanks,
+        opening: tb.totalOpening, waybillSupply: tb.totalWaybill,
+        actualSupply: tb.totalActualSupply, closing: tb.totalClosing,
+        dispensed,
+        ovsh: (tb.totalOpening + tb.totalActualSupply - tb.totalClosing) - dispensed,
       }
     })
 
-    // Recalculate OV/SH properly:
-    // Closing - Opening = net change
-    // Expected change = Supply - Dispensed
-    // OV/SH = (Closing - Opening) - (Supply - Dispensed)  =  (Closing - Opening) - Supply + Dispensed
-    for (const row of tankSummaryRows) {
-      row.ovsh = (row.closing - row.opening) - row.actualSupply + row.dispensed
-    }
-
-    // Get lodgements for this date (POS)
+    // Get lodgements matching this salesDate
     const allLodgements = await db.lodgements
       .where('orgId').equals(orgId)
       .toArray()
-    const todayLodgements = allLodgements.filter(l => l.entryDate === date)
+    const todayLodgements = allLodgements.filter(l => l.salesDate === date)
 
     const posEntries = []
     const bankMap = {}
-    for (const b of banks) {
-      bankMap[b.id] = b
-    }
+    for (const b of banks) { bankMap[b.id] = b }
     for (const l of todayLodgements) {
       const bank = bankMap[l.bankId]
       posEntries.push({
@@ -257,13 +247,13 @@ function DailySalesReportContent() {
       .toArray()
     const todayConsumption = allConsumption.filter(c => c.entryDate === date)
 
-    // Summary
-    const totalSales = fuelTypes.reduce((s, ft) => s + (fuelTotals[ft]?.amount || 0), 0)
+    // Summary — aggregate across all entries
+    const totalSales = fuelTypes.reduce((s, ft) => s + dayFuelTotals[ft].amount, 0)
     const totalCash = totalSales - totalPOS
 
     setReport({
-      nozzleRows,
-      fuelTotals,
+      entryGroups,
+      dayFuelTotals,
       fuelTypes,
       tankSummaryRows,
       tanksByFuel,
@@ -272,7 +262,8 @@ function DailySalesReportContent() {
       todayConsumption,
       totalSales,
       totalCash,
-      hasEntry: !!currentEntry,
+      hasEntry: todayEntries.length > 0,
+      entryCount: todayEntries.length,
     })
   }, [orgId, date, nozzles, tanks, banks])
 
@@ -352,14 +343,33 @@ function DailySalesReportContent() {
                 </tr>
               </thead>
               <tbody>
-                {report?.nozzleRows.map(({ fuelType, rows, totals }) => (
-                  <FuelGroup
-                    key={fuelType}
-                    fuelType={fuelType}
-                    rows={rows}
-                    totals={totals}
+                {report?.entryGroups.map((group) => (
+                  <EntryGroup
+                    key={group.entryIndex}
+                    group={group}
+                    showHeader={report.entryCount > 1}
                   />
                 ))}
+                {report?.entryCount > 1 && (
+                  <tr className="bg-blue-700 text-white font-bold">
+                    <td className="border border-blue-200 px-1.5 py-1.5">DAY TOTAL</td>
+                    <td className="border border-blue-200 px-1.5 py-1.5"></td>
+                    <td className="border border-blue-200 px-1.5 py-1.5"></td>
+                    <td className="border border-blue-200 px-1.5 py-1.5 text-right">
+                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].dispensed, 0))}
+                    </td>
+                    <td className="border border-blue-200 px-1.5 py-1.5 text-right">
+                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].consumed, 0))}
+                    </td>
+                    <td className="border border-blue-200 px-1.5 py-1.5 text-right">
+                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].actual, 0))}
+                    </td>
+                    <td className="border border-blue-200 px-1.5 py-1.5"></td>
+                    <td className="border border-blue-200 px-1.5 py-1.5 text-right">
+                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].amount, 0))}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -457,9 +467,9 @@ function DailySalesReportContent() {
               {report?.fuelTypes.map(ft => (
                 <tr key={ft}>
                   <td className="border border-blue-200 px-1.5 py-1.5 font-medium">{ft}</td>
-                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.fuelTotals[ft]?.pourBack)}</td>
-                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.fuelTotals[ft]?.actual)}</td>
-                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.fuelTotals[ft]?.amount)}</td>
+                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.dayFuelTotals[ft]?.pourBack)}</td>
+                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.dayFuelTotals[ft]?.actual)}</td>
+                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.dayFuelTotals[ft]?.amount)}</td>
                 </tr>
               ))}
               <tr className="bg-blue-50 font-bold">
@@ -482,8 +492,26 @@ function DailySalesReportContent() {
   )
 }
 
+/** Renders all fuel groups for a single entry */
+function EntryGroup({ group, showHeader }) {
+  return (
+    <>
+      {showHeader && (
+        <tr className="bg-blue-600 text-white">
+          <td colSpan={8} className="border border-blue-200 px-1.5 py-1 text-xs font-semibold">
+            Entry {group.entryIndex}
+          </td>
+        </tr>
+      )}
+      {group.nozzleRows.map(({ fuelType, rows, totals }) => (
+        <FuelGroup key={fuelType} rows={rows} totals={totals} />
+      ))}
+    </>
+  )
+}
+
 /** Renders a fuel type group (e.g. all PMS nozzles + subtotal row) */
-function FuelGroup({ fuelType, rows, totals }) {
+function FuelGroup({ rows, totals }) {
   return (
     <>
       {rows.map((r) => (
