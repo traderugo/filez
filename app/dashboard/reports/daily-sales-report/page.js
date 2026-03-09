@@ -494,7 +494,7 @@ function DailySalesReportContent() {
       {report?.dateReports && (
         <>
           {/* Mobile: touch-scrollable strip */}
-          <div className="flex overflow-x-auto shrink-0 border-t border-blue-200 md:hidden">
+          <div className="flex overflow-x-auto justify-center shrink-0 border-t border-blue-200 md:hidden">
             {report.dateReports.map(dr => {
               const d = new Date(dr.date + 'T00:00:00')
               const isActive = dr.date === viewDate
@@ -510,7 +510,7 @@ function DailySalesReportContent() {
             })}
           </div>
           {/* Desktop: arrow-controlled window */}
-          <div className="hidden md:flex items-center shrink-0 border-t border-blue-200">
+          <div className="hidden md:flex items-center justify-center shrink-0 border-t border-blue-200">
             <button
               onClick={() => setTabOffset(Math.max(0, tabOffset - 1))}
               disabled={tabOffset <= 0}
