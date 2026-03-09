@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { initialSync } from '@/lib/initialSync'
@@ -39,6 +39,7 @@ function DailySalesReportContent() {
 
   // Report data
   const [report, setReport] = useState(null)
+  const [showEditMenu, setShowEditMenu] = useState(false)
 
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
@@ -298,9 +299,29 @@ function DailySalesReportContent() {
   return (
     <div className="max-w-[1200px] px-4 sm:px-6 py-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <h1 className="text-lg font-bold text-gray-900">Daily Sales Operation Report</h1>
         <div className="flex items-center gap-2">
+          {/* Edit entries dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowEditMenu(!showEditMenu)}
+              className="flex items-center gap-1 px-3 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Edit <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+            {showEditMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowEditMenu(false)} />
+                <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 shadow-lg min-w-[200px]">
+                  <Link href={`/dashboard/entries/daily-sales?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Daily Sales</Link>
+                  <Link href={`/dashboard/entries/product-receipt?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Product Receipt</Link>
+                  <Link href={`/dashboard/entries/lodgements?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Lodgements</Link>
+                  <Link href={`/dashboard/entries/consumption?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Consumption</Link>
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={() => changeDate(-1)} className="p-1.5 border border-gray-300 hover:bg-gray-50">
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -374,16 +395,6 @@ function DailySalesReportContent() {
             </table>
           </div>
 
-          {/* Edit entry links */}
-          <div className="mt-4 border border-blue-200">
-            <div className="bg-blue-600 text-white px-3 py-2 text-sm font-semibold">EDIT ENTRIES</div>
-            <div className="divide-y divide-gray-200">
-              <Link href={`/dashboard/entries/daily-sales?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Daily Sales Operation</Link>
-              <Link href={`/dashboard/entries/product-receipt?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Product Receipt</Link>
-              <Link href={`/dashboard/entries/lodgements?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Lodgements</Link>
-              <Link href={`/dashboard/entries/consumption?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Consumption</Link>
-            </div>
-          </div>
         </div>
 
         {/* ===== RIGHT: STOCK & SUMMARY ===== */}
