@@ -334,19 +334,32 @@ function DailySalesReportContent() {
         </div>
       </div>
 
-      {/* Day navigation */}
-      <div className="flex items-center gap-2 mb-4">
-        <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <div className={`${hdr} px-3 py-1 font-bold text-sm flex-1 text-center`}>
-          {new Date(viewDate + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          {currentDayReport && !currentDayReport.hasEntry && <span className="ml-2 text-yellow-300 font-normal text-xs">(no entry)</span>}
+      {/* Day tabs */}
+      {report?.dateReports && (
+        <div className="flex items-center mb-4">
+          <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-[#8DB4E2] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="flex overflow-x-auto flex-1 min-w-0">
+            {report.dateReports.map(dr => {
+              const d = new Date(dr.date + 'T00:00:00')
+              const isActive = dr.date === viewDate
+              return (
+                <button
+                  key={dr.date}
+                  onClick={() => setViewDate(dr.date)}
+                  className={`px-2 py-1.5 text-xs font-medium border border-[#8DB4E2] whitespace-nowrap shrink-0 ${isActive ? 'bg-[#1F3864] text-white' : dr.hasEntry ? 'bg-white text-[#1F3864] hover:bg-[#D6E4F0]' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                >
+                  {d.getDate()} {d.toLocaleDateString('en-NG', { weekday: 'short' })}
+                </button>
+              )
+            })}
+          </div>
+          <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-[#8DB4E2] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
-        <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+      )}
 
       {currentDayReport && (
         <div>
