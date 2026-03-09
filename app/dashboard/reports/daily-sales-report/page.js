@@ -45,8 +45,7 @@ function DailySalesReportContent() {
     if (!orgId) { setLoading(false); return }
     let cancelled = false
     const load = async () => {
-      // Force re-sync to ensure we have all entries (not just locally created ones)
-      try { await initialSync(orgId, { force: true }) } catch (e) { /* offline — use local data */ }
+      try { await initialSync(orgId) } catch (e) { /* offline — use local data */ }
       if (cancelled) return
 
       const [noz, tnk, bnk] = await Promise.all([
