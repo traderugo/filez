@@ -253,13 +253,6 @@ function DailySalesReportContent() {
     if (!loading) buildReport()
   }, [loading, buildReport])
 
-  const changeDate = (delta) => {
-    const d = new Date(viewDate)
-    d.setDate(d.getDate() + delta)
-    const next = d.toISOString().split('T')[0]
-    if (next >= startDate && next <= endDate) setViewDate(next)
-  }
-
   // Clamp viewDate when range changes
   useEffect(() => {
     if (viewDate < startDate) setViewDate(startDate)
@@ -334,30 +327,48 @@ function DailySalesReportContent() {
         </div>
       </div>
 
-      {/* Day tabs */}
-      {report?.dateReports && (
-        <div className="flex flex-wrap items-center gap-0.5 mb-4">
-          <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          {report.dateReports.map(dr => {
-            const d = new Date(dr.date + 'T00:00:00')
-            const isActive = dr.date === viewDate
-            return (
-              <button
-                key={dr.date}
-                onClick={() => setViewDate(dr.date)}
-                className={`px-2 py-1.5 text-xs font-medium border border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
-              >
-                {d.getDate()}
-              </button>
-            )
-          })}
-          <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      {/* Day tabs — show up to 31 days, paginated */}
+      {report?.dateReports && (() => {
+        const PAGE = 31
+        const activeIdx = report.dateReports.findIndex(r => r.date === viewDate)
+        const pageStart = Math.floor(activeIdx / PAGE) * PAGE
+        const pageEnd = Math.min(pageStart + PAGE, report.dateReports.length)
+        const visible = report.dateReports.slice(pageStart, pageEnd)
+        const hasPrev = pageStart > 0
+        const hasNext = pageEnd < report.dateReports.length
+
+        return (
+          <div className="flex items-center gap-0.5 mb-4">
+            <button
+              onClick={() => setViewDate(report.dateReports[pageStart - 1].date)}
+              disabled={!hasPrev}
+              className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {visible.map(dr => {
+              const d = new Date(dr.date + 'T00:00:00')
+              const isActive = dr.date === viewDate
+              return (
+                <button
+                  key={dr.date}
+                  onClick={() => setViewDate(dr.date)}
+                  className={`px-2 py-1.5 text-xs font-medium border border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                >
+                  {d.getDate()}
+                </button>
+              )
+            })}
+            <button
+              onClick={() => setViewDate(report.dateReports[pageEnd].date)}
+              disabled={!hasNext}
+              className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )
+      })()}
 
       {currentDayReport && (
         <div>
