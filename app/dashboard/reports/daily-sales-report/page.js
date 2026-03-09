@@ -333,87 +333,91 @@ function DailySalesReportContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ===== LEFT: DAILY SALES OPERATION ===== */}
-        <div>
-          <div className="bg-blue-700 text-white px-3 py-2 text-base font-semibold">
+        <div className="min-w-0">
+          <div className="bg-blue-700 text-white px-3 py-2 text-sm font-semibold">
             DAILY SALES OPERATION
           </div>
-          <table className="w-full border-collapse border border-blue-200 text-base">
-            <thead>
-              <tr className="bg-blue-100 text-blue-900">
-                <th className="border border-blue-200 px-2 py-2 text-left font-semibold">Pumps</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Opening</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Closing</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Dispensed</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Consumed</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Actual</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Price</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report?.nozzleRows.map(({ fuelType, rows, totals }) => (
-                <FuelGroup
-                  key={fuelType}
-                  fuelType={fuelType}
-                  rows={rows}
-                  totals={totals}
-                />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-blue-200 text-sm">
+              <thead>
+                <tr className="bg-blue-100 text-blue-900">
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-left font-semibold whitespace-nowrap">Pumps</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Opening</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Closing</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Dispensed</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Consumed</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Actual</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Price</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report?.nozzleRows.map(({ fuelType, rows, totals }) => (
+                  <FuelGroup
+                    key={fuelType}
+                    fuelType={fuelType}
+                    rows={rows}
+                    totals={totals}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* Edit entry links */}
           <div className="mt-4 border border-blue-200">
-            <div className="bg-blue-600 text-white px-3 py-2 text-base font-semibold">EDIT ENTRIES</div>
+            <div className="bg-blue-600 text-white px-3 py-2 text-sm font-semibold">EDIT ENTRIES</div>
             <div className="divide-y divide-gray-200">
-              <Link href={`/dashboard/entries/daily-sales?${qs}`} className="block px-3 py-2 text-blue-600 hover:bg-blue-50">Daily Sales Operation</Link>
-              <Link href={`/dashboard/entries/product-receipt?${qs}`} className="block px-3 py-2 text-blue-600 hover:bg-blue-50">Product Receipt</Link>
-              <Link href={`/dashboard/entries/lodgements?${qs}`} className="block px-3 py-2 text-blue-600 hover:bg-blue-50">Lodgements</Link>
-              <Link href={`/dashboard/entries/consumption?${qs}`} className="block px-3 py-2 text-blue-600 hover:bg-blue-50">Consumption</Link>
+              <Link href={`/dashboard/entries/daily-sales?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Daily Sales Operation</Link>
+              <Link href={`/dashboard/entries/product-receipt?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Product Receipt</Link>
+              <Link href={`/dashboard/entries/lodgements?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Lodgements</Link>
+              <Link href={`/dashboard/entries/consumption?${qs}`} className="block px-3 py-2 text-sm text-blue-600 hover:bg-blue-50">Consumption</Link>
             </div>
           </div>
         </div>
 
         {/* ===== RIGHT: STOCK & SUMMARY ===== */}
-        <div>
-          <div className="bg-blue-700 text-white px-3 py-2 text-base font-semibold">
+        <div className="min-w-0">
+          <div className="bg-blue-700 text-white px-3 py-2 text-sm font-semibold">
             STOCK &amp; SUMMARY
           </div>
 
           {/* Tank stock table */}
-          <table className="w-full border-collapse border border-blue-200 text-base mb-4">
-            <thead>
-              <tr className="bg-blue-100 text-blue-900">
-                <th className="border border-blue-200 px-2 py-2 text-left font-semibold">Tank</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Opening</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Supply</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Closing</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Dispensed</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">OV/SH</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report?.tankSummaryRows.map((row) => (
-                <TankRow key={row.fuelType} row={row} />
-              ))}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-blue-200 text-sm mb-4">
+              <thead>
+                <tr className="bg-blue-100 text-blue-900">
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-left font-semibold whitespace-nowrap">Tank</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Opening</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Supply</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Closing</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">Dispensed</th>
+                  <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold whitespace-nowrap">OV/SH</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report?.tankSummaryRows.map((row) => (
+                  <TankRow key={row.fuelType} row={row} />
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           {/* POS & Consumption side by side */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             {/* POS */}
             <div>
-              <div className="bg-blue-600 text-white px-3 py-2 text-base font-semibold border border-blue-200 border-b-0">POS</div>
-              <table className="w-full border-collapse border border-blue-200 text-base">
+              <div className="bg-blue-600 text-white px-3 py-1.5 text-sm font-semibold border border-blue-200 border-b-0">POS</div>
+              <table className="w-full border-collapse border border-blue-200 text-sm">
                 <tbody>
                   {report?.posEntries.filter(p => p.lodgementType === 'pos').map((p, i) => (
                     <tr key={i}>
-                      <td className="border border-blue-200 px-2 py-2">{p.bankName}</td>
-                      <td className="border border-blue-200 px-2 py-2 text-right">{fmt(p.amount)}</td>
+                      <td className="border border-blue-200 px-1.5 py-1.5">{p.bankName}</td>
+                      <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(p.amount)}</td>
                     </tr>
                   ))}
                   {(!report?.posEntries.filter(p => p.lodgementType === 'pos').length) && (
-                    <tr><td colSpan={2} className="border border-blue-200 px-2 py-2 text-gray-400">No POS entries</td></tr>
+                    <tr><td colSpan={2} className="border border-blue-200 px-1.5 py-1.5 text-gray-400">No POS entries</td></tr>
                   )}
                 </tbody>
               </table>
@@ -421,17 +425,17 @@ function DailySalesReportContent() {
 
             {/* Consumption */}
             <div>
-              <div className="bg-blue-600 text-white px-3 py-2 text-base font-semibold border border-blue-200 border-b-0">Consumption</div>
-              <table className="w-full border-collapse border border-blue-200 text-base">
+              <div className="bg-blue-600 text-white px-3 py-1.5 text-sm font-semibold border border-blue-200 border-b-0">Consumption</div>
+              <table className="w-full border-collapse border border-blue-200 text-sm">
                 <tbody>
                   {report?.todayConsumption.map((c, i) => (
                     <tr key={i}>
-                      <td className="border border-blue-200 px-2 py-2">{c.fuelType || ''}</td>
-                      <td className="border border-blue-200 px-2 py-2 text-right">{fmt(c.quantity)}</td>
+                      <td className="border border-blue-200 px-1.5 py-1.5">{c.fuelType || ''}</td>
+                      <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(c.quantity)}</td>
                     </tr>
                   ))}
                   {(!report?.todayConsumption?.length) && (
-                    <tr><td colSpan={2} className="border border-blue-200 px-2 py-2 text-gray-400">No consumption</td></tr>
+                    <tr><td colSpan={2} className="border border-blue-200 px-1.5 py-1.5 text-gray-400">No consumption</td></tr>
                   )}
                 </tbody>
               </table>
@@ -439,36 +443,36 @@ function DailySalesReportContent() {
           </div>
 
           {/* Summary */}
-          <div className="bg-blue-600 text-white px-3 py-2 text-base font-semibold border border-blue-200 border-b-0">Summary</div>
-          <table className="w-full border-collapse border border-blue-200 text-base">
+          <div className="bg-blue-600 text-white px-3 py-1.5 text-sm font-semibold border border-blue-200 border-b-0">Summary</div>
+          <table className="w-full border-collapse border border-blue-200 text-sm">
             <thead>
               <tr className="bg-blue-50 text-blue-900">
-                <th className="border border-blue-200 px-2 py-2 text-left font-semibold"></th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">P/b</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Sales</th>
-                <th className="border border-blue-200 px-2 py-2 text-right font-semibold">Amount</th>
+                <th className="border border-blue-200 px-1.5 py-1.5 text-left font-semibold"></th>
+                <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold">P/b</th>
+                <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold">Sales</th>
+                <th className="border border-blue-200 px-1.5 py-1.5 text-right font-semibold">Amount</th>
               </tr>
             </thead>
             <tbody>
               {report?.fuelTypes.map(ft => (
                 <tr key={ft}>
-                  <td className="border border-blue-200 px-2 py-2 font-medium">{ft}</td>
-                  <td className="border border-blue-200 px-2 py-2 text-right">{fmt(report.fuelTotals[ft]?.pourBack)}</td>
-                  <td className="border border-blue-200 px-2 py-2 text-right">{fmt(report.fuelTotals[ft]?.actual)}</td>
-                  <td className="border border-blue-200 px-2 py-2 text-right">{fmt(report.fuelTotals[ft]?.amount)}</td>
+                  <td className="border border-blue-200 px-1.5 py-1.5 font-medium">{ft}</td>
+                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.fuelTotals[ft]?.pourBack)}</td>
+                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.fuelTotals[ft]?.actual)}</td>
+                  <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report.fuelTotals[ft]?.amount)}</td>
                 </tr>
               ))}
               <tr className="bg-blue-50 font-bold">
-                <td colSpan={3} className="border border-blue-200 px-2 py-2">SALES</td>
-                <td className="border border-blue-200 px-2 py-2 text-right">{fmt(report?.totalSales)}</td>
+                <td colSpan={3} className="border border-blue-200 px-1.5 py-1.5">SALES</td>
+                <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report?.totalSales)}</td>
               </tr>
               <tr className="font-bold">
-                <td colSpan={3} className="border border-blue-200 px-2 py-2">POS</td>
-                <td className="border border-blue-200 px-2 py-2 text-right">{fmt(report?.totalPOS)}</td>
+                <td colSpan={3} className="border border-blue-200 px-1.5 py-1.5">POS</td>
+                <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report?.totalPOS)}</td>
               </tr>
               <tr className="bg-blue-50 font-bold">
-                <td colSpan={3} className="border border-blue-200 px-2 py-2">CASH</td>
-                <td className="border border-blue-200 px-2 py-2 text-right">{fmt(report?.totalCash)}</td>
+                <td colSpan={3} className="border border-blue-200 px-1.5 py-1.5">CASH</td>
+                <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(report?.totalCash)}</td>
               </tr>
             </tbody>
           </table>
@@ -484,26 +488,26 @@ function FuelGroup({ fuelType, rows, totals }) {
     <>
       {rows.map((r) => (
         <tr key={r.label}>
-          <td className="border border-blue-200 px-2 py-2 font-medium">{r.label}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(r.opening)}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(r.closing)}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(r.dispensed)}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(r.consumption)}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right"></td>
-          <td className="border border-blue-200 px-2 py-2 text-right"></td>
-          <td className="border border-blue-200 px-2 py-2 text-right"></td>
+          <td className="border border-blue-200 px-1.5 py-1.5 font-medium whitespace-nowrap">{r.label}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(r.opening)}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(r.closing)}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(r.dispensed)}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(r.consumption)}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
         </tr>
       ))}
       {/* Subtotal row */}
       <tr className="bg-blue-50 font-bold">
-        <td className="border border-blue-200 px-2 py-2"></td>
-        <td className="border border-blue-200 px-2 py-2 text-right"></td>
-        <td className="border border-blue-200 px-2 py-2 text-right"></td>
-        <td className="border border-blue-200 px-2 py-2 text-right">{fmt(totals.dispensed)}</td>
-        <td className="border border-blue-200 px-2 py-2 text-right">{fmt(totals.consumed)}</td>
-        <td className="border border-blue-200 px-2 py-2 text-right">{fmt(totals.actual)}</td>
-        <td className="border border-blue-200 px-2 py-2 text-right">{fmt(totals.price)}</td>
-        <td className="border border-blue-200 px-2 py-2 text-right">{fmt(totals.amount)}</td>
+        <td className="border border-blue-200 px-1.5 py-1.5"></td>
+        <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
+        <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
+        <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(totals.dispensed)}</td>
+        <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(totals.consumed)}</td>
+        <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(totals.actual)}</td>
+        <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(totals.price)}</td>
+        <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(totals.amount)}</td>
       </tr>
     </>
   )
@@ -519,33 +523,33 @@ function TankRow({ row }) {
         <>
           {row.tanks.map((t) => (
             <tr key={t.label}>
-              <td className="border border-blue-200 px-2 py-2 font-medium">{t.label}</td>
-              <td className="border border-blue-200 px-2 py-2 text-right">{fmt(t.opening)}</td>
-              <td className="border border-blue-200 px-2 py-2 text-right"></td>
-              <td className="border border-blue-200 px-2 py-2 text-right">{fmt(t.closing)}</td>
-              <td className="border border-blue-200 px-2 py-2 text-right"></td>
-              <td className="border border-blue-200 px-2 py-2 text-right"></td>
+              <td className="border border-blue-200 px-1.5 py-1.5 font-medium whitespace-nowrap">{t.label}</td>
+              <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(t.opening)}</td>
+              <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
+              <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(t.closing)}</td>
+              <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
+              <td className="border border-blue-200 px-1.5 py-1.5 text-right"></td>
             </tr>
           ))}
           <tr className="bg-blue-50 font-bold">
-            <td className="border border-blue-200 px-2 py-2">Total</td>
-            <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.opening)}</td>
-            <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.actualSupply)}</td>
-            <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.closing)}</td>
-            <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.dispensed)}</td>
-            <td className={`border border-blue-200 px-2 py-2 text-right font-bold ${ovshColor}`}>
+            <td className="border border-blue-200 px-1.5 py-1.5">Total</td>
+            <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.opening)}</td>
+            <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.actualSupply)}</td>
+            <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.closing)}</td>
+            <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.dispensed)}</td>
+            <td className={`border border-blue-200 px-1.5 py-1.5 text-right font-bold ${ovshColor}`}>
               {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
             </td>
           </tr>
         </>
       ) : (
         <tr>
-          <td className="border border-blue-200 px-2 py-2 font-medium">{row.fuelType}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.opening)}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.actualSupply)}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.closing)}</td>
-          <td className="border border-blue-200 px-2 py-2 text-right">{fmt(row.dispensed)}</td>
-          <td className={`border border-blue-200 px-2 py-2 text-right font-bold ${ovshColor}`}>
+          <td className="border border-blue-200 px-1.5 py-1.5 font-medium whitespace-nowrap">{row.fuelType}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.opening)}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.actualSupply)}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.closing)}</td>
+          <td className="border border-blue-200 px-1.5 py-1.5 text-right">{fmt(row.dispensed)}</td>
+          <td className={`border border-blue-200 px-1.5 py-1.5 text-right font-bold ${ovshColor}`}>
             {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
           </td>
         </tr>
