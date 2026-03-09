@@ -336,26 +336,24 @@ function DailySalesReportContent() {
 
       {/* Day tabs */}
       {report?.dateReports && (
-        <div className="flex items-center mb-4">
-          <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
+        <div className="flex flex-wrap items-center gap-0.5 mb-4">
+          <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <div className="flex overflow-x-auto flex-1 min-w-0">
-            {report.dateReports.map(dr => {
-              const d = new Date(dr.date + 'T00:00:00')
-              const isActive = dr.date === viewDate
-              return (
-                <button
-                  key={dr.date}
-                  onClick={() => setViewDate(dr.date)}
-                  className={`px-2 py-1.5 text-xs font-medium border border-blue-200 whitespace-nowrap shrink-0 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
-                >
-                  {d.getDate()} {d.toLocaleDateString('en-NG', { weekday: 'short' })}
-                </button>
-              )
-            })}
-          </div>
-          <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
+          {report.dateReports.map(dr => {
+            const d = new Date(dr.date + 'T00:00:00')
+            const isActive = dr.date === viewDate
+            return (
+              <button
+                key={dr.date}
+                onClick={() => setViewDate(dr.date)}
+                className={`px-2 py-1.5 text-xs font-medium border border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+              >
+                {d.getDate()}
+              </button>
+            )
+          })}
+          <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
