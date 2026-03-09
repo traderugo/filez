@@ -331,7 +331,7 @@ function DailySalesReportContent() {
   const hdr = 'bg-[#1F3864] text-white'
   const subHdr = 'bg-[#D6E4F0] text-[#1F3864]'
   const bdr = 'border border-[#8DB4E2]'
-  const cell = `${bdr} px-2 py-1.5`
+  const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
 
   return (
