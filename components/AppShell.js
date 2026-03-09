@@ -57,7 +57,7 @@ export default function AppShell({ children }) {
       />
       <div className="flex-1 flex flex-col min-w-0">
         <Header onToggleSidebar={() => setSidebarOpen((o) => !o)} />
-        {user && !user.email_verified && <EmailVerifyBanner />}
+        {user && !user.email_verified && pathname === '/dashboard' && <EmailVerifyBanner />}
         <main className="flex-1">{children}</main>
       </div>
     </div>
