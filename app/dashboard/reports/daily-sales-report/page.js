@@ -284,9 +284,9 @@ function DailySalesReportContent() {
 
   const qs = `org_id=${orgId}`
 
-  const hdr = 'bg-[#1F3864] text-white'
-  const subHdr = 'bg-[#D6E4F0] text-[#1F3864]'
-  const bdr = 'border border-[#8DB4E2]'
+  const hdr = 'bg-blue-600 text-white'
+  const subHdr = 'bg-blue-50 text-blue-900'
+  const bdr = 'border border-blue-200'
   const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
 
@@ -337,7 +337,7 @@ function DailySalesReportContent() {
       {/* Day tabs */}
       {report?.dateReports && (
         <div className="flex items-center mb-4">
-          <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-[#8DB4E2] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
+          <button onClick={() => changeDate(-1)} disabled={viewDate <= startDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <div className="flex overflow-x-auto flex-1 min-w-0">
@@ -348,14 +348,14 @@ function DailySalesReportContent() {
                 <button
                   key={dr.date}
                   onClick={() => setViewDate(dr.date)}
-                  className={`px-2 py-1.5 text-xs font-medium border border-[#8DB4E2] whitespace-nowrap shrink-0 ${isActive ? 'bg-[#1F3864] text-white' : dr.hasEntry ? 'bg-white text-[#1F3864] hover:bg-[#D6E4F0]' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                  className={`px-2 py-1.5 text-xs font-medium border border-blue-200 whitespace-nowrap shrink-0 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                 >
                   {d.getDate()} {d.toLocaleDateString('en-NG', { weekday: 'short' })}
                 </button>
               )
             })}
           </div>
-          <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-[#8DB4E2] hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
+          <button onClick={() => changeDate(1)} disabled={viewDate >= endDate} className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed shrink-0">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -550,7 +550,7 @@ function FuelGroup({ rows, totals, cell, cellR }) {
         </tr>
       ))}
       {/* Subtotal row */}
-      <tr className="bg-[#D6E4F0] font-bold">
+      <tr className="bg-blue-50 font-bold">
         <td className={cell}></td>
         <td className={cellR}></td>
         <td className={cellR}></td>
