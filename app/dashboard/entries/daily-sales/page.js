@@ -220,7 +220,7 @@ export default function DailySalesFormPage() {
         <div className="border border-gray-300 divide-y divide-gray-300">
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
           <div className="bg-gray-50 px-2 py-1">
             <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>
@@ -228,15 +228,15 @@ export default function DailySalesFormPage() {
           <div className="grid grid-cols-3 divide-x divide-gray-300">
             <div>
               <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">PMS</label>
-              <input type="number" value={prices.PMS} onChange={(e) => setPrices((p) => ({ ...p, PMS: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <input type="number" value={prices.PMS} onChange={(e) => setPrices((p) => ({ ...p, PMS: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">AGO</label>
-              <input type="number" value={prices.AGO} onChange={(e) => setPrices((p) => ({ ...p, AGO: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <input type="number" value={prices.AGO} onChange={(e) => setPrices((p) => ({ ...p, AGO: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">DPK</label>
-              <input type="number" value={prices.DPK} onChange={(e) => setPrices((p) => ({ ...p, DPK: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <input type="number" value={prices.DPK} onChange={(e) => setPrices((p) => ({ ...p, DPK: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
           </div>
 
@@ -254,15 +254,15 @@ export default function DailySalesFormPage() {
                   <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-gray-300">
                     <div>
                       <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Closing Meter</label>
-                      <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+                      <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Consumption</label>
-                      <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+                      <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Pour Back</label>
-                      <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+                      <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                   </div>
                 </div>
@@ -284,12 +284,12 @@ export default function DailySalesFormPage() {
               </div>
               {tankReadings.map((r, idx) => (
                 <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-gray-300">
-                  <div className="flex items-center px-2 py-1.5 bg-gray-50/50">
+                  <div className="flex items-center px-3 py-2.5 bg-gray-50/50">
                     <span className="text-xs text-gray-600">{r.label}</span>
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Litres</label>
-                    <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(idx, e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+                    <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(idx, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                   </div>
                 </div>
               ))}
@@ -304,7 +304,7 @@ export default function DailySalesFormPage() {
 
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
         </div>
 

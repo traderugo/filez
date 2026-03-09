@@ -125,11 +125,11 @@ export default function CustomerPaymentsFormPage() {
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
               <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Transaction Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Customer</label>
-              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="">Select customer</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}{c.phone ? ` (${c.phone})` : ''}</option>
@@ -140,16 +140,16 @@ export default function CustomerPaymentsFormPage() {
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
               <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount Paid</label>
-              <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Amount</label>
-              <input type="number" value={salesAmount} onChange={(e) => setSalesAmount(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <input type="number" value={salesAmount} onChange={(e) => setSalesAmount(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
           </div>
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
         </div>
 

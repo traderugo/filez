@@ -151,11 +151,11 @@ function LubeSalesForm({ products, qs, orgId, editId }) {
         <div className="grid grid-cols-2 divide-x divide-gray-300">
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Product</label>
-            <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+            <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
               <option value="">Select product</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>{p.product_name}</option>
@@ -166,20 +166,20 @@ function LubeSalesForm({ products, qs, orgId, editId }) {
         <div className="grid grid-cols-3 divide-x divide-gray-300">
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Unit Sold</label>
-            <input type="number" value={unitSold} onChange={(e) => setUnitSold(e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            <input type="number" value={unitSold} onChange={(e) => setUnitSold(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Unit Received</label>
-            <input type="number" value={unitReceived} onChange={(e) => setUnitReceived(e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            <input type="number" value={unitReceived} onChange={(e) => setUnitReceived(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Price</label>
-            <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
         </div>
         <div>
           <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
         </div>
       </div>
 
@@ -269,11 +269,11 @@ function LubeStockForm({ products, qs, orgId, editId }) {
         <div className="grid grid-cols-2 divide-x divide-gray-300">
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
           <div>
             <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Product</label>
-            <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+            <select value={productId} onChange={(e) => setProductId(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
               <option value="">Select product</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>{p.product_name}</option>
@@ -283,11 +283,11 @@ function LubeStockForm({ products, qs, orgId, editId }) {
         </div>
         <div>
           <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Stock</label>
-          <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+          <input type="number" value={stock} onChange={(e) => setStock(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
         </div>
         <div>
           <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
         </div>
       </div>
 

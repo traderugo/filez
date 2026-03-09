@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   MessageSquare, Loader2,
   Building2, Check, Plus,
-  Fuel, ChevronRight
+  Fuel, ChevronRight, Shield
 } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -23,6 +23,8 @@ export default function DashboardPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [newName, setNewName] = useState('')
   const [adding, setAdding] = useState(false)
+
+  const isAdmin = profile?.role === 'admin'
 
   const loadInvites = async () => {
     const res = await fetch('/api/invites')
@@ -49,8 +51,10 @@ export default function DashboardPage() {
       const data = await res.json()
       setProfile(data.profile)
       setLoading(false)
-      loadInvites()
-      loadStations()
+      if (data.profile?.role !== 'admin') {
+        loadInvites()
+        loadStations()
+      }
     }
     load()
   }, [])
@@ -100,10 +104,40 @@ export default function DashboardPage() {
     )
   }
 
+  // Admin view — no station management
+  if (isAdmin) {
+    return (
+      <div className="max-w-2xl px-4 sm:px-8 py-8">
+        <h1 className="text-xl font-bold text-gray-900 mb-1">Welcome, {profile?.name}</h1>
+        <p className="text-base text-gray-500 mb-8">{profile?.email}</p>
+
+        <div className="border border-blue-200 bg-blue-50 p-6">
+          <div className="flex items-start gap-3">
+            <Shield className="w-6 h-6 text-blue-600 flex-shrink-0" />
+            <div>
+              <p className="text-base font-medium text-gray-900">Admin account</p>
+              <p className="text-base text-gray-600 mt-1">
+                This is an admin account. Go to the{' '}
+                <Link href="/admin" className="text-blue-600 hover:underline font-medium">admin panel</Link>
+                {' '}to manage the platform.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-200 pt-6 mt-8">
+          <Link href="/dashboard/feedback" className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
+            <MessageSquare className="w-4 h-4" /> Send feedback
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-2xl px-4 sm:px-8 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Welcome, {profile?.name}</h1>
-      <p className="text-sm text-gray-500 mb-8">{profile?.email}</p>
+      <p className="text-base text-gray-500 mb-8">{profile?.email}</p>
 
       {/* Pending station invites (staff) */}
       {invites.length > 0 && (
@@ -113,16 +147,16 @@ export default function DashboardPage() {
               <div className="flex items-start gap-3">
                 <Building2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-base font-medium text-gray-900">
                     You&apos;ve been invited to join <strong>{inv.organizations?.name}</strong>
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-base text-gray-500 mt-1">
                     Accept to access this station&apos;s reports and data.
                   </p>
                   <button
                     onClick={() => acceptInvite(inv.id)}
                     disabled={accepting === inv.id}
-                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-base font-medium hover:bg-blue-700 disabled:opacity-50"
                   >
                     {accepting === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     Accept
@@ -137,10 +171,10 @@ export default function DashboardPage() {
       {/* My Stations */}
       <div className="border-t border-gray-200 pt-6 mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Stations</h2>
+          <h2 className="text-base font-semibold text-gray-900 uppercase tracking-wide">My Stations</h2>
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-1 text-base text-blue-600 hover:text-blue-700 font-medium"
           >
             <Plus className="w-4 h-4" /> Add station
           </button>
@@ -155,19 +189,19 @@ export default function DashboardPage() {
               placeholder="Station name (e.g. MRS Lekki Phase 1)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={adding}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-base font-medium hover:bg-blue-700 disabled:opacity-50"
               >
                 {adding && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create station
               </button>
-              <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-gray-300 text-base text-gray-700 hover:bg-gray-50">
                 Cancel
               </button>
             </div>
@@ -177,7 +211,7 @@ export default function DashboardPage() {
         {stations.length === 0 && !showAdd ? (
           <div className="text-center py-8">
             <Fuel className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No stations yet. Create one to get started.</p>
+            <p className="text-base text-gray-500">No stations yet. Create one to get started.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -187,16 +221,16 @@ export default function DashboardPage() {
                   <Fuel className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   <div className="flex-1">
                     <span className="text-base font-semibold text-gray-900">{station.name}</span>
-                    {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
+                    {station.location && <p className="text-base text-gray-500">{station.location}</p>}
                     {!station.onboarding_complete && (
-                      <p className="text-xs text-orange-600 font-medium mt-0.5">Setup required</p>
+                      <p className="text-base text-orange-600 font-medium mt-0.5">Setup required</p>
                     )}
                   </div>
                 </div>
                 <div className="border-t border-gray-100 px-4 py-2.5 flex justify-end">
                   <Link
                     href={`/dashboard/stations/${station.id}`}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-base font-medium hover:bg-blue-700"
                   >
                     Open <ChevronRight className="w-4 h-4" />
                   </Link>
@@ -210,7 +244,7 @@ export default function DashboardPage() {
       {/* Member Stations (joined via invite) */}
       {memberStations.length > 0 && (
         <div className="border-t border-gray-200 pt-6 mb-8">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4">Stations I&apos;ve Joined</h2>
+          <h2 className="text-base font-semibold text-gray-900 uppercase tracking-wide mb-4">Stations I&apos;ve Joined</h2>
           <div className="space-y-3">
             {memberStations.map((station) => (
               <div key={station.id} className="border border-gray-200">
@@ -218,13 +252,13 @@ export default function DashboardPage() {
                   <Fuel className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <div className="flex-1">
                     <span className="text-base font-semibold text-gray-900">{station.name}</span>
-                    {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
+                    {station.location && <p className="text-base text-gray-500">{station.location}</p>}
                   </div>
                 </div>
                 <div className="border-t border-gray-100 px-4 py-2.5 flex justify-end">
                   <Link
                     href={`/dashboard/stations/${station.id}`}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-base font-medium hover:bg-blue-700"
                   >
                     Open <ChevronRight className="w-4 h-4" />
                   </Link>
@@ -237,7 +271,7 @@ export default function DashboardPage() {
 
       {/* Quick links */}
       <div className="border-t border-gray-200 pt-6">
-        <Link href="/dashboard/feedback" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900">
+        <Link href="/dashboard/feedback" className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
           <MessageSquare className="w-4 h-4" /> Send feedback
         </Link>
       </div>
