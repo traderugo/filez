@@ -381,7 +381,7 @@ function DailySalesReportContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
         {/* ===== LEFT: DAILY SALES OPERATION ===== */}
         <div className="min-w-0">
           <div className="overflow-x-auto">
