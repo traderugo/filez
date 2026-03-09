@@ -297,7 +297,7 @@ function DailySalesReportContent() {
   const currentDayReport = report?.dateReports.find(r => r.date === viewDate) || null
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-[1200px] px-4 sm:px-6">
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Header — fixed at top */}
       <div className="flex items-center justify-between py-3 gap-2 flex-wrap shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Daily Sales Operation Report</h1>
