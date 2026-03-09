@@ -33,8 +33,8 @@ export default function LodgementsFormPage() {
     let cancelled = false
     const load = async () => {
       if (!orgId) { setLoading(false); return }
-      await initialSync(orgId)
-      startSync()
+      try { await initialSync(orgId) } catch (e) { /* offline */ }
+      try { startSync() } catch (e) { /* offline */ }
 
       if (cancelled) return
 

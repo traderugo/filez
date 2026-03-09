@@ -37,9 +37,9 @@ export default function DailySalesFormPage() {
       if (!orgId) { setLoading(false); return }
 
       // Ensure data is synced (no-op if already done)
-      await initialSync(orgId)
+      try { await initialSync(orgId) } catch (e) { /* offline */ }
       // Start background sync engine
-      startSync()
+      try { startSync() } catch (e) { /* offline */ }
 
       if (cancelled) return
 

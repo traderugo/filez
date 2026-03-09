@@ -25,8 +25,8 @@ export default function LubeFormPage() {
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
     const load = async () => {
-      await initialSync(orgId)
-      startSync()
+      try { await initialSync(orgId) } catch (e) { /* offline */ }
+      try { startSync() } catch (e) { /* offline */ }
       const prods = await db.lubeProducts.where('orgId').equals(orgId).toArray()
       if (prods.length === 0) setLocked(true)
       setProducts(prods)

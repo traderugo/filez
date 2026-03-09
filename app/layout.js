@@ -11,6 +11,16 @@ const geistSans = localFont({
 export const metadata = {
   title: 'StationVA — Station Virtual Assistant',
   description: 'Manage your station entries, subscriptions, and operations',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Station Portal',
+  },
+}
+
+export const viewport = {
+  themeColor: '#2563eb',
 }
 
 export default function RootLayout({ children }) {

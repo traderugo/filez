@@ -22,8 +22,8 @@ export default function DailySalesListPage() {
   // Ensure data is synced on mount
   useEffect(() => {
     if (!orgId) return
-    initialSync(orgId).then(() => {
-      startSync()
+    initialSync(orgId).catch(() => {}).finally(() => {
+      try { startSync() } catch (e) { /* offline */ }
       setReady(true)
     })
   }, [orgId])

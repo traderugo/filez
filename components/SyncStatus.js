@@ -28,13 +28,13 @@ export default function SyncStatus({ orgId }) {
 
   const handleSyncNow = async () => {
     setSyncing(true)
-    await processQueue()
+    try { await processQueue() } catch (e) { /* offline */ }
     setSyncing(false)
   }
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await initialSync(orgId, { force: true })
+    try { await initialSync(orgId, { force: true }) } catch (e) { /* offline */ }
     setRefreshing(false)
   }
 

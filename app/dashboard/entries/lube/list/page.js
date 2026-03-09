@@ -19,7 +19,7 @@ export default function LubeListPage() {
 
   useEffect(() => {
     if (!orgId) return
-    initialSync(orgId).then(() => { startSync(); setReady(true) })
+    initialSync(orgId).catch(() => {}).finally(() => { try { startSync() } catch (e) {} setReady(true) })
   }, [orgId])
 
   const hasConfig = useLiveQuery(
