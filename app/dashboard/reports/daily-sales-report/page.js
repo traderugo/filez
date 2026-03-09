@@ -45,7 +45,8 @@ function DailySalesReportContent() {
     if (!orgId) { setLoading(false); return }
     let cancelled = false
     const load = async () => {
-      try { await initialSync(orgId) } catch (e) { /* offline — use local data */ }
+      // Force re-sync to ensure we have all entries (not just locally created ones)
+      try { await initialSync(orgId, { force: true }) } catch (e) { /* offline — use local data */ }
       if (cancelled) return
 
       const [noz, tnk, bnk] = await Promise.all([
@@ -67,9 +68,20 @@ function DailySalesReportContent() {
     if (!orgId || !nozzles.length) return
 
     // Get all daily sales entries sorted by date, then createdAt
-    const allEntries = await db.dailySales
+    const rawEntries = await db.dailySales
       .where('orgId').equals(orgId)
       .toArray()
+
+    // Defensive: normalize field names in case some entries have snake_case
+    const allEntries = rawEntries.map(e => ({
+      ...e,
+      entryDate: e.entryDate || e.entry_date,
+      nozzleReadings: e.nozzleReadings || e.nozzle_readings || [],
+      tankReadings: e.tankReadings || e.tank_readings || [],
+      prices: e.prices || {},
+      createdAt: e.createdAt || e.created_at,
+    }))
+
     allEntries.sort((a, b) =>
       (a.entryDate || '').localeCompare(b.entryDate || '') ||
       (a.createdAt || '').localeCompare(b.createdAt || '')
@@ -86,6 +98,22 @@ function DailySalesReportContent() {
         break
       }
     }
+
+    // Debug: log data state
+    console.log('[Report Debug]', {
+      selectedDate: date,
+      totalEntriesInDB: allEntries.length,
+      entriesForDate: todayEntries.length,
+      prevDayEntry: prevDayEntry ? { entryDate: prevDayEntry.entryDate, id: prevDayEntry.id } : null,
+      allDates: [...new Set(allEntries.map(e => e.entryDate))].sort(),
+      sampleEntry: todayEntries[0] ? {
+        id: todayEntries[0].id,
+        entryDate: todayEntries[0].entryDate,
+        hasNozzleReadings: !!(todayEntries[0].nozzleReadings || todayEntries[0].nozzle_readings),
+        nozzleReadingsKey: todayEntries[0].nozzleReadings ? 'nozzleReadings' : todayEntries[0].nozzle_readings ? 'nozzle_readings' : 'none',
+        prices: todayEntries[0].prices,
+      } : null,
+    })
 
     const fuelTypes = [...new Set(nozzles.map(n => n.fuel_type))]
 
@@ -207,7 +235,10 @@ function DailySalesReportContent() {
       }
     }
 
-    // OV/SH = (Opening + Supply - Closing) - Dispensed
+    // OV/SH = Actual Closing - Expected Closing
+    // Expected Closing = Opening + Supply - Dispensed
+    // OV/SH = Closing - (Opening + Supply - Dispensed) = Closing - Opening - Supply + Dispensed
+    // Positive = overage, Negative = shortage
     const tankSummaryRows = fuelTypes.map(ft => {
       const tb = tanksByFuel[ft]
       const dispensed = dayFuelTotals[ft].dispensed
@@ -216,7 +247,7 @@ function DailySalesReportContent() {
         opening: tb.totalOpening, waybillSupply: tb.totalWaybill,
         actualSupply: tb.totalActualSupply, closing: tb.totalClosing,
         dispensed,
-        ovsh: (tb.totalOpening + tb.totalActualSupply - tb.totalClosing) - dispensed,
+        ovsh: (tb.totalClosing - tb.totalOpening) - tb.totalActualSupply + dispensed,
       }
     })
 
