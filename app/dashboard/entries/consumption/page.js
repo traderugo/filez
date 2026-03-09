@@ -127,12 +127,12 @@ export default function ConsumptionFormPage() {
         <div className="border border-gray-300 divide-y divide-gray-300">
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Account</label>
-              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Account</label>
+              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="">Select account</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}{c.phone ? ` (${c.phone})` : ''}</option>
@@ -142,12 +142,12 @@ export default function ConsumptionFormPage() {
           </div>
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Quantity (litres)</label>
-              <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Quantity (litres)</label>
+              <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Fuel Type</label>
-              <select value={fuelType} onChange={(e) => setFuelType(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Fuel Type</label>
+              <select value={fuelType} onChange={(e) => setFuelType(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="">Select fuel type</option>
                 {FUEL_TYPES.map((ft) => (
                   <option key={ft} value={ft}>{ft}</option>
@@ -156,8 +156,8 @@ export default function ConsumptionFormPage() {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
         </div>
 

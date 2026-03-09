@@ -127,18 +127,18 @@ export default function LodgementsFormPage() {
         <div className="border border-gray-300 divide-y divide-gray-300">
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount</label>
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount</label>
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
           </div>
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Bank Account</label>
-              <select value={bankId} onChange={(e) => setBankId(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Bank Account</label>
+              <select value={bankId} onChange={(e) => setBankId(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="">Select account</option>
                 {banks.map((b) => (
                   <option key={b.id} value={b.id}>{b.bank_name} ({b.lodgement_type})</option>
@@ -146,8 +146,8 @@ export default function LodgementsFormPage() {
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Type</label>
-              <select value={lodgementType} onChange={(e) => setLodgementType(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Type</label>
+              <select value={lodgementType} onChange={(e) => setLodgementType(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="deposit">Deposit</option>
                 <option value="lube-deposit">Lube Deposit</option>
                 <option value="pos">POS</option>
@@ -155,12 +155,12 @@ export default function LodgementsFormPage() {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Date</label>
-            <input type="date" value={salesDate} onChange={(e) => setSalesDate(e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Date</label>
+            <input type="date" value={salesDate} onChange={(e) => setSalesDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
           <div>
-            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
         </div>
 

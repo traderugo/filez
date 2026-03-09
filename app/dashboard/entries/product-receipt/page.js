@@ -134,7 +134,7 @@ export default function ProductReceiptFormPage() {
 
   const Field = ({ label, name, type = 'text', placeholder }) => (
     <div>
-      <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">{label}</label>
+      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{label}</label>
       <input
         type={type}
         value={form[name]}
@@ -142,7 +142,7 @@ export default function ProductReceiptFormPage() {
         placeholder={placeholder}
         step={type === 'number' ? '0.01' : undefined}
         min={type === 'number' ? '0' : undefined}
-        className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50"
+        className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50"
       />
     </div>
   )
@@ -185,7 +185,7 @@ export default function ProductReceiptFormPage() {
             <Field label="Depot Name" name="depotName" />
           </div>
           <div className="bg-gray-50 px-2 py-1">
-            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
             <Field label="Chart Ullage" name="chartUllage" type="number" />
@@ -198,7 +198,7 @@ export default function ProductReceiptFormPage() {
             <Field label="Station Liq. Height" name="stationLiquidHeight" type="number" />
           </div>
           <div className="bg-gray-50 px-2 py-1">
-            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
             <Field label="1st Compartment" name="firstCompartment" type="number" />
@@ -208,8 +208,8 @@ export default function ProductReceiptFormPage() {
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <Field label="Actual Volume" name="actualVolume" type="number" />
             <div>
-              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
-              <select value={form.tankId} onChange={(e) => setField('tankId', e.target.value)} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
+              <select value={form.tankId} onChange={(e) => setField('tankId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="">Select tank</option>
                 {tanks.map((t) => (
                   <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
@@ -218,8 +218,8 @@ export default function ProductReceiptFormPage() {
             </div>
           </div>
           <div>
-            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+            <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
         </div>
 
