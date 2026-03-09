@@ -7,6 +7,7 @@ import {
   Building2, Check, Plus,
   Fuel, ChevronRight, Shield
 } from 'lucide-react'
+import InstallPWABanner from '@/components/InstallPWABanner'
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState(null)
@@ -108,7 +109,9 @@ export default function DashboardPage() {
   if (isAdmin) {
     return (
       <div className="max-w-2xl px-4 sm:px-8 py-8">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">Welcome, {profile?.name}</h1>
+        <InstallPWABanner />
+
+        <h1 className="text-xl font-bold text-gray-900 mb-1 mt-4">Welcome, {profile?.name}</h1>
         <p className="text-base text-gray-500 mb-8">{profile?.email}</p>
 
         <div className="border border-blue-200 bg-blue-50 p-6">
@@ -136,7 +139,9 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-2xl px-4 sm:px-8 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-1">Welcome, {profile?.name}</h1>
+      <InstallPWABanner />
+
+      <h1 className="text-xl font-bold text-gray-900 mb-1 mt-4">Welcome, {profile?.name}</h1>
       <p className="text-base text-gray-500 mb-8">{profile?.email}</p>
 
       {/* Pending station invites (staff) */}
