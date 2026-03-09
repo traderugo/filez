@@ -6,6 +6,7 @@ import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { initialSync } from '@/lib/initialSync'
+import { calculateDateRangeNozzles } from '@/lib/salesCalculations'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -30,7 +31,9 @@ function DailySalesReportContent() {
   const orgId = searchParams.get('org_id') || ''
 
   const [loading, setLoading] = useState(true)
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const today = new Date()
+  const [startDate, setStartDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0])
+  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0])
 
   // Config
   const [nozzles, setNozzles] = useState([])
@@ -66,12 +69,11 @@ function DailySalesReportContent() {
   const buildReport = useCallback(async () => {
     if (!orgId || !nozzles.length) return
 
-    // Get all daily sales entries sorted by date, then createdAt
+    // Get all daily sales entries
     const rawEntries = await db.dailySales
       .where('orgId').equals(orgId)
       .toArray()
 
-    // Defensive: normalize field names in case some entries have snake_case
     const allEntries = rawEntries.map(e => ({
       ...e,
       entryDate: e.entryDate || e.entry_date,
@@ -81,233 +83,173 @@ function DailySalesReportContent() {
       createdAt: e.createdAt || e.created_at,
     }))
 
-    allEntries.sort((a, b) =>
+    const sorted = [...allEntries].sort((a, b) =>
       (a.entryDate || '').localeCompare(b.entryDate || '') ||
       (a.createdAt || '').localeCompare(b.createdAt || '')
     )
 
-    // All entries for the selected date (could be multiple)
-    const todayEntries = allEntries.filter(e => e.entryDate === date)
+    // Use range helper for nozzle dispensed calculations
+    const rangeResult = calculateDateRangeNozzles(allEntries, nozzles, startDate, endDate)
+    const { fuelTypes } = rangeResult
 
-    // Find the last entry before this date (for opening values of first entry)
-    let prevDayEntry = null
-    for (let i = allEntries.length - 1; i >= 0; i--) {
-      if (allEntries[i].entryDate < date) {
-        prevDayEntry = allEntries[i]
-        break
-      }
-    }
-
-    // Debug: log data state
-    console.log('[Report Debug]', {
-      selectedDate: date,
-      totalEntriesInDB: allEntries.length,
-      entriesForDate: todayEntries.length,
-      prevDayEntry: prevDayEntry ? { entryDate: prevDayEntry.entryDate, id: prevDayEntry.id } : null,
-      allDates: [...new Set(allEntries.map(e => e.entryDate))].sort(),
-      sampleEntry: todayEntries[0] ? {
-        id: todayEntries[0].id,
-        entryDate: todayEntries[0].entryDate,
-        hasNozzleReadings: !!(todayEntries[0].nozzleReadings || todayEntries[0].nozzle_readings),
-        nozzleReadingsKey: todayEntries[0].nozzleReadings ? 'nozzleReadings' : todayEntries[0].nozzle_readings ? 'nozzle_readings' : 'none',
-        prices: todayEntries[0].prices,
-      } : null,
-    })
-
-    // Force fuel type order: PMS first, then AGO, then DPK
-    const fuelTypes = ['PMS', 'AGO', 'DPK'].filter(ft => nozzles.some(n => n.fuel_type === ft))
-
-    // Build per-entry groups — each entry gets its own nozzle rows
-    const entryGroups = []
-    const dayFuelTotals = {}
-    for (const ft of fuelTypes) {
-      dayFuelTotals[ft] = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
-    }
-
-    for (let eIdx = 0; eIdx < todayEntries.length; eIdx++) {
-      const currentEntry = todayEntries[eIdx]
-      // All entries on the same day use previous DAY's last closing as opening (not chained)
-      const prevEntry = prevDayEntry
-
-      const nozzleRows = []
-      const entryFuelTotals = {}
-
-      for (const ft of fuelTypes) {
-        const ftNozzles = nozzles.filter(n => n.fuel_type === ft).sort((a, b) => Number(a.pump_number) - Number(b.pump_number))
-        let ftDispensed = 0
-        let ftConsumed = 0
-        let ftActual = 0
-        let price = Number(currentEntry.prices?.[ft]) || 0
-
-        const rows = ftNozzles.map(n => {
-          const currentReadings = currentEntry.nozzleReadings || []
-          const currentR = currentReadings.find(r => r.pump_id === n.id)
-
-          const prevReadings = prevEntry?.nozzleReadings || []
-          const prevR = prevReadings.find(r => r.pump_id === n.id)
-          const opening = prevR ? Number(prevR.closing_meter || 0) : Number(n.initial_reading || 0)
-          const closing = currentR ? Number(currentR.closing_meter || 0) : opening
-          const consumption = currentR ? Number(currentR.consumption || 0) : 0
-          const pourBack = currentR ? Number(currentR.pour_back || 0) : 0
-          const dispensed = closing - opening
-          const actual = dispensed - consumption - pourBack
-
-          ftDispensed += dispensed
-          ftConsumed += consumption
-          ftActual += actual
-
-          return { label: `${ft} ${n.pump_number}`, opening, closing, dispensed, consumption, actual, pourBack }
-        })
-
-        const ftAmount = ftActual * price
-
-        entryFuelTotals[ft] = {
-          dispensed: ftDispensed, consumed: ftConsumed, actual: ftActual,
-          price, amount: ftAmount,
-          pourBack: rows.reduce((s, r) => s + r.pourBack, 0),
-        }
-
-        // Accumulate day totals
-        dayFuelTotals[ft].dispensed += ftDispensed
-        dayFuelTotals[ft].consumed += ftConsumed
-        dayFuelTotals[ft].actual += ftActual
-        dayFuelTotals[ft].pourBack += entryFuelTotals[ft].pourBack
-        dayFuelTotals[ft].price = price // use latest price
-        dayFuelTotals[ft].amount += ftAmount
-
-        nozzleRows.push({ fuelType: ft, rows, totals: entryFuelTotals[ft] })
-      }
-
-      entryGroups.push({ entryIndex: eIdx + 1, nozzleRows, fuelTotals: entryFuelTotals })
-    }
-
-    // If no entries for this date, build a single empty group with carried-forward values
-    if (todayEntries.length === 0) {
-      const nozzleRows = []
-      for (const ft of fuelTypes) {
-        const ftNozzles = nozzles.filter(n => n.fuel_type === ft).sort((a, b) => Number(a.pump_number) - Number(b.pump_number))
-        const rows = ftNozzles.map(n => {
-          const prevReadings = prevDayEntry?.nozzleReadings || []
-          const prevR = prevReadings.find(r => r.pump_id === n.id)
-          const opening = prevR ? Number(prevR.closing_meter || 0) : Number(n.initial_reading || 0)
-          return { label: `${ft} ${n.pump_number}`, opening, closing: opening, dispensed: 0, consumption: 0, actual: 0, pourBack: 0 }
-        })
-        const totals = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
-        nozzleRows.push({ fuelType: ft, rows, totals })
-      }
-      entryGroups.push({ entryIndex: 1, nozzleRows, fuelTotals: Object.fromEntries(fuelTypes.map(ft => [ft, { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }])) })
-    }
-
-    // Build tank rows — day-level (opening from prev day, closing from last entry)
-    const lastEntry = todayEntries.length > 0 ? todayEntries[todayEntries.length - 1] : null
-    const tanksByFuel = {}
-
-    for (const ft of fuelTypes) {
-      const ftTanks = tanks.filter(t => t.fuel_type === ft).sort((a, b) => Number(a.tank_number) - Number(b.tank_number))
-      tanksByFuel[ft] = { tanks: [], totalOpening: 0, totalClosing: 0, totalWaybill: 0, totalActualSupply: 0 }
-
-      for (const t of ftTanks) {
-        const prevTankReadings = prevDayEntry?.tankReadings || []
-        const prevTR = prevTankReadings.find(r => r.tank_id === t.id)
-        const opening = prevTR ? Number(prevTR.closing_stock || 0) : Number(t.opening_stock || 0)
-
-        const lastTankReadings = lastEntry?.tankReadings || []
-        const lastTR = lastTankReadings.find(r => r.tank_id === t.id)
-        const closing = lastTR ? Number(lastTR.closing_stock || 0) : opening
-
-        tanksByFuel[ft].totalOpening += opening
-        tanksByFuel[ft].totalClosing += closing
-        tanksByFuel[ft].tanks.push({ label: `${ft} ${t.tank_number}`, opening, closing })
-      }
-    }
-
-    // Get product receipts for this date (waybill supply)
-    const allReceipts = await db.productReceipts
-      .where('orgId').equals(orgId)
-      .toArray()
-    const todayReceipts = allReceipts.filter(r => r.entryDate === date)
-
-    for (const receipt of todayReceipts) {
-      const tankConfig = tanks.find(t => t.id === receipt.tankId)
-      if (tankConfig && tanksByFuel[tankConfig.fuel_type]) {
-        const waybill = Number(receipt.actualVolume) || 0
-        tanksByFuel[tankConfig.fuel_type].totalWaybill += waybill
-        tanksByFuel[tankConfig.fuel_type].totalActualSupply += waybill
-      }
-    }
-
-    // OV/SH = Actual Closing - Expected Closing
-    // Expected Closing = Opening + Supply - Dispensed
-    // OV/SH = Closing - (Opening + Supply - Dispensed) = Closing - Opening - Supply + Dispensed
-    // Positive = overage, Negative = shortage
-    const tankSummaryRows = fuelTypes.map(ft => {
-      const tb = tanksByFuel[ft]
-      const dispensed = dayFuelTotals[ft].dispensed
-      return {
-        fuelType: ft, tanks: tb.tanks,
-        opening: tb.totalOpening, waybillSupply: tb.totalWaybill,
-        actualSupply: tb.totalActualSupply, closing: tb.totalClosing,
-        dispensed,
-        ovsh: (tb.totalClosing - tb.totalOpening) - tb.totalActualSupply + dispensed,
-      }
-    })
-
-    // Get lodgements matching this salesDate
-    const allLodgements = await db.lodgements
-      .where('orgId').equals(orgId)
-      .toArray()
-    const todayLodgements = allLodgements.filter(l => l.salesDate === date)
-
-    const posEntries = []
+    // Fetch auxiliary data once
+    const [allReceipts, allLodgements, allConsumption] = await Promise.all([
+      db.productReceipts.where('orgId').equals(orgId).toArray(),
+      db.lodgements.where('orgId').equals(orgId).toArray(),
+      db.consumption.where('orgId').equals(orgId).toArray(),
+    ])
     const bankMap = {}
     for (const b of banks) { bankMap[b.id] = b }
-    for (const l of todayLodgements) {
-      const bank = bankMap[l.bankId]
-      posEntries.push({
-        bankName: bank?.bank_name || 'Unknown',
-        lodgementType: l.lodgementType || bank?.lodgement_type || '',
-        amount: Number(l.amount) || 0,
+
+    // Build per-date report
+    const dateReports = rangeResult.dates.map(({ date, entries: helperEntries, dayTotals: helperDayTotals, hasEntry, entryCount }) => {
+      const dateEntries = sorted.filter(e => e.entryDate === date)
+
+      // Layer consumption/price/amount on top of helper output
+      const entryGroups = []
+      const dayFuelTotals = {}
+      for (const ft of fuelTypes) {
+        dayFuelTotals[ft] = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
+      }
+
+      for (let i = 0; i < helperEntries.length; i++) {
+        const helperEntry = helperEntries[i]
+        const currentEntry = dateEntries[i] || {}
+        const nozzleRows = []
+        const entryFuelTotals = {}
+
+        for (const ft of fuelTypes) {
+          const fg = helperEntry.fuelGroups[ft]
+          const price = Number(currentEntry.prices?.[ft]) || 0
+
+          let ftConsumed = 0
+          let ftPourBack = 0
+          const rows = fg.nozzles.map(n => {
+            const currentR = (currentEntry.nozzleReadings || []).find(r => r.pump_id === n.pumpId)
+            const consumption = currentR ? Number(currentR.consumption || 0) : 0
+            const pourBack = currentR ? Number(currentR.pour_back || 0) : 0
+            const actual = n.dispensed - consumption - pourBack
+            ftConsumed += consumption
+            ftPourBack += pourBack
+            return { ...n, consumption, pourBack, actual }
+          })
+
+          const ftActual = fg.totals.dispensed - ftConsumed - ftPourBack
+          const ftAmount = ftActual * price
+
+          entryFuelTotals[ft] = {
+            dispensed: fg.totals.dispensed, consumed: ftConsumed, actual: ftActual,
+            price, amount: ftAmount, pourBack: ftPourBack,
+          }
+
+          dayFuelTotals[ft].dispensed += fg.totals.dispensed
+          dayFuelTotals[ft].consumed += ftConsumed
+          dayFuelTotals[ft].actual += ftActual
+          dayFuelTotals[ft].pourBack += ftPourBack
+          dayFuelTotals[ft].price = price
+          dayFuelTotals[ft].amount += ftAmount
+
+          nozzleRows.push({ fuelType: ft, rows, totals: entryFuelTotals[ft] })
+        }
+
+        entryGroups.push({ entryIndex: helperEntry.entryIndex, nozzleRows, fuelTotals: entryFuelTotals })
+      }
+
+      // Tanks
+      let prevDayEntry = null
+      for (let i = sorted.length - 1; i >= 0; i--) {
+        if (sorted[i].entryDate < date) { prevDayEntry = sorted[i]; break }
+      }
+      const lastEntry = dateEntries.length > 0 ? dateEntries[dateEntries.length - 1] : null
+      const tanksByFuel = {}
+
+      for (const ft of fuelTypes) {
+        const ftTanks = tanks.filter(t => t.fuel_type === ft).sort((a, b) => Number(a.tank_number) - Number(b.tank_number))
+        tanksByFuel[ft] = { tanks: [], totalOpening: 0, totalClosing: 0, totalWaybill: 0, totalActualSupply: 0 }
+
+        for (const t of ftTanks) {
+          const prevTR = (prevDayEntry?.tankReadings || []).find(r => r.tank_id === t.id)
+          const opening = prevTR ? Number(prevTR.closing_stock || 0) : Number(t.opening_stock || 0)
+          const lastTR = (lastEntry?.tankReadings || []).find(r => r.tank_id === t.id)
+          const closing = lastTR ? Number(lastTR.closing_stock || 0) : opening
+
+          tanksByFuel[ft].totalOpening += opening
+          tanksByFuel[ft].totalClosing += closing
+          tanksByFuel[ft].tanks.push({ label: `${ft} ${t.tank_number}`, opening, closing })
+        }
+      }
+
+      const dateReceipts = allReceipts.filter(r => r.entryDate === date)
+      for (const receipt of dateReceipts) {
+        const tankConfig = tanks.find(t => t.id === receipt.tankId)
+        if (tankConfig && tanksByFuel[tankConfig.fuel_type]) {
+          const waybill = Number(receipt.actualVolume) || 0
+          tanksByFuel[tankConfig.fuel_type].totalWaybill += waybill
+          tanksByFuel[tankConfig.fuel_type].totalActualSupply += waybill
+        }
+      }
+
+      const tankSummaryRows = fuelTypes.map(ft => {
+        const tb = tanksByFuel[ft]
+        const dispensed = dayFuelTotals[ft].dispensed
+        return {
+          fuelType: ft, tanks: tb.tanks,
+          opening: tb.totalOpening, waybillSupply: tb.totalWaybill,
+          actualSupply: tb.totalActualSupply, closing: tb.totalClosing,
+          dispensed,
+          ovsh: (tb.totalClosing - tb.totalOpening) - tb.totalActualSupply + dispensed,
+        }
       })
-    }
 
-    const totalPOS = posEntries
-      .filter(p => p.lodgementType === 'pos')
-      .reduce((s, p) => s + p.amount, 0)
+      // Lodgements
+      const dateLodgements = allLodgements.filter(l => l.salesDate === date)
+      const posEntries = dateLodgements.map(l => {
+        const bank = bankMap[l.bankId]
+        return {
+          bankName: bank?.bank_name || 'Unknown',
+          lodgementType: l.lodgementType || bank?.lodgement_type || '',
+          amount: Number(l.amount) || 0,
+        }
+      })
+      const totalPOS = posEntries.filter(p => p.lodgementType === 'pos').reduce((s, p) => s + p.amount, 0)
 
-    // Get consumption for this date
-    const allConsumption = await db.consumption
-      .where('orgId').equals(orgId)
-      .toArray()
-    const todayConsumption = allConsumption.filter(c => c.entryDate === date)
+      // Consumption
+      const dateConsumption = allConsumption.filter(c => c.entryDate === date)
 
-    // Summary — aggregate across all entries
-    const totalSales = fuelTypes.reduce((s, ft) => s + dayFuelTotals[ft].amount, 0)
-    const totalCash = totalSales - totalPOS
+      // Summary
+      const totalSales = fuelTypes.reduce((s, ft) => s + dayFuelTotals[ft].amount, 0)
+      const totalCash = totalSales - totalPOS
 
-    setReport({
-      entryGroups,
-      dayFuelTotals,
-      fuelTypes,
-      tankSummaryRows,
-      tanksByFuel,
-      posEntries,
-      totalPOS,
-      todayConsumption,
-      totalSales,
-      totalCash,
-      hasEntry: todayEntries.length > 0,
-      entryCount: todayEntries.length,
+      return {
+        date,
+        entryGroups,
+        dayFuelTotals,
+        tankSummaryRows,
+        tanksByFuel,
+        posEntries,
+        totalPOS,
+        todayConsumption: dateConsumption,
+        totalSales,
+        totalCash,
+        hasEntry,
+        entryCount,
+      }
     })
-  }, [orgId, date, nozzles, tanks, banks])
+
+    setReport({ dateReports, fuelTypes })
+  }, [orgId, startDate, endDate, nozzles, tanks, banks])
 
   useEffect(() => {
     if (!loading) buildReport()
   }, [loading, buildReport])
 
   const changeDate = (delta) => {
-    const d = new Date(date)
-    d.setDate(d.getDate() + delta)
-    setDate(d.toISOString().split('T')[0])
+    const s = new Date(startDate)
+    const e = new Date(endDate)
+    s.setDate(s.getDate() + delta)
+    e.setDate(e.getDate() + delta)
+    setStartDate(s.toISOString().split('T')[0])
+    setEndDate(e.toISOString().split('T')[0])
   }
 
   if (loading) {
@@ -365,9 +307,16 @@ function DailySalesReportContent() {
           </button>
           <input
             type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 text-base font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-400">to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button onClick={() => changeDate(1)} className="p-1.5 border border-gray-300 hover:bg-gray-50">
             <ChevronRight className="w-4 h-4" />
@@ -375,161 +324,161 @@ function DailySalesReportContent() {
         </div>
       </div>
 
-      {!report?.hasEntry && (
-        <div className="bg-yellow-50 border border-yellow-200 px-4 py-3 mb-4 text-base text-yellow-800">
-          No entry found for this date. Showing carried-forward values.
-        </div>
-      )}
+      {report?.dateReports.map((dayReport) => (
+        <div key={dayReport.date} className="mb-8">
+          {/* Date header */}
+          <div className={`${hdr} px-2 py-1 font-bold text-sm mb-1`}>
+            {new Date(dayReport.date + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+            {!dayReport.hasEntry && <span className="ml-2 text-yellow-300 font-normal text-xs">(no entry)</span>}
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
-        {/* ===== LEFT: DAILY SALES OPERATION ===== */}
-        <div className="min-w-0">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className={subHdr}>
-                  <th className={`${cell} text-left font-bold whitespace-nowrap`}>Pumps</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Opening</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Closing</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Dispensed</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Consumed</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Actual</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Price</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report?.entryGroups.map((group) => (
-                  <EntryGroup
-                    key={group.entryIndex}
-                    group={group}
-                    showHeader={report.entryCount > 1}
-                    cell={cell}
-                    cellR={cellR}
-                    hdr={hdr}
-                  />
-                ))}
-                {report?.entryCount > 1 && (
-                  <tr className={`${hdr} font-bold`}>
-                    <td className={cell}>DAY TOTAL</td>
-                    <td className={cellR}></td>
-                    <td className={cellR}></td>
-                    <td className={cellR}>
-                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].dispensed, 0))}
-                    </td>
-                    <td className={cellR}>
-                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].consumed, 0))}
-                    </td>
-                    <td className={cellR}>
-                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].actual, 0))}
-                    </td>
-                    <td className={cellR}></td>
-                    <td className={cellR}>
-                      {fmt(report.fuelTypes.reduce((s, ft) => s + report.dayFuelTotals[ft].amount, 0))}
-                    </td>
+          <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
+            {/* ===== LEFT: DAILY SALES OPERATION ===== */}
+            <div className="min-w-0">
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className={subHdr}>
+                      <th className={`${cell} text-left font-bold whitespace-nowrap`}>Pumps</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Opening</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Closing</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Dispensed</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Consumed</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Actual</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Price</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dayReport.entryGroups.map((group) => (
+                      <EntryGroup
+                        key={group.entryIndex}
+                        group={group}
+                        showHeader={dayReport.entryCount > 1}
+                        cell={cell}
+                        cellR={cellR}
+                        hdr={hdr}
+                      />
+                    ))}
+                    {dayReport.entryCount > 1 && (
+                      <tr className={`${hdr} font-bold`}>
+                        <td className={cell}>DAY TOTAL</td>
+                        <td className={cellR}></td>
+                        <td className={cellR}></td>
+                        <td className={cellR}>
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].dispensed, 0))}
+                        </td>
+                        <td className={cellR}>
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].consumed, 0))}
+                        </td>
+                        <td className={cellR}>
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].actual, 0))}
+                        </td>
+                        <td className={cellR}></td>
+                        <td className={cellR}>
+                          {fmt(report.fuelTypes.reduce((s, ft) => s + dayReport.dayFuelTotals[ft].amount, 0))}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* ===== RIGHT: STOCK & SUMMARY ===== */}
+            <div className="min-w-0">
+              {/* Tank stock table */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-sm mb-4">
+                  <thead>
+                    <tr className={subHdr}>
+                      <th className={`${cell} text-left font-bold whitespace-nowrap`}>Tank</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Opening</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Supply</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Closing</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>Dispensed</th>
+                      <th className={`${cellR} font-bold whitespace-nowrap`}>OV/SH</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dayReport.tankSummaryRows.map((row) => (
+                      <TankRow key={row.fuelType} row={row} cell={cell} cellR={cellR} subHdr={subHdr} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* POS & Consumption side by side */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <table className="w-full border-collapse text-sm">
+                    <tbody>
+                      {dayReport.posEntries.filter(p => p.lodgementType === 'pos').map((p, i) => (
+                        <tr key={i}>
+                          <td className={cell}>{p.bankName}</td>
+                          <td className={cellR}>{fmt(p.amount)}</td>
+                        </tr>
+                      ))}
+                      {(!dayReport.posEntries.filter(p => p.lodgementType === 'pos').length) && (
+                        <tr><td colSpan={2} className={`${cell} text-gray-400`}>No POS entries</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <table className="w-full border-collapse text-sm">
+                    <tbody>
+                      {dayReport.todayConsumption.map((c, i) => (
+                        <tr key={i}>
+                          <td className={cell}>{c.fuelType || ''}</td>
+                          <td className={cellR}>{fmt(c.quantity)}</td>
+                        </tr>
+                      ))}
+                      {(!dayReport.todayConsumption?.length) && (
+                        <tr><td colSpan={2} className={`${cell} text-gray-400`}>No consumption</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className={subHdr}>
+                    <th className={`${cell} text-left font-bold`}></th>
+                    <th className={`${cellR} font-bold`}>P/b</th>
+                    <th className={`${cellR} font-bold`}>Sales</th>
+                    <th className={`${cellR} font-bold`}>Amount</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-
-        {/* ===== RIGHT: STOCK & SUMMARY ===== */}
-        <div className="min-w-0">
-          {/* Tank stock table */}
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm mb-4">
-              <thead>
-                <tr className={subHdr}>
-                  <th className={`${cell} text-left font-bold whitespace-nowrap`}>Tank</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Opening</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Supply</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Closing</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>Dispensed</th>
-                  <th className={`${cellR} font-bold whitespace-nowrap`}>OV/SH</th>
-                </tr>
-              </thead>
-              <tbody>
-                {report?.tankSummaryRows.map((row) => (
-                  <TankRow key={row.fuelType} row={row} cell={cell} cellR={cellR} subHdr={subHdr} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* POS & Consumption side by side */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            {/* POS */}
-            <div>
-              <table className="w-full border-collapse text-sm">
+                </thead>
                 <tbody>
-                  {report?.posEntries.filter(p => p.lodgementType === 'pos').map((p, i) => (
-                    <tr key={i}>
-                      <td className={cell}>{p.bankName}</td>
-                      <td className={cellR}>{fmt(p.amount)}</td>
+                  {report.fuelTypes.map(ft => (
+                    <tr key={ft}>
+                      <td className={`${cell} font-bold`}>{ft}</td>
+                      <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.pourBack)}</td>
+                      <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.actual)}</td>
+                      <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.amount)}</td>
                     </tr>
                   ))}
-                  {(!report?.posEntries.filter(p => p.lodgementType === 'pos').length) && (
-                    <tr><td colSpan={2} className={`${cell} text-gray-400`}>No POS entries</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Consumption */}
-            <div>
-              <table className="w-full border-collapse text-sm">
-                <tbody>
-                  {report?.todayConsumption.map((c, i) => (
-                    <tr key={i}>
-                      <td className={cell}>{c.fuelType || ''}</td>
-                      <td className={cellR}>{fmt(c.quantity)}</td>
-                    </tr>
-                  ))}
-                  {(!report?.todayConsumption?.length) && (
-                    <tr><td colSpan={2} className={`${cell} text-gray-400`}>No consumption</td></tr>
-                  )}
+                  <tr className={`${subHdr} font-bold`}>
+                    <td colSpan={3} className={cell}>SALES</td>
+                    <td className={cellR}>{fmt(dayReport.totalSales)}</td>
+                  </tr>
+                  <tr className="font-bold">
+                    <td colSpan={3} className={cell}>POS</td>
+                    <td className={cellR}>{fmt(dayReport.totalPOS)}</td>
+                  </tr>
+                  <tr className={`${subHdr} font-bold`}>
+                    <td colSpan={3} className={cell}>CASH</td>
+                    <td className={cellR}>{fmt(dayReport.totalCash)}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
-
-          {/* Summary */}
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className={subHdr}>
-                <th className={`${cell} text-left font-bold`}></th>
-                <th className={`${cellR} font-bold`}>P/b</th>
-                <th className={`${cellR} font-bold`}>Sales</th>
-                <th className={`${cellR} font-bold`}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report?.fuelTypes.map(ft => (
-                <tr key={ft}>
-                  <td className={`${cell} font-bold`}>{ft}</td>
-                  <td className={cellR}>{fmt(report.dayFuelTotals[ft]?.pourBack)}</td>
-                  <td className={cellR}>{fmt(report.dayFuelTotals[ft]?.actual)}</td>
-                  <td className={cellR}>{fmt(report.dayFuelTotals[ft]?.amount)}</td>
-                </tr>
-              ))}
-              <tr className={`${subHdr} font-bold`}>
-                <td colSpan={3} className={cell}>SALES</td>
-                <td className={cellR}>{fmt(report?.totalSales)}</td>
-              </tr>
-              <tr className="font-bold">
-                <td colSpan={3} className={cell}>POS</td>
-                <td className={cellR}>{fmt(report?.totalPOS)}</td>
-              </tr>
-              <tr className={`${subHdr} font-bold`}>
-                <td colSpan={3} className={cell}>CASH</td>
-                <td className={cellR}>{fmt(report?.totalCash)}</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
-      </div>
+      ))}
     </div>
   )
 }
