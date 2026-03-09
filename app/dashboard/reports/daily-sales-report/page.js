@@ -126,6 +126,16 @@ function DailySalesReportContent() {
         dayFuelTotals[ft] = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
       }
 
+      // For no-entry days, carry forward prices from the last entry before this date
+      let prevPrices = {}
+      if (dateEntries.length === 0) {
+        let prevEntry = null
+        for (let i = sorted.length - 1; i >= 0; i--) {
+          if (sorted[i].entryDate < date) { prevEntry = sorted[i]; break }
+        }
+        if (prevEntry) prevPrices = prevEntry.prices || {}
+      }
+
       for (let i = 0; i < helperEntries.length; i++) {
         const helperEntry = helperEntries[i]
         const currentEntry = dateEntries[i] || {}
@@ -134,7 +144,7 @@ function DailySalesReportContent() {
 
         for (const ft of fuelTypes) {
           const fg = helperEntry.fuelGroups[ft]
-          const price = Number(currentEntry.prices?.[ft]) || 0
+          const price = Number(currentEntry.prices?.[ft]) || Number(prevPrices[ft]) || 0
 
           let ftConsumed = 0
           let ftPourBack = 0
