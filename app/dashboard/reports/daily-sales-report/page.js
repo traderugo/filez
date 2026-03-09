@@ -44,6 +44,8 @@ function DailySalesReportContent() {
   // Report data
   const [report, setReport] = useState(null)
   const [showEditMenu, setShowEditMenu] = useState(false)
+  const [tabOffset, setTabOffset] = useState(0)
+  const TAB_COUNT = 31
 
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
@@ -253,11 +255,20 @@ function DailySalesReportContent() {
     if (!loading) buildReport()
   }, [loading, buildReport])
 
-  // Clamp viewDate when range changes
+  // Clamp viewDate and reset tab offset when range changes
   useEffect(() => {
+    setTabOffset(0)
     if (viewDate < startDate) setViewDate(startDate)
     else if (viewDate > endDate) setViewDate(endDate)
   }, [startDate, endDate])
+
+  // Auto-scroll tabs so active day is always visible
+  useEffect(() => {
+    if (!report?.dateReports) return
+    const idx = report.dateReports.findIndex(r => r.date === viewDate)
+    if (idx < tabOffset) setTabOffset(idx)
+    else if (idx >= tabOffset + TAB_COUNT) setTabOffset(idx - TAB_COUNT + 1)
+  }, [viewDate, report])
 
   if (loading) {
     return (
@@ -327,48 +338,40 @@ function DailySalesReportContent() {
         </div>
       </div>
 
-      {/* Day tabs — show up to 31 days, paginated */}
-      {report?.dateReports && (() => {
-        const PAGE = 31
-        const activeIdx = report.dateReports.findIndex(r => r.date === viewDate)
-        const pageStart = Math.floor(activeIdx / PAGE) * PAGE
-        const pageEnd = Math.min(pageStart + PAGE, report.dateReports.length)
-        const visible = report.dateReports.slice(pageStart, pageEnd)
-        const hasPrev = pageStart > 0
-        const hasNext = pageEnd < report.dateReports.length
-
-        return (
-          <div className="flex items-center gap-0.5 mb-4">
-            <button
-              onClick={() => setViewDate(report.dateReports[pageStart - 1].date)}
-              disabled={!hasPrev}
-              className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            {visible.map(dr => {
+      {/* Day tabs — Excel-style sheet navigation */}
+      {report?.dateReports && (
+        <div className="flex items-center mb-4">
+          <button
+            onClick={() => setTabOffset(Math.max(0, tabOffset - 1))}
+            disabled={tabOffset <= 0}
+            className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <div className="flex overflow-hidden">
+            {report.dateReports.slice(tabOffset, tabOffset + TAB_COUNT).map(dr => {
               const d = new Date(dr.date + 'T00:00:00')
               const isActive = dr.date === viewDate
               return (
                 <button
                   key={dr.date}
                   onClick={() => setViewDate(dr.date)}
-                  className={`px-2 py-1.5 text-xs font-medium border border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                  className={`px-2 py-1.5 text-xs font-medium border-r border-blue-200 first:border-l ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                 >
                   {d.getDate()}
                 </button>
               )
             })}
-            <button
-              onClick={() => setViewDate(report.dateReports[pageEnd].date)}
-              disabled={!hasNext}
-              className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
-        )
-      })()}
+          <button
+            onClick={() => setTabOffset(Math.min(report.dateReports.length - TAB_COUNT, tabOffset + 1))}
+            disabled={tabOffset >= report.dateReports.length - TAB_COUNT}
+            className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {currentDayReport && (
         <div>
