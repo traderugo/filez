@@ -384,9 +384,6 @@ function DailySalesReportContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ===== LEFT: DAILY SALES OPERATION ===== */}
         <div className="min-w-0">
-          <div className={`${hdr} px-3 py-2 font-bold text-center`}>
-            DAILY SALES OPERATION
-          </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>
@@ -440,10 +437,6 @@ function DailySalesReportContent() {
 
         {/* ===== RIGHT: STOCK & SUMMARY ===== */}
         <div className="min-w-0">
-          <div className={`${hdr} px-3 py-2 font-bold text-center`}>
-            STOCK &amp; SUMMARY
-          </div>
-
           {/* Tank stock table */}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm mb-4">
@@ -469,7 +462,6 @@ function DailySalesReportContent() {
           <div className="grid grid-cols-2 gap-4 mb-4">
             {/* POS */}
             <div>
-              <div className={`${hdr} px-3 py-1.5 font-bold`}>POS</div>
               <table className="w-full border-collapse text-sm">
                 <tbody>
                   {report?.posEntries.filter(p => p.lodgementType === 'pos').map((p, i) => (
@@ -487,7 +479,6 @@ function DailySalesReportContent() {
 
             {/* Consumption */}
             <div>
-              <div className={`${hdr} px-3 py-1.5 font-bold`}>Consumption</div>
               <table className="w-full border-collapse text-sm">
                 <tbody>
                   {report?.todayConsumption.map((c, i) => (
@@ -505,7 +496,6 @@ function DailySalesReportContent() {
           </div>
 
           {/* Summary */}
-          <div className={`${hdr} px-3 py-1.5 font-bold`}>Summary</div>
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className={subHdr}>
