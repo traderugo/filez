@@ -338,39 +338,58 @@ function DailySalesReportContent() {
         </div>
       </div>
 
-      {/* Day tabs — Excel-style sheet navigation */}
+      {/* Day tabs — mobile: swipe-scroll all tabs; desktop: arrows + fixed window */}
       {report?.dateReports && (
-        <div className="flex items-center mb-4">
-          <button
-            onClick={() => setTabOffset(Math.max(0, tabOffset - 1))}
-            disabled={tabOffset <= 0}
-            className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <div className="flex overflow-hidden">
-            {report.dateReports.slice(tabOffset, tabOffset + TAB_COUNT).map(dr => {
+        <>
+          {/* Mobile: touch-scrollable strip */}
+          <div className="flex overflow-x-auto mb-4 md:hidden">
+            {report.dateReports.map(dr => {
               const d = new Date(dr.date + 'T00:00:00')
               const isActive = dr.date === viewDate
               return (
                 <button
                   key={dr.date}
                   onClick={() => setViewDate(dr.date)}
-                  className={`px-2 py-1.5 text-xs font-medium border-r border-blue-200 first:border-l ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                  className={`px-2 py-1.5 text-xs font-medium border-r border-blue-200 first:border-l shrink-0 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900' : 'bg-gray-50 text-gray-400'}`}
                 >
                   {d.getDate()}
                 </button>
               )
             })}
           </div>
-          <button
-            onClick={() => setTabOffset(Math.min(report.dateReports.length - TAB_COUNT, tabOffset + 1))}
-            disabled={tabOffset >= report.dateReports.length - TAB_COUNT}
-            className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
+          {/* Desktop: arrow-controlled window */}
+          <div className="hidden md:flex items-center mb-4">
+            <button
+              onClick={() => setTabOffset(Math.max(0, tabOffset - 1))}
+              disabled={tabOffset <= 0}
+              className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex overflow-hidden">
+              {report.dateReports.slice(tabOffset, tabOffset + TAB_COUNT).map(dr => {
+                const d = new Date(dr.date + 'T00:00:00')
+                const isActive = dr.date === viewDate
+                return (
+                  <button
+                    key={dr.date}
+                    onClick={() => setViewDate(dr.date)}
+                    className={`px-2 py-1.5 text-xs font-medium border-r border-blue-200 first:border-l ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                  >
+                    {d.getDate()}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => setTabOffset(Math.min(report.dateReports.length - TAB_COUNT, tabOffset + 1))}
+              disabled={tabOffset >= report.dateReports.length - TAB_COUNT}
+              className="p-1.5 border border-blue-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </>
       )}
 
       {currentDayReport && (
