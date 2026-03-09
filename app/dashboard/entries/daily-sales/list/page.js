@@ -2,46 +2,64 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { db } from '@/lib/db'
+import { initialSync } from '@/lib/initialSync'
+import { startSync } from '@/lib/sync'
 
 export default function DailySalesListPage() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
   const qs = `org_id=${orgId}`
-  const [entries, setEntries] = useState([])
-  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [locked, setLocked] = useState(false)
+  const [ready, setReady] = useState(false)
 
   const limit = 10
+
+  // Ensure data is synced on mount
+  useEffect(() => {
+    if (!orgId) return
+    initialSync(orgId).then(() => {
+      startSync()
+      setReady(true)
+    })
+  }, [orgId])
+
+  // Live query — auto-updates when IndexedDB changes
+  const allEntries = useLiveQuery(
+    () => ready && orgId
+      ? db.dailySales.where('orgId').equals(orgId).reverse().sortBy('entryDate')
+      : [],
+    [orgId, ready],
+    []
+  )
+
+  const total = allEntries.length
   const totalPages = Math.ceil(total / limit)
+  const start = (page - 1) * limit
+  const entries = allEntries.slice(start, start + limit)
 
-  const loadEntries = async (p = page) => {
-    const res = await fetch(`/api/entries/daily-sales?page=${p}&limit=${limit}&${qs}`)
-    if (res.status === 403) { setLocked(true); setLoading(false); return }
-    if (res.ok) {
-      const data = await res.json()
-      setEntries(data.entries || [])
-      setTotal(data.total || 0)
-    }
-    setLoading(false)
-  }
+  // Check if nozzles exist (proxy for subscription access)
+  const hasConfig = useLiveQuery(
+    () => ready && orgId
+      ? db.nozzles.where('orgId').equals(orgId).count()
+      : 0,
+    [orgId, ready],
+    0
+  )
 
-  useEffect(() => { loadEntries() }, [])
-  useEffect(() => { loadEntries(page) }, [page])
-
-  if (loading) {
+  if (!ready) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
       </div>
     )
   }
 
-  if (locked) return (
+  if (hasConfig === 0) return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="text-center py-16">
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
@@ -69,13 +87,12 @@ export default function DailySalesListPage() {
             {entries.map((entry) => (
               <div key={entry.id} className="py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</p>
+                  <p className="text-sm font-medium text-gray-900">{format(new Date(entry.entryDate || entry.entry_date), 'MMM d, yyyy')}</p>
                   <p className="text-xs text-gray-500">
-                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
+                    {entry.createdAt ? format(new Date(entry.createdAt), 'h:mm a') : ''}
                     {entry.prices?.PMS ? ` · PMS ₦${Number(entry.prices.PMS).toLocaleString()}` : ''}
                     {entry.prices?.AGO ? ` · AGO ₦${Number(entry.prices.AGO).toLocaleString()}` : ''}
                     {entry.prices?.DPK ? ` · DPK ₦${Number(entry.prices.DPK).toLocaleString()}` : ''}
-                    {entry.users?.name ? ` · by ${entry.users.name}` : ''}
                   </p>
                 </div>
                 <Link href={`/dashboard/entries/daily-sales?${qs}&edit=${entry.id}`} className="flex items-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded hover:bg-blue-50">

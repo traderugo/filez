@@ -2,45 +2,56 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
+import { db } from '@/lib/db'
+import { initialSync } from '@/lib/initialSync'
+import { startSync } from '@/lib/sync'
 
 export default function CustomerPaymentsListPage() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
   const qs = `org_id=${orgId}`
-  const [entries, setEntries] = useState([])
-  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
-  const [locked, setLocked] = useState(false)
-
+  const [ready, setReady] = useState(false)
   const limit = 10
+
+  useEffect(() => {
+    if (!orgId) return
+    initialSync(orgId).then(() => { startSync(); setReady(true) })
+  }, [orgId])
+
+  const allEntries = useLiveQuery(
+    () => ready && orgId ? db.customerPayments.where('orgId').equals(orgId).reverse().sortBy('entryDate') : [],
+    [orgId, ready], []
+  )
+
+  const customersMap = useLiveQuery(
+    () => ready && orgId
+      ? db.customers.where('orgId').equals(orgId).toArray().then(arr => Object.fromEntries(arr.map(c => [c.id, c.name])))
+      : {},
+    [orgId, ready], {}
+  )
+
+  const hasConfig = useLiveQuery(
+    () => ready && orgId ? db.customers.where('orgId').equals(orgId).count() : 0,
+    [orgId, ready], 0
+  )
+
+  const total = allEntries.length
   const totalPages = Math.ceil(total / limit)
+  const entries = allEntries.slice((page - 1) * limit, page * limit)
 
-  const loadEntries = async (p = page) => {
-    const res = await fetch(`/api/entries/customer-payments?page=${p}&limit=${limit}&${qs}`)
-    if (res.status === 403) { setLocked(true); setLoading(false); return }
-    if (res.ok) {
-      const data = await res.json()
-      setEntries(data.entries || [])
-      setTotal(data.total || 0)
-    }
-    setLoading(false)
-  }
+  if (!ready) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>
 
-  useEffect(() => { loadEntries() }, [])
-  useEffect(() => { loadEntries(page) }, [page])
-
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-
-  if (locked) return (
+  if (hasConfig === 0) return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="text-center py-16">
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
-        <p className="text-sm text-gray-500 mb-4">Subscribe to the Customer Payments service to access this feature.</p>
+        <p className="text-sm text-gray-500 mb-4">Subscribe to the Accounts service to access this feature.</p>
         <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
       </div>
     </div>
@@ -49,7 +60,7 @@ export default function CustomerPaymentsListPage() {
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Customer Payment Entries</h1>
+        <h1 className="text-xl font-bold text-gray-900">Account Entries</h1>
         <Link href={`/dashboard/entries/customer-payments?${qs}`} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
           <Plus className="w-4 h-4" /> New Entry
         </Link>
@@ -64,13 +75,12 @@ export default function CustomerPaymentsListPage() {
               <div key={entry.id} className="py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {entry.customer?.name || 'Unknown'}
-                    <span className="ml-2 text-xs text-gray-400">{format(new Date(entry.entry_date), 'MMM d, yyyy')}</span>
+                    {customersMap[entry.customerId] || 'Unknown'}
+                    <span className="ml-2 text-xs text-gray-400">{format(new Date(entry.entryDate), 'MMM d, yyyy')}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {entry.created_at ? format(new Date(entry.created_at), 'h:mm a') : ''}
-                    {' · '}Paid: &#8358;{Number(entry.amount_paid).toLocaleString()} · Sales: &#8358;{Number(entry.sales_amount).toLocaleString()}
-                    {entry.users?.name ? ` · by ${entry.users.name}` : ''}
+                    {entry.createdAt ? format(new Date(entry.createdAt), 'h:mm a') : ''}
+                    {' · '}Paid: &#8358;{Number(entry.amountPaid).toLocaleString()} · Sales: &#8358;{Number(entry.salesAmount).toLocaleString()}
                   </p>
                 </div>
                 <Link href={`/dashboard/entries/customer-payments?${qs}&edit=${entry.id}`} className="flex items-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded hover:bg-blue-50">
@@ -82,13 +92,9 @@ export default function CustomerPaymentsListPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-30">
-                <ChevronLeft className="w-4 h-4" /> Prev
-              </button>
+              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-30"><ChevronLeft className="w-4 h-4" /> Prev</button>
               <span className="text-sm text-gray-500">Page {page} of {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-30">
-                Next <ChevronRight className="w-4 h-4" />
-              </button>
+              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-30">Next <ChevronRight className="w-4 h-4" /></button>
             </div>
           )}
         </>

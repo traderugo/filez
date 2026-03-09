@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getPinUserFromRequest } from '@/lib/pinAuth'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 
 const VALID_PAGES = ['dso', 'lube']
 
 // PATCH — manager updates visible_pages for a staff invite
 export async function PATCH(request) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -20,10 +19,7 @@ export async function PATCH(request) {
     // Only allow known page keys
     const filtered = visible_pages.filter((p) => VALID_PAGES.includes(p))
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    )
+    const supabase = getAdminClient()
 
     // Verify the invite belongs to a station this user owns
     const { data: invite } = await supabase

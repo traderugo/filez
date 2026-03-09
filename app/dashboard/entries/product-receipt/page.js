@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { db } from '@/lib/db'
+import { productReceiptsRepo } from '@/lib/repositories/productReceipts'
+import { initialSync } from '@/lib/initialSync'
+import { startSync } from '@/lib/sync'
 
 export default function ProductReceiptFormPage() {
   const searchParams = useSearchParams()
@@ -11,7 +15,6 @@ export default function ProductReceiptFormPage() {
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
   const qs = `org_id=${orgId}`
-  const API = '/api/entries/product-receipt'
 
   const [loading, setLoading] = useState(true)
   const [locked, setLocked] = useState(false)
@@ -20,55 +23,54 @@ export default function ProductReceiptFormPage() {
   const [error, setError] = useState('')
 
   const [form, setForm] = useState({
-    entry_date: new Date().toISOString().split('T')[0],
-    loaded_date: '', driver_name: '', waybill_number: '', ticket_number: '', truck_number: '',
-    chart_ullage: '', chart_liquid_height: '', depot_ullage: '', depot_liquid_height: '',
-    station_ullage: '', station_liquid_height: '',
-    first_compartment: '', second_compartment: '', third_compartment: '',
-    actual_volume: '', depot_name: '', tank_id: '', notes: '',
+    entryDate: new Date().toISOString().split('T')[0],
+    loadedDate: '', driverName: '', waybillNumber: '', ticketNumber: '', truckNumber: '',
+    chartUllage: '', chartLiquidHeight: '', depotUllage: '', depotLiquidHeight: '',
+    stationUllage: '', stationLiquidHeight: '',
+    firstCompartment: '', secondCompartment: '', thirdCompartment: '',
+    actualVolume: '', depotName: '', tankId: '', notes: '',
   })
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
 
-  const populateForm = (entry) => {
-    setForm({
-      entry_date: entry.entry_date || '',
-      loaded_date: entry.loaded_date || '',
-      driver_name: entry.driver_name || '',
-      waybill_number: entry.waybill_number || '',
-      ticket_number: entry.ticket_number || '',
-      truck_number: entry.truck_number || '',
-      chart_ullage: entry.chart_ullage ?? '',
-      chart_liquid_height: entry.chart_liquid_height ?? '',
-      depot_ullage: entry.depot_ullage ?? '',
-      depot_liquid_height: entry.depot_liquid_height ?? '',
-      station_ullage: entry.station_ullage ?? '',
-      station_liquid_height: entry.station_liquid_height ?? '',
-      first_compartment: entry.first_compartment ?? '',
-      second_compartment: entry.second_compartment ?? '',
-      third_compartment: entry.third_compartment ?? '',
-      actual_volume: entry.actual_volume ?? '',
-      depot_name: entry.depot_name || '',
-      tank_id: entry.tank_id || '',
-      notes: entry.notes || '',
-    })
-  }
-
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      const tankRes = await fetch(`/api/entries/tanks?${qs}`)
-      if (tankRes.status === 403) { setLocked(true); setLoading(false); return }
-      if (tankRes.ok) {
-        const tankData = await tankRes.json()
-        if (!cancelled) setTanks(tankData.tanks || [])
-      }
+      if (!orgId) { setLoading(false); return }
+      await initialSync(orgId)
+      startSync()
+
+      if (cancelled) return
+
+      const tnk = await db.tanks.where('orgId').equals(orgId).toArray()
+      if (tnk.length === 0) { setLocked(true); setLoading(false); return }
+      if (cancelled) return
+      setTanks(tnk)
 
       if (editId) {
-        const res = await fetch(`${API}?id=${editId}&${qs}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.entry && !cancelled) populateForm(data.entry)
+        const entry = await productReceiptsRepo.getById(editId)
+        if (entry && !cancelled) {
+          setForm({
+            entryDate: entry.entryDate || '',
+            loadedDate: entry.loadedDate || '',
+            driverName: entry.driverName || '',
+            waybillNumber: entry.waybillNumber || '',
+            ticketNumber: entry.ticketNumber || '',
+            truckNumber: entry.truckNumber || '',
+            chartUllage: entry.chartUllage ?? '',
+            chartLiquidHeight: entry.chartLiquidHeight ?? '',
+            depotUllage: entry.depotUllage ?? '',
+            depotLiquidHeight: entry.depotLiquidHeight ?? '',
+            stationUllage: entry.stationUllage ?? '',
+            stationLiquidHeight: entry.stationLiquidHeight ?? '',
+            firstCompartment: entry.firstCompartment ?? '',
+            secondCompartment: entry.secondCompartment ?? '',
+            thirdCompartment: entry.thirdCompartment ?? '',
+            actualVolume: entry.actualVolume ?? '',
+            depotName: entry.depotName || '',
+            tankId: entry.tankId || '',
+            notes: entry.notes || '',
+          })
         }
       }
 
@@ -76,41 +78,63 @@ export default function ProductReceiptFormPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [editId])
+  }, [editId, orgId])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.entry_date) { setError('Date is required'); return }
+    if (!form.entryDate) { setError('Date is required'); return }
     setSaving(true)
     setError('')
 
-    const body = { ...form }
-    if (editId) body.id = editId
+    const record = {
+      id: editId || crypto.randomUUID(),
+      orgId,
+      entryDate: form.entryDate,
+      loadedDate: form.loadedDate || null,
+      driverName: form.driverName,
+      waybillNumber: form.waybillNumber,
+      ticketNumber: form.ticketNumber,
+      truckNumber: form.truckNumber,
+      chartUllage: Number(form.chartUllage) || 0,
+      chartLiquidHeight: Number(form.chartLiquidHeight) || 0,
+      depotUllage: Number(form.depotUllage) || 0,
+      depotLiquidHeight: Number(form.depotLiquidHeight) || 0,
+      stationUllage: Number(form.stationUllage) || 0,
+      stationLiquidHeight: Number(form.stationLiquidHeight) || 0,
+      firstCompartment: Number(form.firstCompartment) || 0,
+      secondCompartment: Number(form.secondCompartment) || 0,
+      thirdCompartment: Number(form.thirdCompartment) || 0,
+      actualVolume: Number(form.actualVolume) || 0,
+      depotName: form.depotName,
+      tankId: form.tankId || null,
+      notes: form.notes,
+      createdAt: editId ? undefined : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
 
-    const res = await fetch(`${API}?${qs}`, {
-      method: editId ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (res.ok) {
+    try {
+      if (editId) {
+        const existing = await productReceiptsRepo.getById(editId)
+        await productReceiptsRepo.update({ ...existing, ...record })
+      } else {
+        await productReceiptsRepo.create(record)
+      }
       router.push(`/dashboard/entries/product-receipt/list?${qs}`)
-    } else {
-      const data = await res.json()
-      setError(data.error || 'Failed to save')
+    } catch (err) {
+      setError('Failed to save')
     }
     setSaving(false)
   }
 
   const handleDelete = async () => {
     if (!editId || !confirm('Delete this entry?')) return
-    await fetch(`${API}?${qs}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editId }) })
+    await productReceiptsRepo.remove(editId, orgId)
     router.push(`/dashboard/entries/product-receipt/list?${qs}`)
   }
 
   const Field = ({ label, name, type = 'text', placeholder }) => (
     <div>
-      <label className="block text-xs text-gray-500 mb-1">{label}</label>
+      <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">{label}</label>
       <input
         type={type}
         value={form[name]}
@@ -118,7 +142,7 @@ export default function ProductReceiptFormPage() {
         placeholder={placeholder}
         step={type === 'number' ? '0.01' : undefined}
         min={type === 'number' ? '0' : undefined}
-        className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50"
       />
     </div>
   )
@@ -145,57 +169,63 @@ export default function ProductReceiptFormPage() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); const inputs = Array.from(e.currentTarget.querySelectorAll('input, select')); const idx = inputs.indexOf(e.target); if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus() } }} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Entry Date" name="entry_date" type="date" />
-          <Field label="Loaded Date" name="loaded_date" type="date" />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Field label="Driver Name" name="driver_name" />
-          <Field label="Waybill Number" name="waybill_number" />
-          <Field label="Ticket Number" name="ticket_number" />
-          <Field label="Truck Number" name="truck_number" />
-          <Field label="Depot Name" name="depot_name" />
-        </div>
-
-        <p className="text-xs font-semibold text-gray-700 pt-2">Chart / Depot / Station</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Field label="Chart Ullage" name="chart_ullage" type="number" />
-          <Field label="Chart Liquid Height" name="chart_liquid_height" type="number" />
-          <Field label="Depot Ullage" name="depot_ullage" type="number" />
-          <Field label="Depot Liquid Height" name="depot_liquid_height" type="number" />
-          <Field label="Station Ullage" name="station_ullage" type="number" />
-          <Field label="Station Liquid Height" name="station_liquid_height" type="number" />
-        </div>
-
-        <p className="text-xs font-semibold text-gray-700 pt-2">Compartments</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="1st Compartment" name="first_compartment" type="number" />
-          <Field label="2nd Compartment" name="second_compartment" type="number" />
-          <Field label="3rd Compartment" name="third_compartment" type="number" />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Actual Volume" name="actual_volume" type="number" />
+      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
+        <div className="border border-gray-300 divide-y divide-gray-300">
+          <div className="grid grid-cols-2 divide-x divide-gray-300">
+            <Field label="Entry Date" name="entryDate" type="date" />
+            <Field label="Loaded Date" name="loadedDate" type="date" />
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300">
+            <Field label="Driver Name" name="driverName" />
+            <Field label="Waybill No." name="waybillNumber" />
+            <Field label="Ticket No." name="ticketNumber" />
+          </div>
+          <div className="grid grid-cols-2 divide-x divide-gray-300">
+            <Field label="Truck Number" name="truckNumber" />
+            <Field label="Depot Name" name="depotName" />
+          </div>
+          <div className="bg-gray-50 px-2 py-1">
+            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300">
+            <Field label="Chart Ullage" name="chartUllage" type="number" />
+            <Field label="Chart Liq. Height" name="chartLiquidHeight" type="number" />
+            <Field label="Depot Ullage" name="depotUllage" type="number" />
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300">
+            <Field label="Depot Liq. Height" name="depotLiquidHeight" type="number" />
+            <Field label="Station Ullage" name="stationUllage" type="number" />
+            <Field label="Station Liq. Height" name="stationLiquidHeight" type="number" />
+          </div>
+          <div className="bg-gray-50 px-2 py-1">
+            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300">
+            <Field label="1st Compartment" name="firstCompartment" type="number" />
+            <Field label="2nd Compartment" name="secondCompartment" type="number" />
+            <Field label="3rd Compartment" name="thirdCompartment" type="number" />
+          </div>
+          <div className="grid grid-cols-2 divide-x divide-gray-300">
+            <Field label="Actual Volume" name="actualVolume" type="number" />
+            <div>
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
+              <select value={form.tankId} onChange={(e) => setField('tankId', e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+                <option value="">Select tank</option>
+                {tanks.map((t) => (
+                  <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Receiving Tank</label>
-            <select value={form.tank_id} onChange={(e) => setField('tank_id', e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select tank</option>
-              {tanks.map((t) => (
-                <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
-              ))}
-            </select>
+            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+            <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
         </div>
 
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Notes</label>
-          <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
-        </div>
+        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-3">
           {editId && <button type="button" onClick={handleDelete} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /> Delete</button>}
           <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">

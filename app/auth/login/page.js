@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Fuel, Mail, Lock, Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabaseClient'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -18,27 +19,53 @@ function LoginForm() {
     setLoading(true)
     setError('')
 
-    const res = await fetch('/api/auth/pin-login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+    const trimmedEmail = email.trim().toLowerCase()
+
+    // Try Supabase auth first
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: trimmedEmail,
+      password,
     })
 
-    const data = await res.json()
+    if (!signInError) {
+      const next = searchParams.get('next') || '/dashboard'
+      router.push(next)
+      return
+    }
+
+    // If sign-in failed, try migrating legacy password
+    const migrateRes = await fetch('/api/auth/migrate-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmedEmail, password }),
+    })
+
+    if (migrateRes.ok) {
+      // Password migrated — retry sign-in
+      const { error: retryError } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password,
+      })
+
+      if (!retryError) {
+        const next = searchParams.get('next') || '/dashboard'
+        router.push(next)
+        return
+      }
+
+      setError('Login failed after migration. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    // Both failed — show error
+    const migrateData = await migrateRes.json().catch(() => ({}))
+    if (migrateRes.status === 429) {
+      setError(migrateData.error || 'Too many attempts. Try again later.')
+    } else {
+      setError('Invalid email or password')
+    }
     setLoading(false)
-
-    if (!res.ok) {
-      setError(data.error || 'Login failed')
-      return
-    }
-
-    if (data.must_change_password) {
-      router.push('/auth/change-password')
-      return
-    }
-
-    const next = searchParams.get('next') || '/dashboard'
-    router.push(next)
   }
 
   return (
@@ -95,6 +122,10 @@ function LoginForm() {
       </form>
 
       <p className="text-center text-sm text-gray-500 mt-6">
+        <Link href="/auth/forgot-password" className="text-blue-600 hover:underline">Forgot password?</Link>
+      </p>
+
+      <p className="text-center text-sm text-gray-500 mt-3">
         Don&apos;t have an account?{' '}
         <Link href="/auth/register" className="text-blue-600 hover:underline">Sign up</Link>
       </p>

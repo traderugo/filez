@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getPinUserFromRequest } from '@/lib/pinAuth'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
 
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'pdf']
@@ -13,7 +12,7 @@ const ALLOWED_MIMES = {
 
 export async function POST(request) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -47,10 +46,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'File type mismatch' }, { status: 400 })
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    )
+    const supabase = getAdminClient()
 
     // Sanitize filename — strip path separators
     const safeName = `${user.id}/${Date.now()}.${ext}`

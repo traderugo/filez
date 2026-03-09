@@ -1,19 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getPinUserFromRequest } from '@/lib/pinAuth'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-}
 
 // GET — user checks their pending invites
 export async function GET(request) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -51,7 +43,7 @@ export async function GET(request) {
 // POST — station manager invites a user by email (creates pending invite)
 export async function POST(request) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -110,7 +102,7 @@ export async function POST(request) {
 // DELETE — station manager removes an invite
 export async function DELETE(request) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

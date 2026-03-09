@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getPinUserFromRequest } from '@/lib/pinAuth'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 
 export async function GET(request) {
-  const user = await getPinUserFromRequest(request)
+  const user = await getAuthUser()
   if (!user) return NextResponse.json({ error: 'Not logged in' }, { status: 401 })
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
+  const supabase = getAdminClient()
 
   const { searchParams } = new URL(request.url)
   const org_id = searchParams.get('org_id') || user.org_id

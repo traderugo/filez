@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Fuel, Loader2, Mail, Lock, User, Phone } from 'lucide-react'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' })
@@ -22,31 +23,30 @@ export default function RegisterPage() {
 
     setLoading(true)
 
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: form.name.trim(),
-        email: form.email.trim().toLowerCase(),
-        phone: form.phone.trim(),
-        password: form.password,
-      }),
+    const { error: signUpError } = await supabase.auth.signUp({
+      email: form.email.trim().toLowerCase(),
+      password: form.password,
+      options: {
+        data: {
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
     })
 
-    const data = await res.json()
     setLoading(false)
 
-    if (!res.ok) {
-      setError(data.error || 'Registration failed')
+    if (signUpError) {
+      if (signUpError.message?.includes('already registered')) {
+        setError('An account with this email already exists. Please log in.')
+      } else {
+        setError(signUpError.message || 'Registration failed')
+      }
       return
     }
 
-    if (data.existing) {
-      setError('An account with this email already exists. Please log in.')
-      return
-    }
-
-    router.push('/auth/login')
+    router.push('/auth/verify-email')
   }
 
   return (

@@ -5,11 +5,12 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
-  FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
+  FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users, Flame,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle
 } from 'lucide-react'
 import Modal from '@/components/Modal'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
+import SyncStatus from '@/components/SyncStatus'
 import { format, differenceInDays } from 'date-fns'
 
 const PAGE_OPTIONS = [
@@ -17,7 +18,8 @@ const PAGE_OPTIONS = [
   { key: 'product-receipt', label: 'Product Receipt' },
   { key: 'lodgements', label: 'Lodgements' },
   { key: 'lube', label: 'Lube' },
-  { key: 'customer-payments', label: 'Customer Payments' },
+  { key: 'customer-payments', label: 'Accounts' },
+  { key: 'consumption', label: 'Consumption' },
 ]
 
 export default function StationPage() {
@@ -191,7 +193,8 @@ export default function StationPage() {
     { href: `/dashboard/entries/product-receipt?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries, waybills, and compartments' },
     { href: `/dashboard/entries/lodgements?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits, lube deposits, and POS' },
     { href: `/dashboard/entries/lube?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock entries' },
-    { href: `/dashboard/entries/customer-payments?org_id=${stationId}`, icon: Users, label: 'Customer Payments', desc: 'Credit sales and payments' },
+    { href: `/dashboard/entries/customer-payments?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments' },
+    { href: `/dashboard/entries/consumption?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back' },
   ]
 
   return (
@@ -203,6 +206,11 @@ export default function StationPage() {
           {station.location && <p className="text-sm text-gray-500">{station.location}</p>}
         </div>
       </div>
+
+      {/* Sync Status */}
+      <section className="mb-8">
+        <SyncStatus orgId={stationId} />
+      </section>
 
       {/* Entries */}
       <section className="mb-8">

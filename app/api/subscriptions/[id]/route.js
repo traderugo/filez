@@ -1,19 +1,11 @@
 import { NextResponse } from 'next/server'
-import { getPinUserFromRequest } from '@/lib/pinAuth'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  )
-}
 
 // PATCH — upload proof (moves pending_payment → pending_approval)
 export async function PATCH(request, { params }) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -81,7 +73,7 @@ export async function PATCH(request, { params }) {
 // DELETE — cancel a pending_payment subscription
 export async function DELETE(request, { params }) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

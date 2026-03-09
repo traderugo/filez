@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getPinUserFromRequest } from '@/lib/pinAuth'
-import { createClient } from '@supabase/supabase-js'
+import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { randomBytes } from 'crypto'
-import bcrypt from 'bcryptjs'
 import { rateLimit } from '@/lib/rateLimit'
 
 // POST — manager resets a staff member's password
 export async function POST(request) {
   try {
-    const user = await getPinUserFromRequest(request)
+    const user = await getAuthUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -23,10 +21,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Staff email required' }, { status: 400 })
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    )
+    const supabase = getAdminClient()
 
     // Find staff user
     const { data: staff } = await supabase
@@ -52,12 +47,15 @@ export async function POST(request) {
     }
 
     const tempPassword = randomBytes(6).toString('base64url').slice(0, 10)
-    const hash = await bcrypt.hash(tempPassword, 12)
 
-    await supabase
-      .from('users')
-      .update({ password_hash: hash, must_change_password: true })
-      .eq('id', staff.id)
+    // Set the password in Supabase Auth
+    const { error } = await supabase.auth.admin.updateUserById(staff.id, {
+      password: tempPassword,
+    })
+
+    if (error) {
+      return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true, tempPassword })
   } catch {

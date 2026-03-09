@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
 import Sidebar from './Sidebar'
+import EmailVerifyBanner from './EmailVerifyBanner'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function AppShell({ children }) {
   const [user, setUser] = useState(null)
@@ -25,7 +27,7 @@ export default function AppShell({ children }) {
   useEffect(() => { setSidebarOpen(false) }, [pathname])
 
   const handleSignOut = async () => {
-    await fetch('/api/auth/pin-logout', { method: 'POST' })
+    await supabase.auth.signOut()
     setUser(null)
     router.push('/')
   }
@@ -55,6 +57,7 @@ export default function AppShell({ children }) {
       />
       <div className="flex-1 flex flex-col min-w-0">
         <Header onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+        {user && !user.email_verified && <EmailVerifyBanner />}
         <main className="flex-1">{children}</main>
       </div>
     </div>

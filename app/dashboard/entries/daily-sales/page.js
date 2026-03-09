@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { db } from '@/lib/db'
+import { dailySalesRepo } from '@/lib/repositories/dailySales'
+import { initialSync } from '@/lib/initialSync'
+import { startSync } from '@/lib/sync'
 
 export default function DailySalesFormPage() {
   const searchParams = useSearchParams()
@@ -26,40 +30,40 @@ export default function DailySalesFormPage() {
   const [prices, setPrices] = useState({ PMS: '', AGO: '', DPK: '' })
   const [notes, setNotes] = useState('')
 
-  // Load nozzles and tanks config
+  // Load config from IndexedDB, trigger initial sync if needed
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      const [nozRes, tankRes] = await Promise.all([
-        fetch(`/api/entries/nozzles?${qs}`),
-        fetch(`/api/entries/tanks?${qs}`),
-      ])
+      if (!orgId) { setLoading(false); return }
 
-      if (nozRes.status === 403 || tankRes.status === 403) {
+      // Ensure data is synced (no-op if already done)
+      await initialSync(orgId)
+      // Start background sync engine
+      startSync()
+
+      if (cancelled) return
+
+      // Read config from IndexedDB
+      const noz = await db.nozzles.where('orgId').equals(orgId).toArray()
+      const tnk = await db.tanks.where('orgId').equals(orgId).toArray()
+
+      if (noz.length === 0 && tnk.length === 0) {
         setLocked(true)
         setLoading(false)
         return
       }
 
-      const nozData = nozRes.ok ? await nozRes.json() : { nozzles: [] }
-      const tankData = tankRes.ok ? await tankRes.json() : { tanks: [] }
-
       if (cancelled) return
-      const noz = nozData.nozzles || []
-      const tnk = tankData.tanks || []
       setNozzles(noz)
       setTanks(tnk)
 
-      // If editing, load the entry by ID and populate form
+      // If editing, load the entry from IndexedDB
       if (editId) {
-        const res = await fetch(`/api/entries/daily-sales?id=${editId}&${qs}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.entry && !cancelled) {
-            populateForm(data.entry, noz, tnk)
-            setLoading(false)
-            return
-          }
+        const entry = await dailySalesRepo.getById(editId)
+        if (entry && !cancelled) {
+          populateForm(entry, noz, tnk)
+          setLoading(false)
+          return
         }
       }
 
@@ -82,15 +86,15 @@ export default function DailySalesFormPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [editId])
+  }, [editId, orgId])
 
   const populateForm = (entry, noz, tnk) => {
-    setFormDate(entry.entry_date)
+    setFormDate(entry.entryDate || entry.entry_date)
     const p = entry.prices || {}
     setPrices({ PMS: String(p.PMS || ''), AGO: String(p.AGO || ''), DPK: String(p.DPK || '') })
     setNotes(entry.notes || '')
 
-    const savedNozzles = entry.nozzle_readings || []
+    const savedNozzles = entry.nozzleReadings || entry.nozzle_readings || []
     setNozzleReadings(noz.map((n) => {
       const match = savedNozzles.find((r) => r.pump_id === n.id)
       return {
@@ -102,7 +106,7 @@ export default function DailySalesFormPage() {
       }
     }))
 
-    const savedTanks = entry.tank_readings || []
+    const savedTanks = entry.tankReadings || entry.tank_readings || []
     setTankReadings(tnk.map((t) => {
       const match = savedTanks.find((r) => r.tank_id === t.id)
       return {
@@ -147,42 +151,40 @@ export default function DailySalesFormPage() {
       closing_stock: Number(r.closing_stock) || 0,
     }))
 
-    const body = {
-      entry_date: formDate,
-      nozzle_readings: readings,
-      tank_readings: tankData,
+    const record = {
+      id: editId || crypto.randomUUID(),
+      orgId,
+      entryDate: formDate,
+      nozzleReadings: readings,
+      tankReadings: tankData,
       prices: {
         PMS: Number(prices.PMS) || 0,
         AGO: Number(prices.AGO) || 0,
         DPK: Number(prices.DPK) || 0,
       },
       notes,
+      createdAt: editId ? undefined : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
 
-    if (editId) body.id = editId
-
-    const res = await fetch(`/api/entries/daily-sales?${qs}`, {
-      method: editId ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (res.ok) {
+    try {
+      if (editId) {
+        // Preserve existing fields when updating
+        const existing = await dailySalesRepo.getById(editId)
+        await dailySalesRepo.update({ ...existing, ...record })
+      } else {
+        await dailySalesRepo.create(record)
+      }
       router.push(`/dashboard/entries/daily-sales/list?${qs}`)
-    } else {
-      const data = await res.json()
-      setError(data.error || 'Failed to save')
+    } catch (err) {
+      setError('Failed to save')
     }
     setSaving(false)
   }
 
   const handleDelete = async () => {
     if (!editId || !confirm('Delete this entry?')) return
-    await fetch(`/api/entries/daily-sales?${qs}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: editId }),
-    })
+    await dailySalesRepo.remove(editId, orgId)
     router.push(`/dashboard/entries/daily-sales/list?${qs}`)
   }
 
@@ -214,97 +216,101 @@ export default function DailySalesFormPage() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); const inputs = Array.from(e.currentTarget.querySelectorAll('input, select')); const idx = inputs.indexOf(e.target); if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus() } }} className="space-y-4">
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-          <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full sm:w-48 px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">Fuel Prices (₦/litre)</label>
-          <div className="grid grid-cols-3 gap-3">
+      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
+        <div className="border border-gray-300 divide-y divide-gray-300">
+          <div>
+            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
+            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+          </div>
+          <div className="bg-gray-50 px-2 py-1">
+            <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>
+          </div>
+          <div className="grid grid-cols-3 divide-x divide-gray-300">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">PMS</label>
-              <input type="number" value={prices.PMS} onChange={(e) => setPrices((p) => ({ ...p, PMS: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">PMS</label>
+              <input type="number" value={prices.PMS} onChange={(e) => setPrices((p) => ({ ...p, PMS: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">AGO</label>
-              <input type="number" value={prices.AGO} onChange={(e) => setPrices((p) => ({ ...p, AGO: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">AGO</label>
+              <input type="number" value={prices.AGO} onChange={(e) => setPrices((p) => ({ ...p, AGO: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">DPK</label>
-              <input type="number" value={prices.DPK} onChange={(e) => setPrices((p) => ({ ...p, DPK: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">DPK</label>
+              <input type="number" value={prices.DPK} onChange={(e) => setPrices((p) => ({ ...p, DPK: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
           </div>
-        </div>
 
-        {/* Nozzle readings */}
-        {nozzleReadings.length > 0 && (
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">Nozzle Readings</label>
-            <div className="space-y-2">
+          {/* Nozzle readings */}
+          {nozzleReadings.length > 0 && (
+            <>
+              <div className="bg-gray-50 px-2 py-1">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">Nozzle Readings</span>
+              </div>
               {nozzleReadings.map((r, idx) => (
                 <div key={r.pump_id}>
-                  <p className="text-sm font-medium text-gray-700 mb-1">{r.label}</p>
-                  <div className="grid grid-cols-[2fr_1fr_1fr] gap-2">
+                  <div className="bg-gray-50/50 px-2 py-0.5 border-b border-gray-200">
+                    <span className="text-[10px] text-gray-600 font-medium">{r.label}</span>
+                  </div>
+                  <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-gray-300">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Closing Meter</label>
-                      <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Closing Meter</label>
+                      <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Consumption</label>
-                      <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Consumption</label>
+                      <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Pour Back</label>
-                      <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Pour Back</label>
+                      <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                   </div>
                 </div>
               ))}
+            </>
+          )}
+
+          {nozzles.length === 0 && (
+            <div className="px-2 py-3">
+              <p className="text-sm text-yellow-700">No nozzles found. Check your station setup or refresh.</p>
             </div>
-          </div>
-        )}
+          )}
 
-        {nozzles.length === 0 && (
-          <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 p-3">
-            No nozzles found. Please check your station setup or try refreshing the page.
-          </p>
-        )}
-
-        {/* Tank readings */}
-        {tankReadings.length > 0 && (
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">UGT Closing Stock</label>
-            <div className="space-y-2">
+          {/* Tank readings */}
+          {tankReadings.length > 0 && (
+            <>
+              <div className="bg-gray-50 px-2 py-1">
+                <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wide">UGT Closing Stock</span>
+              </div>
               {tankReadings.map((r, idx) => (
-                <div key={r.tank_id}>
-                  <p className="text-sm font-medium text-gray-700 mb-1">{r.label}</p>
+                <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-gray-300">
+                  <div className="flex items-center px-2 py-1.5 bg-gray-50/50">
+                    <span className="text-xs text-gray-600">{r.label}</span>
+                  </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Closing Stock (litres)</label>
-                    <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(idx, e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Litres</label>
+                    <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(idx, e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
                   </div>
                 </div>
               ))}
+            </>
+          )}
+
+          {tanks.length === 0 && (
+            <div className="px-2 py-3">
+              <p className="text-sm text-yellow-700">No tanks found. Check your station setup or refresh.</p>
             </div>
+          )}
+
+          <div>
+            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
-        )}
-
-        {tanks.length === 0 && (
-          <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 p-3">
-            No tanks found. Please check your station setup or try refreshing the page.
-          </p>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-3">
           {editId && <button type="button" onClick={handleDelete} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /> Delete</button>}
           <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">

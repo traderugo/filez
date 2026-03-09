@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock } from 'lucide-react'
 import Link from 'next/link'
+import { db } from '@/lib/db'
+import { lodgementsRepo } from '@/lib/repositories/lodgements'
+import { initialSync } from '@/lib/initialSync'
+import { startSync } from '@/lib/sync'
 
 export default function LodgementsFormPage() {
   const searchParams = useSearchParams()
@@ -11,7 +15,6 @@ export default function LodgementsFormPage() {
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
   const qs = `org_id=${orgId}`
-  const API = '/api/entries/lodgements'
 
   const [loading, setLoading] = useState(true)
   const [locked, setLocked] = useState(false)
@@ -29,25 +32,26 @@ export default function LodgementsFormPage() {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      const bankRes = await fetch(`/api/entries/banks?${qs}`)
-      if (bankRes.status === 403) { setLocked(true); setLoading(false); return }
-      if (bankRes.ok) {
-        const bankData = await bankRes.json()
-        if (!cancelled) setBanks(bankData.banks || [])
-      }
+      if (!orgId) { setLoading(false); return }
+      await initialSync(orgId)
+      startSync()
+
+      if (cancelled) return
+
+      const bnk = await db.banks.where('orgId').equals(orgId).toArray()
+      if (bnk.length === 0) { setLocked(true); setLoading(false); return }
+      if (cancelled) return
+      setBanks(bnk)
 
       if (editId) {
-        const res = await fetch(`${API}?id=${editId}&${qs}`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.entry && !cancelled) {
-            setFormDate(data.entry.entry_date || '')
-            setAmount(String(data.entry.amount ?? ''))
-            setBankId(data.entry.bank_id || '')
-            setLodgementType(data.entry.lodgement_type || 'deposit')
-            setSalesDate(data.entry.sales_date || '')
-            setNotes(data.entry.notes || '')
-          }
+        const entry = await lodgementsRepo.getById(editId)
+        if (entry && !cancelled) {
+          setFormDate(entry.entryDate || '')
+          setAmount(String(entry.amount ?? ''))
+          setBankId(entry.bankId || '')
+          setLodgementType(entry.lodgementType || 'deposit')
+          setSalesDate(entry.salesDate || '')
+          setNotes(entry.notes || '')
         }
       }
 
@@ -55,7 +59,7 @@ export default function LodgementsFormPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [editId])
+  }, [editId, orgId])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -64,27 +68,36 @@ export default function LodgementsFormPage() {
     setSaving(true)
     setError('')
 
-    const body = { entry_date: formDate, amount: Number(amount) || 0, bank_id: bankId, lodgement_type: lodgementType, sales_date: salesDate || null, notes }
-    if (editId) body.id = editId
+    const record = {
+      id: editId || crypto.randomUUID(),
+      orgId,
+      entryDate: formDate,
+      amount: Number(amount) || 0,
+      bankId,
+      lodgementType,
+      salesDate: salesDate || null,
+      notes,
+      createdAt: editId ? undefined : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
 
-    const res = await fetch(`${API}?${qs}`, {
-      method: editId ? 'PATCH' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (res.ok) {
+    try {
+      if (editId) {
+        const existing = await lodgementsRepo.getById(editId)
+        await lodgementsRepo.update({ ...existing, ...record })
+      } else {
+        await lodgementsRepo.create(record)
+      }
       router.push(`/dashboard/entries/lodgements/list?${qs}`)
-    } else {
-      const data = await res.json()
-      setError(data.error || 'Failed to save')
+    } catch (err) {
+      setError('Failed to save')
     }
     setSaving(false)
   }
 
   const handleDelete = async () => {
     if (!editId || !confirm('Delete this entry?')) return
-    await fetch(`${API}?${qs}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editId }) })
+    await lodgementsRepo.remove(editId, orgId)
     router.push(`/dashboard/entries/lodgements/list?${qs}`)
   }
 
@@ -110,48 +123,50 @@ export default function LodgementsFormPage() {
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); const inputs = Array.from(e.currentTarget.querySelectorAll('input, select')); const idx = inputs.indexOf(e.target); if (idx >= 0 && idx < inputs.length - 1) inputs[idx + 1].focus() } }} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Entry Date</label>
-            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
+        <div className="border border-gray-300 divide-y divide-gray-300">
+          <div className="grid grid-cols-2 divide-x divide-gray-300">
+            <div>
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
+              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount</label>
+              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" min="0" className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 divide-x divide-gray-300">
+            <div>
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Bank Account</label>
+              <select value={bankId} onChange={(e) => setBankId(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+                <option value="">Select account</option>
+                {banks.map((b) => (
+                  <option key={b.id} value={b.id}>{b.bank_name} ({b.lodgement_type})</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Type</label>
+              <select value={lodgementType} onChange={(e) => setLodgementType(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50">
+                <option value="deposit">Deposit</option>
+                <option value="lube-deposit">Lube Deposit</option>
+                <option value="pos">POS</option>
+              </select>
+            </div>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Amount</label>
-            <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Bank Account</label>
-            <select value={bankId} onChange={(e) => setBankId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select account</option>
-              {banks.map((b) => (
-                <option key={b.id} value={b.id}>{b.bank_name} ({b.lodgement_type})</option>
-              ))}
-            </select>
+            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Date</label>
+            <input type="date" value={salesDate} onChange={(e) => setSalesDate(e.target.value)} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50" />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Type</label>
-            <select value={lodgementType} onChange={(e) => setLodgementType(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="deposit">Deposit</option>
-              <option value="lube-deposit">Lube Deposit</option>
-              <option value="pos">POS</option>
-            </select>
+            <label className="block text-[10px] text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-2 py-1.5 text-sm bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Sales Date</label>
-          <input type="date" value={salesDate} onChange={(e) => setSalesDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-3">
           {editId && <button type="button" onClick={handleDelete} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /> Delete</button>}
           <Link href={`/dashboard/entries/lodgements/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
