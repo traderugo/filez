@@ -233,12 +233,21 @@ export default function StationPage() {
         </div>
       </section>
 
-      {/* Reports (coming soon) */}
+      {/* Reports */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Reports</h2>
-        <div className="border border-dashed border-gray-300 p-6 text-center">
-          <BarChart3 className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-400">Reports coming soon</p>
+        <div className="grid gap-2">
+          <Link
+            href={`/dashboard/reports/daily-sales-report?org_id=${stationId}`}
+            className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+          >
+            <BarChart3 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">Daily Sales Report</p>
+              <p className="text-sm text-gray-500">Nozzle sales, stock summary, POS, and cash</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-300" />
+          </Link>
         </div>
       </section>
 
