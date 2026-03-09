@@ -32,9 +32,12 @@ function DailySalesReportContent() {
 
   const [loading, setLoading] = useState(true)
   const today = new Date()
-  const [startDate, setStartDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0])
-  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0])
-  const [viewDate, setViewDate] = useState(today.toISOString().split('T')[0])
+  const pad = (n) => String(n).padStart(2, '0')
+  const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
+  const monthStartStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`
+  const [startDate, setStartDate] = useState(monthStartStr)
+  const [endDate, setEndDate] = useState(todayStr)
+  const [viewDate, setViewDate] = useState(todayStr)
 
   // Config
   const [nozzles, setNozzles] = useState([])
