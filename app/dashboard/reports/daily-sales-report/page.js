@@ -89,6 +89,14 @@ function DailySalesReportContent() {
       (a.createdAt || '').localeCompare(b.createdAt || '')
     )
 
+    // Debug: log entries per date
+    const dateMap = {}
+    for (const e of allEntries) {
+      if (!dateMap[e.entryDate]) dateMap[e.entryDate] = 0
+      dateMap[e.entryDate]++
+    }
+    console.log('[Report] entries per date:', dateMap, 'total:', allEntries.length)
+
     // Use range helper for nozzle dispensed calculations
     const rangeResult = calculateDateRangeNozzles(allEntries, nozzles, startDate, endDate)
     const { fuelTypes } = rangeResult
@@ -237,6 +245,7 @@ function DailySalesReportContent() {
       }
     })
 
+    console.log('[Report] rangeResult dates:', rangeResult.dates.map(d => ({ date: d.date, entryCount: d.entryCount, hasEntry: d.hasEntry })))
     setReport({ dateReports, fuelTypes })
   }, [orgId, startDate, endDate, nozzles, tanks, banks])
 
