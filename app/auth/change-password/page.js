@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Fuel, Lock, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import { Lock, Loader2 } from 'lucide-react'
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState('')
@@ -43,7 +44,7 @@ export default function ChangePasswordPage() {
   return (
     <div className="max-w-sm mx-auto px-4 py-20">
       <div className="text-center mb-8">
-        <Fuel className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+        <Image src="/stationva-logo.svg" alt="StationVA" width={48} height={48} className="mx-auto mb-3 rounded-lg" />
         <h1 className="text-2xl font-bold text-gray-900">Change your password</h1>
         <p className="text-sm text-gray-500 mt-1">You must set a new password before continuing</p>
       </div>

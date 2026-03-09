@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Fuel, Mail, Loader2, CheckCircle } from 'lucide-react'
+import Image from 'next/image'
+import { Mail, Loader2, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function VerifyEmailPage() {
@@ -33,7 +34,7 @@ export default function VerifyEmailPage() {
   return (
     <div className="max-w-sm mx-auto px-4 py-20">
       <div className="text-center mb-8">
-        <Fuel className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+        <Image src="/stationva-logo.svg" alt="StationVA" width={48} height={48} className="mx-auto mb-3 rounded-lg" />
         <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
         <p className="text-sm text-gray-500 mt-2">

@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Image from 'next/image'
 import {
-  Fuel, LayoutDashboard, CreditCard,
+  LayoutDashboard, CreditCard,
   MessageSquare, Shield, LogOut, X
 } from 'lucide-react'
 
@@ -39,7 +40,7 @@ export default function Sidebar({ user, open, onClose, onSignOut }) {
         {/* Logo */}
         <div className="h-14 px-4 flex items-center justify-between border-b border-gray-100">
           <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-lg" onClick={onClose}>
-            <Fuel className="w-5 h-5 text-blue-600" />
+            <Image src="/stationva-logo.svg" alt="StationVA" width={28} height={28} className="rounded" />
             StationVA
           </Link>
           <button className="sm:hidden p-1 text-gray-400 hover:text-gray-600" onClick={onClose}>

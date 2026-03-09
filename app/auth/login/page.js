@@ -3,7 +3,8 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Fuel, Mail, Lock, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import { Mail, Lock, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
 function LoginForm() {
@@ -71,7 +72,7 @@ function LoginForm() {
   return (
     <div className="max-w-sm mx-auto px-4 py-20">
       <div className="text-center mb-8">
-        <Fuel className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+        <Image src="/stationva-logo.svg" alt="StationVA" width={48} height={48} className="mx-auto mb-3 rounded-lg" />
         <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
         <p className="text-sm text-gray-500 mt-1">Sign in with your email and password</p>
       </div>
