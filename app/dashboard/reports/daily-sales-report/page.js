@@ -330,22 +330,61 @@ function DailySalesReportContent() {
                 </tbody>
               </table>
 
-              {/* Consumption */}
-              {currentDayReport.todayConsumption.length > 0 && (
+              {/* Consumption & Pour Back */}
+              {currentDayReport.consumption.entries.length > 0 && (
                 <table className="w-full border-collapse text-sm mb-4">
                   <thead>
                     <tr className={subHdr}>
-                      <th className={`${cell} text-left font-bold`}>Consumption</th>
+                      <th className={`${cell} text-left font-bold`}>Consumption / Pour Back</th>
+                      <th className={`${cellR} font-bold`}>Type</th>
                       <th className={`${cellR} font-bold`}>Qty</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {currentDayReport.todayConsumption.map((c, i) => (
+                    {currentDayReport.consumption.entries.map((c, i) => (
                       <tr key={i}>
                         <td className={cell}>{c.fuelType || ''}</td>
+                        <td className={`${cellR} text-xs`}>{c.isPourBack ? 'P/B' : 'Cons'}</td>
                         <td className={cellR}>{fmt(c.quantity)}</td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              )}
+
+              {/* Consumption comparison: entries vs daily sales nozzle readings */}
+              {currentDayReport.consumption.entries.length > 0 && (
+                <table className="w-full border-collapse text-sm mb-4">
+                  <thead>
+                    <tr className={subHdr}>
+                      <th className={`${cell} text-left font-bold`}></th>
+                      <th className={`${cellR} font-bold`} colSpan={2}>Consumption</th>
+                      <th className={`${cellR} font-bold`} colSpan={2}>Pour Back</th>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <th className={`${cell} text-left text-xs`}>Fuel</th>
+                      <th className={`${cellR} text-xs`}>Entry</th>
+                      <th className={`${cellR} text-xs`}>Nozzle</th>
+                      <th className={`${cellR} text-xs`}>Entry</th>
+                      <th className={`${cellR} text-xs`}>Nozzle</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.fuelTypes.map(ft => {
+                      const cmp = currentDayReport.consumptionComparison[ft]
+                      if (!cmp) return null
+                      const hasData = cmp.entryConsumed || cmp.nozzleConsumed || cmp.entryPourBack || cmp.nozzlePourBack
+                      if (!hasData) return null
+                      return (
+                        <tr key={ft}>
+                          <td className={`${cell} font-bold`}>{ft}</td>
+                          <td className={cellR}>{fmt(cmp.entryConsumed)}</td>
+                          <td className={`${cellR} ${!cmp.consumedMatch ? 'text-red-600 font-bold' : ''}`}>{fmt(cmp.nozzleConsumed)}</td>
+                          <td className={cellR}>{fmt(cmp.entryPourBack)}</td>
+                          <td className={`${cellR} ${!cmp.pourBackMatch ? 'text-red-600 font-bold' : ''}`}>{fmt(cmp.nozzlePourBack)}</td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               )}

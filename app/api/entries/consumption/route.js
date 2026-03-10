@@ -41,7 +41,7 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, customer_id, quantity, fuel_type, notes } = await request.json()
+    const { id, entry_date, customer_id, quantity, fuel_type, is_pour_back, notes } = await request.json()
 
     if (!entry_date) return NextResponse.json({ error: 'Date is required' }, { status: 400 })
     if (!customer_id) return NextResponse.json({ error: 'Customer/account is required' }, { status: 400 })
@@ -57,6 +57,7 @@ export async function POST(request) {
         customer_id,
         quantity: Number(quantity) || 0,
         fuel_type,
+        is_pour_back: !!is_pour_back,
         notes: notes?.trim() || null,
         created_by: user.id,
       })
@@ -80,7 +81,7 @@ export async function PATCH(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, customer_id, quantity, fuel_type, notes } = await request.json()
+    const { id, entry_date, customer_id, quantity, fuel_type, is_pour_back, notes } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
 
     const updates = { updated_at: new Date().toISOString() }
@@ -88,6 +89,7 @@ export async function PATCH(request) {
     if (customer_id !== undefined) updates.customer_id = customer_id
     if (quantity !== undefined) updates.quantity = Number(quantity) || 0
     if (fuel_type !== undefined) updates.fuel_type = fuel_type
+    if (is_pour_back !== undefined) updates.is_pour_back = !!is_pour_back
     if (notes !== undefined) updates.notes = notes?.trim() || null
 
     const supabase = getServiceClient()

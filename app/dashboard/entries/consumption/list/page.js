@@ -81,6 +81,7 @@ export default function ConsumptionListPage() {
                   <p className="text-xs text-gray-500">
                     {entry.createdAt ? format(new Date(entry.createdAt), 'h:mm a') : ''}
                     {' · '}{entry.fuelType} · {Number(entry.quantity).toLocaleString()} litres
+                    {entry.isPourBack && <span className="ml-1 text-blue-600 font-medium">(Pour Back)</span>}
                   </p>
                 </div>
                 <Link href={`/dashboard/entries/consumption?${qs}&edit=${entry.id}`} className="flex items-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded hover:bg-blue-50">

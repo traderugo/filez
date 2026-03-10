@@ -28,6 +28,7 @@ export default function ConsumptionFormPage() {
   const [customerId, setCustomerId] = useState('')
   const [quantity, setQuantity] = useState('')
   const [fuelType, setFuelType] = useState('')
+  const [isPourBack, setIsPourBack] = useState(false)
   const [notes, setNotes] = useState('')
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function ConsumptionFormPage() {
           setCustomerId(entry.customerId || '')
           setQuantity(String(entry.quantity ?? ''))
           setFuelType(entry.fuelType || '')
+          setIsPourBack(!!entry.isPourBack)
           setNotes(entry.notes || '')
         }
       }
@@ -76,6 +78,7 @@ export default function ConsumptionFormPage() {
       customerId,
       quantity: Number(quantity) || 0,
       fuelType,
+      isPourBack,
       notes,
       createdAt: editId ? undefined : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -154,6 +157,16 @@ export default function ConsumptionFormPage() {
                 ))}
               </select>
             </div>
+          </div>
+          <div className="flex items-center gap-3 px-3 py-3">
+            <button
+              type="button"
+              onClick={() => setIsPourBack(!isPourBack)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isPourBack ? 'bg-blue-600' : 'bg-gray-300'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isPourBack ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+            <span className="text-sm text-gray-700">{isPourBack ? 'Pour Back' : 'Consumption'}</span>
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
