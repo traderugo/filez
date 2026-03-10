@@ -641,13 +641,12 @@ function FuelGroup({ rows, totals, cell, cellR }) {
 /** Renders tank summary rows for a fuel type */
 function TankRow({ row, cell, cellR, subHdr }) {
   const ovshColor = row.ovsh < 0 ? 'text-red-600' : row.ovsh > 0 ? 'text-green-600' : ''
-  const spanCount = row.tanks.length + 1 // individual rows + total row
 
   return (
     <>
       {row.tanks.length > 1 ? (
         <>
-          {row.tanks.map((t, i) => {
+          {row.tanks.map((t) => {
             const tDiff = Math.abs(t.closing - t.opening)
             return (
               <tr key={t.label}>
@@ -656,14 +655,8 @@ function TankRow({ row, cell, cellR, subHdr }) {
                 <td className={cellR}></td>
                 <td className={cellR}>{fmt(t.closing)}</td>
                 <td className={cellR}>{fmt(tDiff)}</td>
-                {i === 0 && (
-                  <>
-                    <td className={cellR} rowSpan={spanCount}>{fmt(row.dispensed)}</td>
-                    <td className={`${cellR} font-bold ${ovshColor}`} rowSpan={spanCount}>
-                      {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
-                    </td>
-                  </>
-                )}
+                <td className={cellR}></td>
+                <td className={cellR}></td>
               </tr>
             )
           })}
@@ -673,6 +666,10 @@ function TankRow({ row, cell, cellR, subHdr }) {
             <td className={cellR}>{fmt(row.actualSupply)}</td>
             <td className={cellR}>{fmt(row.closing)}</td>
             <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
+            <td className={cellR}>{fmt(row.dispensed)}</td>
+            <td className={`${cellR} ${ovshColor}`}>
+              {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
+            </td>
           </tr>
         </>
       ) : (
