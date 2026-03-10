@@ -31,7 +31,7 @@ export default function ProductReceiptFormPage() {
     actualVolume: '', depotName: '', tankId: '', notes: '',
   })
 
-  const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }))
+  const sf = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
 
   useEffect(() => {
     let cancelled = false
@@ -134,21 +134,6 @@ export default function ProductReceiptFormPage() {
     router.push(`/dashboard/entries/product-receipt/list?${qs}`)
   }
 
-  const Field = ({ label, name, type = 'text', placeholder }) => (
-    <div>
-      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{label}</label>
-      <input
-        type={type}
-        value={form[name]}
-        onChange={(e) => setField(name, e.target.value)}
-        placeholder={placeholder}
-        step={type === 'number' ? '0.01' : undefined}
-        min={type === 'number' ? '0' : undefined}
-        className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50"
-      />
-    </div>
-  )
-
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
 
   if (locked) return (
@@ -174,44 +159,95 @@ export default function ProductReceiptFormPage() {
       <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
         <div className="border border-gray-300 divide-y divide-gray-300">
           <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <Field label="Entry Date" name="entryDate" type="date" />
-            <Field label="Loaded Date" name="loadedDate" type="date" />
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
+              <input type="date" value={form.entryDate} onChange={sf('entryDate')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Loaded Date</label>
+              <input type="date" value={form.loadedDate} onChange={sf('loadedDate')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <Field label="Driver Name" name="driverName" />
-            <Field label="Waybill No." name="waybillNumber" />
-            <Field label="Ticket No." name="ticketNumber" />
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Driver Name</label>
+              <input type="text" value={form.driverName} onChange={sf('driverName')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Waybill No.</label>
+              <input type="text" value={form.waybillNumber} onChange={sf('waybillNumber')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Ticket No.</label>
+              <input type="text" value={form.ticketNumber} onChange={sf('ticketNumber')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
           </div>
           <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <Field label="Truck Number" name="truckNumber" />
-            <Field label="Depot Name" name="depotName" />
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Truck Number</label>
+              <input type="text" value={form.truckNumber} onChange={sf('truckNumber')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Name</label>
+              <input type="text" value={form.depotName} onChange={sf('depotName')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
           </div>
           <div className="bg-gray-50 px-2 py-1">
             <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <Field label="Chart Ullage" name="chartUllage" type="number" />
-            <Field label="Chart Liq. Height" name="chartLiquidHeight" type="number" />
-            <Field label="Depot Ullage" name="depotUllage" type="number" />
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Ullage</label>
+              <input type="number" value={form.chartUllage} onChange={sf('chartUllage')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Liq. Height</label>
+              <input type="number" value={form.chartLiquidHeight} onChange={sf('chartLiquidHeight')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Ullage</label>
+              <input type="number" value={form.depotUllage} onChange={sf('depotUllage')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <Field label="Depot Liq. Height" name="depotLiquidHeight" type="number" />
-            <Field label="Station Ullage" name="stationUllage" type="number" />
-            <Field label="Station Liq. Height" name="stationLiquidHeight" type="number" />
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Liq. Height</label>
+              <input type="number" value={form.depotLiquidHeight} onChange={sf('depotLiquidHeight')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Ullage</label>
+              <input type="number" value={form.stationUllage} onChange={sf('stationUllage')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Liq. Height</label>
+              <input type="number" value={form.stationLiquidHeight} onChange={sf('stationLiquidHeight')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
           </div>
           <div className="bg-gray-50 px-2 py-1">
             <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <Field label="1st Compartment" name="firstCompartment" type="number" />
-            <Field label="2nd Compartment" name="secondCompartment" type="number" />
-            <Field label="3rd Compartment" name="thirdCompartment" type="number" />
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">1st Compartment</label>
+              <input type="number" value={form.firstCompartment} onChange={sf('firstCompartment')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">2nd Compartment</label>
+              <input type="number" value={form.secondCompartment} onChange={sf('secondCompartment')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">3rd Compartment</label>
+              <input type="number" value={form.thirdCompartment} onChange={sf('thirdCompartment')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
           </div>
           <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <Field label="Actual Volume" name="actualVolume" type="number" />
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Actual Volume</label>
+              <input type="number" value={form.actualVolume} onChange={sf('actualVolume')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
-              <select value={form.tankId} onChange={(e) => setField('tankId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
+              <select value={form.tankId} onChange={sf('tankId')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="">Select tank</option>
                 {tanks.map((t) => (
                   <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
@@ -221,7 +257,7 @@ export default function ProductReceiptFormPage() {
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={form.notes} onChange={(e) => setField('notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            <textarea value={form.notes} onChange={sf('notes')} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
           </div>
         </div>
 
