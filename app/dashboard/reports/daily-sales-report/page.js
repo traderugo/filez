@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { initialSync } from '@/lib/initialSync'
 import { calculateDateRangeNozzles } from '@/lib/salesCalculations'
+import { calculateDateRangeLodgements } from '@/lib/lodgementCalculations'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -107,8 +108,23 @@ function DailySalesReportContent() {
       db.lodgements.where('orgId').equals(orgId).toArray(),
       db.consumption.where('orgId').equals(orgId).toArray(),
     ])
-    const bankMap = {}
-    for (const b of banks) { bankMap[b.id] = b }
+
+    // Normalize lodgements for helper
+    const normalizedLodgements = allLodgements.map(l => ({
+      ...l,
+      salesDate: l.salesDate || l.sales_date,
+      bankId: l.bankId || l.bank_id,
+      lodgementType: l.lodgementType || l.lodgement_type,
+      amount: Number(l.amount || 0),
+      createdAt: l.createdAt || l.created_at,
+    }))
+    const lodgementResult = calculateDateRangeLodgements(normalizedLodgements, banks, startDate, endDate)
+
+    // Index lodgement results by date for quick lookup
+    const lodgementByDate = {}
+    for (const ld of lodgementResult.dates) {
+      lodgementByDate[ld.date] = ld
+    }
 
     // Build per-date report
     const dateReports = rangeResult.dates.map(({ date, entries: helperEntries, dayTotals: helperDayTotals, hasEntry, entryCount }) => {
@@ -222,24 +238,15 @@ function DailySalesReportContent() {
         }
       })
 
-      // Lodgements
-      const dateLodgements = allLodgements.filter(l => l.salesDate === date)
-      const posEntries = dateLodgements.map(l => {
-        const bank = bankMap[l.bankId]
-        return {
-          bankName: bank?.bank_name || 'Unknown',
-          lodgementType: l.lodgementType || bank?.lodgement_type || '',
-          amount: Number(l.amount) || 0,
-        }
-      })
-      const totalPOS = posEntries.filter(p => p.lodgementType === 'pos').reduce((s, p) => s + p.amount, 0)
+      // Lodgements — from helper
+      const dayLodgement = lodgementByDate[date] || { bankRows: [], totalPOS: 0, totalDeposits: 0, totalCash: 0, totalOther: 0, totalAll: 0 }
 
       // Consumption
       const dateConsumption = allConsumption.filter(c => c.entryDate === date)
 
       // Summary
       const totalSales = fuelTypes.reduce((s, ft) => s + dayFuelTotals[ft].amount, 0)
-      const totalCash = totalSales - totalPOS
+      const cashBalance = totalSales - dayLodgement.totalPOS
 
       return {
         date,
@@ -247,11 +254,10 @@ function DailySalesReportContent() {
         dayFuelTotals,
         tankSummaryRows,
         tanksByFuel,
-        posEntries,
-        totalPOS,
+        lodgement: dayLodgement,
         todayConsumption: dateConsumption,
         totalSales,
-        totalCash,
+        cashBalance,
         hasEntry,
         entryCount,
       }
@@ -434,39 +440,61 @@ function DailySalesReportContent() {
                 </table>
               </div>
 
-              {/* POS & Consumption side by side */}
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <table className="w-full border-collapse text-sm">
-                    <tbody>
-                      {currentDayReport.posEntries.filter(p => p.lodgementType === 'pos').map((p, i) => (
-                        <tr key={i}>
-                          <td className={cell}>{p.bankName}</td>
-                          <td className={cellR}>{fmt(p.amount)}</td>
-                        </tr>
-                      ))}
-                      {(!currentDayReport.posEntries.filter(p => p.lodgementType === 'pos').length) && (
-                        <tr><td colSpan={2} className={`${cell} text-gray-400`}>No POS entries</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                <div>
-                  <table className="w-full border-collapse text-sm">
-                    <tbody>
-                      {currentDayReport.todayConsumption.map((c, i) => (
-                        <tr key={i}>
-                          <td className={cell}>{c.fuelType || ''}</td>
-                          <td className={cellR}>{fmt(c.quantity)}</td>
-                        </tr>
-                      ))}
-                      {(!currentDayReport.todayConsumption?.length) && (
-                        <tr><td colSpan={2} className={`${cell} text-gray-400`}>No consumption</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              {/* Lodgements table */}
+              <table className="w-full border-collapse text-sm mb-4">
+                <thead>
+                  <tr className={subHdr}>
+                    <th className={`${cell} text-left font-bold whitespace-nowrap`}>Account</th>
+                    <th className={`${cellR} font-bold whitespace-nowrap`}>Opening</th>
+                    <th className={`${cellR} font-bold whitespace-nowrap`}>Lodged</th>
+                    <th className={`${cellR} font-bold whitespace-nowrap`}>Closing</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentDayReport.lodgement.bankRows.map(row => (
+                    <tr key={row.bankId}>
+                      <td className={`${cell} whitespace-nowrap`}>
+                        <span className="font-bold">{row.bankName}</span>
+                        <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
+                      </td>
+                      <td className={cellR}>{fmt(row.opening)}</td>
+                      <td className={cellR}>{row.deposited ? fmt(row.deposited) : ''}</td>
+                      <td className={cellR}>{fmt(row.closing)}</td>
+                    </tr>
+                  ))}
+                  {currentDayReport.lodgement.bankRows.length === 0 && (
+                    <tr><td colSpan={4} className={`${cell} text-gray-400`}>No accounts configured</td></tr>
+                  )}
+                  {currentDayReport.lodgement.totalAll > 0 && (
+                    <tr className={`${subHdr} font-bold`}>
+                      <td className={cell}>Total Lodged</td>
+                      <td className={cellR}></td>
+                      <td className={cellR}>{fmt(currentDayReport.lodgement.totalAll)}</td>
+                      <td className={cellR}></td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* Consumption */}
+              {currentDayReport.todayConsumption.length > 0 && (
+                <table className="w-full border-collapse text-sm mb-4">
+                  <thead>
+                    <tr className={subHdr}>
+                      <th className={`${cell} text-left font-bold`}>Consumption</th>
+                      <th className={`${cellR} font-bold`}>Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentDayReport.todayConsumption.map((c, i) => (
+                      <tr key={i}>
+                        <td className={cell}>{c.fuelType || ''}</td>
+                        <td className={cellR}>{fmt(c.quantity)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
 
               {/* Summary */}
               <table className="w-full border-collapse text-sm">
@@ -493,11 +521,15 @@ function DailySalesReportContent() {
                   </tr>
                   <tr className="font-bold">
                     <td colSpan={3} className={cell}>POS</td>
-                    <td className={cellR}>{fmt(currentDayReport.totalPOS)}</td>
+                    <td className={cellR}>{fmt(currentDayReport.lodgement.totalPOS)}</td>
+                  </tr>
+                  <tr className="font-bold">
+                    <td colSpan={3} className={cell}>Deposits</td>
+                    <td className={cellR}>{fmt(currentDayReport.lodgement.totalDeposits)}</td>
                   </tr>
                   <tr className={`${subHdr} font-bold`}>
                     <td colSpan={3} className={cell}>CASH</td>
-                    <td className={cellR}>{fmt(currentDayReport.totalCash)}</td>
+                    <td className={cellR}>{fmt(currentDayReport.cashBalance)}</td>
                   </tr>
                 </tbody>
               </table>
@@ -621,16 +653,16 @@ function TankRow({ row, cell, cellR, subHdr }) {
       {row.tanks.length > 1 ? (
         <>
           {row.tanks.map((t) => {
-            const tDiff = t.closing - t.opening
+            const tDiff = Math.abs(t.closing - t.opening)
             return (
               <tr key={t.label}>
                 <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
                 <td className={cellR}>{fmt(t.opening)}</td>
-                <td className={cellR}></td>
+                <td className={cellR}>—</td>
                 <td className={cellR}>{fmt(t.closing)}</td>
                 <td className={cellR}>{fmt(tDiff)}</td>
-                <td className={cellR}></td>
-                <td className={cellR}></td>
+                <td className={cellR}>—</td>
+                <td className={cellR}>—</td>
               </tr>
             )
           })}
@@ -639,7 +671,7 @@ function TankRow({ row, cell, cellR, subHdr }) {
             <td className={cellR}>{fmt(row.opening)}</td>
             <td className={cellR}>{fmt(row.actualSupply)}</td>
             <td className={cellR}>{fmt(row.closing)}</td>
-            <td className={cellR}>{fmt(row.diff)}</td>
+            <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
             <td className={cellR}>{fmt(row.dispensed)}</td>
             <td className={`${cellR} ${ovshColor}`}>
               {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
@@ -652,7 +684,7 @@ function TankRow({ row, cell, cellR, subHdr }) {
           <td className={cellR}>{fmt(row.opening)}</td>
           <td className={cellR}>{fmt(row.actualSupply)}</td>
           <td className={cellR}>{fmt(row.closing)}</td>
-          <td className={cellR}>{fmt(row.diff)}</td>
+          <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
           <td className={cellR}>{fmt(row.dispensed)}</td>
           <td className={`${cellR} font-bold ${ovshColor}`}>
             {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
