@@ -445,32 +445,26 @@ function DailySalesReportContent() {
                 <thead>
                   <tr className={subHdr}>
                     <th className={`${cell} text-left font-bold whitespace-nowrap`}>Account</th>
-                    <th className={`${cellR} font-bold whitespace-nowrap`}>Opening</th>
-                    <th className={`${cellR} font-bold whitespace-nowrap`}>Lodged</th>
-                    <th className={`${cellR} font-bold whitespace-nowrap`}>Closing</th>
+                    <th className={`${cellR} font-bold whitespace-nowrap`}>Amount</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentDayReport.lodgement.bankRows.map(row => (
+                  {currentDayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
                     <tr key={row.bankId}>
                       <td className={`${cell} whitespace-nowrap`}>
                         <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
                         <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
                       </td>
-                      <td className={cellR}>{fmt(row.opening)}</td>
-                      <td className={cellR}>{row.deposited ? fmt(row.deposited) : ''}</td>
-                      <td className={cellR}>{fmt(row.closing)}</td>
+                      <td className={cellR}>{fmt(row.deposited)}</td>
                     </tr>
                   ))}
-                  {currentDayReport.lodgement.bankRows.length === 0 && (
-                    <tr><td colSpan={4} className={`${cell} text-gray-400`}>No accounts configured</td></tr>
+                  {currentDayReport.lodgement.totalAll === 0 && (
+                    <tr><td colSpan={2} className={`${cell} text-gray-400`}>No lodgements</td></tr>
                   )}
                   {currentDayReport.lodgement.totalAll > 0 && (
                     <tr className={`${subHdr} font-bold`}>
                       <td className={cell}>Total Lodged</td>
-                      <td className={cellR}></td>
                       <td className={cellR}>{fmt(currentDayReport.lodgement.totalAll)}</td>
-                      <td className={cellR}></td>
                     </tr>
                   )}
                 </tbody>
