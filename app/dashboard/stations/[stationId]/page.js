@@ -49,7 +49,6 @@ export default function StationPage() {
   // Manage station accordion
   const [showManage, setShowManage] = useState(false)
   const [editName, setEditName] = useState('')
-  const [editGroup, setEditGroup] = useState('')
   const [saving, setSaving] = useState(false)
   const [leaving, setLeaving] = useState(false)
 
@@ -149,10 +148,10 @@ export default function StationPage() {
     const res = await fetch('/api/organizations', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: stationId, name: editName, station_group: editGroup }),
+      body: JSON.stringify({ id: stationId, name: editName }),
     })
     if (res.ok) {
-      setStation((prev) => ({ ...prev, name: editName.trim(), station_group: editGroup.trim() || null }))
+      setStation((prev) => ({ ...prev, name: editName.trim() }))
     }
     setSaving(false)
   }
@@ -395,7 +394,7 @@ export default function StationPage() {
       {isOwner && (
         <section className="mb-8">
           <button
-            onClick={() => { setShowManage(!showManage); if (!showManage) { setEditName(station.name); setEditGroup(station.station_group || '') } }}
+            onClick={() => { setShowManage(!showManage); if (!showManage) setEditName(station.name) }}
             className="w-full flex items-center justify-between py-3 text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
           >
             Manage Station
@@ -439,17 +438,6 @@ export default function StationPage() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    maxLength={100}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-500 mb-1">Group</label>
-                  <input
-                    type="text"
-                    value={editGroup}
-                    onChange={(e) => setEditGroup(e.target.value)}
-                    placeholder="e.g. North Region, Zone A"
                     maxLength={100}
                     className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />

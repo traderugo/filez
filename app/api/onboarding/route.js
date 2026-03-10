@@ -62,7 +62,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { org_id, location, station_group, nozzles, tanks, mappings, lodgements, lube_products, customers } = await request.json()
+    const { org_id, location, nozzles, tanks, mappings, lodgements, lube_products, customers } = await request.json()
 
     if (!org_id) {
       return NextResponse.json({ error: 'Station id required' }, { status: 400 })
@@ -82,14 +82,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Station not found' }, { status: 404 })
     }
 
-    // 1. Update station location and group
-    const orgUpdate = {}
-    if (location) orgUpdate.location = location.trim()
-    if (station_group) orgUpdate.station_group = station_group.trim()
-    if (Object.keys(orgUpdate).length > 0) {
+    // 1. Update station location
+    if (location) {
       await supabase
         .from('organizations')
-        .update(orgUpdate)
+        .update({ location: location.trim() })
         .eq('id', org_id)
     }
 

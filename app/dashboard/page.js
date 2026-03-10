@@ -275,7 +275,10 @@ export default function DashboardPage() {
       )}
 
       {/* Quick links */}
-      <div className="border-t border-gray-200 pt-6">
+      <div className="border-t border-gray-200 pt-6 flex flex-col gap-3">
+        <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
+          <Building2 className="w-4 h-4" /> Settings
+        </Link>
         <Link href="/dashboard/feedback" className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
           <MessageSquare className="w-4 h-4" /> Send feedback
         </Link>
