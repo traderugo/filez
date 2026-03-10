@@ -283,6 +283,14 @@ function DailySalesReportContent() {
     if (!loading) buildReport()
   }, [loading, buildReport])
 
+  // Re-build report when page regains visibility (e.g. after editing an entry)
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible' && !loading) buildReport() }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+    return () => { document.removeEventListener('visibilitychange', onVisible); window.removeEventListener('focus', onVisible) }
+  }, [loading, buildReport])
+
   // Clamp viewDate and reset tab offset when range changes
   useEffect(() => {
     setTabOffset(0)
