@@ -1,15 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   MessageSquare, Loader2,
   Building2, Check, Plus,
-  Fuel, ChevronRight, Shield
+  Fuel, ChevronRight
 } from 'lucide-react'
 import InstallPWABanner from '@/components/InstallPWABanner'
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -105,36 +107,10 @@ export default function DashboardPage() {
     )
   }
 
-  // Admin view — no station management
+  // Admin — redirect to admin panel
   if (isAdmin) {
-    return (
-      <div className="max-w-2xl px-4 sm:px-8 py-8">
-        <InstallPWABanner />
-
-        <h1 className="text-xl font-bold text-gray-900 mb-1 mt-4">Welcome, {profile?.name}</h1>
-        <p className="text-base text-gray-500 mb-8">{profile?.email}</p>
-
-        <div className="border border-blue-200 bg-blue-50 p-6">
-          <div className="flex items-start gap-3">
-            <Shield className="w-6 h-6 text-blue-600 flex-shrink-0" />
-            <div>
-              <p className="text-base font-medium text-gray-900">Admin account</p>
-              <p className="text-base text-gray-600 mt-1">
-                This is an admin account. Go to the{' '}
-                <Link href="/admin" className="text-blue-600 hover:underline font-medium">admin panel</Link>
-                {' '}to manage the platform.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-200 pt-6 mt-8">
-          <Link href="/dashboard/feedback" className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
-            <MessageSquare className="w-4 h-4" /> Send feedback
-          </Link>
-        </div>
-      </div>
-    )
+    router.push('/admin')
+    return null
   }
 
   return (
