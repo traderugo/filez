@@ -166,7 +166,7 @@ function DailySalesReportContent() {
   const qs = `org_id=${orgId}`
 
   const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-900'
+  const subHdr = 'bg-blue-50 text-blue-600'
   const bdr = 'border border-blue-200'
   const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
@@ -450,7 +450,7 @@ function DailySalesReportContent() {
                 <button
                   key={dr.date}
                   onClick={() => setViewDate(dr.date)}
-                  className={`px-2 py-1.5 text-sm font-medium border-r border-blue-200 shrink-0 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900' : 'bg-gray-50 text-gray-400'}`}
+                  className={`px-2 py-1.5 text-sm font-medium border-r border-blue-200 shrink-0 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-600' : 'bg-gray-50 text-gray-400'}`}
                 >
                   {d.getDate()}
                 </button>
@@ -474,7 +474,7 @@ function DailySalesReportContent() {
                   <button
                     key={dr.date}
                     onClick={() => setViewDate(dr.date)}
-                    className={`px-2 py-1.5 text-sm font-medium border-r border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                    className={`px-2 py-1.5 text-sm font-medium border-r border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-600 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                   >
                     {d.getDate()}
                   </button>
