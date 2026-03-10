@@ -191,52 +191,66 @@ function DailySalesReportContent() {
       }
 
       // Tanks — use helper output (chained per entry, same pattern as nozzles)
+      // Also compute per-tank dispensed using nozzle→tank mapping
       const tanksByFuel = {}
+
+      // Build per-tank dispensed from nozzle helper output
+      const dispensedByTankId = {}
       for (const ft of fuelTypes) {
-        tanksByFuel[ft] = {
-          tanks: helperDayTotals[ft] ? [] : [],
-          totalOpening: helperDayTotals[ft]?.tankOpening || 0,
-          totalClosing: helperDayTotals[ft]?.tankClosing || 0,
-          totalWaybill: 0,
-          totalActualSupply: 0,
-        }
-        // Collect per-tank opening/closing from the last helper entry (day summary)
         const lastHelperEntry = helperEntries[helperEntries.length - 1]
-        if (lastHelperEntry?.fuelGroups[ft]?.tanks) {
-          // Opening from first entry, closing from last entry
-          const firstTanks = helperEntries[0].fuelGroups[ft].tanks
-          const lastTanks = lastHelperEntry.fuelGroups[ft].tanks
-          tanksByFuel[ft].tanks = lastTanks.map((t, idx) => ({
-            label: t.label,
-            opening: firstTanks[idx]?.opening ?? t.opening,
-            closing: t.closing,
-          }))
+        if (lastHelperEntry?.fuelGroups[ft]?.nozzles) {
+          // Sum all entries' nozzle dispensed across the day
+          for (const he of helperEntries) {
+            for (const n of he.fuelGroups[ft].nozzles) {
+              const nozzleConfig = nozzles.find(nc => nc.id === n.pumpId)
+              const tid = nozzleConfig?.tank_id
+              if (tid) {
+                dispensedByTankId[tid] = (dispensedByTankId[tid] || 0) + n.dispensed
+              }
+            }
+          }
         }
       }
 
+      // Build per-tank supply from receipts
+      const supplyByTankId = {}
       const dateReceipts = allReceipts.filter(r => r.entryDate === date)
       for (const receipt of dateReceipts) {
-        const tankConfig = tanks.find(t => t.id === receipt.tankId)
-        if (tankConfig && tanksByFuel[tankConfig.fuel_type]) {
-          const waybill = Number(receipt.actualVolume) || 0
-          tanksByFuel[tankConfig.fuel_type].totalWaybill += waybill
-          tanksByFuel[tankConfig.fuel_type].totalActualSupply += waybill
+        const tid = receipt.tankId
+        if (tid) {
+          supplyByTankId[tid] = (supplyByTankId[tid] || 0) + (Number(receipt.actualVolume) || 0)
         }
       }
 
-      const tankSummaryRows = fuelTypes.map(ft => {
-        const tb = tanksByFuel[ft]
-        const dispensed = dayFuelTotals[ft].dispensed
-        const diff = tb.totalClosing - tb.totalOpening
-        return {
-          fuelType: ft, tanks: tb.tanks,
-          opening: tb.totalOpening, waybillSupply: tb.totalWaybill,
-          actualSupply: tb.totalActualSupply, closing: tb.totalClosing,
-          diff,
-          dispensed,
-          ovsh: diff - tb.totalActualSupply + dispensed,
-        }
-      })
+      for (const ft of fuelTypes) {
+        const lastHelperEntry = helperEntries[helperEntries.length - 1]
+        const firstTanks = helperEntries[0]?.fuelGroups[ft]?.tanks || []
+        const lastTanks = lastHelperEntry?.fuelGroups[ft]?.tanks || []
+
+        const tankRows = lastTanks.map((t, idx) => {
+          const opening = firstTanks[idx]?.opening ?? t.opening
+          const closing = t.closing
+          const diff = Math.abs(closing - opening)
+          const supply = supplyByTankId[t.tankId] || 0
+          const dispensed = dispensedByTankId[t.tankId] || 0
+          const ovsh = (closing - opening) - supply + dispensed
+          return { label: t.label, tankId: t.tankId, opening, closing, diff, supply, dispensed, ovsh }
+        })
+
+        const totalOpening = tankRows.reduce((s, t) => s + t.opening, 0)
+        const totalClosing = tankRows.reduce((s, t) => s + t.closing, 0)
+        const totalSupply = tankRows.reduce((s, t) => s + t.supply, 0)
+        const totalDispensed = dayFuelTotals[ft].dispensed
+        const totalDiff = Math.abs(totalClosing - totalOpening)
+        const totalOvsh = (totalClosing - totalOpening) - totalSupply + totalDispensed
+
+        tanksByFuel[ft] = { tanks: tankRows, totalOpening, totalClosing, totalSupply, totalDispensed, totalDiff, totalOvsh }
+      }
+
+      const tankSummaryRows = fuelTypes.map(ft => ({
+        fuelType: ft,
+        ...tanksByFuel[ft],
+      }))
 
       // Lodgements — from helper
       const dayLodgement = lodgementByDate[date] || { bankRows: [], totalPOS: 0, totalDeposits: 0, totalCash: 0, totalOther: 0, totalAll: 0 }
@@ -640,48 +654,36 @@ function FuelGroup({ rows, totals, cell, cellR }) {
 
 /** Renders tank summary rows for a fuel type */
 function TankRow({ row, cell, cellR, subHdr }) {
-  const ovshColor = row.ovsh < 0 ? 'text-red-600' : row.ovsh > 0 ? 'text-green-600' : ''
+  const totalOvshColor = row.totalOvsh < 0 ? 'text-red-600' : row.totalOvsh > 0 ? 'text-green-600' : ''
 
   return (
     <>
-      {row.tanks.length > 1 ? (
-        <>
-          {row.tanks.map((t) => {
-            const tDiff = Math.abs(t.closing - t.opening)
-            return (
-              <tr key={t.label}>
-                <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
-                <td className={cellR}>{fmt(t.opening)}</td>
-                <td className={cellR}></td>
-                <td className={cellR}>{fmt(t.closing)}</td>
-                <td className={cellR}>{fmt(tDiff)}</td>
-                <td className={cellR}></td>
-                <td className={cellR}></td>
-              </tr>
-            )
-          })}
-          <tr className={`${subHdr} font-bold`}>
-            <td className={cell}>Total</td>
-            <td className={cellR}>{fmt(row.opening)}</td>
-            <td className={cellR}>{fmt(row.actualSupply)}</td>
-            <td className={cellR}>{fmt(row.closing)}</td>
-            <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
-            <td className={cellR}>{fmt(row.dispensed)}</td>
+      {row.tanks.map((t) => {
+        const ovshColor = t.ovsh < 0 ? 'text-red-600' : t.ovsh > 0 ? 'text-green-600' : ''
+        return (
+          <tr key={t.label}>
+            <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
+            <td className={cellR}>{fmt(t.opening)}</td>
+            <td className={cellR}>{t.supply ? fmt(t.supply) : ''}</td>
+            <td className={cellR}>{fmt(t.closing)}</td>
+            <td className={cellR}>{fmt(t.diff)}</td>
+            <td className={cellR}>{fmt(t.dispensed)}</td>
             <td className={`${cellR} ${ovshColor}`}>
-              {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
+              {t.ovsh > 0 ? '+' : ''}{fmt(t.ovsh)}
             </td>
           </tr>
-        </>
-      ) : (
-        <tr>
-          <td className={`${cell} font-bold whitespace-nowrap`}>{row.fuelType}</td>
-          <td className={cellR}>{fmt(row.opening)}</td>
-          <td className={cellR}>{fmt(row.actualSupply)}</td>
-          <td className={cellR}>{fmt(row.closing)}</td>
-          <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
-          <td className={cellR}>{fmt(row.dispensed)}</td>
-          <td className={`${cellR} font-bold ${ovshColor}`}>
-            {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
+        )
+      })}
+      {row.tanks.length > 1 && (
+        <tr className={`${subHdr} font-bold`}>
+          <td className={cell}>Total</td>
+          <td className={cellR}>{fmt(row.totalOpening)}</td>
+          <td className={cellR}>{row.totalSupply ? fmt(row.totalSupply) : ''}</td>
+          <td className={cellR}>{fmt(row.totalClosing)}</td>
+          <td className={cellR}>{fmt(row.totalDiff)}</td>
+          <td className={cellR}>{fmt(row.totalDispensed)}</td>
+          <td className={`${cellR} ${totalOvshColor}`}>
+            {row.totalOvsh > 0 ? '+' : ''}{fmt(row.totalOvsh)}
           </td>
         </tr>
       )}
