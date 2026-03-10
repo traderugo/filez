@@ -27,15 +27,27 @@ export default function SyncStatus({ orgId }) {
   const allSynced = count === 0
 
   const handleSyncNow = async () => {
+    if (syncing) return
     setSyncing(true)
-    try { await processQueue() } catch (e) { /* offline */ }
-    setSyncing(false)
+    try {
+      await processQueue()
+    } catch (e) {
+      console.error('[SyncStatus] Sync failed:', e)
+    } finally {
+      setSyncing(false)
+    }
   }
 
   const handleRefresh = async () => {
+    if (refreshing || !orgId) return
     setRefreshing(true)
-    try { await initialSync(orgId, { force: true }) } catch (e) { /* offline */ }
-    setRefreshing(false)
+    try {
+      await initialSync(orgId, { force: true })
+    } catch (e) {
+      console.error('[SyncStatus] Refresh failed:', e)
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   return (
