@@ -151,8 +151,27 @@ function DailySalesReportContent() {
 
   const currentDayReport = report?.dateReports.find(r => r.date === viewDate) || null
 
+  // Detect dates with duplicate entries
+  const duplicateDates = useMemo(() => {
+    if (!liveSales) return []
+    const countByDate = {}
+    for (const e of liveSales) {
+      const d = e.entryDate || e.entry_date
+      countByDate[d] = (countByDate[d] || 0) + 1
+    }
+    return Object.entries(countByDate).filter(([, c]) => c > 1).map(([d]) => d)
+  }, [liveSales])
+
+  const currentDayHasDuplicates = duplicateDates.includes(viewDate)
+
   return (
     <div className="flex flex-col h-[calc(95vh-4rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
+      {/* Duplicate entry warning */}
+      {currentDayHasDuplicates && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-800 px-3 py-2 text-sm mb-1 shrink-0">
+          <span className="font-bold">Warning:</span> Multiple entries exist for {viewDate}. This may cause incorrect calculations. Please delete the duplicate from the <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="underline font-medium">entries list</Link>.
+        </div>
+      )}
       {/* Header — fixed at top */}
       <div className="flex items-center justify-between py-3 gap-2 flex-wrap shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Daily Sales Operation Report</h1>
