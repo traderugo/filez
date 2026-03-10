@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import {
   LayoutDashboard, CreditCard,
-  MessageSquare, Shield, LogOut, X, PanelLeftClose, PanelLeftOpen
+  MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight
 } from 'lucide-react'
 
 const navItems = [
@@ -49,7 +49,7 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
             <span className={collapsed ? 'sm:hidden' : ''}>{collapsed ? '' : 'StationVA'}</span>
           </Link>
           <button className="hidden sm:block p-1 text-gray-400 hover:text-gray-600" onClick={onToggleCollapse}>
-            {collapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
           <button className="sm:hidden p-1 text-gray-400 hover:text-gray-600" onClick={onClose}>
             <X className="w-5 h-5" />
