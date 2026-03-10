@@ -29,6 +29,7 @@ export default function DailySalesFormPage() {
   const [tankReadings, setTankReadings] = useState([])
   const [prices, setPrices] = useState({ PMS: '', AGO: '', DPK: '' })
   const [notes, setNotes] = useState('')
+  const [closeOfBusiness, setCloseOfBusiness] = useState(false)
 
   // Load config from IndexedDB, trigger initial sync if needed
   useEffect(() => {
@@ -96,6 +97,7 @@ export default function DailySalesFormPage() {
     const p = entry.prices || {}
     setPrices({ PMS: String(p.PMS || ''), AGO: String(p.AGO || ''), DPK: String(p.DPK || '') })
     setNotes(entry.notes || '')
+    setCloseOfBusiness(entry.closeOfBusiness || entry.close_of_business || false)
 
     const savedNozzles = entry.nozzleReadings || entry.nozzle_readings || []
     setNozzleReadings(noz.map((n) => {
@@ -132,8 +134,10 @@ export default function DailySalesFormPage() {
     e.preventDefault()
     if (!formDate) { setError('Date is required'); return }
     if (!prices.PMS && !prices.AGO && !prices.DPK) { setError('At least one fuel price is required'); return }
-    const missingTank = tankReadings.find((r) => r.closing_stock === '' || r.closing_stock === undefined)
-    if (missingTank) { setError(`Closing stock is required for ${missingTank.label}`); return }
+    if (closeOfBusiness) {
+      const missingTank = tankReadings.find((r) => r.closing_stock === '' || r.closing_stock === undefined)
+      if (missingTank) { setError(`Closing stock is required for ${missingTank.label}`); return }
+    }
     const missingReading = nozzleReadings.find((r) => r.closing_meter === '' || r.closing_meter === undefined)
     if (missingReading) { setError(`Closing meter is required for ${missingReading.label}`); return }
 
@@ -165,6 +169,7 @@ export default function DailySalesFormPage() {
         AGO: Number(prices.AGO) || 0,
         DPK: Number(prices.DPK) || 0,
       },
+      closeOfBusiness,
       notes,
       createdAt: editId ? undefined : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -279,13 +284,22 @@ export default function DailySalesFormPage() {
             </div>
           )}
 
-          {/* Tank readings */}
+          {/* Close of Business checkbox + Tank readings */}
           {tankReadings.length > 0 && (
             <>
-              <div className="bg-gray-50 px-2 py-1">
+              <div className="bg-gray-50 px-2 py-1.5 flex items-center justify-between">
                 <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">UGT Closing Stock</span>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={closeOfBusiness}
+                    onChange={(e) => setCloseOfBusiness(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                  />
+                  <span className="text-xs text-gray-500">Final entry</span>
+                </label>
               </div>
-              {tankReadings.map((r, idx) => (
+              {closeOfBusiness && tankReadings.map((r, idx) => (
                 <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-gray-300">
                   <div className="flex items-center px-3 py-2.5 bg-gray-50/50">
                     <span className="text-xs text-gray-600">{r.label}</span>
