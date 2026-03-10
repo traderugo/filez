@@ -114,7 +114,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
     }
 
-    const { id, name } = await request.json()
+    const { id, name, station_group } = await request.json()
     if (!id) {
       return NextResponse.json({ error: 'Station id required' }, { status: 400 })
     }
@@ -125,9 +125,14 @@ export async function PATCH(request) {
 
     const supabase = getAdminClient()
 
+    const updateFields = { name: name.trim() }
+    if (station_group !== undefined) {
+      updateFields.station_group = station_group ? station_group.trim().slice(0, 100) : null
+    }
+
     const { data: org, error } = await supabase
       .from('organizations')
-      .update({ name: name.trim() })
+      .update(updateFields)
       .eq('id', id)
       .eq('owner_id', user.id)
       .select()
