@@ -25,6 +25,7 @@ export default function AdminSubscriptionsPage() {
   useEffect(() => {
     setLoading(true)
     loadSubs()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter])
 
   const handleAction = async (sub, action) => {

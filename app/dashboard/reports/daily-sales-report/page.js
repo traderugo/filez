@@ -115,7 +115,19 @@ function DailySalesReportContent() {
     setTabOffset(0)
     if (viewDate < startDate) setViewDate(startDate)
     else if (viewDate > endDate) setViewDate(endDate)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate])
+
+  // Detect dates with duplicate entries
+  const duplicateDates = useMemo(() => {
+    if (!liveSales) return []
+    const countByDate = {}
+    for (const e of liveSales) {
+      const d = e.entryDate || e.entry_date
+      countByDate[d] = (countByDate[d] || 0) + 1
+    }
+    return Object.entries(countByDate).filter(([, c]) => c > 1).map(([d]) => d)
+  }, [liveSales])
 
   // Auto-scroll tabs so active day is always visible
   useEffect(() => {
@@ -123,6 +135,7 @@ function DailySalesReportContent() {
     const idx = report.dateReports.findIndex(r => r.date === viewDate)
     if (idx < tabOffset) setTabOffset(idx)
     else if (idx >= tabOffset + TAB_COUNT) setTabOffset(idx - TAB_COUNT + 1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewDate, report])
 
   if (loading) {
@@ -150,18 +163,6 @@ function DailySalesReportContent() {
   const cellR = `${cell} text-right`
 
   const currentDayReport = report?.dateReports.find(r => r.date === viewDate) || null
-
-  // Detect dates with duplicate entries
-  const duplicateDates = useMemo(() => {
-    if (!liveSales) return []
-    const countByDate = {}
-    for (const e of liveSales) {
-      const d = e.entryDate || e.entry_date
-      countByDate[d] = (countByDate[d] || 0) + 1
-    }
-    return Object.entries(countByDate).filter(([, c]) => c > 1).map(([d]) => d)
-  }, [liveSales])
-
   const currentDayHasDuplicates = duplicateDates.includes(viewDate)
 
   return (
