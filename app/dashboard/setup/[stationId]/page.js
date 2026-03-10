@@ -27,8 +27,9 @@ export default function SetupWizardPage() {
   const [stationName, setStationName] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Step 1: Location
+  // Step 1: Location + Group
   const [location, setLocation] = useState('')
+  const [stationGroup, setStationGroup] = useState('')
 
   // Step 2: Nozzles
   const [nozzles, setNozzles] = useState([])
@@ -188,6 +189,7 @@ export default function SetupWizardPage() {
       body: JSON.stringify({
         org_id: stationId,
         location,
+        station_group: stationGroup.trim() || null,
         nozzles,
         tanks,
         mappings: mappingArr,
@@ -242,9 +244,19 @@ export default function SetupWizardPage() {
             maxLength={200}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
             autoFocus
           />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
+          <input
+            type="text"
+            placeholder="e.g. North Region, Zone A"
+            maxLength={100}
+            value={stationGroup}
+            onChange={(e) => setStationGroup(e.target.value)}
+            className="w-full px-3 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <p className="text-xs text-gray-400 mt-1">Used to group stations together. Cannot be changed later.</p>
         </div>
       )}
 
