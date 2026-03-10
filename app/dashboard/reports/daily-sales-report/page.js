@@ -171,7 +171,7 @@ function DailySalesReportContent() {
           nozzleRows.push({ fuelType: ft, rows, totals: entryFuelTotals[ft] })
         }
 
-        entryGroups.push({ entryIndex: helperEntry.entryIndex, nozzleRows, fuelTotals: entryFuelTotals })
+        entryGroups.push({ entryIndex: helperEntry.entryIndex, entryId: currentEntry.id || null, nozzleRows, fuelTotals: entryFuelTotals })
       }
 
       // Tanks — use helper output (chained per entry, same pattern as nozzles)
@@ -257,7 +257,6 @@ function DailySalesReportContent() {
       }
     })
 
-    console.log('[Report] rangeResult dates:', rangeResult.dates.map(d => ({ date: d.date, entryCount: d.entryCount, hasEntry: d.hasEntry })))
     setReport({ dateReports, fuelTypes })
   }, [orgId, startDate, endDate, nozzles, tanks, banks])
 
@@ -320,17 +319,23 @@ function DailySalesReportContent() {
             >
               <Pencil className="w-3.5 h-3.5" /> Edit <ChevronDown className="w-3.5 h-3.5" />
             </button>
-            {showEditMenu && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowEditMenu(false)} />
-                <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 shadow-lg min-w-[200px]">
-                  <Link href={`/dashboard/entries/daily-sales?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Daily Sales</Link>
-                  <Link href={`/dashboard/entries/product-receipt?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Product Receipt</Link>
-                  <Link href={`/dashboard/entries/lodgements?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Lodgements</Link>
-                  <Link href={`/dashboard/entries/consumption?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Consumption</Link>
-                </div>
-              </>
-            )}
+            {showEditMenu && (() => {
+              const dailySalesId = currentDayReport?.entryGroups?.[0]?.entryId
+              const dailySalesHref = dailySalesId
+                ? `/dashboard/entries/daily-sales?${qs}&edit=${dailySalesId}`
+                : `/dashboard/entries/daily-sales?${qs}`
+              return (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowEditMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 shadow-lg min-w-[200px]">
+                    <Link href={dailySalesHref} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Daily Sales</Link>
+                    <Link href={`/dashboard/entries/product-receipt?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Product Receipt</Link>
+                    <Link href={`/dashboard/entries/lodgements?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Lodgements</Link>
+                    <Link href={`/dashboard/entries/consumption?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Consumption</Link>
+                  </div>
+                </>
+              )
+            })()}
           </div>
           <input
             type="date"
@@ -355,7 +360,7 @@ function DailySalesReportContent() {
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 pb-4 min-w-[700px]">
             {/* ===== LEFT: DAILY SALES OPERATION ===== */}
             <div className="min-w-0">
-              <div className="overflow-x-auto">
+              <div>
                 <table className="w-full border-collapse text-sm">
                   <thead>
                     <tr className={subHdr}>
@@ -408,7 +413,7 @@ function DailySalesReportContent() {
             {/* ===== RIGHT: STOCK & SUMMARY ===== */}
             <div className="min-w-0">
               {/* Tank stock table */}
-              <div className="overflow-x-auto">
+              <div>
                 <table className="w-full border-collapse text-sm mb-4">
                   <thead>
                     <tr className={subHdr}>
