@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
@@ -52,6 +53,7 @@ function DailySalesReportContent() {
   const [tabOffset, setTabOffset] = useState(0)
   const TAB_COUNT = 31
 
+  // Initial sync + config load (one-time)
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
     let cancelled = false
@@ -77,15 +79,28 @@ function DailySalesReportContent() {
     return () => { cancelled = true }
   }, [orgId])
 
-  const buildReport = useCallback(async () => {
-    if (!orgId || !nozzles.length) return
+  // Live queries — auto-rebuild report when entries change in IndexedDB
+  const liveSales = useLiveQuery(
+    () => orgId ? db.dailySales.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
+  const liveReceipts = useLiveQuery(
+    () => orgId ? db.productReceipts.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
+  const liveLodgements = useLiveQuery(
+    () => orgId ? db.lodgements.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
+  const liveConsumption = useLiveQuery(
+    () => orgId ? db.consumption.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
 
-    // Get all daily sales entries
-    const rawEntries = await db.dailySales
-      .where('orgId').equals(orgId)
-      .toArray()
+  const buildReport = useCallback(() => {
+    if (!orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return
 
-    const allEntries = rawEntries.map(e => ({
+    const allEntries = liveSales.map(e => ({
       ...e,
       entryDate: e.entryDate || e.entry_date,
       nozzleReadings: e.nozzleReadings || e.nozzle_readings || [],
@@ -103,15 +118,8 @@ function DailySalesReportContent() {
     const rangeResult = calculateDateRangeNozzles(allEntries, nozzles, startDate, endDate, tanks)
     const { fuelTypes } = rangeResult
 
-    // Fetch auxiliary data once
-    const [allReceipts, allLodgements, allConsumption] = await Promise.all([
-      db.productReceipts.where('orgId').equals(orgId).toArray(),
-      db.lodgements.where('orgId').equals(orgId).toArray(),
-      db.consumption.where('orgId').equals(orgId).toArray(),
-    ])
-
     // Normalize lodgements for helper
-    const normalizedLodgements = allLodgements.map(l => ({
+    const normalizedLodgements = liveLodgements.map(l => ({
       ...l,
       salesDate: l.salesDate || l.sales_date,
       bankId: l.bankId || l.bank_id,
@@ -128,7 +136,7 @@ function DailySalesReportContent() {
     }
 
     // Normalize receipts for helper
-    const normalizedReceipts = allReceipts.map(r => ({
+    const normalizedReceipts = liveReceipts.map(r => ({
       ...r,
       entryDate: r.entryDate || r.entry_date,
       tankId: r.tankId || r.tank_id,
@@ -255,7 +263,7 @@ function DailySalesReportContent() {
       const dayLodgement = lodgementByDate[date] || { bankRows: [], totalPOS: 0, totalDeposits: 0, totalCash: 0, totalOther: 0, totalAll: 0 }
 
       // Consumption
-      const dateConsumption = allConsumption.filter(c => c.entryDate === date)
+      const dateConsumption = liveConsumption.filter(c => (c.entryDate || c.entry_date) === date)
 
       // Collect entry IDs per type for edit links
       const dateReceipts = normalizedReceipts.filter(r => r.entryDate === date)
@@ -288,18 +296,10 @@ function DailySalesReportContent() {
     })
 
     setReport({ dateReports, fuelTypes })
-  }, [orgId, startDate, endDate, nozzles, tanks, banks])
+  }, [orgId, startDate, endDate, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
 
   useEffect(() => {
     if (!loading) buildReport()
-  }, [loading, buildReport])
-
-  // Re-build report when page regains visibility (e.g. after editing an entry)
-  useEffect(() => {
-    const onVisible = () => { if (document.visibilityState === 'visible' && !loading) buildReport() }
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('focus', onVisible)
-    return () => { document.removeEventListener('visibilitychange', onVisible); window.removeEventListener('focus', onVisible) }
   }, [loading, buildReport])
 
   // Clamp viewDate and reset tab offset when range changes
