@@ -50,6 +50,7 @@ export async function POST(request) {
     const { data, error: dbError } = await supabase
       .from(TABLE)
       .insert({
+        ...(body.id ? { id: body.id } : {}),
         org_id: user.org_id,
         entry_date: body.entry_date,
         loaded_date: body.loaded_date || null,

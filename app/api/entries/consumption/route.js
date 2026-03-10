@@ -41,7 +41,7 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { entry_date, customer_id, quantity, fuel_type, notes } = await request.json()
+    const { id, entry_date, customer_id, quantity, fuel_type, notes } = await request.json()
 
     if (!entry_date) return NextResponse.json({ error: 'Date is required' }, { status: 400 })
     if (!customer_id) return NextResponse.json({ error: 'Customer/account is required' }, { status: 400 })
@@ -51,6 +51,7 @@ export async function POST(request) {
     const { data, error: dbError } = await supabase
       .from(TABLE)
       .insert({
+        ...(id ? { id } : {}),
         org_id: user.org_id,
         entry_date,
         customer_id,
