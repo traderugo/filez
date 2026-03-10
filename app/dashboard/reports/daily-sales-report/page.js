@@ -97,16 +97,8 @@ function DailySalesReportContent() {
       (a.createdAt || '').localeCompare(b.createdAt || '')
     )
 
-    // Debug: log entries per date
-    const dateMap = {}
-    for (const e of allEntries) {
-      if (!dateMap[e.entryDate]) dateMap[e.entryDate] = 0
-      dateMap[e.entryDate]++
-    }
-    console.log('[Report] entries per date:', dateMap, 'total:', allEntries.length)
-
-    // Use range helper for nozzle dispensed calculations
-    const rangeResult = calculateDateRangeNozzles(allEntries, nozzles, startDate, endDate)
+    // Use range helper for nozzle and tank calculations
+    const rangeResult = calculateDateRangeNozzles(allEntries, nozzles, startDate, endDate, tanks)
     const { fuelTypes } = rangeResult
 
     // Fetch auxiliary data once
@@ -182,27 +174,27 @@ function DailySalesReportContent() {
         entryGroups.push({ entryIndex: helperEntry.entryIndex, nozzleRows, fuelTotals: entryFuelTotals })
       }
 
-      // Tanks
-      let prevDayEntry = null
-      for (let i = sorted.length - 1; i >= 0; i--) {
-        if (sorted[i].entryDate < date) { prevDayEntry = sorted[i]; break }
-      }
-      const lastEntry = dateEntries.length > 0 ? dateEntries[dateEntries.length - 1] : null
+      // Tanks — use helper output (chained per entry, same pattern as nozzles)
       const tanksByFuel = {}
-
       for (const ft of fuelTypes) {
-        const ftTanks = tanks.filter(t => t.fuel_type === ft).sort((a, b) => Number(a.tank_number) - Number(b.tank_number))
-        tanksByFuel[ft] = { tanks: [], totalOpening: 0, totalClosing: 0, totalWaybill: 0, totalActualSupply: 0 }
-
-        for (const t of ftTanks) {
-          const prevTR = (prevDayEntry?.tankReadings || []).find(r => r.tank_id === t.id)
-          const opening = prevTR ? Number(prevTR.closing_stock || 0) : Number(t.opening_stock || 0)
-          const lastTR = (lastEntry?.tankReadings || []).find(r => r.tank_id === t.id)
-          const closing = lastTR ? Number(lastTR.closing_stock || 0) : opening
-
-          tanksByFuel[ft].totalOpening += opening
-          tanksByFuel[ft].totalClosing += closing
-          tanksByFuel[ft].tanks.push({ label: `${ft} ${t.tank_number}`, opening, closing })
+        tanksByFuel[ft] = {
+          tanks: helperDayTotals[ft] ? [] : [],
+          totalOpening: helperDayTotals[ft]?.tankOpening || 0,
+          totalClosing: helperDayTotals[ft]?.tankClosing || 0,
+          totalWaybill: 0,
+          totalActualSupply: 0,
+        }
+        // Collect per-tank opening/closing from the last helper entry (day summary)
+        const lastHelperEntry = helperEntries[helperEntries.length - 1]
+        if (lastHelperEntry?.fuelGroups[ft]?.tanks) {
+          // Opening from first entry, closing from last entry
+          const firstTanks = helperEntries[0].fuelGroups[ft].tanks
+          const lastTanks = lastHelperEntry.fuelGroups[ft].tanks
+          tanksByFuel[ft].tanks = lastTanks.map((t, idx) => ({
+            label: t.label,
+            opening: firstTanks[idx]?.opening ?? t.opening,
+            closing: t.closing,
+          }))
         }
       }
 
