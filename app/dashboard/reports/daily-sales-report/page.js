@@ -454,7 +454,7 @@ function DailySalesReportContent() {
                   {currentDayReport.lodgement.bankRows.map(row => (
                     <tr key={row.bankId}>
                       <td className={`${cell} whitespace-nowrap`}>
-                        <span className="font-bold">{row.bankName}</span>
+                        <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
                         <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
                       </td>
                       <td className={cellR}>{fmt(row.opening)}</td>
@@ -650,47 +650,31 @@ function TankRow({ row, cell, cellR, subHdr }) {
 
   return (
     <>
-      {row.tanks.length > 1 ? (
-        <>
-          {row.tanks.map((t) => {
-            const tDiff = Math.abs(t.closing - t.opening)
-            return (
-              <tr key={t.label}>
-                <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
-                <td className={cellR}>{fmt(t.opening)}</td>
-                <td className={cellR}>—</td>
-                <td className={cellR}>{fmt(t.closing)}</td>
-                <td className={cellR}>{fmt(tDiff)}</td>
-                <td className={cellR}>—</td>
-                <td className={cellR}>—</td>
-              </tr>
-            )
-          })}
-          <tr className={`${subHdr} font-bold`}>
-            <td className={cell}>Total</td>
-            <td className={cellR}>{fmt(row.opening)}</td>
-            <td className={cellR}>{fmt(row.actualSupply)}</td>
-            <td className={cellR}>{fmt(row.closing)}</td>
-            <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
-            <td className={cellR}>{fmt(row.dispensed)}</td>
-            <td className={`${cellR} ${ovshColor}`}>
-              {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
-            </td>
+      {row.tanks.length > 1 && row.tanks.map((t) => {
+        const tDiff = Math.abs(t.closing - t.opening)
+        return (
+          <tr key={t.label}>
+            <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
+            <td className={cellR}>{fmt(t.opening)}</td>
+            <td className={cellR}></td>
+            <td className={cellR}>{fmt(t.closing)}</td>
+            <td className={cellR}>{fmt(tDiff)}</td>
+            <td className={cellR}></td>
+            <td className={cellR}></td>
           </tr>
-        </>
-      ) : (
-        <tr>
-          <td className={`${cell} font-bold whitespace-nowrap`}>{row.fuelType}</td>
-          <td className={cellR}>{fmt(row.opening)}</td>
-          <td className={cellR}>{fmt(row.actualSupply)}</td>
-          <td className={cellR}>{fmt(row.closing)}</td>
-          <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
-          <td className={cellR}>{fmt(row.dispensed)}</td>
-          <td className={`${cellR} font-bold ${ovshColor}`}>
-            {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
-          </td>
-        </tr>
-      )}
+        )
+      })}
+      <tr className={row.tanks.length > 1 ? `${subHdr} font-bold` : ''}>
+        <td className={`${cell} font-bold whitespace-nowrap`}>{row.tanks.length > 1 ? 'Total' : row.fuelType}</td>
+        <td className={cellR}>{fmt(row.opening)}</td>
+        <td className={cellR}>{fmt(row.actualSupply)}</td>
+        <td className={cellR}>{fmt(row.closing)}</td>
+        <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
+        <td className={cellR}>{fmt(row.dispensed)}</td>
+        <td className={`${cellR} font-bold ${ovshColor}`}>
+          {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
+        </td>
+      </tr>
     </>
   )
 }
