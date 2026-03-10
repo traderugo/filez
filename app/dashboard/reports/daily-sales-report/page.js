@@ -63,6 +63,8 @@ function DailySalesReportContent() {
         db.banks.where('orgId').equals(orgId).toArray(),
       ])
 
+      noz.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.pump_number || 0) - Number(b.pump_number || 0))
+      tnk.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.tank_number || 0) - Number(b.tank_number || 0))
       setNozzles(noz)
       setTanks(tnk)
       setBanks(bnk)
@@ -515,7 +517,7 @@ function DailySalesReportContent() {
                 <button
                   key={dr.date}
                   onClick={() => setViewDate(dr.date)}
-                  className={`px-2 py-1.5 text-xs font-medium border-r border-blue-200 shrink-0 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900' : 'bg-gray-50 text-gray-400'}`}
+                  className={`px-2 py-1.5 text-sm font-medium border-r border-blue-200 shrink-0 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900' : 'bg-gray-50 text-gray-400'}`}
                 >
                   {d.getDate()}
                 </button>
@@ -539,7 +541,7 @@ function DailySalesReportContent() {
                   <button
                     key={dr.date}
                     onClick={() => setViewDate(dr.date)}
-                    className={`px-2 py-1.5 text-xs font-medium border-r border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                    className={`px-2 py-1.5 text-sm font-medium border-r border-blue-200 ${isActive ? 'bg-blue-600 text-white' : dr.hasEntry ? 'bg-white text-blue-900 hover:bg-blue-50' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                   >
                     {d.getDate()}
                   </button>

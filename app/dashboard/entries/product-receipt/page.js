@@ -45,6 +45,7 @@ export default function ProductReceiptFormPage() {
       const tnk = await db.tanks.where('orgId').equals(orgId).toArray()
       if (tnk.length === 0) { setLocked(true); setLoading(false); return }
       if (cancelled) return
+      tnk.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.tank_number || 0) - Number(b.tank_number || 0))
       setTanks(tnk)
 
       if (editId) {

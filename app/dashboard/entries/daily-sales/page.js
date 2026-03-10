@@ -54,6 +54,8 @@ export default function DailySalesFormPage() {
       }
 
       if (cancelled) return
+      noz.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.pump_number || 0) - Number(b.pump_number || 0))
+      tnk.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.tank_number || 0) - Number(b.tank_number || 0))
       setNozzles(noz)
       setTanks(tnk)
 
@@ -257,11 +259,11 @@ export default function DailySalesFormPage() {
                       <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Consumption</label>
+                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
                       <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Pour Back</label>
+                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P/b</label>
                       <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                   </div>
