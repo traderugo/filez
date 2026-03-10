@@ -46,7 +46,7 @@ export async function POST(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { entry_date, nozzle_readings, tank_readings, ugt_closing_stock, prices, notes } = await request.json()
+    const { entry_date, nozzle_readings, tank_readings, ugt_closing_stock, prices, notes, close_of_business } = await request.json()
 
     if (!entry_date) {
       return NextResponse.json({ error: 'Date is required' }, { status: 400 })
@@ -80,6 +80,7 @@ export async function POST(request) {
         ugt_closing_stock: totalUgt,
         prices: safePrices,
         notes: notes?.trim() || null,
+        close_of_business: !!close_of_business,
         created_by: user.id,
       })
       .select()
@@ -102,7 +103,7 @@ export async function PATCH(request) {
     const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
     if (!subscribed) return subError
 
-    const { id, entry_date, nozzle_readings, tank_readings, ugt_closing_stock, prices, notes } = await request.json()
+    const { id, entry_date, nozzle_readings, tank_readings, ugt_closing_stock, prices, notes, close_of_business } = await request.json()
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
 
     const supabase = getServiceClient()
@@ -125,6 +126,7 @@ export async function PATCH(request) {
       }
     }
     if (notes !== undefined) updates.notes = notes?.trim() || null
+    if (close_of_business !== undefined) updates.close_of_business = !!close_of_business
 
     const { data, error: dbError } = await supabase
       .from(TABLE)
