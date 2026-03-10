@@ -133,8 +133,14 @@ function DailySalesReportContent() {
       // Layer consumption/price/amount on top of helper output
       const entryGroups = []
       const dayFuelTotals = {}
+      const dispensedByTankId = {}
       for (const ft of fuelTypes) {
         dayFuelTotals[ft] = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
+      }
+      // Build nozzle→tank mapping from config
+      const nozzleTankMap = {}
+      for (const nc of nozzles) {
+        if (nc.tank_id) nozzleTankMap[nc.id] = nc.tank_id
       }
 
       // For no-entry days, carry forward prices from the last entry before this date
@@ -166,6 +172,9 @@ function DailySalesReportContent() {
             const actual = n.dispensed - consumption - pourBack
             ftConsumed += consumption
             ftPourBack += pourBack
+            // Accumulate dispensed per tank
+            const tid = nozzleTankMap[n.pumpId]
+            if (tid) dispensedByTankId[tid] = (dispensedByTankId[tid] || 0) + n.dispensed
             return { ...n, consumption, pourBack, actual }
           })
 
@@ -190,27 +199,8 @@ function DailySalesReportContent() {
         entryGroups.push({ entryIndex: helperEntry.entryIndex, entryId: currentEntry.id || null, nozzleRows, fuelTotals: entryFuelTotals })
       }
 
-      // Tanks — use helper output (chained per entry, same pattern as nozzles)
-      // Also compute per-tank dispensed using nozzle→tank mapping
+      // Tanks — use helper output + per-tank dispensed accumulated above
       const tanksByFuel = {}
-
-      // Build per-tank dispensed from nozzle helper output
-      const dispensedByTankId = {}
-      for (const ft of fuelTypes) {
-        const lastHelperEntry = helperEntries[helperEntries.length - 1]
-        if (lastHelperEntry?.fuelGroups[ft]?.nozzles) {
-          // Sum all entries' nozzle dispensed across the day
-          for (const he of helperEntries) {
-            for (const n of he.fuelGroups[ft].nozzles) {
-              const nozzleConfig = nozzles.find(nc => nc.id === n.pumpId)
-              const tid = nozzleConfig?.tank_id
-              if (tid) {
-                dispensedByTankId[tid] = (dispensedByTankId[tid] || 0) + n.dispensed
-              }
-            }
-          }
-        }
-      }
 
       // Build per-tank supply from receipts
       const supplyByTankId = {}
