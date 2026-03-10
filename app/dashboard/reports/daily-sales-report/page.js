@@ -257,6 +257,16 @@ function DailySalesReportContent() {
       // Consumption
       const dateConsumption = allConsumption.filter(c => c.entryDate === date)
 
+      // Collect entry IDs per type for edit links
+      const dateReceipts = normalizedReceipts.filter(r => r.entryDate === date)
+      const dateLodgements = normalizedLodgements.filter(l => (l.salesDate || l.entryDate) === date)
+
+      const editIds = {
+        receipt: dateReceipts[0]?.id || null,
+        lodgement: dateLodgements[0]?.id || null,
+        consumption: dateConsumption[0]?.id || null,
+      }
+
       // Summary
       const totalSales = fuelTypes.reduce((s, ft) => s + dayFuelTotals[ft].amount, 0)
       const cashBalance = totalSales - dayLodgement.totalPOS
@@ -269,6 +279,7 @@ function DailySalesReportContent() {
         tanksByFuel,
         lodgement: dayLodgement,
         todayConsumption: dateConsumption,
+        editIds,
         totalSales,
         cashBalance,
         hasEntry,
@@ -348,17 +359,16 @@ function DailySalesReportContent() {
             </button>
             {showEditMenu && (() => {
               const dailySalesId = currentDayReport?.entryGroups?.[0]?.entryId
-              const dailySalesHref = dailySalesId
-                ? `/dashboard/entries/daily-sales?${qs}&edit=${dailySalesId}`
-                : `/dashboard/entries/daily-sales?${qs}`
+              const ids = currentDayReport?.editIds || {}
+              const link = (type, id) => id ? `/dashboard/entries/${type}?${qs}&edit=${id}` : `/dashboard/entries/${type}?${qs}`
               return (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setShowEditMenu(false)} />
                   <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 shadow-lg min-w-[200px]">
-                    <Link href={dailySalesHref} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Daily Sales</Link>
-                    <Link href={`/dashboard/entries/product-receipt?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Product Receipt</Link>
-                    <Link href={`/dashboard/entries/lodgements?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Lodgements</Link>
-                    <Link href={`/dashboard/entries/consumption?${qs}`} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Consumption</Link>
+                    <Link href={link('daily-sales', dailySalesId)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Daily Sales</Link>
+                    <Link href={link('product-receipt', ids.receipt)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Product Receipt</Link>
+                    <Link href={link('lodgements', ids.lodgement)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Lodgements</Link>
+                    <Link href={link('consumption', ids.consumption)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Consumption</Link>
                   </div>
                 </>
               )
