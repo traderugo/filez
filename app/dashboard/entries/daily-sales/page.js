@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
 import { initialSync } from '@/lib/initialSync'
 import { startSync } from '@/lib/sync'
+import Toggle from '@/components/Toggle'
 
 export default function DailySalesFormPage() {
   const searchParams = useSearchParams()
@@ -289,15 +290,7 @@ export default function DailySalesFormPage() {
             <>
               <div className="bg-gray-50 px-2 py-1.5 flex items-center justify-between">
                 <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">UGT Closing Stock</span>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={closeOfBusiness}
-                    onChange={(e) => setCloseOfBusiness(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                  />
-                  <span className="text-xs text-gray-500">Final entry</span>
-                </label>
+                <Toggle checked={closeOfBusiness} onChange={setCloseOfBusiness} label="Final entry" />
               </div>
               {closeOfBusiness && tankReadings.map((r, idx) => (
                 <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-gray-300">
