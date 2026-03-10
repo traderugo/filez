@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabaseClient'
 export default function AppShell({ children }) {
   const [user, setUser] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
 
