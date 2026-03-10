@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
@@ -97,8 +97,9 @@ function DailySalesReportContent() {
     [orgId]
   )
 
-  const buildReport = useCallback(() => {
-    if (!orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return
+  // Build report whenever live data or config changes
+  useEffect(() => {
+    if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return
 
     const allEntries = liveSales.map(e => ({
       ...e,
@@ -296,11 +297,7 @@ function DailySalesReportContent() {
     })
 
     setReport({ dateReports, fuelTypes })
-  }, [orgId, startDate, endDate, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
-
-  useEffect(() => {
-    if (!loading) buildReport()
-  }, [loading, buildReport])
+  }, [loading, orgId, startDate, endDate, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
 
   // Clamp viewDate and reset tab offset when range changes
   useEffect(() => {
