@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { initialSync } from '@/lib/initialSync'
 import { calculateDateRangeNozzles } from '@/lib/salesCalculations'
 import { calculateDateRangeLodgements } from '@/lib/lodgementCalculations'
+import { calculateDateRangeReceipts } from '@/lib/receiptCalculations'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -126,6 +127,22 @@ function DailySalesReportContent() {
       lodgementByDate[ld.date] = ld
     }
 
+    // Normalize receipts for helper
+    const normalizedReceipts = allReceipts.map(r => ({
+      ...r,
+      entryDate: r.entryDate || r.entry_date,
+      tankId: r.tankId || r.tank_id,
+      actualVolume: Number(r.actualVolume || r.actual_volume || 0),
+      createdAt: r.createdAt || r.created_at,
+    }))
+    const receiptResult = calculateDateRangeReceipts(normalizedReceipts, tanks, startDate, endDate)
+
+    // Index receipt results by date for quick lookup
+    const receiptByDate = {}
+    for (const rd of receiptResult.dates) {
+      receiptByDate[rd.date] = rd
+    }
+
     // Build per-date report
     const dateReports = rangeResult.dates.map(({ date, entries: helperEntries, dayTotals: helperDayTotals, hasEntry, entryCount }) => {
       const dateEntries = sorted.filter(e => e.entryDate === date)
@@ -201,16 +218,8 @@ function DailySalesReportContent() {
 
       // Tanks — use helper output + per-tank dispensed accumulated above
       const tanksByFuel = {}
-
-      // Build per-tank supply from receipts
-      const supplyByTankId = {}
-      const dateReceipts = allReceipts.filter(r => r.entryDate === date)
-      for (const receipt of dateReceipts) {
-        const tid = receipt.tankId
-        if (tid) {
-          supplyByTankId[tid] = (supplyByTankId[tid] || 0) + (Number(receipt.actualVolume) || 0)
-        }
-      }
+      const dayReceipt = receiptByDate[date] || { supplyByTankId: {} }
+      const supplyByTankId = dayReceipt.supplyByTankId
 
       for (const ft of fuelTypes) {
         const lastHelperEntry = helperEntries[helperEntries.length - 1]
