@@ -151,19 +151,21 @@ function DailySalesReportContent() {
 
   const currentDayReport = report?.dateReports.find(r => r.date === viewDate) || null
 
-  // DEBUG: show raw entry data vs calculated tank values for current day
-  const debugEntry = liveSales?.find(e => (e.entryDate || e.entry_date) === viewDate)
-  const debugTankCalc = currentDayReport?.tankSummaryRows || []
+  // DEBUG: show ALL entries for current day to check for duplicates
+  const debugEntries = liveSales?.filter(e => (e.entryDate || e.entry_date) === viewDate) || []
 
   return (
     <div className="flex flex-col h-[calc(95vh-4rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* DEBUG — remove after fixing */}
-      {debugEntry && (
-        <div className="bg-yellow-50 border border-yellow-300 p-2 text-xs mb-2 overflow-auto max-h-40">
-          <p className="font-bold">DEBUG ({viewDate}): entry.id={debugEntry.id}</p>
-          <p>Raw tankReadings: {JSON.stringify(debugEntry.tankReadings || debugEntry.tank_readings || 'NONE')}</p>
-          <p>Calculated tanks: {JSON.stringify(debugTankCalc.map(r => r.tanks.map(t => ({ label: t.label, opening: t.opening, closing: t.closing }))))}</p>
-          <p>Config tank IDs: {JSON.stringify(tanks.map(t => ({ id: t.id, label: `${t.fuel_type} ${t.tank_number}` })))}</p>
+      {debugEntries.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-300 p-2 text-xs mb-2 overflow-auto max-h-60">
+          <p className="font-bold">DEBUG ({viewDate}): {debugEntries.length} entries found</p>
+          {debugEntries.map((e, i) => (
+            <div key={e.id} className="mt-1 border-t border-yellow-200 pt-1">
+              <p>Entry {i + 1}: id={e.id} createdAt={e.createdAt}</p>
+              <p>tankReadings: {JSON.stringify((e.tankReadings || []).map(t => ({ tank_id: t.tank_id, closing_stock: t.closing_stock })))}</p>
+            </div>
+          ))}
         </div>
       )}
       {/* Header — fixed at top */}
