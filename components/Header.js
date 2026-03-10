@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, ChevronLeft, PanelLeftOpen } from 'lucide-react'
+import { Menu, ChevronLeft } from 'lucide-react'
 
 // Map sub-page paths to { back, title }
 const PAGE_MAP = {
@@ -30,7 +30,7 @@ function getPageInfo(pathname) {
   return null
 }
 
-export default function Header({ onToggleSidebar, sidebarCollapsed, onToggleCollapse }) {
+export default function Header({ onToggleSidebar }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -44,13 +44,6 @@ export default function Header({ onToggleSidebar, sidebarCollapsed, onToggleColl
       <div className="px-4 sm:px-6 h-14 flex items-center justify-between">
 
         <div className="flex items-center gap-2">
-          {/* Expand sidebar (desktop only, when collapsed) */}
-          {sidebarCollapsed && (
-            <button className="hidden sm:block p-1 text-gray-500 hover:text-gray-700" onClick={onToggleCollapse}>
-              <PanelLeftOpen className="w-5 h-5" />
-            </button>
-          )}
-
           {/* Back button + title or page name */}
           {pageInfo ? (
             <button onClick={() => router.push(pageInfo.back)} className="flex items-center gap-1 text-gray-700 hover:text-gray-900">

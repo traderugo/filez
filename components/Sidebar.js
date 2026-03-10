@@ -48,25 +48,13 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
             <Image src="/stationva-logo.svg" alt="StationVA" width={28} height={28} className="rounded flex-shrink-0" />
             <span className={collapsed ? 'sm:hidden' : ''}>{collapsed ? '' : 'StationVA'}</span>
           </Link>
-          {!collapsed && (
-            <button className="hidden sm:block p-1 text-gray-400 hover:text-gray-600" onClick={onToggleCollapse}>
-              <PanelLeftClose className="w-5 h-5" />
-            </button>
-          )}
+          <button className="hidden sm:block p-1 text-gray-400 hover:text-gray-600" onClick={onToggleCollapse}>
+            {collapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+          </button>
           <button className="sm:hidden p-1 text-gray-400 hover:text-gray-600" onClick={onClose}>
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Collapse toggle (collapsed state) */}
-        {collapsed && (
-          <button
-            className="hidden sm:flex items-center justify-center py-3 text-gray-400 hover:text-gray-600"
-            onClick={onToggleCollapse}
-          >
-            <PanelLeftOpen className="w-5 h-5" />
-          </button>
-        )}
 
         {/* Nav */}
         <nav className={`flex-1 py-4 space-y-1 ${collapsed ? 'sm:px-2 px-3' : 'px-3'}`}>
