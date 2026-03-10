@@ -142,6 +142,20 @@ export default function DailySalesFormPage() {
     const missingReading = nozzleReadings.find((r) => r.closing_meter === '' || r.closing_meter === undefined)
     if (missingReading) { setError(`Closing meter is required for ${missingReading.label}`); return }
 
+    // Block duplicate COB: only one close-of-business entry per date
+    if (closeOfBusiness) {
+      const dateEntries = await db.dailySales.where('orgId').equals(orgId).toArray()
+      const existingCob = dateEntries.find(
+        e => (e.entryDate || e.entry_date) === formDate
+          && (e.closeOfBusiness || e.close_of_business)
+          && e.id !== editId
+      )
+      if (existingCob) {
+        setError('A close-of-business entry already exists for this date. Edit the existing one instead.')
+        return
+      }
+    }
+
     setSaving(true)
     setError('')
 

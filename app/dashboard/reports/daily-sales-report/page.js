@@ -151,23 +151,8 @@ function DailySalesReportContent() {
 
   const currentDayReport = report?.dateReports.find(r => r.date === viewDate) || null
 
-  // DEBUG: show ALL entries for current day to check for duplicates
-  const debugEntries = liveSales?.filter(e => (e.entryDate || e.entry_date) === viewDate) || []
-
   return (
     <div className="flex flex-col h-[calc(95vh-4rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
-      {/* DEBUG — remove after fixing */}
-      {debugEntries.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-300 p-2 text-xs mb-2 overflow-auto max-h-60">
-          <p className="font-bold">DEBUG ({viewDate}): {debugEntries.length} entries found</p>
-          {debugEntries.map((e, i) => (
-            <div key={e.id} className="mt-1 border-t border-yellow-200 pt-1">
-              <p>Entry {i + 1}: id={e.id} createdAt={e.createdAt}</p>
-              <p>tankReadings: {JSON.stringify((e.tankReadings || []).map(t => ({ tank_id: t.tank_id, closing_stock: t.closing_stock })))}</p>
-            </div>
-          ))}
-        </div>
-      )}
       {/* Header — fixed at top */}
       <div className="flex items-center justify-between py-3 gap-2 flex-wrap shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Daily Sales Operation Report</h1>
