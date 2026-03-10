@@ -647,34 +647,53 @@ function FuelGroup({ rows, totals, cell, cellR }) {
 /** Renders tank summary rows for a fuel type */
 function TankRow({ row, cell, cellR, subHdr }) {
   const ovshColor = row.ovsh < 0 ? 'text-red-600' : row.ovsh > 0 ? 'text-green-600' : ''
+  const spanCount = row.tanks.length + 1 // individual rows + total row
 
   return (
     <>
-      {row.tanks.length > 1 && row.tanks.map((t) => {
-        const tDiff = Math.abs(t.closing - t.opening)
-        return (
-          <tr key={t.label}>
-            <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
-            <td className={cellR}>{fmt(t.opening)}</td>
-            <td className={cellR}></td>
-            <td className={cellR}>{fmt(t.closing)}</td>
-            <td className={cellR}>{fmt(tDiff)}</td>
-            <td className={cellR}></td>
-            <td className={cellR}></td>
+      {row.tanks.length > 1 ? (
+        <>
+          {row.tanks.map((t, i) => {
+            const tDiff = Math.abs(t.closing - t.opening)
+            return (
+              <tr key={t.label}>
+                <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
+                <td className={cellR}>{fmt(t.opening)}</td>
+                <td className={cellR}></td>
+                <td className={cellR}>{fmt(t.closing)}</td>
+                <td className={cellR}>{fmt(tDiff)}</td>
+                {i === 0 && (
+                  <>
+                    <td className={cellR} rowSpan={spanCount}>{fmt(row.dispensed)}</td>
+                    <td className={`${cellR} font-bold ${ovshColor}`} rowSpan={spanCount}>
+                      {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
+                    </td>
+                  </>
+                )}
+              </tr>
+            )
+          })}
+          <tr className={`${subHdr} font-bold`}>
+            <td className={cell}>Total</td>
+            <td className={cellR}>{fmt(row.opening)}</td>
+            <td className={cellR}>{fmt(row.actualSupply)}</td>
+            <td className={cellR}>{fmt(row.closing)}</td>
+            <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
           </tr>
-        )
-      })}
-      <tr className={row.tanks.length > 1 ? `${subHdr} font-bold` : ''}>
-        <td className={`${cell} font-bold whitespace-nowrap`}>{row.tanks.length > 1 ? 'Total' : row.fuelType}</td>
-        <td className={cellR}>{fmt(row.opening)}</td>
-        <td className={cellR}>{fmt(row.actualSupply)}</td>
-        <td className={cellR}>{fmt(row.closing)}</td>
-        <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
-        <td className={cellR}>{fmt(row.dispensed)}</td>
-        <td className={`${cellR} font-bold ${ovshColor}`}>
-          {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
-        </td>
-      </tr>
+        </>
+      ) : (
+        <tr>
+          <td className={`${cell} font-bold whitespace-nowrap`}>{row.fuelType}</td>
+          <td className={cellR}>{fmt(row.opening)}</td>
+          <td className={cellR}>{fmt(row.actualSupply)}</td>
+          <td className={cellR}>{fmt(row.closing)}</td>
+          <td className={cellR}>{fmt(Math.abs(row.diff))}</td>
+          <td className={cellR}>{fmt(row.dispensed)}</td>
+          <td className={`${cellR} font-bold ${ovshColor}`}>
+            {row.ovsh > 0 ? '+' : ''}{fmt(row.ovsh)}
+          </td>
+        </tr>
+      )}
     </>
   )
 }
