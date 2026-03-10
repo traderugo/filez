@@ -54,8 +54,9 @@ export default function DailySalesFormPage() {
       }
 
       if (cancelled) return
-      noz.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.pump_number || 0) - Number(b.pump_number || 0))
-      tnk.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.tank_number || 0) - Number(b.tank_number || 0))
+      const fuelOrder = { PMS: 0, AGO: 1, DPK: 2 }
+      noz.sort((a, b) => (fuelOrder[a.fuel_type] ?? 99) - (fuelOrder[b.fuel_type] ?? 99) || Number(a.pump_number || 0) - Number(b.pump_number || 0))
+      tnk.sort((a, b) => (fuelOrder[a.fuel_type] ?? 99) - (fuelOrder[b.fuel_type] ?? 99) || Number(a.tank_number || 0) - Number(b.tank_number || 0))
       setNozzles(noz)
       setTanks(tnk)
 

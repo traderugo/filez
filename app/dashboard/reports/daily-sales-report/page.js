@@ -63,8 +63,9 @@ function DailySalesReportContent() {
         db.banks.where('orgId').equals(orgId).toArray(),
       ])
 
-      noz.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.pump_number || 0) - Number(b.pump_number || 0))
-      tnk.sort((a, b) => (a.fuel_type || '').localeCompare(b.fuel_type || '') || Number(a.tank_number || 0) - Number(b.tank_number || 0))
+      const fuelOrder = { PMS: 0, AGO: 1, DPK: 2 }
+      noz.sort((a, b) => (fuelOrder[a.fuel_type] ?? 99) - (fuelOrder[b.fuel_type] ?? 99) || Number(a.pump_number || 0) - Number(b.pump_number || 0))
+      tnk.sort((a, b) => (fuelOrder[a.fuel_type] ?? 99) - (fuelOrder[b.fuel_type] ?? 99) || Number(a.tank_number || 0) - Number(b.tank_number || 0))
       setNozzles(noz)
       setTanks(tnk)
       setBanks(bnk)
@@ -355,7 +356,7 @@ function DailySalesReportContent() {
 
       {/* Scrollable content area */}
       {currentDayReport && (
-        <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="flex-1 overflow-y-auto min-h-0 mb-3">
 
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 pb-4">
             {/* ===== LEFT: DAILY SALES OPERATION ===== */}
