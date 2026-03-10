@@ -118,15 +118,16 @@ function DailySalesReportContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate, endDate])
 
-  // Detect dates with duplicate entries
+  // Detect dates with duplicate COB entries (multiple COB per date causes calculation issues)
   const duplicateDates = useMemo(() => {
     if (!liveSales) return []
-    const countByDate = {}
+    const cobCountByDate = {}
     for (const e of liveSales) {
+      if (!e.closeOfBusiness && !e.close_of_business) continue
       const d = e.entryDate || e.entry_date
-      countByDate[d] = (countByDate[d] || 0) + 1
+      cobCountByDate[d] = (cobCountByDate[d] || 0) + 1
     }
-    return Object.entries(countByDate).filter(([, c]) => c > 1).map(([d]) => d)
+    return Object.entries(cobCountByDate).filter(([, c]) => c > 1).map(([d]) => d)
   }, [liveSales])
 
   // Auto-scroll tabs so active day is always visible
