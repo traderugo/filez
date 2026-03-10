@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabaseClient'
 export default function AppShell({ children }) {
   const [user, setUser] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -52,11 +53,17 @@ export default function AppShell({ children }) {
       <Sidebar
         user={user}
         open={sidebarOpen}
+        collapsed={sidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
+        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
         onSignOut={handleSignOut}
       />
       <div className="flex-1 flex flex-col min-w-0">
-        <Header onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+        <Header
+          onToggleSidebar={() => setSidebarOpen((o) => !o)}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+        />
         {user && !user.email_verified && pathname === '/dashboard' && <EmailVerifyBanner />}
         <main className="flex-1">{children}</main>
       </div>

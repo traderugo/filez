@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import {
   LayoutDashboard, CreditCard,
-  MessageSquare, Shield, LogOut, X
+  MessageSquare, Shield, LogOut, X, PanelLeftClose
 } from 'lucide-react'
 
 const navItems = [
@@ -14,7 +14,7 @@ const navItems = [
   { href: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare },
 ]
 
-export default function Sidebar({ user, open, onClose, onSignOut }) {
+export default function Sidebar({ user, open, collapsed, onClose, onToggleCollapse, onSignOut }) {
   const pathname = usePathname()
 
   const isActive = (href, exact) => {
@@ -33,19 +33,25 @@ export default function Sidebar({ user, open, onClose, onSignOut }) {
       <aside className={`
         fixed top-0 left-0 z-50 h-screen w-60 bg-white border-r border-gray-200
         flex flex-col flex-shrink-0 overflow-y-auto
-        transition-transform duration-200 ease-in-out
-        sm:translate-x-0 sm:sticky sm:top-0 sm:z-auto
+        transition-all duration-200 ease-in-out
+        sm:sticky sm:top-0 sm:z-auto
         ${open ? 'translate-x-0' : '-translate-x-full'}
+        ${collapsed ? 'sm:w-0 sm:overflow-hidden sm:border-r-0' : 'sm:translate-x-0 sm:w-60'}
       `}>
         {/* Logo */}
         <div className="h-14 px-4 flex items-center justify-between border-b border-gray-100">
-          <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-lg" onClick={onClose}>
+          <Link href="/" className="flex items-center gap-2 text-gray-900 font-bold text-lg whitespace-nowrap" onClick={onClose}>
             <Image src="/stationva-logo.svg" alt="StationVA" width={28} height={28} className="rounded" />
             StationVA
           </Link>
-          <button className="sm:hidden p-1 text-gray-400 hover:text-gray-600" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button className="hidden sm:block p-1 text-gray-400 hover:text-gray-600" onClick={onToggleCollapse}>
+              <PanelLeftClose className="w-5 h-5" />
+            </button>
+            <button className="sm:hidden p-1 text-gray-400 hover:text-gray-600" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Nav */}

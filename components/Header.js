@@ -1,7 +1,7 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, ChevronLeft } from 'lucide-react'
+import { Menu, ChevronLeft, PanelLeftOpen } from 'lucide-react'
 
 // Map sub-page paths to { back, title }
 const PAGE_MAP = {
@@ -30,7 +30,7 @@ function getPageInfo(pathname) {
   return null
 }
 
-export default function Header({ onToggleSidebar }) {
+export default function Header({ onToggleSidebar, sidebarCollapsed, onToggleCollapse }) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -43,15 +43,24 @@ export default function Header({ onToggleSidebar }) {
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
       <div className="px-4 sm:px-6 h-14 flex items-center justify-between">
 
-        {/* Back button + title or page name */}
-        {pageInfo ? (
-          <button onClick={() => router.push(pageInfo.back)} className="flex items-center gap-1 text-gray-700 hover:text-gray-900">
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm font-semibold">{pageInfo.title}</span>
-          </button>
-        ) : (
-          <h1 className="text-sm font-semibold text-gray-900">Dashboard</h1>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Expand sidebar (desktop only, when collapsed) */}
+          {sidebarCollapsed && (
+            <button className="hidden sm:block p-1 text-gray-500 hover:text-gray-700" onClick={onToggleCollapse}>
+              <PanelLeftOpen className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Back button + title or page name */}
+          {pageInfo ? (
+            <button onClick={() => router.push(pageInfo.back)} className="flex items-center gap-1 text-gray-700 hover:text-gray-900">
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm font-semibold">{pageInfo.title}</span>
+            </button>
+          ) : (
+            <h1 className="text-sm font-semibold text-gray-900">Dashboard</h1>
+          )}
+        </div>
 
         {/* Hamburger (mobile only) */}
         <button className="sm:hidden p-1 text-gray-500 hover:text-gray-700" onClick={onToggleSidebar}>
