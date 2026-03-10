@@ -2,13 +2,23 @@ import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
 
+async function verifyAdmin(userId) {
+  const supabase = getAdminClient()
+  const { data: profile } = await supabase
+    .from('users')
+    .select('id, role')
+    .eq('id', userId)
+    .single()
+  return profile?.role === 'admin' ? profile : null
+}
+
 // GET — list groups for the current user
 export async function GET() {
   try {
     const user = await getAuthUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await verifyAdmin(user.id)
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const supabase = getAdminClient()
     const { data: groups } = await supabase
@@ -27,9 +37,9 @@ export async function GET() {
 export async function POST(request) {
   try {
     const user = await getAuthUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await verifyAdmin(user.id)
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { success } = rateLimit(`groups:${user.id}`, 20)
     if (!success) {
@@ -65,9 +75,9 @@ export async function POST(request) {
 export async function DELETE(request) {
   try {
     const user = await getAuthUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await verifyAdmin(user.id)
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { id } = await request.json()
     if (!id) {
@@ -116,9 +126,9 @@ export async function DELETE(request) {
 export async function PATCH(request) {
   try {
     const user = await getAuthUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const admin = await verifyAdmin(user.id)
+    if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { station_id, group_name } = await request.json()
     if (!station_id) {

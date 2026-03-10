@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
-  Loader2, Plus, Trash2, Fuel, ChevronRight, Settings, FolderOpen
+  Loader2, Plus, Trash2, Fuel, ChevronRight, Settings, FolderOpen, ShieldAlert
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [forbidden, setForbidden] = useState(false)
   const [groups, setGroups] = useState([])
   const [stations, setStations] = useState([])
   const [newGroup, setNewGroup] = useState('')
@@ -16,6 +19,12 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const load = async () => {
+      // Check admin role first
+      const meRes = await fetch('/api/auth/me')
+      if (!meRes.ok) { router.push('/auth/login'); return }
+      const me = await meRes.json()
+      if (me.role !== 'admin') { setForbidden(true); setLoading(false); return }
+
       const [groupsRes, stationsRes] = await Promise.all([
         fetch('/api/station-groups'),
         fetch('/api/organizations'),
@@ -31,7 +40,7 @@ export default function SettingsPage() {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [router])
 
   const addGroup = async (e) => {
     e.preventDefault()
@@ -87,6 +96,16 @@ export default function SettingsPage() {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    )
+  }
+
+  if (forbidden) {
+    return (
+      <div className="max-w-lg px-4 sm:px-8 py-8 text-center">
+        <ShieldAlert className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Access Denied</h2>
+        <p className="text-sm text-gray-500">This page is only available to admins.</p>
       </div>
     )
   }
