@@ -1,15 +1,13 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Suspense, useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { initialSync } from '@/lib/initialSync'
-import { calculateDateRangeNozzles } from '@/lib/salesCalculations'
-import { calculateDateRangeLodgements } from '@/lib/lodgementCalculations'
-import { calculateDateRangeReceipts } from '@/lib/receiptCalculations'
+import { buildDailyReport } from '@/lib/buildDailyReport'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -47,8 +45,6 @@ function DailySalesReportContent() {
   const [tanks, setTanks] = useState([])
   const [banks, setBanks] = useState([])
 
-  // Report data
-  const [report, setReport] = useState(null)
   const [showEditMenu, setShowEditMenu] = useState(false)
   const [tabOffset, setTabOffset] = useState(0)
   const TAB_COUNT = 31
@@ -97,206 +93,21 @@ function DailySalesReportContent() {
     [orgId]
   )
 
-  // Build report whenever live data or config changes
-  useEffect(() => {
-    if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return
+  // Derive report synchronously — recalculates whenever any input changes
+  const report = useMemo(() => {
+    if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return null
 
-    const allEntries = liveSales.map(e => ({
-      ...e,
-      entryDate: e.entryDate || e.entry_date,
-      nozzleReadings: e.nozzleReadings || e.nozzle_readings || [],
-      tankReadings: e.tankReadings || e.tank_readings || [],
-      prices: e.prices || {},
-      createdAt: e.createdAt || e.created_at,
-    }))
-
-    const sorted = [...allEntries].sort((a, b) =>
-      (a.entryDate || '').localeCompare(b.entryDate || '') ||
-      (a.createdAt || '').localeCompare(b.createdAt || '')
-    )
-
-    // Use range helper for nozzle and tank calculations
-    const rangeResult = calculateDateRangeNozzles(allEntries, nozzles, startDate, endDate, tanks)
-    const { fuelTypes } = rangeResult
-
-    // Normalize lodgements for helper
-    const normalizedLodgements = liveLodgements.map(l => ({
-      ...l,
-      salesDate: l.salesDate || l.sales_date,
-      bankId: l.bankId || l.bank_id,
-      lodgementType: l.lodgementType || l.lodgement_type,
-      amount: Number(l.amount || 0),
-      createdAt: l.createdAt || l.created_at,
-    }))
-    const lodgementResult = calculateDateRangeLodgements(normalizedLodgements, banks, startDate, endDate)
-
-    // Index lodgement results by date for quick lookup
-    const lodgementByDate = {}
-    for (const ld of lodgementResult.dates) {
-      lodgementByDate[ld.date] = ld
-    }
-
-    // Normalize receipts for helper
-    const normalizedReceipts = liveReceipts.map(r => ({
-      ...r,
-      entryDate: r.entryDate || r.entry_date,
-      tankId: r.tankId || r.tank_id,
-      actualVolume: Number(r.actualVolume || r.actual_volume || 0),
-      createdAt: r.createdAt || r.created_at,
-    }))
-    const receiptResult = calculateDateRangeReceipts(normalizedReceipts, tanks, startDate, endDate)
-
-    // Index receipt results by date for quick lookup
-    const receiptByDate = {}
-    for (const rd of receiptResult.dates) {
-      receiptByDate[rd.date] = rd
-    }
-
-    // Build per-date report
-    const dateReports = rangeResult.dates.map(({ date, entries: helperEntries, dayTotals: helperDayTotals, hasEntry, entryCount }) => {
-      const dateEntries = sorted.filter(e => e.entryDate === date)
-
-      // Layer consumption/price/amount on top of helper output
-      const entryGroups = []
-      const dayFuelTotals = {}
-      const dispensedByTankId = {}
-      for (const ft of fuelTypes) {
-        dayFuelTotals[ft] = { dispensed: 0, consumed: 0, actual: 0, price: 0, amount: 0, pourBack: 0 }
-      }
-      // Build nozzle→tank mapping from config
-      const nozzleTankMap = {}
-      for (const nc of nozzles) {
-        if (nc.tank_id) nozzleTankMap[nc.id] = nc.tank_id
-      }
-
-      // For no-entry days, carry forward prices from the last entry before this date
-      let prevPrices = {}
-      if (dateEntries.length === 0) {
-        let prevEntry = null
-        for (let i = sorted.length - 1; i >= 0; i--) {
-          if (sorted[i].entryDate < date) { prevEntry = sorted[i]; break }
-        }
-        if (prevEntry) prevPrices = prevEntry.prices || {}
-      }
-
-      for (let i = 0; i < helperEntries.length; i++) {
-        const helperEntry = helperEntries[i]
-        const currentEntry = dateEntries[i] || {}
-        const nozzleRows = []
-        const entryFuelTotals = {}
-
-        for (const ft of fuelTypes) {
-          const fg = helperEntry.fuelGroups[ft]
-          const price = Number(currentEntry.prices?.[ft]) || Number(prevPrices[ft]) || 0
-
-          let ftConsumed = 0
-          let ftPourBack = 0
-          const rows = fg.nozzles.map(n => {
-            const currentR = (currentEntry.nozzleReadings || []).find(r => r.pump_id === n.pumpId)
-            const consumption = currentR ? Number(currentR.consumption || 0) : 0
-            const pourBack = currentR ? Number(currentR.pour_back || 0) : 0
-            const actual = n.dispensed - consumption - pourBack
-            ftConsumed += consumption
-            ftPourBack += pourBack
-            // Accumulate dispensed per tank
-            const tid = nozzleTankMap[n.pumpId]
-            if (tid) dispensedByTankId[tid] = (dispensedByTankId[tid] || 0) + n.dispensed
-            return { ...n, consumption, pourBack, actual }
-          })
-
-          const ftActual = fg.totals.dispensed - ftConsumed - ftPourBack
-          const ftAmount = ftActual * price
-
-          entryFuelTotals[ft] = {
-            dispensed: fg.totals.dispensed, consumed: ftConsumed, actual: ftActual,
-            price, amount: ftAmount, pourBack: ftPourBack,
-          }
-
-          dayFuelTotals[ft].dispensed += fg.totals.dispensed
-          dayFuelTotals[ft].consumed += ftConsumed
-          dayFuelTotals[ft].actual += ftActual
-          dayFuelTotals[ft].pourBack += ftPourBack
-          dayFuelTotals[ft].price = price
-          dayFuelTotals[ft].amount += ftAmount
-
-          nozzleRows.push({ fuelType: ft, rows, totals: entryFuelTotals[ft] })
-        }
-
-        entryGroups.push({ entryIndex: helperEntry.entryIndex, entryId: currentEntry.id || null, nozzleRows, fuelTotals: entryFuelTotals })
-      }
-
-      // Tanks — use helper output + per-tank dispensed accumulated above
-      const tanksByFuel = {}
-      const dayReceipt = receiptByDate[date] || { supplyByTankId: {} }
-      const supplyByTankId = dayReceipt.supplyByTankId
-
-      for (const ft of fuelTypes) {
-        const lastHelperEntry = helperEntries[helperEntries.length - 1]
-        const firstTanks = helperEntries[0]?.fuelGroups[ft]?.tanks || []
-        const lastTanks = lastHelperEntry?.fuelGroups[ft]?.tanks || []
-
-        const tankRows = lastTanks.map((t, idx) => {
-          const opening = firstTanks[idx]?.opening ?? t.opening
-          const closing = t.closing
-          const diff = Math.abs(closing - opening)
-          const supply = supplyByTankId[t.tankId] || 0
-          const dispensed = dispensedByTankId[t.tankId] || 0
-          const ovsh = (closing - opening) - supply + dispensed
-          return { label: t.label, tankId: t.tankId, opening, closing, diff, supply, dispensed, ovsh }
-        })
-
-        const totalOpening = tankRows.reduce((s, t) => s + t.opening, 0)
-        const totalClosing = tankRows.reduce((s, t) => s + t.closing, 0)
-        const totalSupply = tankRows.reduce((s, t) => s + t.supply, 0)
-        const totalDispensed = dayFuelTotals[ft].dispensed
-        const totalDiff = Math.abs(totalClosing - totalOpening)
-        const totalOvsh = (totalClosing - totalOpening) - totalSupply + totalDispensed
-
-        tanksByFuel[ft] = { tanks: tankRows, totalOpening, totalClosing, totalSupply, totalDispensed, totalDiff, totalOvsh }
-      }
-
-      const tankSummaryRows = fuelTypes.map(ft => ({
-        fuelType: ft,
-        ...tanksByFuel[ft],
-      }))
-
-      // Lodgements — from helper
-      const dayLodgement = lodgementByDate[date] || { bankRows: [], totalPOS: 0, totalDeposits: 0, totalCash: 0, totalOther: 0, totalAll: 0 }
-
-      // Consumption
-      const dateConsumption = liveConsumption.filter(c => (c.entryDate || c.entry_date) === date)
-
-      // Collect entry IDs per type for edit links
-      const dateReceipts = normalizedReceipts.filter(r => r.entryDate === date)
-      const dateLodgements = normalizedLodgements.filter(l => (l.salesDate || l.entryDate) === date)
-
-      const editIds = {
-        receipt: dateReceipts[0]?.id || null,
-        lodgement: dateLodgements[0]?.id || null,
-        consumption: dateConsumption[0]?.id || null,
-      }
-
-      // Summary
-      const totalSales = fuelTypes.reduce((s, ft) => s + dayFuelTotals[ft].amount, 0)
-      const cashBalance = totalSales - dayLodgement.totalPOS
-
-      return {
-        date,
-        entryGroups,
-        dayFuelTotals,
-        tankSummaryRows,
-        tanksByFuel,
-        lodgement: dayLodgement,
-        todayConsumption: dateConsumption,
-        editIds,
-        totalSales,
-        cashBalance,
-        hasEntry,
-        entryCount,
-      }
+    return buildDailyReport({
+      sales: liveSales,
+      receipts: liveReceipts,
+      lodgements: liveLodgements,
+      consumption: liveConsumption,
+      nozzles,
+      tanks,
+      banks,
+      startDate,
+      endDate,
     })
-
-    setReport({ dateReports, fuelTypes })
   }, [loading, orgId, startDate, endDate, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
 
   // Clamp viewDate and reset tab offset when range changes
