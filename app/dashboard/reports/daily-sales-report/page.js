@@ -92,6 +92,14 @@ function DailySalesReportContent() {
     () => orgId ? db.consumption.where('orgId').equals(orgId).toArray() : [],
     [orgId]
   )
+  const liveCustomers = useLiveQuery(
+    () => orgId ? db.customers.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
+  const customerMap = useMemo(() => {
+    if (!liveCustomers) return {}
+    return Object.fromEntries(liveCustomers.map(c => [c.id, c.name || 'Unknown']))
+  }, [liveCustomers])
 
   // Derive report synchronously — recalculates whenever any input changes
   const report = useMemo(() => {
@@ -330,64 +338,63 @@ function DailySalesReportContent() {
                 </tbody>
               </table>
 
-              {/* Consumption & Pour Back */}
+              {/* Consumption & Pour Back entries */}
               {currentDayReport.consumption.entries.length > 0 && (
-                <table className="w-full border-collapse text-sm mb-4">
+                <table className="w-full border-collapse text-sm mb-2">
                   <thead>
                     <tr className={subHdr}>
-                      <th className={`${cell} text-left font-bold`}>Consumption / Pour Back</th>
-                      <th className={`${cellR} font-bold`}>Type</th>
+                      <th className={`${cell} text-left font-bold`}>Account</th>
+                      <th className={`${cell} text-left font-bold`}>Fuel</th>
                       <th className={`${cellR} font-bold`}>Qty</th>
+                      <th className={`${cell} text-center font-bold`}>Type</th>
                     </tr>
                   </thead>
                   <tbody>
                     {currentDayReport.consumption.entries.map((c, i) => (
                       <tr key={i}>
+                        <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
                         <td className={cell}>{c.fuelType || ''}</td>
-                        <td className={`${cellR} text-xs`}>{c.isPourBack ? 'P/B' : 'Cons'}</td>
                         <td className={cellR}>{fmt(c.quantity)}</td>
+                        <td className={`${cell} text-center text-xs`}>{c.isPourBack ? 'Pour Back' : 'Consumption'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               )}
 
-              {/* Consumption comparison: entries vs daily sales nozzle readings */}
-              {currentDayReport.consumption.entries.length > 0 && (
-                <table className="w-full border-collapse text-sm mb-4">
-                  <thead>
-                    <tr className={subHdr}>
-                      <th className={`${cell} text-left font-bold`}></th>
-                      <th className={`${cellR} font-bold`} colSpan={2}>Consumption</th>
-                      <th className={`${cellR} font-bold`} colSpan={2}>Pour Back</th>
-                    </tr>
-                    <tr className="bg-gray-50">
-                      <th className={`${cell} text-left text-xs`}>Fuel</th>
-                      <th className={`${cellR} text-xs`}>Entry</th>
-                      <th className={`${cellR} text-xs`}>Nozzle</th>
-                      <th className={`${cellR} text-xs`}>Entry</th>
-                      <th className={`${cellR} text-xs`}>Nozzle</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              {/* Consumption comparison notice */}
+              {(() => {
+                const cmp = currentDayReport.consumptionComparison
+                const hasMismatch = report.fuelTypes.some(ft => cmp[ft] && (!cmp[ft].consumedMatch || !cmp[ft].pourBackMatch))
+                const hasAnyData = report.fuelTypes.some(ft => cmp[ft] && (cmp[ft].entryConsumed || cmp[ft].nozzleConsumed || cmp[ft].entryPourBack || cmp[ft].nozzlePourBack))
+                if (!hasAnyData) return null
+                return (
+                  <div className={`text-xs px-3 py-2 mb-4 border rounded ${hasMismatch ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
                     {report.fuelTypes.map(ft => {
-                      const cmp = currentDayReport.consumptionComparison[ft]
-                      if (!cmp) return null
-                      const hasData = cmp.entryConsumed || cmp.nozzleConsumed || cmp.entryPourBack || cmp.nozzlePourBack
-                      if (!hasData) return null
-                      return (
-                        <tr key={ft}>
-                          <td className={`${cell} font-bold`}>{ft}</td>
-                          <td className={cellR}>{fmt(cmp.entryConsumed)}</td>
-                          <td className={`${cellR} ${!cmp.consumedMatch ? 'text-red-600 font-bold' : ''}`}>{fmt(cmp.nozzleConsumed)}</td>
-                          <td className={cellR}>{fmt(cmp.entryPourBack)}</td>
-                          <td className={`${cellR} ${!cmp.pourBackMatch ? 'text-red-600 font-bold' : ''}`}>{fmt(cmp.nozzlePourBack)}</td>
-                        </tr>
-                      )
+                      const c = cmp[ft]
+                      if (!c || (!c.entryConsumed && !c.nozzleConsumed && !c.entryPourBack && !c.nozzlePourBack)) return null
+                      const parts = []
+                      if (c.nozzleConsumed || c.entryConsumed) {
+                        parts.push(
+                          <span key={`${ft}-c`}>
+                            <strong>{ft}</strong> consumption: {fmt(c.nozzleConsumed)}L dispensed vs {fmt(c.entryConsumed)}L entered
+                            {!c.consumedMatch && <span className="font-bold text-red-600"> (mismatch)</span>}
+                          </span>
+                        )
+                      }
+                      if (c.nozzlePourBack || c.entryPourBack) {
+                        parts.push(
+                          <span key={`${ft}-p`}>
+                            <strong>{ft}</strong> pour back: {fmt(c.nozzlePourBack)}L dispensed vs {fmt(c.entryPourBack)}L entered
+                            {!c.pourBackMatch && <span className="font-bold text-red-600"> (mismatch)</span>}
+                          </span>
+                        )
+                      }
+                      return parts.map((p, i) => <div key={`${ft}-${i}`}>{p}</div>)
                     })}
-                  </tbody>
-                </table>
-              )}
+                  </div>
+                )
+              })()}
 
               {/* Summary */}
               <table className="w-full border-collapse text-sm">
