@@ -1,14 +1,25 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Fuel, ClipboardList, BarChart3, Users } from 'lucide-react'
 import Footer from '@/components/Footer'
 
 export default function LandingPage() {
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(res => {
+      if (res.ok) setLoggedIn(true)
+    }).catch(() => {})
+  }, [])
+
   return (
     <>
     <div className="max-w-3xl mx-auto px-4 py-20">
       <div className="text-center mb-16">
         <div className="flex justify-center mb-5">
-          <img src="/icon-192.png" alt="StationMGR" className="w-14 h-14 rounded-2xl" />
+          <img src="/icon-192.png" alt="StationMGR" className="w-14 h-14" />
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
@@ -20,18 +31,29 @@ export default function LandingPage() {
       </div>
 
       <div className="flex justify-center gap-3 mb-16">
-        <Link
-          href="/auth/login"
-          className="bg-accent text-white px-6 py-2.5 font-medium hover:bg-accent-600 transition-colors"
-        >
-          Log in
-        </Link>
-        <Link
-          href="/auth/register"
-          className="border border-gray-300 text-gray-700 px-6 py-2.5 font-medium hover:bg-gray-50 transition-colors"
-        >
-          Create Account
-        </Link>
+        {loggedIn ? (
+          <Link
+            href="/dashboard"
+            className="bg-accent text-white px-6 py-2.5 font-medium hover:bg-accent-600 transition-colors"
+          >
+            Dashboard
+          </Link>
+        ) : (
+          <>
+            <Link
+              href="/auth/login"
+              className="bg-accent text-white px-6 py-2.5 font-medium hover:bg-accent-600 transition-colors"
+            >
+              Log in
+            </Link>
+            <Link
+              href="/auth/register"
+              className="border border-gray-300 text-gray-700 px-6 py-2.5 font-medium hover:bg-gray-50 transition-colors"
+            >
+              Create Account
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="border-t border-gray-200 pt-12">

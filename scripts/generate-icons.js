@@ -13,7 +13,7 @@ const BRAND_BLUE = '#2563eb';
 
 const svgIcon = `
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512">
-  <rect fill="${BRAND_BLUE}" x="0" y="0" width="100" height="100" rx="18" ry="18"/>
+  <rect fill="${BRAND_BLUE}" x="0" y="0" width="100" height="100"/>
   <!-- Pump body with evenodd window cutout -->
   <path fill="white" fill-rule="evenodd" d="
     M 24.95 18.64 h 40.50 v 62.73 h -40.50 z
