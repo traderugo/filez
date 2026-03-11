@@ -126,7 +126,7 @@ function SummaryContent() {
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-600'
   const bdr = 'border border-blue-200'
-  const cell = `${bdr} px-1 py-0.5`
+  const cell = `${bdr} px-0.5 sm:px-1 py-0.5 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
   const dateLabel = reportDate
@@ -134,7 +134,7 @@ function SummaryContent() {
     : ''
 
   return (
-    <div className="flex flex-col h-[calc(95vh-4rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
+    <div className="flex flex-col h-[calc(95vh-4rem)] max-w-[1200px] mx-auto px-2 sm:px-6">
       {/* Header */}
       <div className="flex items-center justify-between py-3 gap-2 flex-wrap shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Summary</h1>
@@ -168,161 +168,49 @@ function SummaryContent() {
           <p className="text-gray-400 text-sm">No data for this date.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3">
+        <div className="flex-1 overflow-y-auto min-h-0 mb-3">
           {/* DAY header */}
-          <table className="w-full border-collapse text-sm mb-0">
+          <table className="w-full border-collapse text-xs sm:text-sm mb-0">
             <tbody>
               <tr className={hdr}>
                 <td className={cell} colSpan={2}>DAY</td>
                 <td className={cell}>{new Date(reportDate + 'T00:00:00').getDate()}</td>
-                <td className={cell} colSpan={3}></td>
               </tr>
               <tr>
-                <td className={`${cell} text-center text-xs text-gray-600 bg-gray-50`} colSpan={6}>{dateLabel}</td>
+                <td className={`${cell} text-center text-xs text-gray-600 bg-gray-50`} colSpan={3}>{dateLabel}</td>
               </tr>
             </tbody>
           </table>
 
-          {/* Top section: Dispensed + Summary */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-w-[600px]">
-            {/* LEFT: Dispensed per nozzle */}
-            <div>
-              <table className="w-full border-collapse text-sm">
-                <tbody>
-                  {report.fuelTypes.map(ft => {
-                    const totals = dayReport.dayFuelTotals[ft]
-                    if (!totals) return null
-                    // Collect all nozzle rows for this fuel across all entry groups
-                    const nozzleRows = []
-                    for (const group of dayReport.entryGroups) {
-                      const fuelGroup = group.nozzleRows.find(nr => nr.fuelType === ft)
-                      if (fuelGroup) {
-                        for (const r of fuelGroup.rows) {
-                          nozzleRows.push(r)
-                        }
-                      }
-                    }
-                    // For multi-nozzle fuels, show per-nozzle dispensed then subtotal
-                    if (nozzleRows.length > 1) {
-                      return (
-                        <DispensedFuelRows key={ft} fuelType={ft} nozzleRows={nozzleRows} total={totals.dispensed} cell={cell} cellR={cellR} />
-                      )
-                    }
-                    // Single nozzle
-                    return (
-                      <tr key={ft}>
-                        <td className={`${cell} font-bold`}>{ft}</td>
-                        <td className={cellR}>{fmt(totals.dispensed)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* RIGHT: Summary */}
-            <div>
-              <table className="w-full border-collapse text-sm">
-                <tbody>
-                  <tr className={subHdr}>
-                    <td className={`${cell} font-bold`} colSpan={2}>Summary</td>
-                  </tr>
-                  <tr className="font-bold">
-                    <td className={cell}>SALES</td>
-                    <td className={cellR}>{fmt(dayReport.totalSales)}</td>
-                  </tr>
-                  <tr className="font-bold">
-                    <td className={cell}>POS</td>
-                    <td className={cellR}>{fmt(dayReport.lodgement.totalPOS)}</td>
-                  </tr>
-                  <tr className="font-bold">
-                    <td className={cell}>CASH</td>
-                    <td className={cellR}>{fmt(dayReport.cashBalance)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Product Received + Transfer */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-w-[600px]">
-            {/* LEFT: Product Received */}
-            <div>
-              <table className="w-full border-collapse text-sm">
-                <tbody>
-                  <tr className={subHdr}>
-                    <td className={`${cell} font-bold`}>Product Received</td>
-                    <td className={cellR}></td>
-                  </tr>
-                  {report.fuelTypes.map(ft => {
-                    const tankData = dayReport.tanksByFuel?.[ft]
-                    const supply = tankData?.totalSupply || 0
-                    return (
-                      <tr key={ft}>
-                        <td className={cell}>{ft}</td>
-                        <td className={cellR}>{fmt(supply)}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* RIGHT: Transfer */}
-            <div>
-              <table className="w-full border-collapse text-sm">
-                <tbody>
-                  <tr className={subHdr}>
-                    <td className={`${cell} font-bold`} colSpan={2}>Transfer</td>
-                  </tr>
-                  {dayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
-                    <tr key={row.bankId}>
-                      <td className={cell}>
-                        <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
-                        <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
-                      </td>
-                      <td className={cellR}>{fmt(row.deposited)}</td>
-                    </tr>
-                  ))}
-                  {dayReport.lodgement.totalAll === 0 && (
-                    <tr><td colSpan={2} className={`${cell} text-gray-400`}></td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Nozzle closing readings per entry */}
+          {/* 1. Closing Meter Readings per entry */}
           {dayReport.entryGroups.map((group) => (
-            <div key={group.entryIndex}>
-              <NozzleReadingsEntry
-                group={group}
-                fuelTypes={report.fuelTypes}
-                cell={cell}
-                cellR={cellR}
-                subHdr={subHdr}
-              />
+            <div key={group.entryIndex} className="mb-4">
+              {dayReport.entryCount > 1 && (
+                <table className="w-full border-collapse text-xs sm:text-sm">
+                  <tbody>
+                    <tr className={hdr}>
+                      <td className={cell} colSpan={3}>Entry {group.entryIndex}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
 
-              {/* Total volume sold for this entry */}
-              <table className="w-full border-collapse text-sm mb-4">
+              {/* Closing readings grouped by fuel */}
+              <table className="w-full border-collapse text-xs sm:text-sm">
                 <tbody>
-                  <tr className={subHdr}>
-                    <td className={`${cell} font-bold`} colSpan={2}>Total volume sold</td>
-                  </tr>
                   {report.fuelTypes.map(ft => {
                     const fuelGroup = group.nozzleRows.find(nr => nr.fuelType === ft)
                     if (!fuelGroup) return null
-                    const dispensed = fuelGroup.totals.dispensed
-                    const consumed = fuelGroup.totals.consumed
-                    const pourBack = fuelGroup.totals.pourBack || 0
-                    const adjustment = consumed + pourBack
-                    const actual = fuelGroup.totals.actual
                     return (
-                      <tr key={ft}>
-                        <td className={cell} colSpan={2}>
-                          {ft} &gt; {fmt(dispensed)} &minus; {fmt(adjustment)} = {fmt(actual)}
-                        </td>
-                      </tr>
+                      <ClosingReadings
+                        key={ft}
+                        fuelType={ft}
+                        rows={fuelGroup.rows}
+                        totals={fuelGroup.totals}
+                        cell={cell}
+                        cellR={cellR}
+                        subHdr={subHdr}
+                      />
                     )
                   })}
                 </tbody>
@@ -330,29 +218,9 @@ function SummaryContent() {
             </div>
           ))}
 
-          {/* Tank stock */}
-          <table className="w-full border-collapse text-sm mb-4">
-            <thead>
-              <tr className={subHdr}>
-                <th className={`${cell} text-left font-bold whitespace-nowrap`}>Tank</th>
-                <th className={`${cellR} font-bold whitespace-nowrap`}>Opening</th>
-                <th className={`${cellR} font-bold whitespace-nowrap`}>Supply</th>
-                <th className={`${cellR} font-bold whitespace-nowrap`}>Closing</th>
-                <th className={`${cellR} font-bold whitespace-nowrap`}>Diff</th>
-                <th className={`${cellR} font-bold whitespace-nowrap`}>Dispensed</th>
-                <th className={`${cellR} font-bold whitespace-nowrap`}>OV/SH</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dayReport.tankSummaryRows.map((row) => (
-                <TankRow key={row.fuelType} row={row} cell={cell} cellR={cellR} subHdr={subHdr} />
-              ))}
-            </tbody>
-          </table>
-
-          {/* Consumption entries */}
+          {/* 2. Consumption table */}
           {dayReport.consumption.entries.length > 0 && (
-            <table className="w-full border-collapse text-sm mb-4">
+            <table className="w-full border-collapse text-xs sm:text-sm mb-4">
               <thead>
                 <tr className={subHdr}>
                   <th className={`${cell} text-left font-bold`}>Account</th>
@@ -367,79 +235,112 @@ function SummaryContent() {
                     <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
                     <td className={cell}>{c.fuelType || ''}</td>
                     <td className={cellR}>{fmt(c.quantity)}</td>
-                    <td className={`${cell} text-center text-xs`}>{c.isPourBack ? 'Pour Back' : 'Consumption'}</td>
+                    <td className={`${cell} text-center`}>{c.isPourBack ? 'Pour Back' : 'Consumption'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           )}
+
+          {/* 3. Lodgements */}
+          <table className="w-full border-collapse text-xs sm:text-sm mb-4">
+            <thead>
+              <tr className={subHdr}>
+                <th className={`${cell} text-left font-bold`}>Lodgements</th>
+                <th className={`${cellR} font-bold`}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
+                <tr key={row.bankId}>
+                  <td className={cell}>
+                    <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
+                    <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
+                  </td>
+                  <td className={cellR}>{fmt(row.deposited)}</td>
+                </tr>
+              ))}
+              {dayReport.lodgement.totalAll === 0 && (
+                <tr><td colSpan={2} className={`${cell} text-gray-400`}>No lodgements</td></tr>
+              )}
+              {dayReport.lodgement.totalAll > 0 && (
+                <tr className={`${subHdr} font-bold`}>
+                  <td className={cell}>Total Lodged</td>
+                  <td className={cellR}>{fmt(dayReport.lodgement.totalAll)}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* 4. Product Received */}
+          {report.fuelTypes.some(ft => (dayReport.tanksByFuel?.[ft]?.totalSupply || 0) > 0) && (
+            <table className="w-full border-collapse text-xs sm:text-sm mb-4">
+              <thead>
+                <tr className={subHdr}>
+                  <th className={`${cell} text-left font-bold`}>Product Received</th>
+                  <th className={`${cellR} font-bold`}>Volume</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.fuelTypes.map(ft => {
+                  const supply = dayReport.tanksByFuel?.[ft]?.totalSupply || 0
+                  if (!supply) return null
+                  return (
+                    <tr key={ft}>
+                      <td className={`${cell} font-bold`}>{ft}</td>
+                      <td className={cellR}>{fmt(supply)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+
+          {/* 5. Sales (replaces Stock) */}
+          <table className="w-full border-collapse text-xs sm:text-sm mb-4">
+            <thead>
+              <tr className={subHdr}>
+                <th className={`${cell} text-left font-bold`}></th>
+                <th className={`${cellR} font-bold`}>Sales</th>
+                <th className={`${cellR} font-bold`}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.fuelTypes.map(ft => (
+                <tr key={ft}>
+                  <td className={`${cell} font-bold`}>{ft}</td>
+                  <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.actual)}</td>
+                  <td className={cellR}>{fmt(dayReport.dayFuelTotals[ft]?.amount)}</td>
+                </tr>
+              ))}
+              <tr className={`${subHdr} font-bold`}>
+                <td colSpan={2} className={cell}>SALES</td>
+                <td className={cellR}>{fmt(dayReport.totalSales)}</td>
+              </tr>
+              <tr className="font-bold">
+                <td colSpan={2} className={cell}>TOTAL POS</td>
+                <td className={cellR}>{fmt(dayReport.lodgement.totalPOS)}</td>
+              </tr>
+              <tr className={`${subHdr} font-bold`}>
+                <td colSpan={2} className={cell}>CASH</td>
+                <td className={cellR}>{fmt(dayReport.cashBalance)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   )
 }
 
-/** Dispensed rows for a multi-nozzle fuel type */
-function DispensedFuelRows({ fuelType, nozzleRows, total, cell, cellR }) {
-  return (
-    <>
-      {nozzleRows.map((r) => (
-        <tr key={r.label}>
-          <td className={`${cell} font-bold`}>{r.label}</td>
-          <td className={cellR}>{fmt(r.dispensed)}</td>
-        </tr>
-      ))}
-      <tr className="font-bold bg-gray-50">
-        <td className={cell}></td>
-        <td className={cellR}>{fmt(total)}</td>
-      </tr>
-    </>
-  )
-}
+/** Renders closing meter readings for one fuel type + dispensed minus consumed */
+function ClosingReadings({ fuelType, rows, totals, cell, cellR, subHdr }) {
+  const dispensed = totals.dispensed
+  const consumed = totals.consumed
+  const pourBack = totals.pourBack || 0
+  const adjustment = consumed + pourBack
+  const actual = totals.actual
 
-/** Nozzle closing readings for one entry, split into 2-col grid by fuel type */
-function NozzleReadingsEntry({ group, fuelTypes, cell, cellR, subHdr }) {
-  // Split fuel types into left (first fuel, typically PMS) and right (rest)
-  const leftFuels = fuelTypes.slice(0, 1)
-  const rightFuels = fuelTypes.slice(1)
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 min-w-[600px] mb-0">
-      {/* Left column */}
-      <div>
-        <table className="w-full border-collapse text-sm">
-          <tbody>
-            {leftFuels.map(ft => {
-              const fuelGroup = group.nozzleRows.find(nr => nr.fuelType === ft)
-              if (!fuelGroup) return null
-              return (
-                <NozzleClosingRows key={ft} fuelType={ft} rows={fuelGroup.rows} cell={cell} cellR={cellR} subHdr={subHdr} />
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Right column */}
-      <div>
-        <table className="w-full border-collapse text-sm">
-          <tbody>
-            {rightFuels.map(ft => {
-              const fuelGroup = group.nozzleRows.find(nr => nr.fuelType === ft)
-              if (!fuelGroup) return null
-              return (
-                <NozzleClosingRows key={ft} fuelType={ft} rows={fuelGroup.rows} cell={cell} cellR={cellR} subHdr={subHdr} />
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-/** Renders nozzle closing meter readings for one fuel type */
-function NozzleClosingRows({ fuelType, rows, cell, cellR, subHdr }) {
   return (
     <>
       <tr className={subHdr}>
@@ -451,45 +352,11 @@ function NozzleClosingRows({ fuelType, rows, cell, cellR, subHdr }) {
           <td className={cellR}>{fmt(r.closing)}</td>
         </tr>
       ))}
-    </>
-  )
-}
-
-/** Renders tank summary rows for a fuel type */
-function TankRow({ row, cell, cellR, subHdr }) {
-  const totalOvshColor = row.totalOvsh < 0 ? 'text-red-600' : row.totalOvsh > 0 ? 'text-green-600' : ''
-
-  return (
-    <>
-      {row.tanks.map((t) => {
-        const ovshColor = t.ovsh < 0 ? 'text-red-600' : t.ovsh > 0 ? 'text-green-600' : ''
-        return (
-          <tr key={t.label}>
-            <td className={`${cell} font-bold whitespace-nowrap`}>{t.label}</td>
-            <td className={cellR}>{fmt(t.opening)}</td>
-            <td className={cellR}>{t.supply ? fmt(t.supply) : ''}</td>
-            <td className={cellR}>{fmt(t.closing)}</td>
-            <td className={cellR}>{fmt(t.diff)}</td>
-            <td className={cellR}>{fmt(t.dispensed)}</td>
-            <td className={`${cellR} ${ovshColor}`}>
-              {t.ovsh > 0 ? '+' : ''}{fmt(t.ovsh)}
-            </td>
-          </tr>
-        )
-      })}
-      {row.tanks.length > 1 && (
-        <tr className={`${subHdr} font-bold`}>
-          <td className={cell}>Total</td>
-          <td className={cellR}>{fmt(row.totalOpening)}</td>
-          <td className={cellR}>{row.totalSupply ? fmt(row.totalSupply) : ''}</td>
-          <td className={cellR}>{fmt(row.totalClosing)}</td>
-          <td className={cellR}>{fmt(row.totalDiff)}</td>
-          <td className={cellR}>{fmt(row.totalDispensed)}</td>
-          <td className={`${cellR} ${totalOvshColor}`}>
-            {row.totalOvsh > 0 ? '+' : ''}{fmt(row.totalOvsh)}
-          </td>
-        </tr>
-      )}
+      <tr className="bg-gray-50 font-bold">
+        <td className={cell} colSpan={2}>
+          {fmt(dispensed)} &minus; {fmt(adjustment)} = {fmt(actual)}
+        </td>
+      </tr>
     </>
   )
 }
