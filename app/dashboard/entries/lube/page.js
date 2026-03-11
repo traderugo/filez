@@ -9,6 +9,7 @@ import { lubeSalesRepo } from '@/lib/repositories/lubeSales'
 import { lubeStockRepo } from '@/lib/repositories/lubeStock'
 import { initialSync } from '@/lib/initialSync'
 import { startSync } from '@/lib/sync'
+import DateInput from '@/components/DateInput'
 
 export default function LubeFormPage() {
   const searchParams = useSearchParams()
@@ -105,7 +106,6 @@ function LubeSalesForm({ products, qs, orgId, editId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formDate) { setError('Date is required'); return }
     if (!productId) { setError('Product is required'); return }
     setSaving(true)
     setError('')
@@ -151,7 +151,7 @@ function LubeSalesForm({ products, qs, orgId, editId }) {
         <div className="grid grid-cols-2 divide-x divide-gray-300">
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Product</label>
@@ -225,7 +225,6 @@ function LubeStockForm({ products, qs, orgId, editId }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formDate) { setError('Date is required'); return }
     if (!productId) { setError('Product is required'); return }
     setSaving(true)
     setError('')
@@ -269,7 +268,7 @@ function LubeStockForm({ products, qs, orgId, editId }) {
         <div className="grid grid-cols-2 divide-x divide-gray-300">
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Product</label>

@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { lodgementsRepo } from '@/lib/repositories/lodgements'
 import { initialSync } from '@/lib/initialSync'
 import { startSync } from '@/lib/sync'
+import DateInput from '@/components/DateInput'
 
 export default function LodgementsFormPage() {
   const searchParams = useSearchParams()
@@ -63,7 +64,6 @@ export default function LodgementsFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formDate) { setError('Date is required'); return }
     if (!bankId) { setError('Bank account is required'); return }
     setSaving(true)
     setError('')
@@ -128,7 +128,7 @@ export default function LodgementsFormPage() {
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount</label>
@@ -156,7 +156,7 @@ export default function LodgementsFormPage() {
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Date</label>
-            <input type="date" value={salesDate} onChange={(e) => setSalesDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <DateInput value={salesDate} onChange={setSalesDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>

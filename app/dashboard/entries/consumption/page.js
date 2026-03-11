@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { consumptionRepo } from '@/lib/repositories/consumption'
 import { initialSync } from '@/lib/initialSync'
 import { startSync } from '@/lib/sync'
+import DateInput from '@/components/DateInput'
 
 const FUEL_TYPES = ['PMS', 'AGO', 'DPK']
 
@@ -65,7 +66,6 @@ export default function ConsumptionFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formDate) { setError('Date is required'); return }
     if (!customerId) { setError('Account is required'); return }
     if (!fuelType) { setError('Fuel type is required'); return }
     setSaving(true)
@@ -131,7 +131,7 @@ export default function ConsumptionFormPage() {
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-              <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Account</label>

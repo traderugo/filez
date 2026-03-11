@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
 import { initialSync } from '@/lib/initialSync'
 import { startSync } from '@/lib/sync'
+import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
 
 export default function DailySalesFormPage() {
@@ -133,7 +134,6 @@ export default function DailySalesFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formDate) { setError('Date is required'); return }
     if (!prices.PMS && !prices.AGO && !prices.DPK) { setError('At least one fuel price is required'); return }
     if (closeOfBusiness) {
       const missingTank = tankReadings.find((r) => r.closing_stock === '' || r.closing_stock === undefined)
@@ -243,7 +243,7 @@ export default function DailySalesFormPage() {
         <div className="border border-gray-300 divide-y divide-gray-300">
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-            <input type="date" value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
           </div>
           <div className="bg-gray-50 px-2 py-1">
             <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>

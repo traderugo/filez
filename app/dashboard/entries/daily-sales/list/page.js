@@ -40,7 +40,16 @@ export default function DailySalesListPage() {
   const total = allEntries.length
   const totalPages = Math.ceil(total / limit)
   const start = (page - 1) * limit
-  const entries = allEntries.slice(start, start + limit)
+  const pageEntries = allEntries.slice(start, start + limit)
+  // Fill in missing dates from adjacent entries
+  const entries = pageEntries.map((entry, i) => {
+    const date = entry.entryDate || entry.entry_date
+    if (date) return entry
+    // Look backward then forward for a date to borrow
+    for (let j = i - 1; j >= 0; j--) { if (pageEntries[j].entryDate || pageEntries[j].entry_date) return { ...entry, _displayDate: pageEntries[j].entryDate || pageEntries[j].entry_date }; break }
+    for (let j = i + 1; j < pageEntries.length; j++) { if (pageEntries[j].entryDate || pageEntries[j].entry_date) return { ...entry, _displayDate: pageEntries[j].entryDate || pageEntries[j].entry_date }; break }
+    return entry
+  })
 
   // Check if nozzles exist (proxy for subscription access)
   const hasConfig = useLiveQuery(
@@ -87,7 +96,7 @@ export default function DailySalesListPage() {
             {entries.map((entry) => (
               <div key={entry.id} className="py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900">{format(new Date(entry.entryDate || entry.entry_date), 'MMM d, yyyy')}</p>
+                  <p className="text-sm font-medium text-gray-900">{(entry.entryDate || entry.entry_date || entry._displayDate) ? format(new Date((entry.entryDate || entry.entry_date || entry._displayDate) + 'T00:00:00'), 'MMM d, yyyy') : <span className="text-gray-400">No date</span>}</p>
                   <p className="text-xs text-gray-500">
                     {entry.createdAt ? format(new Date(entry.createdAt), 'h:mm a') : ''}
                     {entry.prices?.PMS ? ` · PMS ₦${Number(entry.prices.PMS).toLocaleString()}` : ''}

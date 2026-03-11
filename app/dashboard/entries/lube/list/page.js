@@ -81,7 +81,13 @@ function LubeSalesList({ orgId, qs, ready }) {
 
   const total = allEntries.length
   const totalPages = Math.ceil(total / limit)
-  const entries = allEntries.slice((page - 1) * limit, page * limit)
+  const pageEntries = allEntries.slice((page - 1) * limit, page * limit)
+  const entries = pageEntries.map((entry, i) => {
+    if (entry.entryDate) return entry
+    for (let j = i - 1; j >= 0; j--) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
+    for (let j = i + 1; j < pageEntries.length; j++) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
+    return entry
+  })
 
   if (entries.length === 0) return <p className="text-sm text-gray-500 py-8 text-center">No sales entries yet.</p>
 
@@ -92,7 +98,7 @@ function LubeSalesList({ orgId, qs, ready }) {
           <div key={entry.id} className="py-3 flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
-                {format(new Date(entry.entryDate), 'MMM d, yyyy')}
+                {(entry.entryDate || entry._displayDate) ? format(new Date((entry.entryDate || entry._displayDate) + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
                 <span className="ml-2 text-xs text-gray-600">{productsMap[entry.productId] || 'Unknown'}</span>
               </p>
               <p className="text-xs text-gray-500">
@@ -135,7 +141,13 @@ function LubeStockList({ orgId, qs, ready }) {
 
   const total = allEntries.length
   const totalPages = Math.ceil(total / limit)
-  const entries = allEntries.slice((page - 1) * limit, page * limit)
+  const pageEntries2 = allEntries.slice((page - 1) * limit, page * limit)
+  const entries = pageEntries2.map((entry, i) => {
+    if (entry.entryDate) return entry
+    for (let j = i - 1; j >= 0; j--) { if (pageEntries2[j].entryDate) return { ...entry, _displayDate: pageEntries2[j].entryDate }; break }
+    for (let j = i + 1; j < pageEntries2.length; j++) { if (pageEntries2[j].entryDate) return { ...entry, _displayDate: pageEntries2[j].entryDate }; break }
+    return entry
+  })
 
   if (entries.length === 0) return <p className="text-sm text-gray-500 py-8 text-center">No stock entries yet.</p>
 
@@ -146,7 +158,7 @@ function LubeStockList({ orgId, qs, ready }) {
           <div key={entry.id} className="py-3 flex items-center gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
-                {format(new Date(entry.entryDate), 'MMM d, yyyy')}
+                {(entry.entryDate || entry._displayDate) ? format(new Date((entry.entryDate || entry._displayDate) + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
                 <span className="ml-2 text-xs text-gray-600">{productsMap[entry.productId] || 'Unknown'}</span>
               </p>
               <p className="text-xs text-gray-500">

@@ -44,7 +44,13 @@ export default function LodgementsListPage() {
 
   const total = allEntries.length
   const totalPages = Math.ceil(total / limit)
-  const entries = allEntries.slice((page - 1) * limit, page * limit)
+  const pageEntries = allEntries.slice((page - 1) * limit, page * limit)
+  const entries = pageEntries.map((entry, i) => {
+    if (entry.entryDate) return entry
+    for (let j = i - 1; j >= 0; j--) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
+    for (let j = i + 1; j < pageEntries.length; j++) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
+    return entry
+  })
 
   if (!ready) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>
 
@@ -77,7 +83,7 @@ export default function LodgementsListPage() {
               <div key={entry.id} className="py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {format(new Date(entry.entryDate), 'MMM d, yyyy')}
+                    {(entry.entryDate || entry._displayDate) ? format(new Date((entry.entryDate || entry._displayDate) + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
                     <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{typeLabel[entry.lodgementType] || entry.lodgementType}</span>
                   </p>
                   <p className="text-xs text-gray-500">

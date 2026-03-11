@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { db } from '@/lib/db'
 import { initialSync } from '@/lib/initialSync'
 import { buildAuditReport } from '@/lib/buildAuditReport'
+import DateInput from '@/components/DateInput'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -141,19 +142,9 @@ function AuditReportContent() {
       <div className="flex items-center justify-between py-3 gap-2 flex-wrap shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Audit Report</h1>
         <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
           <span className="text-sm text-gray-400">to</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
           <button
             onClick={handleGenerate}
             disabled={!startDate || !endDate || startDate > endDate}

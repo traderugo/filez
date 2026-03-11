@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { initialSync } from '@/lib/initialSync'
 import { buildDailyReport } from '@/lib/buildDailyReport'
+import DateInput from '@/components/DateInput'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -223,17 +224,15 @@ function DailySalesReportContent() {
               )
             })()}
           </div>
-          <input
-            type="date"
+          <DateInput
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={setStartDate}
             className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <span className="text-sm text-gray-400">to</span>
-          <input
-            type="date"
+          <DateInput
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={setEndDate}
             className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button

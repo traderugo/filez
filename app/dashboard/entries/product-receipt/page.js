@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { productReceiptsRepo } from '@/lib/repositories/productReceipts'
 import { initialSync } from '@/lib/initialSync'
 import { startSync } from '@/lib/sync'
+import DateInput from '@/components/DateInput'
 
 export default function ProductReceiptFormPage() {
   const searchParams = useSearchParams()
@@ -84,7 +85,6 @@ export default function ProductReceiptFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.entryDate) { setError('Date is required'); return }
     setSaving(true)
     setError('')
 
@@ -161,11 +161,11 @@ export default function ProductReceiptFormPage() {
           <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-              <input type="date" value={form.entryDate} onChange={sf('entryDate')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              <DateInput value={form.entryDate} onChange={(v) => setForm(prev => ({ ...prev, entryDate: v }))} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Loaded Date</label>
-              <input type="date" value={form.loadedDate} onChange={sf('loadedDate')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              <DateInput value={form.loadedDate} onChange={(v) => setForm(prev => ({ ...prev, loadedDate: v }))} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
             </div>
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
