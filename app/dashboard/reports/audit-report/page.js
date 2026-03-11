@@ -46,11 +46,9 @@ function AuditReportContent() {
   const today = new Date()
   const pad = (n) => String(n).padStart(2, '0')
   const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
-  const weekAgoDate = new Date(today)
-  weekAgoDate.setDate(weekAgoDate.getDate() - 6)
-  const weekAgoStr = `${weekAgoDate.getFullYear()}-${pad(weekAgoDate.getMonth() + 1)}-${pad(weekAgoDate.getDate())}`
+  const monthStartStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`
 
-  const [startDate, setStartDate] = useState(weekAgoStr)
+  const [startDate, setStartDate] = useState(monthStartStr)
   const [endDate, setEndDate] = useState(todayStr)
   const [generated, setGenerated] = useState(false)
   const [activeTab, setActiveTab] = useState('sales-cash')

@@ -39,6 +39,9 @@ function DailySalesReportContent() {
   const [startDate, setStartDate] = useState(monthStartStr)
   const [endDate, setEndDate] = useState(todayStr)
   const [viewDate, setViewDate] = useState(todayStr)
+  const [generated, setGenerated] = useState(false)
+  const [reportStart, setReportStart] = useState('')
+  const [reportEnd, setReportEnd] = useState('')
 
   // Config
   const [nozzles, setNozzles] = useState([])
@@ -101,8 +104,9 @@ function DailySalesReportContent() {
     return Object.fromEntries(liveCustomers.map(c => [c.id, c.name || 'Unknown']))
   }, [liveCustomers])
 
-  // Derive report synchronously — recalculates whenever any input changes
+  // Derive report synchronously — only recalculates after Generate is clicked
   const report = useMemo(() => {
+    if (!generated || !reportStart || !reportEnd) return null
     if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return null
 
     return buildDailyReport({
@@ -113,18 +117,26 @@ function DailySalesReportContent() {
       nozzles,
       tanks,
       banks,
-      startDate,
-      endDate,
+      startDate: reportStart,
+      endDate: reportEnd,
     })
-  }, [loading, orgId, startDate, endDate, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
+  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
 
-  // Clamp viewDate and reset tab offset when range changes
+  const handleGenerate = () => {
+    if (!startDate || !endDate) return
+    setReportStart(startDate)
+    setReportEnd(endDate)
+    setGenerated(true)
+  }
+
+  // Clamp viewDate and reset tab offset when committed range changes
   useEffect(() => {
+    if (!reportStart || !reportEnd) return
     setTabOffset(0)
-    if (viewDate < startDate) setViewDate(startDate)
-    else if (viewDate > endDate) setViewDate(endDate)
+    if (viewDate < reportStart) setViewDate(reportStart)
+    else if (viewDate > reportEnd) setViewDate(reportEnd)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate])
+  }, [reportStart, reportEnd])
 
   // Detect dates with duplicate COB entries (multiple COB per date causes calculation issues)
   const duplicateDates = useMemo(() => {
@@ -224,11 +236,26 @@ function DailySalesReportContent() {
             onChange={(e) => setEndDate(e.target.value)}
             className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <button
+            onClick={handleGenerate}
+            disabled={!startDate || !endDate || startDate > endDate}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
+            Generate
+          </button>
         </div>
       </div>
 
       {/* Scrollable content area */}
-      {currentDayReport && (
+      {!generated ? (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+        </div>
+      ) : !report ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        </div>
+      ) : currentDayReport && (
         <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-200">
 
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 pb-4 min-w-[700px]">
@@ -439,7 +466,7 @@ function DailySalesReportContent() {
       )}
 
       {/* Day tabs — fixed at bottom */}
-      {report?.dateReports && (
+      {generated && report?.dateReports && (
         <>
           {/* Mobile: touch-scrollable strip */}
           <div className="flex overflow-x-auto justify-center shrink-0 border-t border-blue-200 md:hidden">
