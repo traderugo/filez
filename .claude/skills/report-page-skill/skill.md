@@ -114,6 +114,118 @@ Each `dateReport` contains:
 }
 ```
 
+### Reference Implementation 2: `lib/buildAuditReport.js`
+
+The audit report is a **period-level** report (not per-date like the daily report). It groups data across a date range into summaries.
+
+```js
+import { sortEntries, getFuelTypes, getNozzlesForFuel } from './salesCalculations'
+import { calculateDateRangeLodgements } from './lodgementCalculations'
+import { calculateDateRangeConsumption } from './consumptionCalculations'
+
+export function buildAuditReport({ sales, lodgements, consumption, nozzles, banks, customers, startDate, endDate }) {
+  if (!nozzles.length) return null
+
+  const fuelTypes = getFuelTypes(nozzles)
+
+  // Build meter reading rows per fuel type (grouped by price period)
+  const fuelData = {}
+  for (const ft of fuelTypes) {
+    fuelData[ft] = buildFuelMeterRows(ft, nozzles, sorted, prevEntry, dateStrings, entriesByDate)
+  }
+
+  // Build price-by-date lookup, then price consumption/pour back per date
+  // ... (see consumption pricing section below)
+
+  // Build per-fuel summary: A (total sales) → B (pour back) → C (net) → D (consumption) → E (expected)
+  // Cash reconciliation: expected vs lodgements vs POS → overage/shortage
+
+  return { fuelTypes, salesCash: { fuelSummaries, cashReconciliation } }
+}
+```
+
+**Meter rows group by price period** — a new row is emitted when the daily sales price changes. Each row has: `{ pumps, dispensed, price, amount }`.
+
+**Audit report output shape:**
+```js
+{
+  fuelTypes: ['PMS', 'AGO', 'DPK'],
+  salesCash: {
+    fuelSummaries: {
+      PMS: {
+        rows: [{ pumps, dispensed, price, amount }],   // meter reading rows by price period
+        totalDispensed, totalAmount,                    // A: total sales
+        totalPourBackQty, totalPourBackAmt,             // B: pour back
+        netSalesQty, netSalesAmt,                       // C = A - B
+        totalConsumedQty, totalConsumedAmt,             // D: consumption
+        expectedSalesQty, expectedSalesAmt,             // E = C - D
+        consumption: {
+          consumed: [{ name, qty, amt }],               // per-customer consumption
+          pourBack: [{ name, qty, amt }],               // per-customer pour back
+        }
+      }
+    },
+    cashReconciliation: {
+      expectedSalesTotal,   // sum of E across all fuels
+      totalLodgement,       // bank deposits + cash + other
+      totalPOS,
+      overshort,            // expected - lodgement - POS
+    }
+  }
+}
+```
+
+### Consumption Pricing by Date
+
+Consumption and pour back entries do NOT have a price field. The price comes from the daily sales entry for the same date.
+
+```js
+// Build price-by-date lookup from daily sales entries
+const priceByDate = {}
+for (const e of rangeEntries) {
+  if (!e.prices) continue
+  priceByDate[e.entryDate] = priceByDate[e.entryDate] || {}
+  for (const ft of fuelTypes) {
+    const p = Number(e.prices[ft] || 0)
+    if (p) priceByDate[e.entryDate][ft] = p
+  }
+}
+
+// Helper: get the active price for a fuel type on a given date
+// Falls back to nearest earlier date, then nearest later date
+function getPriceForDate(fuelType, date) {
+  if (priceByDate[date]?.[fuelType]) return priceByDate[date][fuelType]
+  for (let i = dateStrings.indexOf(date) - 1; i >= 0; i--) {
+    if (priceByDate[dateStrings[i]]?.[fuelType]) return priceByDate[dateStrings[i]][fuelType]
+  }
+  for (let i = dateStrings.indexOf(date) + 1; i < dateStrings.length; i++) {
+    if (priceByDate[dateStrings[i]]?.[fuelType]) return priceByDate[dateStrings[i]][fuelType]
+  }
+  return 0
+}
+
+// Each consumption entry priced individually
+for (const e of dayData.entries) {
+  const qty = Number(e.quantity || 0)
+  const price = getPriceForDate(ft, e.entryDate || dayData.date)
+  const amt = qty * price
+  // ... push { name, qty, amt } and accumulate totals
+}
+```
+
+**aggregateByName** sums both `qty` and `amt` per customer:
+```js
+function aggregateByName(items) {
+  const map = {}
+  for (const item of items) {
+    if (!map[item.name]) map[item.name] = { name: item.name, qty: 0, amt: 0 }
+    map[item.name].qty += item.qty
+    map[item.name].amt += (item.amt || 0)
+  }
+  return Object.values(map)
+}
+```
+
 ### Key Builder Concepts
 
 **COB (Close-of-Business) tank readings:**
@@ -173,11 +285,70 @@ function ReportContent() {
 }
 ```
 
+### Date Range & Generate Button Pattern
+
+Reports use a **committed date range** — the user picks dates, then clicks Generate. The report renders immediately on page load with default dates (1st of current month → today).
+
+```js
+const today = new Date()
+const pad = (n) => String(n).padStart(2, '0')
+const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
+const monthStartStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`
+
+// User-editable date inputs
+const [startDate, setStartDate] = useState(monthStartStr)
+const [endDate, setEndDate] = useState(todayStr)
+
+// Committed range — only updates on Generate click (initialized to defaults for auto-render)
+const [generated, setGenerated] = useState(true)
+const [reportStart, setReportStart] = useState(monthStartStr)
+const [reportEnd, setReportEnd] = useState(todayStr)
+
+const handleGenerate = () => {
+  if (!startDate || !endDate) return
+  setReportStart(startDate)
+  setReportEnd(endDate)
+  setGenerated(true)
+}
+
+// useMemo uses reportStart/reportEnd (committed), NOT startDate/endDate (input)
+const report = useMemo(() => {
+  if (!generated || !reportStart || !reportEnd) return null
+  // ... build report with reportStart, reportEnd
+}, [generated, reportStart, reportEnd, ...otherDeps])
+```
+
+**Generate button in JSX:**
+```jsx
+<button
+  onClick={handleGenerate}
+  disabled={!startDate || !endDate || startDate > endDate}
+  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+>
+  Generate
+</button>
+```
+
+**Empty/loading states:**
+```jsx
+{!generated ? (
+  <div className="flex-1 flex items-center justify-center">
+    <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+  </div>
+) : !report ? (
+  <div className="flex justify-center py-20">
+    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+  </div>
+) : (
+  /* render report */
+)}
+```
+
 ### Data Flow (IMPORTANT)
 
 1. **Config** loaded once via `useEffect` → `useState` (nozzles, tanks, banks)
 2. **Entries** loaded reactively via `useLiveQuery` (auto-updates when IndexedDB changes)
-3. **Report** derived via `useMemo` calling the builder — recalculates on any input change
+3. **Report** derived via `useMemo` calling the builder — uses **committed** date range (reportStart/reportEnd)
 4. **No useEffect+setState for derived data** — useMemo eliminates timing gaps
 
 ```js
@@ -201,9 +372,10 @@ const customerMap = useMemo(() => {
 
 // Derived: report (synchronous, no timing gaps)
 const report = useMemo(() => {
+  if (!generated || !reportStart || !reportEnd) return null
   if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return null
-  return buildDailyReport({ sales: liveSales, receipts: liveReceipts, lodgements: liveLodgements, consumption: liveConsumption, nozzles, tanks, banks, startDate, endDate })
-}, [loading, orgId, startDate, endDate, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
+  return buildDailyReport({ sales: liveSales, receipts: liveReceipts, lodgements: liveLodgements, consumption: liveConsumption, nozzles, tanks, banks, startDate: reportStart, endDate: reportEnd })
+}, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
 ```
 
 ### Hook Ordering Rule
@@ -439,13 +611,17 @@ Compact box comparing nozzle reading totals vs consumption entry totals. Green =
 5. [ ] Wrap in `<Suspense>` for `useSearchParams`
 6. [ ] Load config via `useEffect` + IndexedDB
 7. [ ] Load entries via `useLiveQuery` (reactive)
-8. [ ] Derive report via `useMemo(builder)` — NOT useEffect+setState
-9. [ ] ALL hooks BEFORE early returns
-10. [ ] Use consistent CSS classes: `hdr`, `subHdr`, `bdr`, `cell`, `cellR`
-11. [ ] Use `fmt()` / `fmtDec()` for number formatting
-12. [ ] Include day tab navigation (mobile + desktop)
-13. [ ] Include edit dropdown linking to entry forms with `?edit=<id>`
-14. [ ] Sub-components at module level only
+8. [ ] Default dates: 1st of current month → today
+9. [ ] Add committed date range state (`generated`, `reportStart`, `reportEnd`) — initialized to defaults so report renders on load
+10. [ ] Add Generate button next to date inputs
+11. [ ] Derive report via `useMemo(builder)` using committed range — NOT useEffect+setState
+12. [ ] ALL hooks BEFORE early returns
+13. [ ] Use consistent CSS classes: `hdr`, `subHdr`, `bdr`, `cell`, `cellR`
+14. [ ] Use `fmt()` / `fmtDec()` for number formatting
+15. [ ] Include day tab navigation if per-date report (mobile + desktop)
+16. [ ] Include edit dropdown linking to entry forms with `?edit=<id>`
+17. [ ] Sub-components at module level only
+18. [ ] If consumption amounts needed, use price-by-date lookup (never hardcode `lastPrice`)
 
 ## 13. Checklist for New Helper Functions
 
