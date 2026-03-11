@@ -27,6 +27,7 @@ export default function ConsumptionFormPage() {
   const [customerId, setCustomerId] = useState('')
   const [quantity, setQuantity] = useState('')
   const [fuelType, setFuelType] = useState('')
+  const [price, setPrice] = useState('')
   const [isPourBack, setIsPourBack] = useState(false)
   const [notes, setNotes] = useState('')
 
@@ -51,6 +52,7 @@ export default function ConsumptionFormPage() {
           setCustomerId(entry.customerId || '')
           setQuantity(String(entry.quantity ?? ''))
           setFuelType(entry.fuelType || '')
+          setPrice(String(entry.price ?? ''))
           setIsPourBack(!!entry.isPourBack)
           setNotes(entry.notes || '')
         }
@@ -76,6 +78,7 @@ export default function ConsumptionFormPage() {
       customerId,
       quantity: Number(quantity) || 0,
       fuelType,
+      price: Number(price) || 0,
       isPourBack,
       notes,
       createdAt: editId ? undefined : new Date().toISOString(),
@@ -141,10 +144,14 @@ export default function ConsumptionFormPage() {
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
+          <div className="grid grid-cols-3 divide-x divide-gray-300">
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Quantity (litres)</label>
               <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Price (per litre)</label>
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Fuel Type</label>

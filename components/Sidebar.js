@@ -9,11 +9,13 @@ import {
   LayoutDashboard, CreditCard,
   MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight, ChevronDown,
   FileSpreadsheet, ClipboardList, Droplets, Users, Flame, BarChart3,
-  SquarePen, ChartNoAxesCombined, Cloud, RefreshCw, Loader2
+  SquarePen, ChartNoAxesCombined, Cloud, RefreshCw, Loader2, Building2,
+  ArrowUpFromLine, ArrowDownToLine
 } from 'lucide-react'
 import { db } from '@/lib/db'
 import { processQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
+import { useRemoteChanges } from '@/lib/hooks/useRemoteChanges'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -51,6 +53,7 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
     [stationId],
     0
   )
+  const { pendingPullCount, resetPullCount } = useRemoteChanges(stationId)
 
   const handleSync = async () => {
     if (syncing) return
@@ -62,7 +65,10 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
   const handleRefresh = async () => {
     if (refreshing || !stationId) return
     setRefreshing(true)
-    try { await initialSync(stationId, { force: true }) } catch (e) { /* offline */ }
+    try {
+      await initialSync(stationId, { force: true })
+      resetPullCount()
+    } catch (e) { /* offline */ }
     setRefreshing(false)
   }
 
@@ -140,6 +146,76 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
           {/* Station-contextual links */}
           {stationId && (
             <>
+              {/* Push (sync to server) */}
+              <button
+                onClick={handleSync}
+                disabled={syncing || pendingCount === 0}
+                title={collapsed ? (pendingCount > 0 ? `Push ${pendingCount} pending` : 'All pushed') : undefined}
+                className={`relative flex items-center rounded-md text-sm ${
+                  collapsed
+                    ? 'sm:justify-center sm:px-0 sm:py-2.5 gap-3 px-3 py-2'
+                    : 'gap-3 px-3 py-2'
+                } ${
+                  pendingCount > 0
+                    ? 'text-yellow-700 hover:bg-yellow-50'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                } disabled:opacity-40`}
+              >
+                {syncing ? <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" /> : <ArrowUpFromLine className="w-5 h-5 flex-shrink-0" />}
+                <span className={collapsed ? 'sm:hidden' : ''}>Push</span>
+                {pendingCount > 0 && (
+                  <span className="ml-auto bg-yellow-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {pendingCount > 9 ? '9+' : pendingCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Pull (refresh from server) */}
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                title={collapsed ? 'Pull data from server' : undefined}
+                className={`relative flex items-center rounded-md text-sm ${
+                  collapsed
+                    ? 'sm:justify-center sm:px-0 sm:py-2.5 gap-3 px-3 py-2'
+                    : 'gap-3 px-3 py-2'
+                } ${
+                  pendingPullCount > 0
+                    ? 'text-blue-700 hover:bg-blue-50'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                } disabled:opacity-40`}
+              >
+                {refreshing ? <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" /> : <ArrowDownToLine className="w-5 h-5 flex-shrink-0" />}
+                <span className={collapsed ? 'sm:hidden' : ''}>Pull</span>
+                {pendingPullCount > 0 && (
+                  <span className="ml-auto bg-blue-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {pendingPullCount > 9 ? '9+' : pendingPullCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Divider */}
+              <hr className={`my-2 border-gray-200 ${collapsed ? 'sm:mx-1' : ''}`} />
+
+              {/* Station Overview */}
+              <Link
+                href={`/dashboard/stations/${stationId}`}
+                onClick={onClose}
+                title={collapsed ? 'Station Overview' : undefined}
+                className={`flex items-center rounded-md text-sm ${
+                  collapsed
+                    ? 'sm:justify-center sm:px-0 sm:py-2.5 gap-3 px-3 py-2'
+                    : 'gap-3 px-3 py-2'
+                } ${
+                  pathname === `/dashboard/stations/${stationId}`
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Building2 className="w-5 h-5 flex-shrink-0" />
+                <span className={collapsed ? 'sm:hidden' : ''}>Station Overview</span>
+              </Link>
+
               {/* Entries */}
               <div className={`pt-3 ${collapsed ? 'sm:pt-2' : ''}`}>
                 <button
@@ -228,39 +304,6 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
                 })}
               </div>
             </>
-          )}
-
-          {/* Sync / Refresh buttons */}
-          {stationId && (
-            <div className={`flex items-center gap-1 pt-4 ${collapsed ? 'sm:flex-col sm:gap-2' : ''}`}>
-              <button
-                onClick={handleSync}
-                disabled={syncing || pendingCount === 0}
-                title={pendingCount > 0 ? `Sync ${pendingCount} pending` : 'All synced'}
-                className={`relative flex items-center justify-center rounded-md text-sm disabled:opacity-40 ${
-                  pendingCount > 0
-                    ? 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
-                    : 'text-green-600 bg-green-50'
-                } ${collapsed ? 'sm:w-10 sm:h-10 w-10 h-10' : 'w-10 h-10'}`}
-              >
-                {syncing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Cloud className="w-4.5 h-4.5" />}
-                {pendingCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                    {pendingCount > 9 ? '9+' : pendingCount}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                title="Refresh data from server"
-                className={`flex items-center justify-center rounded-md text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 ${
-                  collapsed ? 'sm:w-10 sm:h-10 w-10 h-10' : 'w-10 h-10'
-                }`}
-              >
-                {refreshing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <RefreshCw className="w-4.5 h-4.5" />}
-              </button>
-            </div>
           )}
 
           {user?.role === 'admin' && (
