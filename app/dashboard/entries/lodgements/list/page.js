@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
@@ -26,7 +26,6 @@ export default function LodgementsListPage() {
     [orgId, ready], []
   )
 
-  // Look up bank names for display
   const banksMap = useLiveQuery(
     () => ready && orgId
       ? db.banks.where('orgId').equals(orgId).toArray().then(arr => Object.fromEntries(arr.map(b => [b.id, b.bank_name])))
@@ -39,15 +38,24 @@ export default function LodgementsListPage() {
     [orgId, ready], 0
   )
 
-  const total = allEntries.length
+  // Group entries by date
+  const groupedEntries = useMemo(() => {
+    const groups = {}
+    for (const entry of allEntries) {
+      const date = entry.entryDate || 'no-date'
+      if (!groups[date]) groups[date] = []
+      groups[date].push(entry)
+    }
+    return Object.entries(groups).map(([date, entries]) => ({
+      date,
+      entries,
+      totalAmount: entries.reduce((s, e) => s + (Number(e.amount) || 0), 0),
+    }))
+  }, [allEntries])
+
+  const total = groupedEntries.length
   const totalPages = Math.ceil(total / limit)
-  const pageEntries = allEntries.slice((page - 1) * limit, page * limit)
-  const entries = pageEntries.map((entry, i) => {
-    if (entry.entryDate) return entry
-    for (let j = i - 1; j >= 0; j--) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
-    for (let j = i + 1; j < pageEntries.length; j++) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
-    return entry
-  })
+  const pageGroups = groupedEntries.slice((page - 1) * limit, page * limit)
 
   if (!ready) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>
 
@@ -71,24 +79,30 @@ export default function LodgementsListPage() {
         </Link>
       </div>
 
-      {entries.length === 0 ? (
+      {pageGroups.length === 0 ? (
         <p className="text-sm text-gray-500 py-8 text-center">No entries yet.</p>
       ) : (
         <>
           <div className="divide-y divide-gray-100">
-            {entries.map((entry) => (
-              <div key={entry.id} className="py-3 flex items-center gap-3">
+            {pageGroups.map((group) => (
+              <div key={group.date} className="py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {(entry.entryDate || entry._displayDate) ? format(new Date((entry.entryDate || entry._displayDate) + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
-                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{typeLabel[entry.lodgementType] || entry.lodgementType}</span>
+                    {group.date !== 'no-date' ? format(new Date(group.date + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
+                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'}</span>
+                    <span className="ml-2 text-sm font-semibold text-gray-700">&#8358;{group.totalAmount.toLocaleString()}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {entry.createdAt ? format(new Date(entry.createdAt), 'h:mm a') : ''}
-                    {' · '}&#8358;{Number(entry.amount).toLocaleString()} · {banksMap[entry.bankId] || 'Unknown'}
+                    {group.entries.map((e, i) => (
+                      <span key={e.id}>
+                        {i > 0 && ' · '}
+                        {banksMap[e.bankId] || 'Unknown'} &#8358;{Number(e.amount).toLocaleString()}
+                        <span className="ml-1 text-gray-400">({typeLabel[e.lodgementType] || e.lodgementType})</span>
+                      </span>
+                    ))}
                   </p>
                 </div>
-                <Link href={`/dashboard/entries/lodgements?${qs}&edit=${entry.id}`} className="flex items-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded hover:bg-blue-50">
+                <Link href={`/dashboard/entries/lodgements?${qs}&edit_date=${group.date}`} className="flex items-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded hover:bg-blue-50">
                   <Pencil className="w-3.5 h-3.5" /> Edit
                 </Link>
               </div>

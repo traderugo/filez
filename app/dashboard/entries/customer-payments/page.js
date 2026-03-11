@@ -2,17 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { customerPaymentsRepo } from '@/lib/repositories/customerPayments'
 import DateInput from '@/components/DateInput'
+
+function blankEntry() {
+  return { _key: crypto.randomUUID(), id: null, customerId: '', amountPaid: '', salesAmount: '', notes: '' }
+}
 
 export default function CustomerPaymentsFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
+  const editDate = searchParams.get('edit_date') || null
   const qs = `org_id=${orgId}`
 
   const [loading, setLoading] = useState(true)
@@ -22,17 +27,13 @@ export default function CustomerPaymentsFormPage() {
   const [error, setError] = useState('')
 
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
-  const [customerId, setCustomerId] = useState('')
-  const [amountPaid, setAmountPaid] = useState('')
-  const [salesAmount, setSalesAmount] = useState('')
-  const [notes, setNotes] = useState('')
+  const [entries, setEntries] = useState([blankEntry()])
+  const [originalIds, setOriginalIds] = useState([])
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       if (!orgId) { setLoading(false); return }
-
-
 
       if (cancelled) return
 
@@ -45,10 +46,28 @@ export default function CustomerPaymentsFormPage() {
         const entry = await customerPaymentsRepo.getById(editId)
         if (entry && !cancelled) {
           setFormDate(entry.entryDate || '')
-          setCustomerId(entry.customerId || '')
-          setAmountPaid(String(entry.amountPaid ?? ''))
-          setSalesAmount(String(entry.salesAmount ?? ''))
-          setNotes(entry.notes || '')
+          setOriginalIds([entry.id])
+          setEntries([{
+            _key: entry.id, id: entry.id,
+            customerId: entry.customerId || '',
+            amountPaid: String(entry.amountPaid ?? ''),
+            salesAmount: String(entry.salesAmount ?? ''),
+            notes: entry.notes || '',
+          }])
+        }
+      } else if (editDate) {
+        const all = await db.customerPayments.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === editDate)
+        if (dateEntries.length > 0 && !cancelled) {
+          setFormDate(editDate)
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => ({
+            _key: e.id, id: e.id,
+            customerId: e.customerId || '',
+            amountPaid: String(e.amountPaid ?? ''),
+            salesAmount: String(e.salesAmount ?? ''),
+            notes: e.notes || '',
+          })))
         }
       }
 
@@ -56,44 +75,66 @@ export default function CustomerPaymentsFormPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [editId, orgId])
+  }, [editId, editDate, orgId])
+
+  const updateEntry = (idx, field, value) => {
+    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
+  }
+
+  const addEntry = () => setEntries(prev => [...prev, blankEntry()])
+
+  const removeEntry = (idx) => {
+    if (entries.length === 1) return
+    setEntries(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const isEditing = !!(editId || editDate)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!customerId) { setError('Customer is required'); return }
+    for (let i = 0; i < entries.length; i++) {
+      if (!entries[i].customerId) { setError(`Entry ${i + 1}: Customer is required`); return }
+    }
     setSaving(true)
     setError('')
 
-    const record = {
-      id: editId || crypto.randomUUID(),
-      orgId,
-      entryDate: formDate,
-      customerId,
-      amountPaid: Number(amountPaid) || 0,
-      salesAmount: Number(salesAmount) || 0,
-      notes,
-      createdAt: editId ? undefined : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
     try {
-      if (editId) {
-        const existing = await customerPaymentsRepo.getById(editId)
-        await customerPaymentsRepo.update({ ...existing, ...record })
-      } else {
-        await customerPaymentsRepo.create(record)
+      const now = new Date().toISOString()
+      const currentIds = entries.filter(e => e.id).map(e => e.id)
+
+      if (isEditing) {
+        const deletedIds = originalIds.filter(id => !currentIds.includes(id))
+        for (const id of deletedIds) {
+          await customerPaymentsRepo.remove(id, orgId)
+        }
       }
+
+      for (const entry of entries) {
+        const record = {
+          id: entry.id || crypto.randomUUID(),
+          orgId,
+          entryDate: formDate,
+          customerId: entry.customerId,
+          amountPaid: Number(entry.amountPaid) || 0,
+          salesAmount: Number(entry.salesAmount) || 0,
+          notes: entry.notes,
+          updatedAt: now,
+        }
+
+        if (entry.id) {
+          const existing = await customerPaymentsRepo.getById(entry.id)
+          await customerPaymentsRepo.update({ ...existing, ...record })
+        } else {
+          record.createdAt = now
+          await customerPaymentsRepo.create(record)
+        }
+      }
+
       router.push(`/dashboard/entries/customer-payments/list?${qs}`)
     } catch (err) {
       setError('Failed to save')
     }
     setSaving(false)
-  }
-
-  const handleDelete = async () => {
-    if (!editId || !confirm('Delete this entry?')) return
-    await customerPaymentsRepo.remove(editId, orgId)
-    router.push(`/dashboard/entries/customer-payments/list?${qs}`)
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -112,53 +153,67 @@ export default function CustomerPaymentsFormPage() {
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{editId ? 'Edit Entry' : 'New Account Entry'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Account Entry'}</h1>
         <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
           <List className="w-4 h-4" /> View Entries
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
-        <div className="border border-gray-300 divide-y divide-gray-300">
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Transaction Date</label>
-              <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+      <form onSubmit={handleSubmit}>
+        {/* Shared date */}
+        <div className="border border-gray-300 mb-4">
+          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Transaction Date</label>
+          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+        </div>
+
+        {/* Entry cards */}
+        {entries.map((entry, idx) => (
+          <div key={entry._key} className="border border-gray-300 divide-y divide-gray-300 mb-3">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50">
+              <span className="text-xs font-medium text-gray-500">Entry {idx + 1}</span>
+              {entries.length > 1 && (
+                <button type="button" onClick={() => removeEntry(idx)} className="text-red-400 hover:text-red-600">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Customer</label>
-              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
+              <select value={entry.customerId} onChange={(e) => updateEntry(idx, 'customerId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
                 <option value="">Select customer</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}{c.phone ? ` (${c.phone})` : ''}</option>
                 ))}
               </select>
             </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount Paid</label>
-              <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount Paid</label>
+                <input type="number" value={entry.amountPaid} onChange={(e) => updateEntry(idx, 'amountPaid', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Amount</label>
+                <input type="number" value={entry.salesAmount} onChange={(e) => updateEntry(idx, 'salesAmount', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Amount</label>
-              <input type="number" value={salesAmount} onChange={(e) => setSalesAmount(e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+              <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
             </div>
           </div>
-          <div>
-            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
-          </div>
-        </div>
+        ))}
+
+        <button type="button" onClick={addEntry} className="flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700 mb-4">
+          <Plus className="w-4 h-4" /> Add Entry
+        </button>
 
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
         <div className="flex gap-2 mt-3">
-          {editId && <button type="button" onClick={handleDelete} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /> Delete</button>}
           <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {editId ? 'Update' : 'Create'}
+            {isEditing ? 'Update' : 'Save All'}
           </button>
         </div>
       </form>

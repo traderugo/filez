@@ -2,17 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { lodgementsRepo } from '@/lib/repositories/lodgements'
 import DateInput from '@/components/DateInput'
+
+function blankEntry() {
+  return { _key: crypto.randomUUID(), id: null, amount: '', bankId: '', lodgementType: 'deposit', salesDate: '', notes: '' }
+}
 
 export default function LodgementsFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
+  const editDate = searchParams.get('edit_date') || null
   const qs = `org_id=${orgId}`
 
   const [loading, setLoading] = useState(true)
@@ -22,18 +27,13 @@ export default function LodgementsFormPage() {
   const [error, setError] = useState('')
 
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
-  const [amount, setAmount] = useState('')
-  const [bankId, setBankId] = useState('')
-  const [lodgementType, setLodgementType] = useState('deposit')
-  const [salesDate, setSalesDate] = useState('')
-  const [notes, setNotes] = useState('')
+  const [entries, setEntries] = useState([blankEntry()])
+  const [originalIds, setOriginalIds] = useState([])
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       if (!orgId) { setLoading(false); return }
-
-
 
       if (cancelled) return
 
@@ -46,11 +46,30 @@ export default function LodgementsFormPage() {
         const entry = await lodgementsRepo.getById(editId)
         if (entry && !cancelled) {
           setFormDate(entry.entryDate || '')
-          setAmount(String(entry.amount ?? ''))
-          setBankId(entry.bankId || '')
-          setLodgementType(entry.lodgementType || 'deposit')
-          setSalesDate(entry.salesDate || '')
-          setNotes(entry.notes || '')
+          setOriginalIds([entry.id])
+          setEntries([{
+            _key: entry.id, id: entry.id,
+            amount: String(entry.amount ?? ''),
+            bankId: entry.bankId || '',
+            lodgementType: entry.lodgementType || 'deposit',
+            salesDate: entry.salesDate || '',
+            notes: entry.notes || '',
+          }])
+        }
+      } else if (editDate) {
+        const all = await db.lodgements.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === editDate)
+        if (dateEntries.length > 0 && !cancelled) {
+          setFormDate(editDate)
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => ({
+            _key: e.id, id: e.id,
+            amount: String(e.amount ?? ''),
+            bankId: e.bankId || '',
+            lodgementType: e.lodgementType || 'deposit',
+            salesDate: e.salesDate || '',
+            notes: e.notes || '',
+          })))
         }
       }
 
@@ -58,45 +77,67 @@ export default function LodgementsFormPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [editId, orgId])
+  }, [editId, editDate, orgId])
+
+  const updateEntry = (idx, field, value) => {
+    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
+  }
+
+  const addEntry = () => setEntries(prev => [...prev, blankEntry()])
+
+  const removeEntry = (idx) => {
+    if (entries.length === 1) return
+    setEntries(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  const isEditing = !!(editId || editDate)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!bankId) { setError('Bank account is required'); return }
+    for (let i = 0; i < entries.length; i++) {
+      if (!entries[i].bankId) { setError(`Entry ${i + 1}: Bank account is required`); return }
+    }
     setSaving(true)
     setError('')
 
-    const record = {
-      id: editId || crypto.randomUUID(),
-      orgId,
-      entryDate: formDate,
-      amount: Number(amount) || 0,
-      bankId,
-      lodgementType,
-      salesDate: salesDate || null,
-      notes,
-      createdAt: editId ? undefined : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
     try {
-      if (editId) {
-        const existing = await lodgementsRepo.getById(editId)
-        await lodgementsRepo.update({ ...existing, ...record })
-      } else {
-        await lodgementsRepo.create(record)
+      const now = new Date().toISOString()
+      const currentIds = entries.filter(e => e.id).map(e => e.id)
+
+      if (isEditing) {
+        const deletedIds = originalIds.filter(id => !currentIds.includes(id))
+        for (const id of deletedIds) {
+          await lodgementsRepo.remove(id, orgId)
+        }
       }
+
+      for (const entry of entries) {
+        const record = {
+          id: entry.id || crypto.randomUUID(),
+          orgId,
+          entryDate: formDate,
+          amount: Number(entry.amount) || 0,
+          bankId: entry.bankId,
+          lodgementType: entry.lodgementType,
+          salesDate: entry.salesDate || null,
+          notes: entry.notes,
+          updatedAt: now,
+        }
+
+        if (entry.id) {
+          const existing = await lodgementsRepo.getById(entry.id)
+          await lodgementsRepo.update({ ...existing, ...record })
+        } else {
+          record.createdAt = now
+          await lodgementsRepo.create(record)
+        }
+      }
+
       router.push(`/dashboard/entries/lodgements/list?${qs}`)
     } catch (err) {
       setError('Failed to save')
     }
     setSaving(false)
-  }
-
-  const handleDelete = async () => {
-    if (!editId || !confirm('Delete this entry?')) return
-    await lodgementsRepo.remove(editId, orgId)
-    router.push(`/dashboard/entries/lodgements/list?${qs}`)
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -115,61 +156,77 @@ export default function LodgementsFormPage() {
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{editId ? 'Edit Entry' : 'New Lodgement'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Lodgement'}</h1>
         <Link href={`/dashboard/entries/lodgements/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
           <List className="w-4 h-4" /> View Entries
         </Link>
       </div>
 
-      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
-        <div className="border border-gray-300 divide-y divide-gray-300">
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-              <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount</label>
-              <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Bank Account</label>
-              <select value={bankId} onChange={(e) => setBankId(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                <option value="">Select account</option>
-                {banks.map((b) => (
-                  <option key={b.id} value={b.id}>{b.bank_name} ({b.lodgement_type})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Type</label>
-              <select value={lodgementType} onChange={(e) => setLodgementType(e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                <option value="deposit">Deposit</option>
-                <option value="lube-deposit">Lube Deposit</option>
-                <option value="pos">POS</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Date</label>
-            <DateInput value={salesDate} onChange={setSalesDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
-          </div>
+      <form onSubmit={handleSubmit}>
+        {/* Shared date */}
+        <div className="border border-gray-300 mb-4">
+          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
+          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
         </div>
+
+        {/* Entry cards */}
+        {entries.map((entry, idx) => (
+          <div key={entry._key} className="border border-gray-300 divide-y divide-gray-300 mb-3">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50">
+              <span className="text-xs font-medium text-gray-500">Entry {idx + 1}</span>
+              {entries.length > 1 && (
+                <button type="button" onClick={() => removeEntry(idx)} className="text-red-400 hover:text-red-600">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount</label>
+                <input type="number" value={entry.amount} onChange={(e) => updateEntry(idx, 'amount', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Bank Account</label>
+                <select value={entry.bankId} onChange={(e) => updateEntry(idx, 'bankId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
+                  <option value="">Select account</option>
+                  {banks.map((b) => (
+                    <option key={b.id} value={b.id}>{b.bank_name} ({b.lodgement_type})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Type</label>
+                <select value={entry.lodgementType} onChange={(e) => updateEntry(idx, 'lodgementType', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
+                  <option value="deposit">Deposit</option>
+                  <option value="lube-deposit">Lube Deposit</option>
+                  <option value="pos">POS</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Date</label>
+                <DateInput value={entry.salesDate} onChange={(v) => updateEntry(idx, 'salesDate', v)} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+              <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            </div>
+          </div>
+        ))}
+
+        <button type="button" onClick={addEntry} className="flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700 mb-4">
+          <Plus className="w-4 h-4" /> Add Entry
+        </button>
 
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
         <div className="flex gap-2 mt-3">
-          {editId && <button type="button" onClick={handleDelete} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /> Delete</button>}
           <Link href={`/dashboard/entries/lodgements/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {editId ? 'Update' : 'Create'}
+            {isEditing ? 'Update' : 'Save All'}
           </button>
         </div>
       </form>
