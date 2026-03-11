@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense, useState, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2 } from 'lucide-react'
@@ -305,24 +305,13 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
             <td className={cellR}>{fmt(summary.totalPourBackAmt)}</td>
           </tr>
           {(summary.consumption.pourBackByPrice || []).map((group, gi) => (
-            <React.Fragment key={`pbg-${gi}`}>
-              {group.entries.map((item, i) => (
-                <tr key={`pb-${gi}-${i}`}>
-                  <td className={cell}></td>
-                  <td className={cell}>{item.name}</td>
-                  <td className={cellR}>{fmt(item.qty)}</td>
-                  <td className={cellR}>{i === 0 ? fmt(group.price) : ''}</td>
-                  <td className={cellR}>{i === 0 ? '' : ''}</td>
-                </tr>
-              ))}
-              <tr className="font-semibold bg-gray-50">
-                <td className={cell}></td>
-                <td className={cell}>Subtotal @ {fmt(group.price)}</td>
-                <td className={cellR}>{fmt(group.totalQty)}</td>
-                <td className={cellR}>{fmt(group.price)}</td>
-                <td className={cellR}>{fmt(group.totalAmt)}</td>
-              </tr>
-            </React.Fragment>
+            <tr key={`pbg-${gi}`}>
+              <td className={cell}></td>
+              <td className={cell}>{group.entries.map(e => e.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</td>
+              <td className={cellR}>{fmt(group.totalQty)}</td>
+              <td className={cellR}>{fmt(group.price)}</td>
+              <td className={cellR}>{fmt(group.totalAmt)}</td>
+            </tr>
           ))}
 
           {/* C = Net Sales */}
@@ -340,24 +329,13 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
             <td className={cell} colSpan={4}>Less Consumption on {fuelType}</td>
           </tr>
           {(summary.consumption.consumedByPrice || []).map((group, gi) => (
-            <React.Fragment key={`cg-${gi}`}>
-              {group.entries.map((item, i) => (
-                <tr key={`c-${gi}-${i}`}>
-                  <td className={cell}></td>
-                  <td className={cell}>{item.name}</td>
-                  <td className={cellR}>{fmt(item.qty)}</td>
-                  <td className={cellR}>{i === 0 ? fmt(group.price) : ''}</td>
-                  <td className={cellR}>{i === 0 ? '' : ''}</td>
-                </tr>
-              ))}
-              <tr className="font-semibold bg-gray-50">
-                <td className={cell}></td>
-                <td className={cell}>Subtotal @ {fmt(group.price)}</td>
-                <td className={cellR}>{fmt(group.totalQty)}</td>
-                <td className={cellR}>{fmt(group.price)}</td>
-                <td className={cellR}>{fmt(group.totalAmt)}</td>
-              </tr>
-            </React.Fragment>
+            <tr key={`cg-${gi}`}>
+              <td className={cell}></td>
+              <td className={cell}>{group.entries.map(e => e.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</td>
+              <td className={cellR}>{fmt(group.totalQty)}</td>
+              <td className={cellR}>{fmt(group.price)}</td>
+              <td className={cellR}>{fmt(group.totalAmt)}</td>
+            </tr>
           ))}
 
           {/* D = Total Consumption */}
