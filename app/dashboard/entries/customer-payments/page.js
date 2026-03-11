@@ -6,8 +6,6 @@ import { Loader2, List, Trash2, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { customerPaymentsRepo } from '@/lib/repositories/customerPayments'
-import { initialSync } from '@/lib/initialSync'
-import { startSync } from '@/lib/sync'
 import DateInput from '@/components/DateInput'
 
 export default function CustomerPaymentsFormPage() {
@@ -33,8 +31,8 @@ export default function CustomerPaymentsFormPage() {
     let cancelled = false
     const load = async () => {
       if (!orgId) { setLoading(false); return }
-      try { await initialSync(orgId) } catch (e) { /* offline */ }
-      try { startSync() } catch (e) { /* offline */ }
+
+
 
       if (cancelled) return
 

@@ -6,8 +6,6 @@ import { Loader2, List, Trash2, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { consumptionRepo } from '@/lib/repositories/consumption'
-import { initialSync } from '@/lib/initialSync'
-import { startSync } from '@/lib/sync'
 import DateInput from '@/components/DateInput'
 
 const FUEL_TYPES = ['PMS', 'AGO', 'DPK']
@@ -36,8 +34,8 @@ export default function ConsumptionFormPage() {
     let cancelled = false
     const load = async () => {
       if (!orgId) { setLoading(false); return }
-      try { await initialSync(orgId) } catch (e) { /* offline */ }
-      try { startSync() } catch (e) { /* offline */ }
+
+
 
       if (cancelled) return
 

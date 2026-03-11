@@ -6,7 +6,6 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
-import { initialSync } from '@/lib/initialSync'
 import { buildDailyReport } from '@/lib/buildDailyReport'
 import DateInput from '@/components/DateInput'
 
@@ -62,7 +61,7 @@ function DailySalesReportContent() {
     if (!orgId) { setLoading(false); return }
     let cancelled = false
     const load = async () => {
-      try { await initialSync(orgId) } catch (e) { /* offline — use local data */ }
+
       if (cancelled) return
 
       const [noz, tnk, bnk] = await Promise.all([

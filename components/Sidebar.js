@@ -4,12 +4,16 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { useState } from 'react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import {
   LayoutDashboard, CreditCard,
   MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight, ChevronDown,
   FileSpreadsheet, ClipboardList, Droplets, Users, Flame, BarChart3,
-  SquarePen, ChartNoAxesCombined
+  SquarePen, ChartNoAxesCombined, Cloud, RefreshCw, Loader2
 } from 'lucide-react'
+import { db } from '@/lib/db'
+import { processQueue } from '@/lib/sync'
+import { initialSync } from '@/lib/initialSync'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -38,6 +42,29 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
   // Detect station context from URL
   const stationMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)/)
   const stationId = stationMatch ? stationMatch[1] : searchParams.get('org_id')
+
+  // Sync state
+  const [syncing, setSyncing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const pendingCount = useLiveQuery(
+    () => stationId ? db.syncQueue.where('orgId').equals(stationId).count() : 0,
+    [stationId],
+    0
+  )
+
+  const handleSync = async () => {
+    if (syncing) return
+    setSyncing(true)
+    try { await processQueue() } catch (e) { /* offline */ }
+    setSyncing(false)
+  }
+
+  const handleRefresh = async () => {
+    if (refreshing || !stationId) return
+    setRefreshing(true)
+    try { await initialSync(stationId, { force: true }) } catch (e) { /* offline */ }
+    setRefreshing(false)
+  }
 
   const isActive = (href, exact) => {
     if (exact) return pathname === href
@@ -201,6 +228,39 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
                 })}
               </div>
             </>
+          )}
+
+          {/* Sync / Refresh buttons */}
+          {stationId && (
+            <div className={`flex items-center gap-1 pt-4 ${collapsed ? 'sm:flex-col sm:gap-2' : ''}`}>
+              <button
+                onClick={handleSync}
+                disabled={syncing || pendingCount === 0}
+                title={pendingCount > 0 ? `Sync ${pendingCount} pending` : 'All synced'}
+                className={`relative flex items-center justify-center rounded-md text-sm disabled:opacity-40 ${
+                  pendingCount > 0
+                    ? 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
+                    : 'text-green-600 bg-green-50'
+                } ${collapsed ? 'sm:w-10 sm:h-10 w-10 h-10' : 'w-10 h-10'}`}
+              >
+                {syncing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <Cloud className="w-4.5 h-4.5" />}
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                    {pendingCount > 9 ? '9+' : pendingCount}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                title="Refresh data from server"
+                className={`flex items-center justify-center rounded-md text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 ${
+                  collapsed ? 'sm:w-10 sm:h-10 w-10 h-10' : 'w-10 h-10'
+                }`}
+              >
+                {refreshing ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <RefreshCw className="w-4.5 h-4.5" />}
+              </button>
+            </div>
           )}
 
           {user?.role === 'admin' && (

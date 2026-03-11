@@ -7,8 +7,6 @@ import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { db } from '@/lib/db'
-import { initialSync } from '@/lib/initialSync'
-import { startSync } from '@/lib/sync'
 
 export default function LodgementsListPage() {
   const searchParams = useSearchParams()
@@ -20,8 +18,7 @@ export default function LodgementsListPage() {
   const typeLabel = { deposit: 'Deposit', 'lube-deposit': 'Lube Deposit', pos: 'POS' }
 
   useEffect(() => {
-    if (!orgId) return
-    initialSync(orgId).catch(() => {}).finally(() => { try { startSync() } catch (e) {} setReady(true) })
+    setReady(true)
   }, [orgId])
 
   const allEntries = useLiveQuery(

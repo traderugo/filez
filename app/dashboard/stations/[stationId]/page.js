@@ -10,7 +10,6 @@ import {
 } from 'lucide-react'
 import Modal from '@/components/Modal'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
-import SyncStatus from '@/components/SyncStatus'
 import { format, differenceInDays } from 'date-fns'
 
 const PAGE_OPTIONS = [
@@ -207,11 +206,6 @@ export default function StationPage() {
           {station.station_group && <p className="text-xs text-gray-400">{station.station_group}</p>}
         </div>
       </div>
-
-      {/* Sync Status */}
-      <section className="mb-8">
-        <SyncStatus orgId={stationId} />
-      </section>
 
       {/* Entries */}
       <section className="mb-8">

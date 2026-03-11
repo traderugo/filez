@@ -6,8 +6,6 @@ import { Loader2, List, Trash2, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
-import { initialSync } from '@/lib/initialSync'
-import { startSync } from '@/lib/sync'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
 
@@ -40,9 +38,9 @@ export default function DailySalesFormPage() {
       if (!orgId) { setLoading(false); return }
 
       // Ensure data is synced (no-op if already done)
-      try { await initialSync(orgId) } catch (e) { /* offline */ }
+
       // Start background sync engine
-      try { startSync() } catch (e) { /* offline */ }
+
 
       if (cancelled) return
 

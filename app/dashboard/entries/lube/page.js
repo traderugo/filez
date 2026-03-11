@@ -7,8 +7,6 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { lubeSalesRepo } from '@/lib/repositories/lubeSales'
 import { lubeStockRepo } from '@/lib/repositories/lubeStock'
-import { initialSync } from '@/lib/initialSync'
-import { startSync } from '@/lib/sync'
 import DateInput from '@/components/DateInput'
 
 export default function LubeFormPage() {
@@ -26,8 +24,8 @@ export default function LubeFormPage() {
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
     const load = async () => {
-      try { await initialSync(orgId) } catch (e) { /* offline */ }
-      try { startSync() } catch (e) { /* offline */ }
+
+
       const prods = await db.lubeProducts.where('orgId').equals(orgId).toArray()
       if (prods.length === 0) setLocked(true)
       setProducts(prods)

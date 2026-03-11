@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2 } from 'lucide-react'
 import { db } from '@/lib/db'
-import { initialSync } from '@/lib/initialSync'
 import { buildAuditReport } from '@/lib/buildAuditReport'
 import DateInput from '@/components/DateInput'
 
@@ -66,7 +65,7 @@ function AuditReportContent() {
     if (!orgId) { setLoading(false); return }
     let cancelled = false
     const load = async () => {
-      try { await initialSync(orgId) } catch (e) { /* offline */ }
+
       if (cancelled) return
       const [noz, bnk] = await Promise.all([
         db.nozzles.where('orgId').equals(orgId).toArray(),

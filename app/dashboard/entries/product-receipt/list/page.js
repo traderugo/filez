@@ -7,8 +7,6 @@ import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { db } from '@/lib/db'
-import { initialSync } from '@/lib/initialSync'
-import { startSync } from '@/lib/sync'
 
 export default function ProductReceiptListPage() {
   const searchParams = useSearchParams()
@@ -19,8 +17,7 @@ export default function ProductReceiptListPage() {
   const limit = 10
 
   useEffect(() => {
-    if (!orgId) return
-    initialSync(orgId).catch(() => {}).finally(() => { try { startSync() } catch (e) {} setReady(true) })
+    setReady(true)
   }, [orgId])
 
   const allEntries = useLiveQuery(
