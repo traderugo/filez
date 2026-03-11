@@ -314,7 +314,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
               <td className={cell}></td>
               <td className={cell}>{item.name}</td>
               <td className={cellR}>{fmt(item.qty)}</td>
-              <td className={cellR}></td>
+              <td className={cellR}>{fmt(item.amt)}</td>
             </tr>
           ))}
 
@@ -336,7 +336,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
               <td className={cell}></td>
               <td className={cell}>{item.name}</td>
               <td className={cellR}>{fmt(item.qty)}</td>
-              <td className={cellR}></td>
+              <td className={cellR}>{fmt(item.amt)}</td>
             </tr>
           ))}
 
