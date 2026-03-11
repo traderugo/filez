@@ -612,8 +612,9 @@ Compact box comparing nozzle reading totals vs consumption entry totals. Green =
 6. [ ] Load config via `useEffect` + IndexedDB
 7. [ ] Load entries via `useLiveQuery` (reactive)
 8. [ ] Default dates: 1st of current month → today
-9. [ ] Add committed date range state (`generated`, `reportStart`, `reportEnd`) — initialized to defaults so report renders on load
-10. [ ] Add Generate button next to date inputs
+9. [ ] Use `DateInput` component for all date inputs (NOT `<input type="date">`)
+10. [ ] Add committed date range state (`generated`, `reportStart`, `reportEnd`) — initialized to defaults so report renders on load
+11. [ ] Add Generate button next to date inputs
 11. [ ] Derive report via `useMemo(builder)` using committed range — NOT useEffect+setState
 12. [ ] ALL hooks BEFORE early returns
 13. [ ] Use consistent CSS classes: `hdr`, `subHdr`, `bdr`, `cell`, `cellR`
@@ -623,7 +624,82 @@ Compact box comparing nozzle reading totals vs consumption entry totals. Green =
 17. [ ] Sub-components at module level only
 18. [ ] If consumption amounts needed, use price-by-date lookup (never hardcode `lastPrice`)
 
-## 13. Checklist for New Helper Functions
+## 13. DateInput Component
+
+All date inputs use the custom `DateInput` component (`components/DateInput.js`) instead of `<input type="date">`.
+
+### Usage
+
+```jsx
+import DateInput from '@/components/DateInput'
+
+// value = YYYY-MM-DD string, onChange receives YYYY-MM-DD string (NOT an event object)
+<DateInput
+  value={formDate}
+  onChange={setFormDate}
+  className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50"
+/>
+```
+
+### Features
+- **Display format**: DD/MM/YYYY (IMask enforced)
+- **Storage format**: YYYY-MM-DD (same as native date input)
+- **Keyboard shortcuts**: `+`/`-` (next/prev day), `t` (today), `y` (yesterday)
+- **Smart parsing**: type just a day number (e.g. `5`), day/month (e.g. `5/3`), or full date
+- **Calendar picker**: click calendar icon for visual date selection
+- **Empty values**: gracefully handles empty/null — shows empty input, no error
+
+### In Report Pages
+
+Date range inputs use DateInput with the same committed date range pattern:
+
+```jsx
+<DateInput
+  value={startDate}
+  onChange={setStartDate}
+  className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+<span className="text-sm text-gray-400">to</span>
+<DateInput
+  value={endDate}
+  onChange={setEndDate}
+  className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+```
+
+### In Entry Forms
+
+- Date fields are **NOT required** — entries can be saved without a date
+- Do NOT add `if (!formDate) { setError('Date is required'); return }` validation
+- DateInput is a direct replacement: swap `onChange={(e) => setX(e.target.value)}` with `onChange={setX}`
+- For forms using the `sf()` pattern (like product-receipt), use inline handler: `(v) => setForm(prev => ({ ...prev, fieldName: v }))`
+
+### Empty Date Fallback in List Pages
+
+When rendering entries in list pages, entries without dates fall back to the nearest adjacent entry's date:
+
+```jsx
+const pageEntries = allEntries.slice((page - 1) * limit, page * limit)
+const entries = pageEntries.map((entry, i) => {
+  if (entry.entryDate) return entry
+  for (let j = i - 1; j >= 0; j--) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
+  for (let j = i + 1; j < pageEntries.length; j++) { if (pageEntries[j].entryDate) return { ...entry, _displayDate: pageEntries[j].entryDate }; break }
+  return entry
+})
+
+// In JSX:
+{(entry.entryDate || entry._displayDate)
+  ? format(new Date((entry.entryDate || entry._displayDate) + 'T00:00:00'), 'MMM d, yyyy')
+  : 'No date'}
+```
+
+### Dependencies
+
+DateInput requires: `imask`, `react-datepicker`, `date-fns`, `lucide-react` (Calendar icon)
+
+---
+
+## 14. Checklist for New Helper Functions
 
 1. [ ] Create in `lib/*Calculations.js`
 2. [ ] Include `sortEntries()` and `getDateRange()` (or import shared)
