@@ -294,13 +294,14 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
             <td className={cell}>A</td>
             <td className={cell}>Total {fuelType} Sales for the Period</td>
             <td className={cellR}>{fmt(summary.totalDispensed)}</td>
+            <td className={cellR}></td>
             <td className={cellR}>{fmt(summary.totalAmount)}</td>
           </tr>
 
           {/* B = Less Pour Back */}
           <tr className="font-bold">
             <td className={cell}>B</td>
-            <td className={cell} colSpan={2}>Less Pour Back on {fuelType} for the Period</td>
+            <td className={cell} colSpan={3}>Less Pour Back on {fuelType} for the Period</td>
             <td className={cellR}>{fmt(summary.totalPourBackAmt)}</td>
           </tr>
           {summary.consumption.pourBack.map((item, i) => (
@@ -308,6 +309,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
               <td className={cell}></td>
               <td className={cell}>{item.name}</td>
               <td className={cellR}>{fmt(item.qty)}</td>
+              <td className={cellR}>{fmt(item.price)}</td>
               <td className={cellR}>{fmt(item.amt)}</td>
             </tr>
           ))}
@@ -317,19 +319,21 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
             <td className={cell}>C=A-B</td>
             <td className={cell}>Net {fuelType} Sales for the Period</td>
             <td className={cellR}>{fmt(summary.netSalesQty)}</td>
+            <td className={cellR}></td>
             <td className={cellR}>{fmt(summary.netSalesAmt)}</td>
           </tr>
 
           {/* Less Consumption */}
           <tr className="font-bold">
             <td className={cell}></td>
-            <td className={cell} colSpan={3}>Less Consumption on {fuelType}</td>
+            <td className={cell} colSpan={4}>Less Consumption on {fuelType}</td>
           </tr>
           {summary.consumption.consumed.map((item, i) => (
             <tr key={`c-${i}`}>
               <td className={cell}></td>
               <td className={cell}>{item.name}</td>
               <td className={cellR}>{fmt(item.qty)}</td>
+              <td className={cellR}>{fmt(item.price)}</td>
               <td className={cellR}>{fmt(item.amt)}</td>
             </tr>
           ))}
@@ -339,6 +343,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
             <td className={cell}>D</td>
             <td className={cell}>Total Consumption of {fuelType} for the Period</td>
             <td className={cellR}>{fmt(summary.totalConsumedQty)}</td>
+            <td className={cellR}></td>
             <td className={cellR}>{fmt(summary.totalConsumedAmt)}</td>
           </tr>
 
@@ -347,6 +352,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
             <td className={cell}>E=C-D</td>
             <td className={cell}>Expected {fuelType} Sales for the Period</td>
             <td className={cellR}>{fmt(summary.expectedSalesQty)}</td>
+            <td className={cellR}></td>
             <td className={cellR}>{fmt(summary.expectedSalesAmt)}</td>
           </tr>
         </tbody>
