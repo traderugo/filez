@@ -50,12 +50,12 @@ function AuditReportContent() {
 
   const [startDate, setStartDate] = useState(monthStartStr)
   const [endDate, setEndDate] = useState(todayStr)
-  const [generated, setGenerated] = useState(false)
+  const [generated, setGenerated] = useState(true)
   const [activeTab, setActiveTab] = useState('sales-cash')
 
   // Committed date range (only updates on Generate)
-  const [reportStart, setReportStart] = useState('')
-  const [reportEnd, setReportEnd] = useState('')
+  const [reportStart, setReportStart] = useState(monthStartStr)
+  const [reportEnd, setReportEnd] = useState(todayStr)
 
   useEffect(() => {
     if (!orgId) { setLoading(false); return }

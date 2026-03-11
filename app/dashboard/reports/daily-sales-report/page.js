@@ -39,9 +39,9 @@ function DailySalesReportContent() {
   const [startDate, setStartDate] = useState(monthStartStr)
   const [endDate, setEndDate] = useState(todayStr)
   const [viewDate, setViewDate] = useState(todayStr)
-  const [generated, setGenerated] = useState(false)
-  const [reportStart, setReportStart] = useState('')
-  const [reportEnd, setReportEnd] = useState('')
+  const [generated, setGenerated] = useState(true)
+  const [reportStart, setReportStart] = useState(monthStartStr)
+  const [reportEnd, setReportEnd] = useState(todayStr)
 
   // Config
   const [nozzles, setNozzles] = useState([])
