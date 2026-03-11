@@ -8,7 +8,7 @@ import {
   LayoutDashboard, CreditCard,
   MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight, ChevronDown,
   FileSpreadsheet, ClipboardList, Droplets, Users, Flame, BarChart3,
-  NotebookPen, FileBarChart
+  SquarePen, ChartNoAxesCombined
 } from 'lucide-react'
 
 const navItems = [
@@ -128,7 +128,7 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <NotebookPen className="w-4 h-4 flex-shrink-0 opacity-60" />
+                  <SquarePen className="w-4 h-4 flex-shrink-0" />
                   <span className={`flex-1 text-left text-xs font-semibold uppercase tracking-wide ${collapsed ? 'sm:hidden' : ''}`}>Entries</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${entriesOpen ? 'rotate-180' : ''} ${collapsed ? 'sm:hidden' : ''}`} />
                 </button>
@@ -172,7 +172,7 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
                       : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                   }`}
                 >
-                  <FileBarChart className="w-4 h-4 flex-shrink-0 opacity-60" />
+                  <ChartNoAxesCombined className="w-4 h-4 flex-shrink-0" />
                   <span className={`flex-1 text-left text-xs font-semibold uppercase tracking-wide ${collapsed ? 'sm:hidden' : ''}`}>Reports</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${reportsOpen ? 'rotate-180' : ''} ${collapsed ? 'sm:hidden' : ''}`} />
                 </button>

@@ -229,7 +229,7 @@ function DailySalesReportContent() {
 
       {/* Scrollable content area */}
       {currentDayReport && (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3">
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-200">
 
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 pb-4 min-w-[700px]">
             {/* ===== LEFT: DAILY SALES OPERATION ===== */}

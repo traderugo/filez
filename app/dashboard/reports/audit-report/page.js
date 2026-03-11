@@ -168,7 +168,7 @@ function AuditReportContent() {
 
       {/* Report content */}
       {report ? (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3">
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-200">
           {activeTab === 'sales-cash' && (
             <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
           )}
@@ -377,8 +377,8 @@ function MeterGroup({ row, rowIdx, totalRows, cell, cellR }) {
           <td className={cellR}>{fmt(pump.opening)}</td>
           <td className={cellR}>{fmt(pump.closing)}</td>
           <td className={cellR}>{fmt(pump.dispensed)}</td>
-          <td className={cellR}>{pIdx === 0 ? fmt(row.price) : ''}</td>
-          <td className={cellR}>{pIdx === 0 ? fmt(row.amount) : ''}</td>
+          <td className={cellR}>{fmt(row.price)}</td>
+          <td className={cellR}>{fmt(pump.dispensed * row.price)}</td>
         </tr>
       ))}
     </>
