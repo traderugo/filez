@@ -2,17 +2,55 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { productReceiptsRepo } from '@/lib/repositories/productReceipts'
 import DateInput from '@/components/DateInput'
+
+function blankEntry(tanks) {
+  return {
+    _key: crypto.randomUUID(),
+    id: null,
+    loadedDate: '', driverName: '', waybillNumber: '', ticketNumber: '', truckNumber: '',
+    chartUllage: '', chartLiquidHeight: '', depotUllage: '', depotLiquidHeight: '',
+    stationUllage: '', stationLiquidHeight: '',
+    firstCompartment: '', secondCompartment: '', thirdCompartment: '',
+    actualVolume: '', depotName: '', tankId: '', notes: '',
+  }
+}
+
+function entryFromRecord(entry) {
+  return {
+    _key: entry.id,
+    id: entry.id,
+    loadedDate: entry.loadedDate || '',
+    driverName: entry.driverName || '',
+    waybillNumber: entry.waybillNumber || '',
+    ticketNumber: entry.ticketNumber || '',
+    truckNumber: entry.truckNumber || '',
+    chartUllage: entry.chartUllage ?? '',
+    chartLiquidHeight: entry.chartLiquidHeight ?? '',
+    depotUllage: entry.depotUllage ?? '',
+    depotLiquidHeight: entry.depotLiquidHeight ?? '',
+    stationUllage: entry.stationUllage ?? '',
+    stationLiquidHeight: entry.stationLiquidHeight ?? '',
+    firstCompartment: entry.firstCompartment ?? '',
+    secondCompartment: entry.secondCompartment ?? '',
+    thirdCompartment: entry.thirdCompartment ?? '',
+    actualVolume: entry.actualVolume ?? '',
+    depotName: entry.depotName || '',
+    tankId: entry.tankId || '',
+    notes: entry.notes || '',
+  }
+}
 
 export default function ProductReceiptFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
+  const editDate = searchParams.get('edit_date') || null
   const qs = `org_id=${orgId}`
 
   const [loading, setLoading] = useState(true)
@@ -21,23 +59,15 @@ export default function ProductReceiptFormPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const [form, setForm] = useState({
-    entryDate: new Date().toISOString().split('T')[0],
-    loadedDate: '', driverName: '', waybillNumber: '', ticketNumber: '', truckNumber: '',
-    chartUllage: '', chartLiquidHeight: '', depotUllage: '', depotLiquidHeight: '',
-    stationUllage: '', stationLiquidHeight: '',
-    firstCompartment: '', secondCompartment: '', thirdCompartment: '',
-    actualVolume: '', depotName: '', tankId: '', notes: '',
-  })
-
-  const sf = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
+  const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
+  const [entries, setEntries] = useState([])
+  const [activeTab, setActiveTab] = useState(0)
+  const [originalIds, setOriginalIds] = useState([])
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       if (!orgId) { setLoading(false); return }
-
-
 
       if (cancelled) return
 
@@ -51,85 +81,102 @@ export default function ProductReceiptFormPage() {
       if (editId) {
         const entry = await productReceiptsRepo.getById(editId)
         if (entry && !cancelled) {
-          setForm({
-            entryDate: entry.entryDate || '',
-            loadedDate: entry.loadedDate || '',
-            driverName: entry.driverName || '',
-            waybillNumber: entry.waybillNumber || '',
-            ticketNumber: entry.ticketNumber || '',
-            truckNumber: entry.truckNumber || '',
-            chartUllage: entry.chartUllage ?? '',
-            chartLiquidHeight: entry.chartLiquidHeight ?? '',
-            depotUllage: entry.depotUllage ?? '',
-            depotLiquidHeight: entry.depotLiquidHeight ?? '',
-            stationUllage: entry.stationUllage ?? '',
-            stationLiquidHeight: entry.stationLiquidHeight ?? '',
-            firstCompartment: entry.firstCompartment ?? '',
-            secondCompartment: entry.secondCompartment ?? '',
-            thirdCompartment: entry.thirdCompartment ?? '',
-            actualVolume: entry.actualVolume ?? '',
-            depotName: entry.depotName || '',
-            tankId: entry.tankId || '',
-            notes: entry.notes || '',
-          })
+          setFormDate(entry.entryDate || '')
+          setOriginalIds([entry.id])
+          setEntries([entryFromRecord(entry)])
+        }
+      } else if (editDate) {
+        const all = await db.productReceipts.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === editDate)
+        if (dateEntries.length > 0 && !cancelled) {
+          setFormDate(editDate)
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => entryFromRecord(e)))
         }
       }
 
-      if (!cancelled) setLoading(false)
+      if (!cancelled) {
+        setEntries(prev => prev.length > 0 ? prev : [blankEntry(tnk)])
+        setLoading(false)
+      }
     }
     load()
     return () => { cancelled = true }
-  }, [editId, orgId])
+  }, [editId, editDate, orgId])
+
+  const isEditing = !!(editId || editDate)
+
+  const updateEntry = (idx, field, value) => {
+    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
+  }
+
+  const addEntry = () => {
+    setEntries(prev => [...prev, blankEntry(tanks)])
+    setActiveTab(entries.length)
+  }
+
+  const removeEntry = (idx) => {
+    if (entries.length === 1) return
+    setEntries(prev => prev.filter((_, i) => i !== idx))
+    setActiveTab(Math.min(activeTab, entries.length - 2))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
     setError('')
 
-    const record = {
-      id: editId || crypto.randomUUID(),
-      orgId,
-      entryDate: form.entryDate,
-      loadedDate: form.loadedDate || null,
-      driverName: form.driverName,
-      waybillNumber: form.waybillNumber,
-      ticketNumber: form.ticketNumber,
-      truckNumber: form.truckNumber,
-      chartUllage: Number(form.chartUllage) || 0,
-      chartLiquidHeight: Number(form.chartLiquidHeight) || 0,
-      depotUllage: Number(form.depotUllage) || 0,
-      depotLiquidHeight: Number(form.depotLiquidHeight) || 0,
-      stationUllage: Number(form.stationUllage) || 0,
-      stationLiquidHeight: Number(form.stationLiquidHeight) || 0,
-      firstCompartment: Number(form.firstCompartment) || 0,
-      secondCompartment: Number(form.secondCompartment) || 0,
-      thirdCompartment: Number(form.thirdCompartment) || 0,
-      actualVolume: Number(form.actualVolume) || 0,
-      depotName: form.depotName,
-      tankId: form.tankId || null,
-      notes: form.notes,
-      createdAt: editId ? undefined : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
     try {
-      if (editId) {
-        const existing = await productReceiptsRepo.getById(editId)
-        await productReceiptsRepo.update({ ...existing, ...record })
-      } else {
-        await productReceiptsRepo.create(record)
+      const now = new Date().toISOString()
+      const currentIds = entries.filter(e => e.id).map(e => e.id)
+
+      if (isEditing) {
+        const deletedIds = originalIds.filter(id => !currentIds.includes(id))
+        for (const id of deletedIds) {
+          await productReceiptsRepo.remove(id, orgId)
+        }
       }
+
+      for (const entry of entries) {
+        const record = {
+          id: entry.id || crypto.randomUUID(),
+          orgId,
+          entryDate: formDate,
+          loadedDate: entry.loadedDate || null,
+          driverName: entry.driverName,
+          waybillNumber: entry.waybillNumber,
+          ticketNumber: entry.ticketNumber,
+          truckNumber: entry.truckNumber,
+          chartUllage: Number(entry.chartUllage) || 0,
+          chartLiquidHeight: Number(entry.chartLiquidHeight) || 0,
+          depotUllage: Number(entry.depotUllage) || 0,
+          depotLiquidHeight: Number(entry.depotLiquidHeight) || 0,
+          stationUllage: Number(entry.stationUllage) || 0,
+          stationLiquidHeight: Number(entry.stationLiquidHeight) || 0,
+          firstCompartment: Number(entry.firstCompartment) || 0,
+          secondCompartment: Number(entry.secondCompartment) || 0,
+          thirdCompartment: Number(entry.thirdCompartment) || 0,
+          actualVolume: Number(entry.actualVolume) || 0,
+          depotName: entry.depotName,
+          tankId: entry.tankId || null,
+          notes: entry.notes,
+          updatedAt: now,
+        }
+
+        if (entry.id) {
+          const existing = await productReceiptsRepo.getById(entry.id)
+          await productReceiptsRepo.update({ ...existing, ...record })
+        } else {
+          record.createdAt = now
+          await productReceiptsRepo.create(record)
+        }
+      }
+
       router.push(`/dashboard/entries/product-receipt/list?${qs}`)
     } catch (err) {
       setError('Failed to save')
     }
     setSaving(false)
-  }
-
-  const handleDelete = async () => {
-    if (!editId || !confirm('Delete this entry?')) return
-    await productReceiptsRepo.remove(editId, orgId)
-    router.push(`/dashboard/entries/product-receipt/list?${qs}`)
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -145,128 +192,157 @@ export default function ProductReceiptFormPage() {
     </div>
   )
 
+  const current = entries[activeTab]
+
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{editId ? 'Edit Entry' : 'New Product Receipt'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Product Receipt'}</h1>
         <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
           <List className="w-4 h-4" /> View Entries
         </Link>
       </div>
 
       <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
-        <div className="border border-gray-300 divide-y divide-gray-300">
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-              <DateInput value={form.entryDate} onChange={(v) => setForm(prev => ({ ...prev, entryDate: v }))} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+        {/* Shared date */}
+        <div className="border border-gray-300 mb-4">
+          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
+          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+        </div>
+
+        {/* Entry tabs */}
+        <div className="flex items-center border-b border-gray-300 mb-0">
+          {entries.map((entry, idx) => (
+            <button
+              key={entry._key}
+              type="button"
+              onClick={() => setActiveTab(idx)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === idx ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            >
+              Entry {idx + 1}
+            </button>
+          ))}
+          <button type="button" onClick={addEntry} className="px-3 py-2 text-blue-600 hover:text-blue-700">
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Active entry form */}
+        {current && (
+          <div className="border border-gray-300 border-t-0 divide-y divide-gray-300">
+            {entries.length > 1 && (
+              <div className="flex justify-end px-3 py-1.5 bg-gray-50">
+                <button type="button" onClick={() => removeEntry(activeTab)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+                  <Trash2 className="w-3.5 h-3.5" /> Remove Entry {activeTab + 1}
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Loaded Date</label>
+                <DateInput value={current.loadedDate} onChange={(v) => updateEntry(activeTab, 'loadedDate', v)} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Name</label>
+                <input type="text" value={current.depotName} onChange={(e) => updateEntry(activeTab, 'depotName', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Loaded Date</label>
-              <DateInput value={form.loadedDate} onChange={(v) => setForm(prev => ({ ...prev, loadedDate: v }))} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Driver Name</label>
+                <input type="text" value={current.driverName} onChange={(e) => updateEntry(activeTab, 'driverName', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Waybill No.</label>
+                <input type="text" value={current.waybillNumber} onChange={(e) => updateEntry(activeTab, 'waybillNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Ticket No.</label>
+                <input type="text" value={current.ticketNumber} onChange={(e) => updateEntry(activeTab, 'ticketNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Driver Name</label>
-              <input type="text" value={form.driverName} onChange={sf('driverName')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Truck Number</label>
+                <input type="text" value={current.truckNumber} onChange={(e) => updateEntry(activeTab, 'truckNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
+                <select value={current.tankId} onChange={(e) => updateEntry(activeTab, 'tankId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
+                  <option value="">Select tank</option>
+                  {tanks.map((t) => (
+                    <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Waybill No.</label>
-              <input type="text" value={form.waybillNumber} onChange={sf('waybillNumber')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
             </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Ticket No.</label>
-              <input type="text" value={form.ticketNumber} onChange={sf('ticketNumber')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Ullage</label>
+                <input type="number" value={current.chartUllage} onChange={(e) => updateEntry(activeTab, 'chartUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Liq. Height</label>
+                <input type="number" value={current.chartLiquidHeight} onChange={(e) => updateEntry(activeTab, 'chartLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Ullage</label>
+                <input type="number" value={current.depotUllage} onChange={(e) => updateEntry(activeTab, 'depotUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
             </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Truck Number</label>
-              <input type="text" value={form.truckNumber} onChange={sf('truckNumber')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Liq. Height</label>
+                <input type="number" value={current.depotLiquidHeight} onChange={(e) => updateEntry(activeTab, 'depotLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Ullage</label>
+                <input type="number" value={current.stationUllage} onChange={(e) => updateEntry(activeTab, 'stationUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Liq. Height</label>
+                <input type="number" value={current.stationLiquidHeight} onChange={(e) => updateEntry(activeTab, 'stationLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Name</label>
-              <input type="text" value={form.depotName} onChange={sf('depotName')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
             </div>
-          </div>
-          <div className="bg-gray-50 px-2 py-1">
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Ullage</label>
-              <input type="number" value={form.chartUllage} onChange={sf('chartUllage')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">1st Compartment</label>
+                <input type="number" value={current.firstCompartment} onChange={(e) => updateEntry(activeTab, 'firstCompartment', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">2nd Compartment</label>
+                <input type="number" value={current.secondCompartment} onChange={(e) => updateEntry(activeTab, 'secondCompartment', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">3rd Compartment</label>
+                <input type="number" value={current.thirdCompartment} onChange={(e) => updateEntry(activeTab, 'thirdCompartment', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Liq. Height</label>
-              <input type="number" value={form.chartLiquidHeight} onChange={sf('chartLiquidHeight')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Ullage</label>
-              <input type="number" value={form.depotUllage} onChange={sf('depotUllage')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Liq. Height</label>
-              <input type="number" value={form.depotLiquidHeight} onChange={sf('depotLiquidHeight')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Ullage</label>
-              <input type="number" value={form.stationUllage} onChange={sf('stationUllage')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Liq. Height</label>
-              <input type="number" value={form.stationLiquidHeight} onChange={sf('stationLiquidHeight')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-          </div>
-          <div className="bg-gray-50 px-2 py-1">
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">1st Compartment</label>
-              <input type="number" value={form.firstCompartment} onChange={sf('firstCompartment')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">2nd Compartment</label>
-              <input type="number" value={form.secondCompartment} onChange={sf('secondCompartment')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">3rd Compartment</label>
-              <input type="number" value={form.thirdCompartment} onChange={sf('thirdCompartment')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 divide-x divide-gray-300">
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Actual Volume</label>
-              <input type="number" value={form.actualVolume} onChange={sf('actualVolume')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              <input type="number" value={current.actualVolume} onChange={(e) => updateEntry(activeTab, 'actualVolume', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
-              <select value={form.tankId} onChange={sf('tankId')} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                <option value="">Select tank</option>
-                {tanks.map((t) => (
-                  <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
-                ))}
-              </select>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+              <textarea value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
             </div>
           </div>
-          <div>
-            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={form.notes} onChange={sf('notes')} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
-          </div>
-        </div>
+        )}
 
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
         <div className="flex gap-2 mt-3">
-          {editId && <button type="button" onClick={handleDelete} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /> Delete</button>}
           <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {editId ? 'Update' : 'Create'}
+            {isEditing ? 'Update' : 'Save All'}
           </button>
         </div>
       </form>

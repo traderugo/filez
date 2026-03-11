@@ -126,7 +126,7 @@ function SummaryContent() {
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-600'
   const bdr = 'border border-blue-200'
-  const cell = `${bdr} px-0.5 sm:px-1 py-0.5 whitespace-nowrap`
+  const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
 
   const dateLabel = reportDate
@@ -168,9 +168,9 @@ function SummaryContent() {
           <p className="text-gray-400 text-sm">No data for this date.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto min-h-0 mb-3">
+        <div className="flex-1 overflow-y-auto min-h-0 mb-3 px-[15%]">
           {/* DAY header */}
-          <table className="w-full border-collapse text-xs sm:text-sm mb-0">
+          <table className="w-full border-collapse text-sm mb-0">
             <tbody>
               <tr className={hdr}>
                 <td className={cell} colSpan={2}>DAY</td>
@@ -186,7 +186,7 @@ function SummaryContent() {
           {dayReport.entryGroups.map((group) => (
             <div key={group.entryIndex} className="mb-4">
               {dayReport.entryCount > 1 && (
-                <table className="w-full border-collapse text-xs sm:text-sm">
+                <table className="w-full border-collapse text-sm">
                   <tbody>
                     <tr className={hdr}>
                       <td className={cell} colSpan={3}>Entry {group.entryIndex}</td>
@@ -196,7 +196,7 @@ function SummaryContent() {
               )}
 
               {/* Closing readings grouped by fuel */}
-              <table className="w-full border-collapse text-xs sm:text-sm">
+              <table className="w-full border-collapse text-sm">
                 <tbody>
                   {report.fuelTypes.map(ft => {
                     const fuelGroup = group.nozzleRows.find(nr => nr.fuelType === ft)
@@ -220,7 +220,7 @@ function SummaryContent() {
 
           {/* 2. Consumption table */}
           {dayReport.consumption.entries.length > 0 && (
-            <table className="w-full border-collapse text-xs sm:text-sm mb-4">
+            <table className="w-full border-collapse text-sm mb-4">
               <thead>
                 <tr className={subHdr}>
                   <th className={`${cell} text-left font-bold`}>Account</th>
@@ -243,7 +243,7 @@ function SummaryContent() {
           )}
 
           {/* 3. Lodgements */}
-          <table className="w-full border-collapse text-xs sm:text-sm mb-4">
+          <table className="w-full border-collapse text-sm mb-4">
             <thead>
               <tr className={subHdr}>
                 <th className={`${cell} text-left font-bold`}>Lodgements</th>
@@ -274,7 +274,7 @@ function SummaryContent() {
 
           {/* 4. Product Received */}
           {report.fuelTypes.some(ft => (dayReport.tanksByFuel?.[ft]?.totalSupply || 0) > 0) && (
-            <table className="w-full border-collapse text-xs sm:text-sm mb-4">
+            <table className="w-full border-collapse text-sm mb-4">
               <thead>
                 <tr className={subHdr}>
                   <th className={`${cell} text-left font-bold`}>Product Received</th>
@@ -297,7 +297,7 @@ function SummaryContent() {
           )}
 
           {/* 5. Sales (replaces Stock) */}
-          <table className="w-full border-collapse text-xs sm:text-sm mb-4">
+          <table className="w-full border-collapse text-sm mb-4">
             <thead>
               <tr className={subHdr}>
                 <th className={`${cell} text-left font-bold`}></th>

@@ -2,18 +2,72 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
 
+function blankEntry(nozzles, tanks) {
+  return {
+    _key: crypto.randomUUID(),
+    id: null,
+    nozzleReadings: nozzles.map(n => ({
+      pump_id: n.id,
+      label: `${n.fuel_type} ${n.pump_number}`,
+      closing_meter: '',
+      consumption: '',
+      pour_back: '',
+    })),
+    tankReadings: tanks.map(t => ({
+      tank_id: t.id,
+      label: `${t.fuel_type} Tank ${t.tank_number}`,
+      closing_stock: '',
+    })),
+    prices: { PMS: '', AGO: '', DPK: '' },
+    closeOfBusiness: false,
+    notes: '',
+  }
+}
+
+function entryFromRecord(entry, nozzles, tanks) {
+  const savedNozzles = entry.nozzleReadings || entry.nozzle_readings || []
+  const savedTanks = entry.tankReadings || entry.tank_readings || []
+  const p = entry.prices || {}
+  return {
+    _key: entry.id,
+    id: entry.id,
+    nozzleReadings: nozzles.map(n => {
+      const match = savedNozzles.find(r => r.pump_id === n.id)
+      return {
+        pump_id: n.id,
+        label: `${n.fuel_type} ${n.pump_number}`,
+        closing_meter: match ? String(match.closing_meter || '') : '',
+        consumption: match ? String(match.consumption || '') : '',
+        pour_back: match ? String(match.pour_back || '') : '',
+      }
+    }),
+    tankReadings: tanks.map(t => {
+      const match = savedTanks.find(r => r.tank_id === t.id)
+      return {
+        tank_id: t.id,
+        label: `${t.fuel_type} Tank ${t.tank_number}`,
+        closing_stock: match ? String(match.closing_stock || '') : '',
+      }
+    }),
+    prices: { PMS: String(p.PMS || ''), AGO: String(p.AGO || ''), DPK: String(p.DPK || '') },
+    closeOfBusiness: entry.closeOfBusiness || entry.close_of_business || false,
+    notes: entry.notes || '',
+  }
+}
+
 export default function DailySalesFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
+  const editDate = searchParams.get('edit_date') || null
   const qs = `org_id=${orgId}`
 
   const [loading, setLoading] = useState(true)
@@ -21,30 +75,20 @@ export default function DailySalesFormPage() {
   const [nozzles, setNozzles] = useState([])
   const [tanks, setTanks] = useState([])
 
-  // Form state
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
-  const [nozzleReadings, setNozzleReadings] = useState([])
-  const [tankReadings, setTankReadings] = useState([])
-  const [prices, setPrices] = useState({ PMS: '', AGO: '', DPK: '' })
-  const [notes, setNotes] = useState('')
-  const [closeOfBusiness, setCloseOfBusiness] = useState(false)
+  const [entries, setEntries] = useState([])
+  const [activeTab, setActiveTab] = useState(0)
+  const [originalIds, setOriginalIds] = useState([])
 
-  // Load config from IndexedDB, trigger initial sync if needed
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       if (!orgId) { setLoading(false); return }
 
-      // Ensure data is synced (no-op if already done)
-
-      // Start background sync engine
-
-
       if (cancelled) return
 
-      // Read config from IndexedDB
       const noz = await db.nozzles.where('orgId').equals(orgId).toArray()
       const tnk = await db.tanks.where('orgId').equals(orgId).toArray()
 
@@ -61,141 +105,159 @@ export default function DailySalesFormPage() {
       setNozzles(noz)
       setTanks(tnk)
 
-      // If editing, load the entry from IndexedDB
       if (editId) {
         const entry = await dailySalesRepo.getById(editId)
         if (entry && !cancelled) {
-          populateForm(entry, noz, tnk)
-          setLoading(false)
-          return
+          setFormDate(entry.entryDate || entry.entry_date || '')
+          setOriginalIds([entry.id])
+          setEntries([entryFromRecord(entry, noz, tnk)])
+        }
+      } else if (editDate) {
+        const all = await db.dailySales.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => (e.entryDate || e.entry_date) === editDate)
+        if (dateEntries.length > 0 && !cancelled) {
+          setFormDate(editDate)
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => entryFromRecord(e, noz, tnk)))
         }
       }
 
-      // New entry — initialize empty readings
       if (!cancelled) {
-        setNozzleReadings(noz.map((n) => ({
-          pump_id: n.id,
-          label: `${n.fuel_type} ${n.pump_number}`,
-          closing_meter: '',
-          consumption: '',
-          pour_back: '',
-        })))
-        setTankReadings(tnk.map((t) => ({
-          tank_id: t.id,
-          label: `${t.fuel_type} Tank ${t.tank_number}`,
-          closing_stock: '',
-        })))
+        setEntries(prev => prev.length > 0 ? prev : [blankEntry(noz, tnk)])
         setLoading(false)
       }
     }
     load()
     return () => { cancelled = true }
-  }, [editId, orgId])
+  }, [editId, editDate, orgId])
 
-  const populateForm = (entry, noz, tnk) => {
-    setFormDate(entry.entryDate || entry.entry_date)
-    const p = entry.prices || {}
-    setPrices({ PMS: String(p.PMS || ''), AGO: String(p.AGO || ''), DPK: String(p.DPK || '') })
-    setNotes(entry.notes || '')
-    setCloseOfBusiness(entry.closeOfBusiness || entry.close_of_business || false)
+  const isEditing = !!(editId || editDate)
 
-    const savedNozzles = entry.nozzleReadings || entry.nozzle_readings || []
-    setNozzleReadings(noz.map((n) => {
-      const match = savedNozzles.find((r) => r.pump_id === n.id)
-      return {
-        pump_id: n.id,
-        label: `${n.fuel_type} ${n.pump_number}`,
-        closing_meter: match ? String(match.closing_meter || '') : '',
-        consumption: match ? String(match.consumption || '') : '',
-        pour_back: match ? String(match.pour_back || '') : '',
-      }
-    }))
+  const updateEntry = (idx, field, value) => {
+    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
+  }
 
-    const savedTanks = entry.tankReadings || entry.tank_readings || []
-    setTankReadings(tnk.map((t) => {
-      const match = savedTanks.find((r) => r.tank_id === t.id)
-      return {
-        tank_id: t.id,
-        label: `${t.fuel_type} Tank ${t.tank_number}`,
-        closing_stock: match ? String(match.closing_stock || '') : '',
-      }
+  const updateNozzleReading = (entryIdx, nozzleIdx, field, value) => {
+    setEntries(prev => prev.map((e, i) => {
+      if (i !== entryIdx) return e
+      return { ...e, nozzleReadings: e.nozzleReadings.map((r, j) => j === nozzleIdx ? { ...r, [field]: value } : r) }
     }))
   }
 
-  const updateReading = (idx, field, value) => {
-    setNozzleReadings((prev) => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r))
+  const updateTankReading = (entryIdx, tankIdx, value) => {
+    setEntries(prev => prev.map((e, i) => {
+      if (i !== entryIdx) return e
+      return { ...e, tankReadings: e.tankReadings.map((r, j) => j === tankIdx ? { ...r, closing_stock: value } : r) }
+    }))
   }
 
-  const updateTankReading = (idx, value) => {
-    setTankReadings((prev) => prev.map((r, i) => i === idx ? { ...r, closing_stock: value } : r))
+  const updatePrice = (entryIdx, fuel, value) => {
+    setEntries(prev => prev.map((e, i) => {
+      if (i !== entryIdx) return e
+      return { ...e, prices: { ...e.prices, [fuel]: value } }
+    }))
+  }
+
+  const addEntry = () => {
+    setEntries(prev => [...prev, blankEntry(nozzles, tanks)])
+    setActiveTab(entries.length)
+  }
+
+  const removeEntry = (idx) => {
+    if (entries.length === 1) return
+    setEntries(prev => prev.filter((_, i) => i !== idx))
+    setActiveTab(Math.min(activeTab, entries.length - 2))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!prices.PMS && !prices.AGO && !prices.DPK) { setError('At least one fuel price is required'); return }
-    if (closeOfBusiness) {
-      const missingTank = tankReadings.find((r) => r.closing_stock === '' || r.closing_stock === undefined)
-      if (missingTank) { setError(`Closing stock is required for ${missingTank.label}`); return }
-    }
-    const missingReading = nozzleReadings.find((r) => r.closing_meter === '' || r.closing_meter === undefined)
-    if (missingReading) { setError(`Closing meter is required for ${missingReading.label}`); return }
 
-    // Block duplicate COB: only one close-of-business entry per date
-    if (closeOfBusiness) {
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i]
+      if (!entry.prices.PMS && !entry.prices.AGO && !entry.prices.DPK) {
+        setError(`Entry ${i + 1}: At least one fuel price is required`); setActiveTab(i); return
+      }
+      const missingReading = entry.nozzleReadings.find(r => r.closing_meter === '' || r.closing_meter === undefined)
+      if (missingReading) {
+        setError(`Entry ${i + 1}: Closing meter is required for ${missingReading.label}`); setActiveTab(i); return
+      }
+      if (entry.closeOfBusiness) {
+        const missingTank = entry.tankReadings.find(r => r.closing_stock === '' || r.closing_stock === undefined)
+        if (missingTank) {
+          setError(`Entry ${i + 1}: Closing stock is required for ${missingTank.label}`); setActiveTab(i); return
+        }
+      }
+    }
+
+    const cobEntries = entries.filter(e => e.closeOfBusiness)
+    if (cobEntries.length > 1) {
+      setError('Only one entry can be marked as close-of-business'); return
+    }
+    if (cobEntries.length === 1) {
       const dateEntries = await db.dailySales.where('orgId').equals(orgId).toArray()
       const existingCob = dateEntries.find(
         e => (e.entryDate || e.entry_date) === formDate
           && (e.closeOfBusiness || e.close_of_business)
-          && e.id !== editId
+          && !originalIds.includes(e.id)
       )
       if (existingCob) {
-        setError('A close-of-business entry already exists for this date. Edit the existing one instead.')
-        return
+        setError('A close-of-business entry already exists for this date.'); return
       }
     }
 
     setSaving(true)
     setError('')
 
-    const readings = nozzleReadings.map((r) => ({
-      pump_id: r.pump_id,
-      nozzle_label: r.label,
-      closing_meter: Number(r.closing_meter) || 0,
-      consumption: Number(r.consumption) || 0,
-      pour_back: Number(r.pour_back) || 0,
-    }))
-
-    const tankData = tankReadings.map((r) => ({
-      tank_id: r.tank_id,
-      tank_label: r.label,
-      closing_stock: Number(r.closing_stock) || 0,
-    }))
-
-    const record = {
-      id: editId || crypto.randomUUID(),
-      orgId,
-      entryDate: formDate,
-      nozzleReadings: readings,
-      tankReadings: tankData,
-      prices: {
-        PMS: Number(prices.PMS) || 0,
-        AGO: Number(prices.AGO) || 0,
-        DPK: Number(prices.DPK) || 0,
-      },
-      closeOfBusiness,
-      notes,
-      createdAt: editId ? undefined : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-
     try {
-      if (editId) {
-        // Preserve existing fields when updating
-        const existing = await dailySalesRepo.getById(editId)
-        await dailySalesRepo.update({ ...existing, ...record })
-      } else {
-        await dailySalesRepo.create(record)
+      const now = new Date().toISOString()
+      const currentIds = entries.filter(e => e.id).map(e => e.id)
+
+      if (isEditing) {
+        const deletedIds = originalIds.filter(id => !currentIds.includes(id))
+        for (const id of deletedIds) {
+          await dailySalesRepo.remove(id, orgId)
+        }
       }
+
+      for (const entry of entries) {
+        const readings = entry.nozzleReadings.map(r => ({
+          pump_id: r.pump_id,
+          nozzle_label: r.label,
+          closing_meter: Number(r.closing_meter) || 0,
+          consumption: Number(r.consumption) || 0,
+          pour_back: Number(r.pour_back) || 0,
+        }))
+        const tankData = entry.tankReadings.map(r => ({
+          tank_id: r.tank_id,
+          tank_label: r.label,
+          closing_stock: Number(r.closing_stock) || 0,
+        }))
+
+        const record = {
+          id: entry.id || crypto.randomUUID(),
+          orgId,
+          entryDate: formDate,
+          nozzleReadings: readings,
+          tankReadings: tankData,
+          prices: {
+            PMS: Number(entry.prices.PMS) || 0,
+            AGO: Number(entry.prices.AGO) || 0,
+            DPK: Number(entry.prices.DPK) || 0,
+          },
+          closeOfBusiness: entry.closeOfBusiness,
+          notes: entry.notes,
+          updatedAt: now,
+        }
+
+        if (entry.id) {
+          const existing = await dailySalesRepo.getById(entry.id)
+          await dailySalesRepo.update({ ...existing, ...record })
+        } else {
+          record.createdAt = now
+          await dailySalesRepo.create(record)
+        }
+      }
+
       router.push(`/dashboard/entries/daily-sales/list?${qs}`)
     } catch (err) {
       setError('Failed to save')
@@ -203,19 +265,7 @@ export default function DailySalesFormPage() {
     setSaving(false)
   }
 
-  const handleDelete = async () => {
-    if (!editId || !confirm('Delete this entry?')) return
-    await dailySalesRepo.remove(editId, orgId)
-    router.push(`/dashboard/entries/daily-sales/list?${qs}`)
-  }
-
-  if (loading) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-      </div>
-    )
-  }
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
 
   if (locked) return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
@@ -228,116 +278,145 @@ export default function DailySalesFormPage() {
     </div>
   )
 
+  const current = entries[activeTab]
+
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{editId ? 'Edit Entry' : 'New Daily Sales Entry'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Daily Sales Entry'}</h1>
         <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
           <List className="w-4 h-4" /> View Entries
         </Link>
       </div>
 
       <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
-        <div className="border border-gray-300 divide-y divide-gray-300">
-          <div>
-            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-            <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
-          </div>
-          <div className="bg-gray-50 px-2 py-1">
-            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>
-          </div>
-          <div className="grid grid-cols-3 divide-x divide-gray-300">
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">PMS</label>
-              <input type="number" value={prices.PMS} onChange={(e) => setPrices((p) => ({ ...p, PMS: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">AGO</label>
-              <input type="number" value={prices.AGO} onChange={(e) => setPrices((p) => ({ ...p, AGO: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">DPK</label>
-              <input type="number" value={prices.DPK} onChange={(e) => setPrices((p) => ({ ...p, DPK: e.target.value }))} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-            </div>
-          </div>
-
-          {/* Nozzle readings */}
-          {nozzleReadings.length > 0 && (
-            <>
-              <div className="bg-gray-50 px-2 py-1">
-                <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Nozzle Readings</span>
-              </div>
-              {nozzleReadings.map((r, idx) => (
-                <div key={r.pump_id}>
-                  <div className="bg-gray-50/50 px-2 py-0.5 border-b border-gray-200">
-                    <span className="text-xs text-gray-600 font-medium">{r.label}</span>
-                  </div>
-                  <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-gray-300">
-                    <div>
-                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Closing Meter</label>
-                      <input type="number" value={r.closing_meter} onChange={(e) => updateReading(idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
-                      <input type="number" value={r.consumption} onChange={(e) => updateReading(idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P/b</label>
-                      <input type="number" value={r.pour_back} onChange={(e) => updateReading(idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-
-          {nozzles.length === 0 && (
-            <div className="px-2 py-3">
-              <p className="text-sm text-yellow-700">No nozzles found. Check your station setup or refresh.</p>
-            </div>
-          )}
-
-          {/* Close of Business checkbox + Tank readings */}
-          {tankReadings.length > 0 && (
-            <>
-              <div className="bg-gray-50 px-2 py-1.5 flex items-center justify-between">
-                <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">UGT Closing Stock</span>
-                <Toggle checked={closeOfBusiness} onChange={setCloseOfBusiness} label="Final entry" />
-              </div>
-              {closeOfBusiness && tankReadings.map((r, idx) => (
-                <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-gray-300">
-                  <div className="flex items-center px-3 py-2.5 bg-gray-50/50">
-                    <span className="text-xs text-gray-600">{r.label}</span>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Litres</label>
-                    <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(idx, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-
-          {tanks.length === 0 && (
-            <div className="px-2 py-3">
-              <p className="text-sm text-yellow-700">No tanks found. Check your station setup or refresh.</p>
-            </div>
-          )}
-
-          <div>
-            <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
-          </div>
+        {/* Shared date */}
+        <div className="border border-gray-300 mb-4">
+          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
+          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
         </div>
+
+        {/* Entry tabs */}
+        <div className="flex items-center border-b border-gray-300 mb-0">
+          {entries.map((entry, idx) => (
+            <button
+              key={entry._key}
+              type="button"
+              onClick={() => setActiveTab(idx)}
+              className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === idx ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+            >
+              Entry {idx + 1}
+            </button>
+          ))}
+          <button type="button" onClick={addEntry} className="px-3 py-2 text-blue-600 hover:text-blue-700">
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Active entry form */}
+        {current && (
+          <div className="border border-gray-300 border-t-0 divide-y divide-gray-300">
+            {entries.length > 1 && (
+              <div className="flex justify-end px-3 py-1.5 bg-gray-50">
+                <button type="button" onClick={() => removeEntry(activeTab)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+                  <Trash2 className="w-3.5 h-3.5" /> Remove Entry {activeTab + 1}
+                </button>
+              </div>
+            )}
+
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">PMS</label>
+                <input type="number" value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">AGO</label>
+                <input type="number" value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">DPK</label>
+                <input type="number" value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+            </div>
+
+            {current.nozzleReadings.length > 0 && (
+              <>
+                <div className="bg-gray-50 px-2 py-1">
+                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Nozzle Readings</span>
+                </div>
+                {current.nozzleReadings.map((r, idx) => (
+                  <div key={r.pump_id}>
+                    <div className="bg-gray-50/50 px-2 py-0.5 border-b border-gray-200">
+                      <span className="text-xs text-gray-600 font-medium">{r.label}</span>
+                    </div>
+                    <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-gray-300">
+                      <div>
+                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Closing Meter</label>
+                        <input type="number" value={r.closing_meter} onChange={(e) => updateNozzleReading(activeTab, idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
+                        <input type="number" value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P/b</label>
+                        <input type="number" value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {nozzles.length === 0 && (
+              <div className="px-2 py-3">
+                <p className="text-sm text-yellow-700">No nozzles found. Check your station setup or refresh.</p>
+              </div>
+            )}
+
+            {current.tankReadings.length > 0 && (
+              <>
+                <div className="bg-gray-50 px-2 py-1.5 flex items-center justify-between">
+                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">UGT Closing Stock</span>
+                  <Toggle checked={current.closeOfBusiness} onChange={(v) => updateEntry(activeTab, 'closeOfBusiness', v)} label="Final entry" />
+                </div>
+                {current.closeOfBusiness && current.tankReadings.map((r, idx) => (
+                  <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-gray-300">
+                    <div className="flex items-center px-3 py-2.5 bg-gray-50/50">
+                      <span className="text-xs text-gray-600">{r.label}</span>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Litres</label>
+                      <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {tanks.length === 0 && (
+              <div className="px-2 py-3">
+                <p className="text-sm text-yellow-700">No tanks found. Check your station setup or refresh.</p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
+              <textarea value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+            </div>
+          </div>
+        )}
 
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
         <div className="flex gap-2 mt-3">
-          {editId && <button type="button" onClick={handleDelete} className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /> Delete</button>}
           <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
           <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {editId ? 'Update' : 'Create'}
+            {isEditing ? 'Update' : 'Save All'}
           </button>
         </div>
       </form>
