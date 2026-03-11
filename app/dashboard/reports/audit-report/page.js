@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2 } from 'lucide-react'
@@ -49,8 +49,12 @@ function AuditReportContent() {
   const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
   const monthStartStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`
 
-  const [startDate, setStartDate] = useState(monthStartStr)
-  const [endDate, setEndDate] = useState(todayStr)
+  const [startDate, _setStartDate] = useState(monthStartStr)
+  const [endDate, _setEndDate] = useState(todayStr)
+  const startDateRef = useRef(monthStartStr)
+  const endDateRef = useRef(todayStr)
+  const setStartDate = (v) => { startDateRef.current = v; _setStartDate(v) }
+  const setEndDate = (v) => { endDateRef.current = v; _setEndDate(v) }
   const [generated, setGenerated] = useState(true)
   const [activeTab, setActiveTab] = useState('sales-cash')
 
@@ -113,9 +117,11 @@ function AuditReportContent() {
   }, [generated, reportStart, reportEnd, loading, orgId, nozzles, banks, liveSales, liveLodgements, liveConsumption, liveCustomers])
 
   const handleGenerate = () => {
-    if (!startDate || !endDate) return
-    setReportStart(startDate)
-    setReportEnd(endDate)
+    const s = startDateRef.current
+    const e = endDateRef.current
+    if (!s || !e) return
+    setReportStart(s)
+    setReportEnd(e)
     setGenerated(true)
     setActiveTab('sales-cash')
   }
