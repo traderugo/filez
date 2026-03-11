@@ -268,7 +268,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
   }
 
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       {/* Section header */}
       <div className={`${hdr} px-2 py-1.5 text-sm font-bold mb-0`}>
         {index}. {fuelType} Sales for the Period
@@ -279,8 +279,8 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
         <thead>
           <tr className={subHdr}>
             <th className={`${cell} text-left font-bold`}>Meter Reading</th>
-            <th className={`${cellR} font-bold`}>Opening</th>
-            <th className={`${cellR} font-bold`}>Closing</th>
+            <th className={`${cellR} font-bold`}>Opening ({formatDate(startDate)})</th>
+            <th className={`${cellR} font-bold`}>Closing ({formatDate(endDate)})</th>
             <th className={`${cellR} font-bold`}>Dispensed</th>
             <th className={`${cellR} font-bold`}>Price</th>
             <th className={`${cellR} font-bold`}>Amount</th>
@@ -288,26 +288,13 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
         </thead>
         <tbody>
           {summary.rows.map((row, rowIdx) => (
-            row.pumps.map((pump, pIdx) => (
-              <tr key={`${rowIdx}-${pIdx}`}>
-                <td className={`${cell} font-medium`}>{pump.label}</td>
-                <td className={cellR}>{fmt(pump.opening)}</td>
-                <td className={cellR}>{fmt(pump.closing)}</td>
-                <td className={cellR}>{fmt(pump.dispensed)}</td>
-                {pIdx === 0 && (
-                  <>
-                    <td className={cellR} rowSpan={row.pumps.length}>{fmt(row.price)}</td>
-                    <td className={cellR} rowSpan={row.pumps.length}>{fmt(row.amount)}</td>
-                  </>
-                )}
-              </tr>
-            ))
+            <MeterGroup key={rowIdx} row={row} rowIdx={rowIdx} totalRows={summary.rows.length} cell={cell} cellR={cellR} />
           ))}
         </tbody>
       </table>
 
       {/* A = Total sales */}
-      <table className="w-full border-collapse text-sm">
+      <table className="w-full border-collapse text-sm mb-4">
         <tbody>
           <tr className={`${subHdr} font-bold`}>
             <td className={cell}>A</td>
@@ -371,6 +358,30 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
         </tbody>
       </table>
     </div>
+  )
+}
+
+function MeterGroup({ row, rowIdx, totalRows, cell, cellR }) {
+  return (
+    <>
+      {/* Spacer rows between price period groups */}
+      {rowIdx > 0 && (
+        <>
+          <tr><td colSpan={6} className="h-2"></td></tr>
+          <tr><td colSpan={6} className="h-2"></td></tr>
+        </>
+      )}
+      {row.pumps.map((pump, pIdx) => (
+        <tr key={`${rowIdx}-${pIdx}`}>
+          <td className={`${cell} font-medium`}>{pump.label}</td>
+          <td className={cellR}>{fmt(pump.opening)}</td>
+          <td className={cellR}>{fmt(pump.closing)}</td>
+          <td className={cellR}>{fmt(pump.dispensed)}</td>
+          <td className={cellR}>{pIdx === 0 ? fmt(row.price) : ''}</td>
+          <td className={cellR}>{pIdx === 0 ? fmt(row.amount) : ''}</td>
+        </tr>
+      ))}
+    </>
   )
 }
 
