@@ -8,7 +8,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import {
   LayoutDashboard, CreditCard,
   MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight, ChevronDown,
-  FileSpreadsheet, ClipboardList, Droplets, Users, Flame, BarChart3,
+  FileSpreadsheet, ClipboardList, Droplets, Users, Flame, BarChart3, FileText,
   SquarePen, ChartNoAxesCombined, Cloud, RefreshCw, Loader2, Building2,
   ArrowUpFromLine, ArrowDownToLine
 } from 'lucide-react'
@@ -33,6 +33,7 @@ const entryItems = [
 ]
 
 const reportItems = [
+  { key: 'summary', label: 'Summary', icon: FileText },
   { key: 'daily-sales-report', label: 'Daily Sales Report', icon: BarChart3 },
   { key: 'audit-report', label: 'Audit Report', icon: ClipboardList },
 ]
