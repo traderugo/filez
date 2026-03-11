@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
+import { useState } from 'react'
 import {
   LayoutDashboard, CreditCard,
-  MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight
+  MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight, ChevronDown,
+  FileSpreadsheet, ClipboardList, Droplets, Users, Flame, BarChart3
 } from 'lucide-react'
 
 const navItems = [
@@ -14,13 +16,41 @@ const navItems = [
   { href: '/dashboard/feedback', label: 'Feedback', icon: MessageSquare },
 ]
 
+const entryItems = [
+  { key: 'daily-sales', label: 'Daily Sales', icon: FileSpreadsheet },
+  { key: 'product-receipt', label: 'Product Receipt', icon: ClipboardList },
+  { key: 'lodgements', label: 'Lodgements', icon: CreditCard },
+  { key: 'lube', label: 'Lube', icon: Droplets },
+  { key: 'customer-payments', label: 'Accounts', icon: Users },
+  { key: 'consumption', label: 'Consumption', icon: Flame },
+]
+
+const reportItems = [
+  { key: 'daily-sales-report', label: 'Daily Sales Report', icon: BarChart3 },
+  { key: 'audit-report', label: 'Audit Report', icon: ClipboardList },
+]
+
 export default function Sidebar({ user, open, collapsed, onClose, onToggleCollapse, onSignOut }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // Detect station context from URL
+  const stationMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)/)
+  const stationId = stationMatch ? stationMatch[1] : searchParams.get('org_id')
 
   const isActive = (href, exact) => {
     if (exact) return pathname === href
     return pathname === href || pathname.startsWith(href + '/')
   }
+
+  const isEntryActive = (key) => pathname.startsWith(`/dashboard/entries/${key}`)
+  const isReportActive = (key) => pathname.startsWith(`/dashboard/reports/${key}`)
+
+  const anyEntryActive = entryItems.some(({ key }) => isEntryActive(key))
+  const anyReportActive = reportItems.some(({ key }) => isReportActive(key))
+
+  const [entriesOpen, setEntriesOpen] = useState(anyEntryActive)
+  const [reportsOpen, setReportsOpen] = useState(anyReportActive)
 
   return (
     <>
@@ -78,6 +108,100 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
               <span className={collapsed ? 'sm:hidden' : ''}>{label}</span>
             </Link>
           ))}
+
+          {/* Station-contextual links */}
+          {stationId && (
+            <>
+              {/* Entries */}
+              <div className={`pt-3 ${collapsed ? 'sm:pt-2' : ''}`}>
+                <button
+                  onClick={() => setEntriesOpen((o) => !o)}
+                  title={collapsed ? 'Entries' : undefined}
+                  className={`flex items-center w-full rounded-md text-sm ${
+                    collapsed
+                      ? 'sm:justify-center sm:px-0 sm:py-2.5 gap-3 px-3 py-2'
+                      : 'gap-3 px-3 py-2'
+                  } ${
+                    anyEntryActive
+                      ? 'text-blue-700 font-medium'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-5 h-5 flex-shrink-0" />
+                  <span className={`flex-1 text-left text-xs font-semibold uppercase tracking-wide ${collapsed ? 'sm:hidden' : ''}`}>Entries</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${entriesOpen ? 'rotate-180' : ''} ${collapsed ? 'sm:hidden' : ''}`} />
+                </button>
+                {entriesOpen && entryItems.map(({ key, label, icon: Icon }) => {
+                  const href = `/dashboard/entries/${key}?org_id=${stationId}`
+                  return (
+                    <Link
+                      key={key}
+                      href={href}
+                      onClick={onClose}
+                      title={collapsed ? label : undefined}
+                      className={`flex items-center rounded-md text-sm ${
+                        collapsed
+                          ? 'sm:justify-center sm:px-0 sm:py-2.5 gap-3 px-3 py-2'
+                          : 'gap-3 px-3 py-2 pl-6'
+                      } ${
+                        isEntryActive(key)
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span className={collapsed ? 'sm:hidden' : ''}>{label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+
+              {/* Reports */}
+              <div className={`pt-3 ${collapsed ? 'sm:pt-2' : ''}`}>
+                <button
+                  onClick={() => setReportsOpen((o) => !o)}
+                  title={collapsed ? 'Reports' : undefined}
+                  className={`flex items-center w-full rounded-md text-sm ${
+                    collapsed
+                      ? 'sm:justify-center sm:px-0 sm:py-2.5 gap-3 px-3 py-2'
+                      : 'gap-3 px-3 py-2'
+                  } ${
+                    anyReportActive
+                      ? 'text-blue-700 font-medium'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <BarChart3 className="w-5 h-5 flex-shrink-0" />
+                  <span className={`flex-1 text-left text-xs font-semibold uppercase tracking-wide ${collapsed ? 'sm:hidden' : ''}`}>Reports</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${reportsOpen ? 'rotate-180' : ''} ${collapsed ? 'sm:hidden' : ''}`} />
+                </button>
+                {reportsOpen && reportItems.map(({ key, label, icon: Icon }) => {
+                  const href = `/dashboard/reports/${key}?org_id=${stationId}`
+                  return (
+                    <Link
+                      key={key}
+                      href={href}
+                      onClick={onClose}
+                      title={collapsed ? label : undefined}
+                      className={`flex items-center rounded-md text-sm ${
+                        collapsed
+                          ? 'sm:justify-center sm:px-0 sm:py-2.5 gap-3 px-3 py-2'
+                          : 'gap-3 px-3 py-2 pl-6'
+                      } ${
+                        isReportActive(key)
+                          ? 'bg-blue-50 text-blue-700 font-medium'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span className={collapsed ? 'sm:hidden' : ''}>{label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
           {user?.role === 'admin' && (
             <Link
               href="/admin"

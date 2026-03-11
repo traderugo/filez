@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
 import Sidebar from './Sidebar'
@@ -50,14 +50,16 @@ export default function AppShell({ children }) {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar
-        user={user}
-        open={sidebarOpen}
-        collapsed={sidebarCollapsed}
-        onClose={() => setSidebarOpen(false)}
-        onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
-        onSignOut={handleSignOut}
-      />
+      <Suspense fallback={null}>
+        <Sidebar
+          user={user}
+          open={sidebarOpen}
+          collapsed={sidebarCollapsed}
+          onClose={() => setSidebarOpen(false)}
+          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+          onSignOut={handleSignOut}
+        />
+      </Suspense>
       <div className="flex-1 flex flex-col min-w-0">
         <Header
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
