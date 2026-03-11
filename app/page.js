@@ -1,61 +1,76 @@
 import Link from 'next/link'
-import { FolderOpen, FileSpreadsheet, Shield, Clock } from 'lucide-react'
+import { Fuel, ClipboardList, BarChart3, Users } from 'lucide-react'
 import Footer from '@/components/Footer'
 
 export default function LandingPage() {
   return (
     <>
-    <div className="max-w-3xl mx-auto px-4 py-20 text-center">
-      <div className="flex justify-center mb-6">
-        <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center">
-          <FolderOpen className="w-7 h-7 text-blue-600" />
+    <div className="max-w-3xl mx-auto px-4 py-20">
+      <div className="text-center mb-16">
+        <div className="flex justify-center mb-5">
+          <img src="/icon-192.png" alt="StationMGR" className="w-14 h-14 rounded-2xl" />
         </div>
-      </div>
 
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-        Your Files, Organized
-      </h1>
-      <p className="text-lg text-gray-500 mb-10 max-w-lg mx-auto">
-        Access your custom reports and documents anytime. Subscribe monthly, get your files delivered.
-      </p>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+          StationMGR
+        </h1>
+        <p className="text-base text-gray-500 max-w-md mx-auto">
+          Daily sales, lodgements, stock receipts, and reports — all in one place.
+        </p>
+      </div>
 
       <div className="flex justify-center gap-3 mb-16">
         <Link
-          href="/auth/register"
-          className="bg-blue-600 text-white px-6 py-2.5 font-medium hover:bg-blue-700 transition-colors"
-        >
-          Get Started
-        </Link>
-        <Link
           href="/auth/login"
-          className="border border-gray-300 text-gray-700 px-6 py-2.5 font-medium hover:bg-gray-50 transition-colors"
+          className="bg-accent text-white px-6 py-2.5 font-medium hover:bg-accent-600 transition-colors"
         >
           Log in
+        </Link>
+        <Link
+          href="/auth/register"
+          className="border border-gray-300 text-gray-700 px-6 py-2.5 font-medium hover:bg-gray-50 transition-colors"
+        >
+          Create Account
         </Link>
       </div>
 
       <div className="border-t border-gray-200 pt-12">
-        <div className="grid sm:grid-cols-3 gap-8 text-left">
-          <div>
-            <FileSpreadsheet className="w-5 h-5 text-blue-600 mb-2" />
-            <h3 className="font-semibold text-gray-900 mb-1">Custom Files</h3>
-            <p className="text-sm text-gray-500">
-              Your data in ready-to-use spreadsheets, updated and assigned by our team.
-            </p>
+        <div className="grid sm:grid-cols-2 gap-8">
+          <div className="flex gap-3">
+            <Fuel className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1">Daily Sales Entry</h3>
+              <p className="text-sm text-gray-500">
+                Record pump readings, nozzle sales, and tank dips per shift.
+              </p>
+            </div>
           </div>
-          <div>
-            <Shield className="w-5 h-5 text-blue-600 mb-2" />
-            <h3 className="font-semibold text-gray-900 mb-1">Secure Access</h3>
-            <p className="text-sm text-gray-500">
-              Your files are private. Only you and admins can see your assigned documents.
-            </p>
+          <div className="flex gap-3">
+            <ClipboardList className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1">Lodgements & Receipts</h3>
+              <p className="text-sm text-gray-500">
+                Track bank lodgements, product receipts, and customer payments.
+              </p>
+            </div>
           </div>
-          <div>
-            <Clock className="w-5 h-5 text-blue-600 mb-2" />
-            <h3 className="font-semibold text-gray-900 mb-1">Simple Subscription</h3>
-            <p className="text-sm text-gray-500">
-              Pay monthly via bank transfer, upload your proof, and get approved within hours.
-            </p>
+          <div className="flex gap-3">
+            <BarChart3 className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1">Reports</h3>
+              <p className="text-sm text-gray-500">
+                Generate daily sales reports, audit reports, and variance summaries.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Users className="w-5 h-5 text-accent mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1">Multi-Station Access</h3>
+              <p className="text-sm text-gray-500">
+                Invite staff, assign roles, and manage multiple stations from one account.
+              </p>
+            </div>
           </div>
         </div>
       </div>

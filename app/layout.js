@@ -9,13 +9,13 @@ const geistSans = localFont({
 })
 
 export const metadata = {
-  title: 'StationVA — Station Virtual Assistant',
-  description: 'Manage your station entries, subscriptions, and operations',
+  title: 'StationMGR — Station Operations Management',
+  description: 'Manage your station entries, reports, and daily operations',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Station Portal',
+    title: 'StationMGR',
   },
 }
 

@@ -8,7 +8,7 @@ export default function Footer() {
           <Link href="/dashboard/feedback" className="hover:text-gray-600">Feedback</Link>
           <Link href="/auth/login" className="hover:text-gray-600">Login</Link>
         </div>
-        <span>&copy; {new Date().getFullYear()} StationVA</span>
+        <span>&copy; {new Date().getFullYear()} StationMGR</span>
       </div>
     </footer>
   )

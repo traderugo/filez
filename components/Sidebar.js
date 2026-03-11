@@ -76,8 +76,8 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
             className="flex items-center gap-2 text-gray-900 font-bold text-lg whitespace-nowrap"
             onClick={onClose}
           >
-            <Image src="/stationva-logo.svg" alt="StationVA" width={28} height={28} className="rounded flex-shrink-0" />
-            <span className={collapsed ? 'sm:hidden' : ''}>{collapsed ? '' : 'StationVA'}</span>
+            <Image src="/icon-192.png" alt="StationMGR" width={28} height={28} className="rounded flex-shrink-0" />
+            <span className={collapsed ? 'sm:hidden' : ''}>{collapsed ? '' : 'StationMGR'}</span>
           </Link>
           <button className="hidden sm:block p-1 text-gray-400 hover:text-gray-600" onClick={onToggleCollapse}>
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}

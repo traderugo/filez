@@ -1,7 +1,7 @@
 {
-  "name": "Station Portal",
-  "short_name": "Station",
-  "description": "Fuel station management portal",
+  "name": "StationMGR",
+  "short_name": "StationMGR",
+  "description": "Station operations management portal",
   "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",

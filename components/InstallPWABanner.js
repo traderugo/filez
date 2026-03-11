@@ -62,7 +62,7 @@ export default function InstallPWABanner() {
       <div className="flex items-center gap-3">
         <Download className="w-5 h-5 text-blue-600 flex-shrink-0" />
         <div>
-          <p className="text-sm font-medium text-gray-900">Install Station Portal</p>
+          <p className="text-sm font-medium text-gray-900">Install StationMGR</p>
           <p className="text-sm text-gray-600">Install as an app for offline access and faster loading.</p>
         </div>
       </div>
