@@ -160,6 +160,7 @@ export default function DateInput({ value, onChange, className = '' }) {
           type="text"
           value={inputValue}
           onChange={handleChange}
+          onFocus={(e) => e.target.select()}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           placeholder="DD/MM/YYYY"
