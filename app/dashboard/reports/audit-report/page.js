@@ -168,38 +168,9 @@ function AuditReportContent() {
         </div>
       </div>
 
-      {/* Report content */}
-      {report ? (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-200">
-          {activeTab === 'sales-cash' && (
-            <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
-          )}
-          {activeTab === 'lodgement-sheet' && (
-            <LodgementSheet report={report} />
-          )}
-          {activeTab === 'stock-position' && (
-            <StockPosition report={report} />
-          )}
-          {activeTab === 'stock-summary' && (
-            <StockSummary report={report} startDate={reportStart} endDate={reportEnd} />
-          )}
-          {activeTab === 'consumption' && (
-            <ConsumptionReport report={report} startDate={reportStart} endDate={reportEnd} />
-          )}
-        </div>
-      ) : generated ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-        </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
-        </div>
-      )}
-
-      {/* Sub-report tabs */}
+      {/* Sub-report tabs (fixed above scroll area) */}
       {generated && report && (
-        <div className="flex overflow-x-auto shrink-0 border-t border-blue-200">
+        <div className="flex overflow-x-auto shrink-0 border-b border-blue-200">
           {SUB_REPORTS.map(tab => (
             <button
               key={tab.key}
@@ -213,6 +184,37 @@ function AuditReportContent() {
               {tab.label}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Report content */}
+      {report ? (
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3">
+          <div className="px-4 sm:px-8 py-4">
+            {activeTab === 'sales-cash' && (
+              <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
+            )}
+            {activeTab === 'lodgement-sheet' && (
+              <LodgementSheet report={report} />
+            )}
+            {activeTab === 'stock-position' && (
+              <StockPosition report={report} />
+            )}
+            {activeTab === 'stock-summary' && (
+              <StockSummary report={report} startDate={reportStart} endDate={reportEnd} />
+            )}
+            {activeTab === 'consumption' && (
+              <ConsumptionReport report={report} startDate={reportStart} endDate={reportEnd} />
+            )}
+          </div>
+        </div>
+      ) : generated ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
         </div>
       )}
     </div>
