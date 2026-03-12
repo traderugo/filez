@@ -16,7 +16,7 @@ function fmt(n) {
 const SUB_REPORTS = [
   { key: 'sales-cash', label: 'Sales/Cash Position' },
   // Future sub-reports will be added here:
-  // { key: 'stock-position', label: 'Stock Position' },
+  { key: 'stock-position', label: 'Stock Position' },
   { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
   // { key: 'pms-consumption', label: 'PMS Consumption & Pour Back' },
   // { key: 'ago-consumption', label: 'AGO Consumption & Pour Back' },
@@ -42,6 +42,7 @@ function AuditReportContent() {
   const [loading, setLoading] = useState(true)
   const [nozzles, setNozzles] = useState([])
   const [banks, setBanks] = useState([])
+  const [tanks, setTanks] = useState([])
 
   const today = new Date()
   const pad = (n) => String(n).padStart(2, '0')
@@ -67,14 +68,16 @@ function AuditReportContent() {
     const load = async () => {
 
       if (cancelled) return
-      const [noz, bnk] = await Promise.all([
+      const [noz, bnk, tnk] = await Promise.all([
         db.nozzles.where('orgId').equals(orgId).toArray(),
         db.banks.where('orgId').equals(orgId).toArray(),
+        db.tanks.where('orgId').equals(orgId).toArray(),
       ])
       const fuelOrder = { PMS: 0, AGO: 1, DPK: 2 }
       noz.sort((a, b) => (fuelOrder[a.fuel_type] ?? 99) - (fuelOrder[b.fuel_type] ?? 99) || Number(a.pump_number || 0) - Number(b.pump_number || 0))
       setNozzles(noz)
       setBanks(bnk)
+      setTanks(tnk)
       setLoading(false)
     }
     load()
@@ -98,6 +101,10 @@ function AuditReportContent() {
     () => orgId ? db.customers.where('orgId').equals(orgId).toArray() : [],
     [orgId]
   )
+  const liveReceipts = useLiveQuery(
+    () => orgId ? db.productReceipts.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
 
   const report = useMemo(() => {
     if (!generated || !reportStart || !reportEnd) return null
@@ -107,13 +114,15 @@ function AuditReportContent() {
       sales: liveSales,
       lodgements: liveLodgements,
       consumption: liveConsumption,
+      receipts: liveReceipts || [],
       nozzles,
       banks,
+      tanks,
       customers: liveCustomers || [],
       startDate: reportStart,
       endDate: reportEnd,
     })
-  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, banks, liveSales, liveLodgements, liveConsumption, liveCustomers])
+  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, banks, tanks, liveSales, liveLodgements, liveConsumption, liveCustomers, liveReceipts])
 
   const handleGenerate = () => {
     const s = startDateRef.current
@@ -168,6 +177,9 @@ function AuditReportContent() {
           )}
           {activeTab === 'lodgement-sheet' && (
             <LodgementSheet report={report} />
+          )}
+          {activeTab === 'stock-position' && (
+            <StockPosition report={report} />
           )}
         </div>
       ) : generated ? (
@@ -537,6 +549,102 @@ function LodgementSheet({ report }) {
               <td className={`${cellR} ${ovshColor(totals.ovsh)}`}>
                 {fmtOvsh(totals.ovsh)}
               </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── Stock Position sub-report ───
+
+function StockPosition({ report }) {
+  const { stockPosition, fuelTypes } = report
+  const [activeFuel, setActiveFuel] = useState(fuelTypes[0] || 'PMS')
+
+  if (!stockPosition) return null
+
+  const hdr = 'bg-blue-600 text-white'
+  const subHdr = 'bg-blue-50 text-blue-600'
+  const bdr = 'border border-blue-200'
+  const cell = `${bdr} px-1.5 py-1`
+  const cellR = `${cell} text-right`
+
+  const fmtDate = (d) => {
+    const dt = new Date(d + 'T00:00:00')
+    return `${dt.getDate()}-${dt.getMonth() + 1}-${dt.getFullYear()}`
+  }
+
+  const ovshColor = (v) => {
+    if (v == null || v === 0) return ''
+    return v < 0 ? 'text-red-600' : 'text-green-600'
+  }
+
+  const fuelData = stockPosition[activeFuel]
+  if (!fuelData) return null
+
+  const visibleRows = fuelData.rows.filter(r => r.hasData)
+  const { totals } = fuelData
+
+  return (
+    <div className="min-w-[700px] pb-4">
+      {/* Fuel type tabs */}
+      <div className="flex border-b border-blue-200 mb-0">
+        {fuelTypes.map(ft => (
+          <button
+            key={ft}
+            onClick={() => setActiveFuel(ft)}
+            className={`px-4 py-1.5 text-sm font-bold border-r border-blue-200 ${
+              activeFuel === ft ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+            }`}
+          >
+            {ft}
+          </button>
+        ))}
+      </div>
+
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            <th colSpan={8} className={`${hdr} px-2 py-1.5 text-center font-bold`}>
+              RECORD OF STOCK POSITION — {activeFuel}
+            </th>
+          </tr>
+          <tr className={subHdr}>
+            <th className={`${cell} font-bold`}>Date</th>
+            <th className={`${cellR} font-bold`}>Opening Stock</th>
+            <th className={`${cellR} font-bold`}>Actual Product Supplied</th>
+            <th className={`${cellR} font-bold`}>Quantity Sold</th>
+            <th className={`${cellR} font-bold`}>Closing Stock</th>
+            <th className={`${cellR} font-bold`}>OV/SH</th>
+            <th className={`${cellR} font-bold`}>Actual OV/SH</th>
+            <th className={`${cellR} font-bold`}>VARIANCE</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visibleRows.map(row => (
+            <tr key={row.date}>
+              <td className={cell}>{fmtDate(row.date)}</td>
+              <td className={cellR}>{fmt(row.opening)}</td>
+              <td className={cellR}>{fmt(row.supply)}</td>
+              <td className={cellR}>{fmt(row.qtySold)}</td>
+              <td className={cellR}>{fmt(row.closing)}</td>
+              <td className={`${cellR} ${ovshColor(row.ovsh)}`}>{fmt(row.ovsh)}</td>
+              <td className={`${cellR} ${ovshColor(row.actualOvsh)}`}>{fmt(row.actualOvsh)}</td>
+              <td className={cellR}></td>
+            </tr>
+          ))}
+          {visibleRows.length > 0 && (
+            <tr className={`${subHdr} font-bold`}>
+              <td className={cell}>Total</td>
+              <td className={cellR}>{fmt(totals.opening)}</td>
+              <td className={cellR}>{fmt(totals.supply)}</td>
+              <td className={cellR}>{fmt(totals.qtySold)}</td>
+              <td className={cellR}>{fmt(totals.closing)}</td>
+              <td className={`${cellR} ${ovshColor(totals.ovsh)}`}>{fmt(totals.ovsh)}</td>
+              <td className={`${cellR} ${ovshColor(totals.actualOvsh)}`}>{fmt(totals.actualOvsh)}</td>
+              <td className={cellR}></td>
             </tr>
           )}
         </tbody>
