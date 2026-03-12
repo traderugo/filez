@@ -19,9 +19,7 @@ const SUB_REPORTS = [
   { key: 'stock-position', label: 'Record of Stock Position' },
   { key: 'stock-summary', label: 'Stock Position' },
   { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
-  // { key: 'pms-consumption', label: 'PMS Consumption & Pour Back' },
-  // { key: 'ago-consumption', label: 'AGO Consumption & Pour Back' },
-  // { key: 'dpk-consumption', label: 'DPK Consumption & Pour Back' },
+  { key: 'consumption', label: 'Consumption & Pour Back' },
   // { key: 'product-received', label: 'Product Received' },
   // { key: 'expenses', label: 'Expenses' },
   // { key: 'record-stock', label: 'Record of Stock Position' },
@@ -184,6 +182,9 @@ function AuditReportContent() {
           )}
           {activeTab === 'stock-summary' && (
             <StockSummary report={report} startDate={reportStart} endDate={reportEnd} />
+          )}
+          {activeTab === 'consumption' && (
+            <ConsumptionReport report={report} startDate={reportStart} endDate={reportEnd} />
           )}
         </div>
       ) : generated ? (
@@ -769,6 +770,100 @@ function StockSummary({ report, startDate, endDate }) {
           </tbody>
         </table>
       </div>
+    </div>
+  )
+}
+
+function ConsumptionReport({ report, startDate, endDate }) {
+  const { consumptionReport, fuelTypes } = report
+  const [activeFuel, setActiveFuel] = useState(fuelTypes?.[0] || 'PMS')
+
+  if (!consumptionReport) return null
+
+  const fmtDate = (d) => {
+    if (!d) return ''
+    const dt = new Date(d + 'T00:00:00')
+    return dt.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+
+  const hdr = 'bg-blue-600 text-white'
+  const subHdr = 'bg-blue-50 text-blue-900'
+  const cell = 'border border-blue-200 px-2 py-1 text-sm'
+  const cellR = cell + ' text-right'
+
+  const data = consumptionReport[activeFuel]
+  if (!data) return null
+
+  const { customers, rows, totals } = data
+
+  return (
+    <div>
+      {/* Fuel type tabs */}
+      <div className="flex gap-1 mb-4">
+        {fuelTypes.map(ft => (
+          <button
+            key={ft}
+            onClick={() => setActiveFuel(ft)}
+            className={`px-4 py-1.5 text-sm font-medium border ${
+              activeFuel === ft
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-blue-900 border-blue-200 hover:bg-blue-50'
+            }`}
+          >
+            {ft}
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-blue-200 text-sm">
+          <thead>
+            <tr className={hdr}>
+              <th className={cell + ' text-left'}>Date</th>
+              <th className={cellR}>Rate (N)</th>
+              {customers.map(c => (
+                <th key={c.id} className={cellR}>{c.name}</th>
+              ))}
+              <th className={cellR}>Pour back</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(row => {
+              const d = new Date(row.date + 'T00:00:00')
+              const hasAnyValue = row.hasData || customers.some(c => row.customerQtys[c.id]) || row.pourBack
+              return (
+                <tr key={row.date} className={hasAnyValue ? '' : 'text-gray-400'}>
+                  <td className={cell}>
+                    {d.toLocaleDateString('en-NG', { day: 'numeric', month: 'numeric', year: 'numeric' })}
+                  </td>
+                  <td className={cellR}>{fmt(row.rate)}</td>
+                  {customers.map(c => (
+                    <td key={c.id} className={cellR}>
+                      {row.customerQtys[c.id] ? fmt(row.customerQtys[c.id]) : '0'}
+                    </td>
+                  ))}
+                  <td className={cellR}>{row.pourBack ? fmt(row.pourBack) : '0'}</td>
+                </tr>
+              )
+            })}
+            {/* Totals row */}
+            <tr className={`${subHdr} font-bold`}>
+              <td className={cell}>Total</td>
+              <td className={cellR}></td>
+              {customers.map(c => (
+                <td key={c.id} className={cellR}>{fmt(totals.customerTotals[c.id])}</td>
+              ))}
+              <td className={cellR}>{fmt(totals.pourBack)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {customers.length === 0 && (
+        <p className="text-sm text-gray-400 text-center py-8">
+          No consumption entries for {activeFuel} in this period.
+        </p>
+      )}
     </div>
   )
 }
