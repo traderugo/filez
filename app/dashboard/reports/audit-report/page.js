@@ -665,11 +665,11 @@ function StockSummary({ report, startDate, endDate }) {
   const fmtDate = (d) => {
     if (!d) return ''
     const dt = new Date(d + 'T00:00:00')
-    return dt.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+    return dt.toLocaleDateString('en-NG', { day: '2-digit', month: '2-digit', year: 'numeric' })
   }
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-900'
-  const cell = 'border border-blue-200 px-2 py-1 text-sm'
+
+  const yHdr = 'bg-yellow-400 text-black font-bold'
+  const cell = 'border border-gray-800 px-3 py-1.5 text-sm'
   const cellR = cell + ' text-right'
 
   const fmtOvsh = (n) => {
@@ -678,17 +678,13 @@ function StockSummary({ report, startDate, endDate }) {
     if (v < 0) return `(${fmt(Math.abs(v))})`
     return fmt(v)
   }
-  const ovshColor = (n) => {
-    if (n == null || isNaN(n)) return ''
-    return Number(n) < 0 ? 'text-red-600' : ''
-  }
 
   return (
-    <div className="space-y-8 print:space-y-6">
-      <div className="text-center mb-4">
-        <h2 className="text-lg font-bold">STOCK POSITION</h2>
-        <p className="text-sm text-gray-600">
-          {fmtDate(startDate)} — {fmtDate(endDate)}
+    <div>
+      {/* Title */}
+      <div className="mb-3">
+        <p className="text-xs font-bold uppercase">
+          STOCK POSITION FOR THE PERIOD ({fmtDate(startDate)} - {fmtDate(endDate)})
         </p>
       </div>
 
@@ -696,81 +692,69 @@ function StockSummary({ report, startDate, endDate }) {
         const data = stockPosition[ft]
         if (!data) return null
         const t = data.totals
-
         const stockAvailable = t.opening + t.supply
-        const rows = [
-          { label: 'Opening Stock', value: t.opening },
-          { label: 'Supplies During Period', value: t.supply },
-          { label: 'Stock Available For Sale', value: stockAvailable, bold: true },
-          { label: 'Closing Stock', value: t.closing },
-          { label: 'Quantity Sold (Tank)', value: t.qtySold },
-          { label: 'Quantity Dispensed (Nozzle)', value: t.dispensed },
-          { label: 'Overage / Shortage', value: t.ovsh, isOvsh: true },
-          { label: 'Actual Overage / Shortage', value: t.actualOvsh, isOvsh: true },
-        ]
 
         return (
-          <div key={ft} className="overflow-x-auto">
-            <table className="w-full border-collapse border border-blue-200">
+          <div key={ft} className="mb-6">
+            <table className="w-full border-collapse border border-gray-800">
               <thead>
-                <tr>
-                  <th colSpan={2} className={hdr + ' text-center py-2 font-bold'}>{ft}</th>
+                <tr className={yHdr}>
+                  <th className={cell + ' text-left'}>{ft} STOCK POSITION</th>
+                  <th className={cell + ' text-right whitespace-nowrap'}>Per Manager&apos;s Computation</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
-                  <tr key={i} className={r.bold ? subHdr + ' font-semibold' : ''}>
-                    <td className={cell}>{r.label}</td>
-                    <td className={`${cellR} ${r.isOvsh ? ovshColor(r.value) : ''} ${r.bold ? 'font-semibold' : ''}`}>
-                      {r.isOvsh ? fmtOvsh(r.value) : fmt(r.value)}
-                    </td>
-                  </tr>
-                ))}
+                <tr>
+                  <td className={cell + ' font-bold'}>OPENING STOCK ({fmtDate(startDate)})</td>
+                  <td className={cellR}>{fmt(t.opening)}</td>
+                </tr>
+                <tr>
+                  <td className={cell + ' font-bold'}>SUPPLIES DURING THE PERIOD</td>
+                  <td className={cellR}>{fmt(t.supply)}</td>
+                </tr>
+                <tr className="font-bold">
+                  <td className={cell}>STOCK AVAILABLE FOR SALE</td>
+                  <td className={cellR}>{fmt(stockAvailable)}</td>
+                </tr>
+                <tr>
+                  <td className={cell + ' font-bold'}>CLOSING STOCK ({fmtDate(endDate)})</td>
+                  <td className={cellR}>{fmt(t.closing)}</td>
+                </tr>
+                <tr>
+                  <td className={cell + ' font-bold'}>QUANTITY SOLD</td>
+                  <td className={cellR}>{fmt(t.qtySold)}</td>
+                </tr>
+                <tr>
+                  <td className={cell + ' font-bold'}>QUANTITY DISPENSED</td>
+                  <td className={cellR}>{fmt(t.dispensed)}</td>
+                </tr>
+                <tr>
+                  <td className={cell + ' font-bold'}>OVERAGE/(SHORTAGE)</td>
+                  <td className={cellR}>{fmtOvsh(t.ovsh)}</td>
+                </tr>
+                {/* Spacer */}
+                <tr>
+                  <td className={cell}>&nbsp;</td>
+                  <td className={cell}></td>
+                </tr>
+                {/* Truck driver section */}
+                <tr>
+                  <td className={cell + ' font-bold'}>EXPECTED LITRES</td>
+                  <td className={cellR}>{fmt(t.expectedLitres)}</td>
+                </tr>
+                <tr>
+                  <td className={cell + ' font-bold'}>ACTUAL LITRES RECEIVED</td>
+                  <td className={cellR}>{fmt(t.actualLitresReceived)}</td>
+                </tr>
+                <tr>
+                  <td className={cell + ' font-bold'}>OVERAGE/(SHORTAGE) - TRUCK DRIVER</td>
+                  <td className={cellR}>{fmtOvsh(t.truckDriverOvsh)}</td>
+                </tr>
               </tbody>
             </table>
           </div>
         )
       })}
-
-      {/* Truck Driver Shortage Section */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-blue-200">
-          <thead>
-            <tr>
-              <th colSpan={1 + fuelTypes.length} className={hdr + ' text-center py-2 font-bold'}>TRUCK DRIVER SHORTAGE</th>
-            </tr>
-            <tr className={subHdr}>
-              <th className={cell}></th>
-              {fuelTypes.map(ft => (
-                <th key={ft} className={cell + ' text-center font-semibold'}>{ft}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className={cell + ' font-medium'}>Expected Litres</td>
-              {fuelTypes.map(ft => (
-                <td key={ft} className={cellR}>{fmt(stockPosition[ft]?.totals?.expectedLitres)}</td>
-              ))}
-            </tr>
-            <tr>
-              <td className={cell + ' font-medium'}>Actual Litres Received</td>
-              {fuelTypes.map(ft => (
-                <td key={ft} className={cellR}>{fmt(stockPosition[ft]?.totals?.actualLitresReceived)}</td>
-              ))}
-            </tr>
-            <tr className={`${subHdr} font-semibold`}>
-              <td className={cell}>Truck Driver OV/SH</td>
-              {fuelTypes.map(ft => {
-                const v = stockPosition[ft]?.totals?.truckDriverOvsh
-                return (
-                  <td key={ft} className={`${cellR} ${ovshColor(v)}`}>{fmtOvsh(v)}</td>
-                )
-              })}
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   )
 }
