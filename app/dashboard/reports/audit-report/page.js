@@ -16,7 +16,7 @@ function fmt(n) {
 const SUB_REPORTS = [
   { key: 'sales-cash', label: 'Sales/Cash Position' },
   // Future sub-reports will be added here:
-  { key: 'stock-position', label: 'Stock Position' },
+  { key: 'stock-position', label: 'Record of Stock Position' },
   { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
   // { key: 'pms-consumption', label: 'PMS Consumption & Pour Back' },
   // { key: 'ago-consumption', label: 'AGO Consumption & Pour Back' },
