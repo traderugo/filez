@@ -17,7 +17,7 @@ const SUB_REPORTS = [
   { key: 'sales-cash', label: 'Sales/Cash Position' },
   // Future sub-reports will be added here:
   // { key: 'stock-position', label: 'Stock Position' },
-  // { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
+  { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
   // { key: 'pms-consumption', label: 'PMS Consumption & Pour Back' },
   // { key: 'ago-consumption', label: 'AGO Consumption & Pour Back' },
   // { key: 'dpk-consumption', label: 'DPK Consumption & Pour Back' },
@@ -165,6 +165,9 @@ function AuditReportContent() {
         <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-200">
           {activeTab === 'sales-cash' && (
             <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
+          )}
+          {activeTab === 'lodgement-sheet' && (
+            <LodgementSheet report={report} />
           )}
         </div>
       ) : generated ? (
@@ -418,6 +421,126 @@ function CashReconciliation({ data, startDate, endDate, hdr, subHdr, cell, cellR
               {data.overshort > 0 ? '+' : ''}{fmt(data.overshort)}
             </td>
           </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── Lodgement Sheet sub-report ───
+
+function LodgementSheet({ report }) {
+  const { lodgementSheet } = report
+  if (!lodgementSheet) return null
+
+  const { rows, banks, totals } = lodgementSheet
+  const posBanks = banks.filter(b => b.lodgement_type === 'pos')
+  const otherBanks = banks.filter(b => b.lodgement_type !== 'pos')
+
+  const hdr = 'bg-blue-600 text-white'
+  const subHdr = 'bg-blue-50 text-blue-600'
+  const bdr = 'border border-blue-200'
+  const cell = `${bdr} px-1.5 py-1`
+  const cellR = `${cell} text-right`
+
+  const fmtDate = (d) => {
+    const dt = new Date(d + 'T00:00:00')
+    return `${dt.getDate()}-${dt.getMonth() + 1}-${dt.getFullYear()}`
+  }
+
+  const fmtOvsh = (v) => {
+    if (v === 0) return ''
+    if (v < 0) return `(${fmt(Math.abs(v))})`
+    return fmt(v)
+  }
+
+  const ovshColor = (v) => v !== 0 ? 'text-red-600' : ''
+
+  const totalCols = 4 + banks.length + 3
+  const visibleRows = rows.filter(r => r.hasData)
+
+  return (
+    <div className="min-w-[700px] pb-4">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            <th colSpan={totalCols} className={`${hdr} px-2 py-1.5 text-center font-bold`}>
+              LODGEMENT
+            </th>
+          </tr>
+          <tr className={subHdr}>
+            <th className={`${cell} font-bold`}>Sheet</th>
+            <th className={`${cell} font-bold`}>Date</th>
+            <th className={`${cellR} font-bold`}>Total Sales</th>
+            <th className={`${cellR} font-bold`}>Expected</th>
+            {posBanks.length > 0 && (
+              <th colSpan={posBanks.length} className={`${cell} text-center font-bold`}>
+                Analysis of POS by Banks
+              </th>
+            )}
+            {otherBanks.length > 0 && (
+              <th colSpan={otherBanks.length} className={`${cell} text-center font-bold`}>
+                Other Lodgements
+              </th>
+            )}
+            <th className={`${cellR} font-bold`}>Total POS</th>
+            <th className={`${cellR} font-bold`}>Actual</th>
+            <th className={`${cellR} font-bold`}>OV/SH</th>
+          </tr>
+          {banks.length > 0 && (
+            <tr className={subHdr}>
+              <th className={cell}></th>
+              <th className={cell}></th>
+              <th className={cell}></th>
+              <th className={cell}></th>
+              {banks.map(bank => (
+                <th key={bank.id} className={`${cellR} font-bold text-xs`}>
+                  {bank.bank_name}
+                </th>
+              ))}
+              <th className={cell}></th>
+              <th className={cell}></th>
+              <th className={cell}></th>
+            </tr>
+          )}
+        </thead>
+        <tbody>
+          {visibleRows.map((row, i) => (
+            <tr key={row.date}>
+              <td className={cell}>{i + 1}</td>
+              <td className={cell}>{fmtDate(row.date)}</td>
+              <td className={cellR}>{fmt(row.totalSales)}</td>
+              <td className={cellR}>{fmt(row.expected)}</td>
+              {banks.map(bank => (
+                <td key={bank.id} className={cellR}>
+                  {fmt(row.bankAmounts[bank.id] || 0)}
+                </td>
+              ))}
+              <td className={cellR}>{fmt(row.totalPOS)}</td>
+              <td className={cellR}>{fmt(row.actual)}</td>
+              <td className={`${cellR} font-bold ${ovshColor(row.ovsh)}`}>
+                {fmtOvsh(row.ovsh)}
+              </td>
+            </tr>
+          ))}
+          {visibleRows.length > 0 && (
+            <tr className={`${subHdr} font-bold`}>
+              <td className={cell}></td>
+              <td className={cell}>Total</td>
+              <td className={cellR}>{fmt(totals.totalSales)}</td>
+              <td className={cellR}>{fmt(totals.expected)}</td>
+              {banks.map(bank => (
+                <td key={bank.id} className={cellR}>
+                  {fmt(totals.bankTotals[bank.id] || 0)}
+                </td>
+              ))}
+              <td className={cellR}>{fmt(totals.totalPOS)}</td>
+              <td className={cellR}>{fmt(totals.actual)}</td>
+              <td className={`${cellR} ${ovshColor(totals.ovsh)}`}>
+                {fmtOvsh(totals.ovsh)}
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

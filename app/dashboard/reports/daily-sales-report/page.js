@@ -450,13 +450,23 @@ function DailySalesReportContent() {
                     <td colSpan={3} className={cell}>SALES</td>
                     <td className={cellR}>{fmt(currentDayReport.totalSales)}</td>
                   </tr>
+                  {currentDayReport.lodgement.bankRows
+                    .filter(r => r.lodgementType !== 'bank_deposit' && r.deposited > 0)
+                    .map(row => (
+                      <tr key={row.bankId}>
+                        <td colSpan={3} className={`${cell} text-xs pl-3`}>
+                          {row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}
+                          {row.lodgementType !== 'pos' && (
+                            <span className="text-gray-400 ml-1">({row.lodgementType})</span>
+                          )}
+                        </td>
+                        <td className={cellR}>{fmt(row.deposited)}</td>
+                      </tr>
+                    ))
+                  }
                   <tr className="font-bold">
-                    <td colSpan={3} className={cell}>POS</td>
+                    <td colSpan={3} className={cell}>TOTAL POS</td>
                     <td className={cellR}>{fmt(currentDayReport.lodgement.totalPOS)}</td>
-                  </tr>
-                  <tr className="font-bold">
-                    <td colSpan={3} className={cell}>Deposits</td>
-                    <td className={cellR}>{fmt(currentDayReport.lodgement.totalDeposits)}</td>
                   </tr>
                   <tr className={`${subHdr} font-bold`}>
                     <td colSpan={3} className={cell}>CASH</td>
