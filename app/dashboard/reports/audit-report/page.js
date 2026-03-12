@@ -17,6 +17,7 @@ const SUB_REPORTS = [
   { key: 'sales-cash', label: 'Sales/Cash Position' },
   // Future sub-reports will be added here:
   { key: 'stock-position', label: 'Record of Stock Position' },
+  { key: 'stock-summary', label: 'Stock Position' },
   { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
   // { key: 'pms-consumption', label: 'PMS Consumption & Pour Back' },
   // { key: 'ago-consumption', label: 'AGO Consumption & Pour Back' },
@@ -180,6 +181,9 @@ function AuditReportContent() {
           )}
           {activeTab === 'stock-position' && (
             <StockPosition report={report} />
+          )}
+          {activeTab === 'stock-summary' && (
+            <StockSummary report={report} startDate={reportStart} endDate={reportEnd} />
           )}
         </div>
       ) : generated ? (
@@ -649,6 +653,122 @@ function StockPosition({ report }) {
           )}
         </tbody>
       </table>
+    </div>
+  )
+}
+
+function StockSummary({ report, startDate, endDate }) {
+  const { stockPosition, fuelTypes } = report
+  if (!stockPosition) return null
+
+  const fmtDate = (d) => {
+    if (!d) return ''
+    const dt = new Date(d + 'T00:00:00')
+    return dt.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
+  const hdr = 'bg-yellow-400 text-black font-bold text-center py-2 text-sm'
+  const cell = 'border border-gray-300 px-3 py-1.5 text-sm'
+  const cellR = cell + ' text-right'
+
+  const fmtOvsh = (n) => {
+    if (n == null || isNaN(n)) return ''
+    const v = Number(n)
+    if (v < 0) return `(${fmt(Math.abs(v))})`
+    return fmt(v)
+  }
+  const ovshColor = (n) => {
+    if (n == null || isNaN(n)) return ''
+    return Number(n) < 0 ? 'text-red-600' : ''
+  }
+
+  return (
+    <div className="space-y-8 print:space-y-6">
+      <div className="text-center mb-4">
+        <h2 className="text-lg font-bold">STOCK POSITION</h2>
+        <p className="text-sm text-gray-600">
+          {fmtDate(startDate)} — {fmtDate(endDate)}
+        </p>
+      </div>
+
+      {fuelTypes.map((ft) => {
+        const data = stockPosition[ft]
+        if (!data) return null
+        const t = data.totals
+
+        const stockAvailable = t.opening + t.supply
+        const rows = [
+          { label: 'Opening Stock', value: t.opening },
+          { label: 'Supplies During Period', value: t.supply },
+          { label: 'Stock Available For Sale', value: stockAvailable, bold: true },
+          { label: 'Closing Stock', value: t.closing },
+          { label: 'Quantity Sold (Tank)', value: t.qtySold },
+          { label: 'Quantity Dispensed (Nozzle)', value: t.dispensed },
+          { label: 'Overage / Shortage', value: t.ovsh, isOvsh: true },
+          { label: 'Actual Overage / Shortage', value: t.actualOvsh, isOvsh: true },
+        ]
+
+        return (
+          <div key={ft} className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300">
+              <thead>
+                <tr>
+                  <th colSpan={2} className={hdr}>{ft}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i} className={r.bold ? 'bg-gray-100 font-semibold' : ''}>
+                    <td className={cell}>{r.label}</td>
+                    <td className={`${cellR} ${r.isOvsh ? ovshColor(r.value) : ''} ${r.bold ? 'font-semibold' : ''}`}>
+                      {r.isOvsh ? fmtOvsh(r.value) : fmt(r.value)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+
+      {/* Truck Driver Shortage Section */}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr>
+              <th colSpan={2 + fuelTypes.length} className={hdr}>TRUCK DRIVER SHORTAGE</th>
+            </tr>
+            <tr className="bg-yellow-100">
+              <th className={cell}></th>
+              {fuelTypes.map(ft => (
+                <th key={ft} className={cell + ' text-center font-semibold'}>{ft}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className={cell + ' font-medium'}>Expected Litres</td>
+              {fuelTypes.map(ft => (
+                <td key={ft} className={cellR}>{fmt(stockPosition[ft]?.totals?.expectedLitres)}</td>
+              ))}
+            </tr>
+            <tr>
+              <td className={cell + ' font-medium'}>Actual Litres Received</td>
+              {fuelTypes.map(ft => (
+                <td key={ft} className={cellR}>{fmt(stockPosition[ft]?.totals?.actualLitresReceived)}</td>
+              ))}
+            </tr>
+            <tr className="bg-gray-100 font-semibold">
+              <td className={cell}>Truck Driver OV/SH</td>
+              {fuelTypes.map(ft => {
+                const v = stockPosition[ft]?.totals?.truckDriverOvsh
+                return (
+                  <td key={ft} className={`${cellR} ${ovshColor(v)}`}>{fmtOvsh(v)}</td>
+                )
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
