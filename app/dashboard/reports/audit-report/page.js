@@ -667,8 +667,9 @@ function StockSummary({ report, startDate, endDate }) {
     const dt = new Date(d + 'T00:00:00')
     return dt.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
   }
-  const hdr = 'bg-yellow-400 text-black font-bold text-center py-2 text-sm'
-  const cell = 'border border-gray-300 px-3 py-1.5 text-sm'
+  const hdr = 'bg-blue-600 text-white'
+  const subHdr = 'bg-blue-50 text-blue-900'
+  const cell = 'border border-blue-200 px-2 py-1 text-sm'
   const cellR = cell + ' text-right'
 
   const fmtOvsh = (n) => {
@@ -710,15 +711,15 @@ function StockSummary({ report, startDate, endDate }) {
 
         return (
           <div key={ft} className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
+            <table className="w-full border-collapse border border-blue-200">
               <thead>
                 <tr>
-                  <th colSpan={2} className={hdr}>{ft}</th>
+                  <th colSpan={2} className={hdr + ' text-center py-2 font-bold'}>{ft}</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((r, i) => (
-                  <tr key={i} className={r.bold ? 'bg-gray-100 font-semibold' : ''}>
+                  <tr key={i} className={r.bold ? subHdr + ' font-semibold' : ''}>
                     <td className={cell}>{r.label}</td>
                     <td className={`${cellR} ${r.isOvsh ? ovshColor(r.value) : ''} ${r.bold ? 'font-semibold' : ''}`}>
                       {r.isOvsh ? fmtOvsh(r.value) : fmt(r.value)}
@@ -733,12 +734,12 @@ function StockSummary({ report, startDate, endDate }) {
 
       {/* Truck Driver Shortage Section */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
+        <table className="w-full border-collapse border border-blue-200">
           <thead>
             <tr>
-              <th colSpan={2 + fuelTypes.length} className={hdr}>TRUCK DRIVER SHORTAGE</th>
+              <th colSpan={1 + fuelTypes.length} className={hdr + ' text-center py-2 font-bold'}>TRUCK DRIVER SHORTAGE</th>
             </tr>
-            <tr className="bg-yellow-100">
+            <tr className={subHdr}>
               <th className={cell}></th>
               {fuelTypes.map(ft => (
                 <th key={ft} className={cell + ' text-center font-semibold'}>{ft}</th>
@@ -758,7 +759,7 @@ function StockSummary({ report, startDate, endDate }) {
                 <td key={ft} className={cellR}>{fmt(stockPosition[ft]?.totals?.actualLitresReceived)}</td>
               ))}
             </tr>
-            <tr className="bg-gray-100 font-semibold">
+            <tr className={`${subHdr} font-semibold`}>
               <td className={cell}>Truck Driver OV/SH</td>
               {fuelTypes.map(ft => {
                 const v = stockPosition[ft]?.totals?.truckDriverOvsh
