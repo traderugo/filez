@@ -217,7 +217,7 @@ function SalesCashPosition({ report, startDate, endDate }) {
   }
 
   return (
-    <div className="min-w-[700px] pb-4">
+    <div className="min-w-[700px] pb-4 px-[10%]">
       <h2 className="text-base font-bold text-gray-900 mb-1">
         Cash/Sales Reconciliation — {formatDate(startDate)} to {formatDate(endDate)}
       </h2>
