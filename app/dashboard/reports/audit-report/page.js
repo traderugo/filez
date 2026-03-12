@@ -434,8 +434,10 @@ function LodgementSheet({ report }) {
   if (!lodgementSheet) return null
 
   const { rows, banks, totals } = lodgementSheet
-  const posBanks = banks.filter(b => b.lodgement_type === 'pos')
-  const otherBanks = banks.filter(b => b.lodgement_type !== 'pos')
+  // Only show non-deposit banks as columns (POS, cash, other)
+  const displayBanks = banks.filter(b => b.lodgement_type !== 'bank_deposit')
+  const posBanks = displayBanks.filter(b => b.lodgement_type === 'pos')
+  const otherBanks = displayBanks.filter(b => b.lodgement_type !== 'pos')
 
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-600'
@@ -456,7 +458,7 @@ function LodgementSheet({ report }) {
 
   const ovshColor = (v) => v !== 0 ? 'text-red-600' : ''
 
-  const totalCols = 4 + banks.length + 3
+  const totalCols = 3 + displayBanks.length + 3
   const visibleRows = rows.filter(r => r.hasData)
 
   return (
@@ -469,7 +471,6 @@ function LodgementSheet({ report }) {
             </th>
           </tr>
           <tr className={subHdr}>
-            <th className={`${cell} font-bold`}>Sheet</th>
             <th className={`${cell} font-bold`}>Date</th>
             <th className={`${cellR} font-bold`}>Total Sales</th>
             <th className={`${cellR} font-bold`}>Expected</th>
@@ -487,13 +488,12 @@ function LodgementSheet({ report }) {
             <th className={`${cellR} font-bold`}>Actual</th>
             <th className={`${cellR} font-bold`}>OV/SH</th>
           </tr>
-          {banks.length > 0 && (
+          {displayBanks.length > 0 && (
             <tr className={subHdr}>
               <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
-              <th className={cell}></th>
-              {banks.map(bank => (
+              {displayBanks.map(bank => (
                 <th key={bank.id} className={`${cellR} font-bold text-xs`}>
                   {bank.bank_name}
                 </th>
@@ -505,13 +505,12 @@ function LodgementSheet({ report }) {
           )}
         </thead>
         <tbody>
-          {visibleRows.map((row, i) => (
+          {visibleRows.map((row) => (
             <tr key={row.date}>
-              <td className={cell}>{i + 1}</td>
               <td className={cell}>{fmtDate(row.date)}</td>
               <td className={cellR}>{fmt(row.totalSales)}</td>
               <td className={cellR}>{fmt(row.expected)}</td>
-              {banks.map(bank => (
+              {displayBanks.map(bank => (
                 <td key={bank.id} className={cellR}>
                   {fmt(row.bankAmounts[bank.id] || 0)}
                 </td>
@@ -525,11 +524,10 @@ function LodgementSheet({ report }) {
           ))}
           {visibleRows.length > 0 && (
             <tr className={`${subHdr} font-bold`}>
-              <td className={cell}></td>
               <td className={cell}>Total</td>
               <td className={cellR}>{fmt(totals.totalSales)}</td>
               <td className={cellR}>{fmt(totals.expected)}</td>
-              {banks.map(bank => (
+              {displayBanks.map(bank => (
                 <td key={bank.id} className={cellR}>
                   {fmt(totals.bankTotals[bank.id] || 0)}
                 </td>
