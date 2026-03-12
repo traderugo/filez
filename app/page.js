@@ -9,9 +9,10 @@ export default function LandingPage() {
   const [loggedIn, setLoggedIn] = useState(false)
 
   useEffect(() => {
-    fetch('/api/auth/me').then(res => {
-      if (res.ok) setLoggedIn(true)
-    }).catch(() => {})
+    fetch('/api/auth/me')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => { if (data?.user) setLoggedIn(true) })
+      .catch(() => {})
   }, [])
 
   return (
