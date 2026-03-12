@@ -168,7 +168,7 @@ function SummaryContent() {
           <p className="text-gray-400 text-sm">No data for this date.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto min-h-0 mb-3 px-[15%]">
+        <div className="flex-1 overflow-y-auto min-h-0 mb-3 px-1 sm:px-[15%]">
           {/* DAY header */}
           <table className="w-full border-collapse text-sm mb-0">
             <tbody>
