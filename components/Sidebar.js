@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import {
   LayoutDashboard, CreditCard,
@@ -63,15 +63,34 @@ export default function Sidebar({ user, open, collapsed, onClose, onToggleCollap
     setSyncing(false)
   }
 
-  const handleRefresh = async () => {
-    if (refreshing || !stationId) return
+  const handleRefresh = useCallback(async () => {
+    if (refreshingRef.current || !stationId) return
     setRefreshing(true)
+    refreshingRef.current = true
     try {
       await initialSync(stationId, { force: true })
       resetPullCount()
     } catch (e) { /* offline */ }
     setRefreshing(false)
-  }
+    refreshingRef.current = false
+  }, [stationId, resetPullCount])
+
+  // Refs for stable interval access
+  const refreshingRef = useRef(false)
+  const pendingPullRef = useRef(0)
+  useEffect(() => { pendingPullRef.current = pendingPullCount }, [pendingPullCount])
+
+  // Auto-pull every 5s when Realtime detects remote changes and tab is visible
+  useEffect(() => {
+    if (!stationId) return
+    const interval = setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      if (pendingPullRef.current > 0 && !refreshingRef.current) {
+        handleRefresh()
+      }
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [stationId, handleRefresh])
 
   const isActive = (href, exact) => {
     if (exact) return pathname === href
