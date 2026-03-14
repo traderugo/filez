@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Send, RefreshCw, Loader2, Activity } from 'lucide-react'
+import { Send, Loader2, Activity, Trash2 } from 'lucide-react'
 import { db } from '@/lib/db'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function ChatPage() {
   const params = useParams()
@@ -13,8 +14,10 @@ export default function ChatPage() {
   const [user, setUser] = useState(null)
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
-  const [pulling, setPulling] = useState(false)
   const [error, setError] = useState('')
+  const [showMentions, setShowMentions] = useState(false)
+  const [mentionSuggestions, setMentionSuggestions] = useState([])
+  const [activeMentionIdx, setActiveMentionIdx] = useState(0)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -26,14 +29,52 @@ export default function ChatPage() {
     []
   )
 
+  // Derive unique member names from existing messages
+  const members = useMemo(() => {
+    if (!messages?.length) return []
+    const seen = new Set()
+    for (const m of messages) {
+      if (m.userName) seen.add(m.userName)
+    }
+    return [...seen]
+  }, [messages])
+
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
   }, [])
 
-  // Pull on first mount
+  // Initial fetch of message history
   useEffect(() => {
-    if (stationId) handlePull()
+    if (!stationId) return
+    fetchMessages()
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stationId])
+
+  // Supabase Realtime subscription
+  useEffect(() => {
+    if (!supabase || !stationId) return
+
+    const channel = supabase
+      .channel(`chat:${stationId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'station_messages',
+        filter: `org_id=eq.${stationId}`,
+      }, async (payload) => {
+        await db.stationMessages.put(mapMessage(payload.new))
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'station_messages',
+        filter: `org_id=eq.${stationId}`,
+      }, async (payload) => {
+        await db.stationMessages.put(mapMessage(payload.new))
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [stationId])
 
   // Scroll to bottom when messages change
@@ -41,39 +82,39 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handlePull = async () => {
-    if (pulling || !stationId) return
-    setPulling(true)
-    setError('')
+  function mapMessage(m) {
+    return {
+      id: m.id,
+      orgId: m.org_id,
+      userId: m.user_id,
+      userName: m.user_name,
+      type: m.type,
+      content: m.content,
+      actionType: m.action_type,
+      deletedAt: m.deleted_at || null,
+      createdAt: m.created_at,
+    }
+  }
+
+  const fetchMessages = async () => {
     try {
       const res = await fetch(`/api/chat?org_id=${stationId}`)
       if (res.ok) {
         const { messages: serverMessages } = await res.json()
         if (serverMessages?.length) {
-          await db.stationMessages.bulkPut(
-            serverMessages.map(m => ({
-              id: m.id,
-              orgId: m.org_id,
-              userId: m.user_id,
-              userName: m.user_name,
-              type: m.type,
-              content: m.content,
-              actionType: m.action_type,
-              createdAt: m.created_at,
-            }))
-          )
+          await db.stationMessages.bulkPut(serverMessages.map(mapMessage))
         }
       }
     } catch {
-      setError('Failed to pull messages. Check your connection.')
+      // Silently fail — realtime will catch new messages
     }
-    setPulling(false)
   }
 
   const handleSend = async () => {
     const content = message.trim()
     if (!content || sending) return
     setMessage('')
+    setShowMentions(false)
     setSending(true)
     setError('')
     try {
@@ -84,16 +125,7 @@ export default function ChatPage() {
       })
       if (res.ok) {
         const { message: m } = await res.json()
-        await db.stationMessages.put({
-          id: m.id,
-          orgId: m.org_id,
-          userId: m.user_id,
-          userName: m.user_name,
-          type: 'message',
-          content: m.content,
-          actionType: null,
-          createdAt: m.created_at,
-        })
+        await db.stationMessages.put(mapMessage(m))
       } else {
         setError('Failed to send. Try again.')
         setMessage(content)
@@ -106,6 +138,78 @@ export default function ChatPage() {
     inputRef.current?.focus()
   }
 
+  const handleDelete = async (msg) => {
+    const deletedAt = new Date().toISOString()
+    // Optimistic update
+    await db.stationMessages.update(msg.id, { content: null, deletedAt })
+    try {
+      const res = await fetch(`/api/chat?id=${msg.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        // Revert
+        await db.stationMessages.update(msg.id, { content: msg.content, deletedAt: null })
+      }
+    } catch {
+      await db.stationMessages.update(msg.id, { content: msg.content, deletedAt: null })
+    }
+  }
+
+  const handleMessageChange = (e) => {
+    const val = e.target.value
+    setMessage(val)
+    const cursor = e.target.selectionStart
+    const textBefore = val.slice(0, cursor)
+    const atMatch = textBefore.match(/@(\S*)$/)
+    if (atMatch) {
+      const query = atMatch[1].toLowerCase()
+      const filtered = members.filter(
+        name => name !== user?.name && name.toLowerCase().includes(query)
+      )
+      setMentionSuggestions(filtered)
+      setActiveMentionIdx(0)
+      setShowMentions(filtered.length > 0)
+    } else {
+      setShowMentions(false)
+    }
+  }
+
+  const insertMention = (name) => {
+    const cursor = inputRef.current?.selectionStart ?? message.length
+    const textBefore = message.slice(0, cursor)
+    const textAfter = message.slice(cursor)
+    const atIndex = textBefore.lastIndexOf('@')
+    setMessage(textBefore.slice(0, atIndex) + `@${name} ` + textAfter)
+    setShowMentions(false)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  const handleKeyDown = (e) => {
+    if (showMentions) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setActiveMentionIdx(i => Math.min(i + 1, mentionSuggestions.length - 1))
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setActiveMentionIdx(i => Math.max(i - 1, 0))
+        return
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        insertMention(mentionSuggestions[activeMentionIdx])
+        return
+      }
+      if (e.key === 'Escape') {
+        setShowMentions(false)
+        return
+      }
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
   const fmtTime = (ts) => {
     if (!ts) return ''
     return new Date(ts).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })
@@ -116,7 +220,6 @@ export default function ChatPage() {
     return new Date(ts).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
   }
 
-  // Group messages by day for date separators
   let lastDate = null
 
   return (
@@ -129,7 +232,7 @@ export default function ChatPage() {
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white">
-        {messages?.length === 0 && !pulling && (
+        {messages?.length === 0 && (
           <div className="flex justify-center items-center h-full">
             <p className="text-sm text-gray-400">No messages yet.</p>
           </div>
@@ -140,6 +243,7 @@ export default function ChatPage() {
           const msgDate = msg.createdAt ? fmtDate(msg.createdAt) : null
           const showDateSep = msgDate && msgDate !== lastDate
           if (showDateSep) lastDate = msgDate
+          const isDeleted = !!msg.deletedAt
 
           return (
             <div key={msg.id}>
@@ -162,18 +266,35 @@ export default function ChatPage() {
                 </div>
               ) : (
                 /* Chat message */
-                <div className={`flex flex-col mb-2 ${isMe ? 'items-end' : 'items-start'}`}>
-                  {!isMe && (
-                    <span className="text-xs text-gray-600 mb-1 px-1">{msg.userName}</span>
+                <div className={`flex items-end gap-1 mb-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                  {/* Delete button — own messages only, not already deleted */}
+                  {isMe && !isDeleted && (
+                    <button
+                      onClick={() => handleDelete(msg)}
+                      className="mb-5 p-1.5 text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   )}
-                  <div className={`max-w-[78%] px-4 py-2.5 text-sm leading-relaxed ${
-                    isMe
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-100 text-gray-900'
-                  }`}>
-                    {msg.content}
+
+                  <div className={`flex flex-col max-w-[78%] ${isMe ? 'items-end' : 'items-start'}`}>
+                    {!isMe && !isDeleted && (
+                      <span className="text-xs text-gray-500 mb-1 px-1">{msg.userName}</span>
+                    )}
+                    <div className={`px-4 py-2.5 text-sm leading-relaxed ${
+                      isDeleted
+                        ? 'bg-gray-100 text-gray-400 italic border border-gray-200'
+                        : isMe
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 text-gray-900'
+                    }`}>
+                      {isDeleted
+                        ? `Message deleted · ${fmtTime(msg.deletedAt)}`
+                        : <MessageContent content={msg.content} currentUserName={user?.name} isMe={isMe} />
+                      }
+                    </div>
+                    <span className="text-[10px] text-gray-500 mt-1 px-1">{fmtTime(msg.createdAt)}</span>
                   </div>
-                  <span className="text-[10px] text-gray-500 mt-1 px-1">{fmtTime(msg.createdAt)}</span>
                 </div>
               )}
             </div>
@@ -190,26 +311,33 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Input */}
-      <div className="shrink-0 border-t border-gray-200 px-4 py-3 bg-white">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handlePull}
-            disabled={pulling}
-            className="w-10 h-10 flex items-center justify-center text-blue-600 border border-blue-200 hover:bg-blue-50 transition-colors flex-shrink-0"
-          >
-            {pulling
-              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              : <RefreshCw className="w-3.5 h-3.5" />
-            }
-          </button>
+      {/* Input area */}
+      <div className="shrink-0 border-t border-gray-200 bg-white">
+        {/* Mention suggestions */}
+        {showMentions && (
+          <div className="border-b border-gray-200 max-h-40 overflow-y-auto">
+            {mentionSuggestions.map((name, i) => (
+              <button
+                key={name}
+                onMouseDown={(e) => { e.preventDefault(); insertMention(name) }}
+                className={`w-full text-left px-4 py-2 text-sm ${
+                  i === activeMentionIdx ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                @{name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2 px-4 py-3">
           <input
             ref={inputRef}
             type="text"
             value={message}
-            onChange={e => setMessage(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
-            placeholder="Type a message..."
+            onChange={handleMessageChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Message... use @ to mention"
             className="flex-1 px-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
           <button
@@ -225,5 +353,32 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function MessageContent({ content, currentUserName, isMe }) {
+  if (!content) return null
+  const parts = content.split(/(@\S+)/g)
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith('@')) {
+          const isYou = part.slice(1).toLowerCase() === currentUserName?.toLowerCase()
+          return (
+            <span
+              key={i}
+              className={`font-semibold ${
+                isYou
+                  ? 'bg-yellow-200 text-yellow-900 px-0.5 rounded'
+                  : isMe ? 'text-blue-200' : 'text-blue-600'
+              }`}
+            >
+              {part}
+            </span>
+          )
+        }
+        return <span key={i}>{part}</span>
+      })}
+    </>
   )
 }
