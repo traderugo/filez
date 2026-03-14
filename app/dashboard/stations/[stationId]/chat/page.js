@@ -3,9 +3,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Send, Loader2, Activity, Trash2 } from 'lucide-react'
+import { Send, Loader2, Activity, Trash2, RefreshCw } from 'lucide-react'
 import { db } from '@/lib/db'
-import { supabase } from '@/lib/supabaseClient'
 
 export default function ChatPage() {
   const params = useParams()
@@ -15,6 +14,7 @@ export default function ChatPage() {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [refreshing, setRefreshing] = useState(false)
   const [showMentions, setShowMentions] = useState(false)
   const [mentionSuggestions, setMentionSuggestions] = useState([])
   const [activeMentionIdx, setActiveMentionIdx] = useState(0)
@@ -50,33 +50,6 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stationId])
 
-  // Supabase Realtime subscription
-  useEffect(() => {
-    if (!supabase || !stationId) return
-
-    const channel = supabase
-      .channel(`chat:${stationId}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'station_messages',
-        filter: `org_id=eq.${stationId}`,
-      }, async (payload) => {
-        await db.stationMessages.put(mapMessage(payload.new))
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'station_messages',
-        filter: `org_id=eq.${stationId}`,
-      }, async (payload) => {
-        await db.stationMessages.put(mapMessage(payload.new))
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [stationId])
-
   // Scroll to bottom when messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -97,6 +70,7 @@ export default function ChatPage() {
   }
 
   const fetchMessages = async () => {
+    setRefreshing(true)
     try {
       const res = await fetch(`/api/chat?org_id=${stationId}`)
       if (res.ok) {
@@ -106,8 +80,9 @@ export default function ChatPage() {
         }
       }
     } catch {
-      // Silently fail — realtime will catch new messages
+      // Silently fail
     }
+    setRefreshing(false)
   }
 
   const handleSend = async () => {
@@ -226,8 +201,16 @@ export default function ChatPage() {
     <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-white">
 
       {/* Top bar */}
-      <div className="flex items-center px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
         <h1 className="text-sm font-semibold text-gray-900">Station Chat</h1>
+        <button
+          onClick={fetchMessages}
+          disabled={refreshing}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 disabled:opacity-40 transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* Messages area */}
