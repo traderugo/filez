@@ -168,28 +168,9 @@ function AuditReportContent() {
         </div>
       </div>
 
-      {/* Sub-report tabs (fixed above scroll area) */}
-      {generated && report && (
-        <div className="flex overflow-x-auto shrink-0 border-b border-blue-200">
-          {SUB_REPORTS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-2 text-sm font-medium border-r border-blue-200 shrink-0 whitespace-nowrap ${
-                activeTab === tab.key
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-blue-600 hover:bg-blue-50'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Report content */}
       {report ? (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3">
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
           <div className="px-4 sm:px-8 py-4">
             {activeTab === 'sales-cash' && (
               <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
@@ -209,12 +190,31 @@ function AuditReportContent() {
           </div>
         </div>
       ) : generated ? (
-        <div className="flex justify-center py-20">
+        <div className="flex-1 flex justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+        </div>
+      )}
+
+      {/* Sub-report tabs (bottom, Excel-style) */}
+      {generated && report && (
+        <div className="flex overflow-x-auto shrink-0 border-t border-blue-200 bg-gray-50">
+          {SUB_REPORTS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-1.5 text-sm font-medium border-r border-blue-200 shrink-0 whitespace-nowrap transition-colors ${
+                activeTab === tab.key
+                  ? 'bg-white text-blue-600 border-t-2 border-t-blue-600 -mt-px'
+                  : 'bg-gray-50 text-gray-500 hover:bg-white hover:text-blue-600'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -573,7 +573,7 @@ function StockPosition({ report }) {
   if (!stockPosition) return null
 
   const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-900'
+  const subHdr = 'bg-blue-50 text-blue-600'
   const bdr = 'border border-blue-200'
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
