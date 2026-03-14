@@ -142,7 +142,7 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white">
         {messages?.length === 0 && !pulling && (
           <div className="flex justify-center items-center h-full">
-            <p className="text-sm text-gray-400">No messages yet. Pull to load or send the first message.</p>
+            <p className="text-sm text-gray-400">No messages yet.</p>
           </div>
         )}
 
