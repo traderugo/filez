@@ -463,12 +463,16 @@ export { sortEntries, calculateDateRange* }
 ### Page Container
 
 ```jsx
-<div className="flex flex-col h-[calc(95vh-4rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
+<div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
   {/* Header — shrink-0 */}
   {/* Scrollable content — flex-1 overflow-y-auto overflow-x-auto min-h-0 */}
   {/* Day tabs — shrink-0 */}
 </div>
 ```
+
+- Use `100dvh` (dynamic viewport height) — accounts for mobile browser chrome (address bar, etc.)
+- `3.5rem` = header height (`h-14`)
+- This makes the container fill exactly the device screen minus the header, so bottom tabs sit at the true bottom of the screen
 
 ### CSS Class Constants
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { authenticateUser, getServiceClient, paginationParams, requireService } from '@/lib/entryHelpers'
+import { authenticateUser, getServiceClient, paginationParams, requireService, logActivity } from '@/lib/entryHelpers'
 
 const TABLE = 'lube_sales_entries'
 const SERVICE_KEY = 'lube-management'
@@ -67,6 +67,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 })
     }
 
+    logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'added a lube sales entry', actionType: 'created_entry' }).catch(() => {})
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
@@ -104,6 +105,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 })
     }
 
+    logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'updated a lube sales entry', actionType: 'updated_entry' }).catch(() => {})
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

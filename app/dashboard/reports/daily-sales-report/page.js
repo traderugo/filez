@@ -193,7 +193,7 @@ function DailySalesReportContent() {
   const currentDayHasDuplicates = duplicateDates.includes(viewDate)
 
   return (
-    <div className="flex flex-col h-[calc(95vh-4rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Duplicate entry warning */}
       {currentDayHasDuplicates && (
         <div className="bg-amber-50 border border-amber-300 text-amber-800 px-3 py-2 text-sm mb-1 shrink-0">
