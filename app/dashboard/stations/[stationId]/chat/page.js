@@ -128,7 +128,7 @@ export default function ChatPage() {
         <button
           onClick={handlePull}
           disabled={pulling}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors"
         >
           {pulling
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -157,14 +157,14 @@ export default function ChatPage() {
               {/* Date separator */}
               {showDateSep && (
                 <div className="flex justify-center my-3">
-                  <span className="bg-gray-200 text-gray-500 text-xs px-3 py-0.5 rounded-full">{msgDate}</span>
+                  <span className="bg-gray-200 text-gray-500 text-xs px-3 py-0.5">{msgDate}</span>
                 </div>
               )}
 
               {/* Activity log */}
               {msg.type === 'activity' ? (
                 <div className="flex justify-center my-1">
-                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 text-xs px-3 py-1.5 rounded-full max-w-[90%]">
+                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 text-xs px-3 py-1.5 max-w-[90%]">
                     <Activity className="w-3 h-3 flex-shrink-0 text-blue-400" />
                     <span className="font-medium text-gray-700">{msg.userName}</span>
                     <span>{msg.content}</span>
@@ -179,8 +179,8 @@ export default function ChatPage() {
                   )}
                   <div className={`max-w-[78%] px-4 py-2.5 text-sm leading-relaxed ${
                     isMe
-                      ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm'
-                      : 'bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-bl-sm'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white border border-gray-200 text-gray-800'
                   }`}>
                     {msg.content}
                   </div>
@@ -211,12 +211,12 @@ export default function ChatPage() {
             onChange={e => setMessage(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+            className="flex-1 px-4 py-2.5 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
           />
           <button
             onClick={handleSend}
             disabled={sending || !message.trim()}
-            className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 transition-colors flex-shrink-0"
+            className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 transition-colors flex-shrink-0"
           >
             {sending
               ? <Loader2 className="w-4 h-4 animate-spin" />
