@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users, Flame,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, MessageSquare, Shield, ArrowUpFromLine, ArrowDownToLine, LayoutDashboard
+  FileText, MessageSquare, Shield, ArrowUpFromLine, ArrowDownToLine, LayoutDashboard, MessagesSquare
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -363,6 +363,22 @@ export default function StationPage() {
             </Link>
           ))}
         </div>
+      </section>
+
+      {/* Chat */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Chat</h2>
+        <Link
+          href={`/dashboard/stations/${stationId}/chat`}
+          className="flex items-center gap-3 border border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+        >
+          <MessagesSquare className="w-5 h-5 text-blue-600 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-900">Station Chat</p>
+            <p className="text-xs text-gray-500">Messages and activity log for this station</p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-300" />
+        </Link>
       </section>
 
       {/* Navigate */}

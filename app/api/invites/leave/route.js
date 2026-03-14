@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { logActivity } from '@/lib/entryHelpers'
 
 // POST — user leaves a station (updates invite status, clears org_id if it matches)
 export async function POST(request) {
@@ -32,6 +33,7 @@ export async function POST(request) {
         .eq('id', user.id)
     }
 
+    logActivity(supabase, { orgId: org_id, userId: user.id, userName: user.name || user.email, content: 'left the station', actionType: 'left_station' }).catch(() => {})
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

@@ -22,6 +22,9 @@ function getPageInfo(pathname) {
   const settingsMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)\/settings$/)
   if (settingsMatch) return { back: `/dashboard/stations/${settingsMatch[1]}`, title: 'Settings' }
 
+  const chatMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)\/chat$/)
+  if (chatMatch) return { back: `/dashboard/stations/${chatMatch[1]}`, title: 'Chat' }
+
   const stationMatch = pathname.match(/^\/dashboard\/stations\/[^/]+$/)
   if (stationMatch) return { back: '/dashboard', title: 'Station' }
 
