@@ -573,7 +573,7 @@ function StockPosition({ report }) {
   if (!stockPosition) return null
 
   const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
+  const subHdr = 'bg-blue-50 text-blue-900'
   const bdr = 'border border-blue-200'
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
@@ -597,13 +597,15 @@ function StockPosition({ report }) {
   return (
     <div className="min-w-[700px] pb-4">
       {/* Fuel type tabs */}
-      <div className="flex border-b border-blue-200 mb-0">
+      <div className="flex gap-1 mb-4">
         {fuelTypes.map(ft => (
           <button
             key={ft}
             onClick={() => setActiveFuel(ft)}
-            className={`px-4 py-1.5 text-sm font-bold border-r border-blue-200 ${
-              activeFuel === ft ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+            className={`px-4 py-1.5 text-sm font-medium border ${
+              activeFuel === ft
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-blue-900 border-blue-200 hover:bg-blue-50'
             }`}
           >
             {ft}
