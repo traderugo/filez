@@ -81,6 +81,8 @@ export default function DailySalesFormPage() {
   const [entries, setEntries] = useState([])
   const [activeTab, setActiveTab] = useState(0)
   const [originalIds, setOriginalIds] = useState([])
+  // Previous day's last closing meter per pump_id — used when the user leaves a nozzle blank
+  const [prevClosing, setPrevClosing] = useState({})
 
   useEffect(() => {
     let cancelled = false
@@ -131,6 +133,37 @@ export default function DailySalesFormPage() {
     return () => { cancelled = true }
   }, [editId, editDate, orgId])
 
+  // Resolve the previous day's last closing meter readings from IndexedDB
+  useEffect(() => {
+    if (!orgId || !formDate) return
+    const load = async () => {
+      const prevDate = new Date(formDate)
+      prevDate.setDate(prevDate.getDate() - 1)
+      const prevDateStr = prevDate.toISOString().split('T')[0]
+
+      const prevDayEntries = await db.dailySales
+        .where('orgId').equals(orgId)
+        .filter(e => (e.entryDate || e.entry_date) === prevDateStr)
+        .toArray()
+
+      if (!prevDayEntries.length) { setPrevClosing({}); return }
+
+      // Prefer the close-of-business entry; otherwise use the latest by createdAt
+      const lastEntry =
+        prevDayEntries.find(e => e.closeOfBusiness || e.close_of_business) ||
+        prevDayEntries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+
+      const map = {}
+      for (const r of (lastEntry?.nozzleReadings || [])) {
+        if (r.pump_id != null && r.closing_meter != null) {
+          map[r.pump_id] = r.closing_meter
+        }
+      }
+      setPrevClosing(map)
+    }
+    load()
+  }, [orgId, formDate])
+
   const isEditing = !!(editId || editDate)
 
   const updateEntry = (idx, field, value) => {
@@ -177,10 +210,6 @@ export default function DailySalesFormPage() {
       if (!entry.prices.PMS && !entry.prices.AGO && !entry.prices.DPK) {
         setError(`Entry ${i + 1}: At least one fuel price is required`); setActiveTab(i); return
       }
-      const missingReading = entry.nozzleReadings.find(r => r.closing_meter === '' || r.closing_meter === undefined)
-      if (missingReading) {
-        setError(`Entry ${i + 1}: Closing meter is required for ${missingReading.label}`); setActiveTab(i); return
-      }
       if (entry.closeOfBusiness) {
         const missingTank = entry.tankReadings.find(r => r.closing_stock === '' || r.closing_stock === undefined)
         if (missingTank) {
@@ -223,7 +252,10 @@ export default function DailySalesFormPage() {
         const readings = entry.nozzleReadings.map(r => ({
           pump_id: r.pump_id,
           nozzle_label: r.label,
-          closing_meter: Number(r.closing_meter) || 0,
+          // If blank, fall back to the previous day's last closing meter for this nozzle
+          closing_meter: r.closing_meter !== '' && r.closing_meter !== undefined
+            ? Number(r.closing_meter)
+            : (prevClosing[r.pump_id] ?? 0),
           consumption: Number(r.consumption) || 0,
           pour_back: Number(r.pour_back) || 0,
         }))
@@ -346,13 +378,22 @@ export default function DailySalesFormPage() {
               <>
                 <div className="bg-gray-50 px-2 py-1">
                   <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Nozzle Readings</span>
+                  <span className="text-xs text-gray-400 ml-2">— leave blank to use prev. day closing</span>
                 </div>
                 {current.nozzleReadings.map((r, idx) => (
                   <div key={r.pump_id}>
                     <div className="grid grid-cols-[2fr_1fr] divide-x divide-gray-300">
                       <div>
                         <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{r.label}</label>
-                        <input type="number" value={r.closing_meter} onChange={(e) => updateNozzleReading(activeTab, idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                        <input
+                          type="number"
+                          value={r.closing_meter}
+                          onChange={(e) => updateNozzleReading(activeTab, idx, 'closing_meter', e.target.value)}
+                          step="0.01"
+                          min="0"
+                          placeholder={prevClosing[r.pump_id] != null ? String(prevClosing[r.pump_id]) : ''}
+                          className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50"
+                        />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
