@@ -2,6 +2,9 @@ CLAUDE.md
 
 Important
 
+After every git push, always provide the pull request / merge link:
+https://github.com/traderugo/filez/compare/main...<branch-name>
+
 When generating code for this project, always follow the offline-first architecture defined in this file.
 
 Prioritize local IndexedDB reads and writes before any server communication.
