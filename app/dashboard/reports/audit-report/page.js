@@ -703,8 +703,8 @@ function StockSummary({ report, startDate, endDate }) {
             <table className="w-full border-collapse border border-blue-200">
               <thead>
                 <tr className={hdr}>
-                  <th className={cell + ' text-left'}>{ft} STOCK POSITION</th>
-                  <th className={cell + ' text-right whitespace-nowrap'}>Per Manager&apos;s Computation</th>
+                  <th className={cell + ' text-left w-[65%]'}>{ft} STOCK POSITION</th>
+                  <th className={cell + ' text-right w-[35%]'}>Per Manager&apos;s Computation</th>
                 </tr>
               </thead>
               <tbody>

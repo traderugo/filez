@@ -349,21 +349,14 @@ export default function DailySalesFormPage() {
                 </div>
                 {current.nozzleReadings.map((r, idx) => (
                   <div key={r.pump_id}>
-                    <div className="bg-gray-50/50 px-2 py-0.5 border-b border-gray-200">
-                      <span className="text-xs text-gray-600 font-medium">{r.label}</span>
-                    </div>
-                    <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-gray-300">
+                    <div className="grid grid-cols-[2fr_1fr] divide-x divide-gray-300">
                       <div>
-                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Closing Meter</label>
+                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{r.label}</label>
                         <input type="number" value={r.closing_meter} onChange={(e) => updateNozzleReading(activeTab, idx, 'closing_meter', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                       </div>
                       <div>
                         <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
                         <input type="number" value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P/b</label>
-                        <input type="number" value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                       </div>
                     </div>
                   </div>
