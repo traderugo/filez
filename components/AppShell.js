@@ -1,16 +1,13 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
-import Sidebar from './Sidebar'
 import EmailVerifyBanner from './EmailVerifyBanner'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function AppShell({ children }) {
   const [user, setUser] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -23,9 +20,6 @@ export default function AppShell({ children }) {
     }
     load()
   }, [])
-
-  // Close sidebar on route change (mobile)
-  useEffect(() => { setSidebarOpen(false) }, [pathname])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -43,30 +37,16 @@ export default function AppShell({ children }) {
   // Admin pages: header only, no main sidebar (admin layout has its own)
   if (isAdmin) return (
     <div className="flex flex-col min-h-screen">
-      <Header onToggleSidebar={() => setSidebarOpen((o) => !o)} />
+      <Header />
       <main className="flex-1">{children}</main>
     </div>
   )
 
   return (
-    <div className="flex min-h-screen">
-      <Suspense fallback={null}>
-        <Sidebar
-          user={user}
-          open={sidebarOpen}
-          collapsed={sidebarCollapsed}
-          onClose={() => setSidebarOpen(false)}
-          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
-          onSignOut={handleSignOut}
-        />
-      </Suspense>
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header
-          onToggleSidebar={() => setSidebarOpen((o) => !o)}
-        />
-        {user && !user.email_verified && pathname === '/dashboard' && <EmailVerifyBanner />}
-        <main className="flex-1">{children}</main>
-      </div>
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      {user && !user.email_verified && pathname === '/dashboard' && <EmailVerifyBanner />}
+      <main className="flex-1">{children}</main>
     </div>
   )
 }

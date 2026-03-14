@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, ChevronLeft } from 'lucide-react'
+import { ChevronLeft, Home } from 'lucide-react'
 
 // Map sub-page paths to { back, title }
 const PAGE_MAP = {
@@ -30,7 +31,7 @@ function getPageInfo(pathname) {
   return null
 }
 
-export default function Header({ onToggleSidebar }) {
+export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -55,10 +56,14 @@ export default function Header({ onToggleSidebar }) {
           )}
         </div>
 
-        {/* Hamburger (mobile only) */}
-        <button className="sm:hidden p-1 text-gray-500 hover:text-gray-700" onClick={onToggleSidebar}>
-          <Menu className="w-5 h-5" />
-        </button>
+        {/* Home button (visible on all screen sizes) */}
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+        >
+          <Home className="w-4 h-4" />
+          <span>Home</span>
+        </Link>
       </div>
     </header>
   )

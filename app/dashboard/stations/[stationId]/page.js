@@ -1,16 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users, Flame,
-  ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle
+  ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
+  FileText, MessageSquare, Shield, ArrowUpFromLine, ArrowDownToLine, LayoutDashboard
 } from 'lucide-react'
+import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format, differenceInDays } from 'date-fns'
+import { db } from '@/lib/db'
+import { processQueue } from '@/lib/sync'
+import { initialSync } from '@/lib/initialSync'
+import { useRemoteChanges } from '@/lib/hooks/useRemoteChanges'
+import { supabase } from '@/lib/supabaseClient'
 
 const PAGE_OPTIONS = [
   { key: 'daily-sales', label: 'Daily Sales' },
@@ -29,6 +36,7 @@ export default function StationPage() {
   const [loading, setLoading] = useState(true)
   const [station, setStation] = useState(null)
   const [isOwner, setIsOwner] = useState(false)
+  const [user, setUser] = useState(null)
 
   // Staff invite state
   const [invites, setInvites] = useState([])
@@ -51,17 +59,71 @@ export default function StationPage() {
   const [saving, setSaving] = useState(false)
   const [leaving, setLeaving] = useState(false)
 
+  // Sync state
+  const [syncing, setSyncing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const refreshingRef = useRef(false)
+  const pendingPullRef = useRef(0)
+
+  const pendingCount = useLiveQuery(
+    () => stationId ? db.syncQueue.where('orgId').equals(stationId).count() : 0,
+    [stationId],
+    0
+  )
+  const { pendingPullCount, resetPullCount } = useRemoteChanges(stationId)
+
+  useEffect(() => { pendingPullRef.current = pendingPullCount }, [pendingPullCount])
+
+  const handleSync = async () => {
+    if (syncing) return
+    setSyncing(true)
+    try { await processQueue() } catch (e) { /* offline */ }
+    setSyncing(false)
+  }
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshingRef.current || !stationId) return
+    setRefreshing(true)
+    refreshingRef.current = true
+    try {
+      await initialSync(stationId, { force: true })
+      resetPullCount()
+    } catch (e) { /* offline */ }
+    setRefreshing(false)
+    refreshingRef.current = false
+  }, [stationId, resetPullCount])
+
+  // Auto-pull every 5s when Realtime detects remote changes and tab is visible
+  useEffect(() => {
+    if (!stationId) return
+    const interval = setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      if (pendingPullRef.current > 0 && !refreshingRef.current) {
+        handleRefresh()
+      }
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [stationId, handleRefresh])
+
   useEffect(() => {
     const load = async () => {
-      const res = await fetch('/api/organizations')
-      if (!res.ok) { router.push('/dashboard'); return }
-      const data = await res.json()
+      const [orgRes, userRes] = await Promise.all([
+        fetch('/api/organizations'),
+        fetch('/api/auth/me'),
+      ])
+      if (!orgRes.ok) { router.push('/dashboard'); return }
+      const data = await orgRes.json()
       const owned = (data.stations || []).find((st) => st.id === stationId)
       const member = (data.memberStations || []).find((st) => st.id === stationId)
       const s = owned || member
       if (!s) { router.push('/dashboard'); return }
       setStation(s)
       setIsOwner(!!owned)
+
+      if (userRes.ok) {
+        const userData = await userRes.json()
+        setUser(userData.user)
+      }
 
       if (owned) {
         const [invRes, dashRes] = await Promise.all([
@@ -179,6 +241,11 @@ export default function StationPage() {
     setLeaving(false)
   }
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -188,41 +255,91 @@ export default function StationPage() {
   }
 
   const entryLinks = [
-    { href: `/dashboard/entries/daily-sales?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, and pricing' },
-    { href: `/dashboard/entries/product-receipt?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries, waybills, and compartments' },
-    { href: `/dashboard/entries/lodgements?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits, lube deposits, and POS' },
-    { href: `/dashboard/entries/lube?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock entries' },
+    { href: `/dashboard/entries/daily-sales?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, pricing' },
+    { href: `/dashboard/entries/product-receipt?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries and waybills' },
+    { href: `/dashboard/entries/lodgements?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS' },
+    { href: `/dashboard/entries/lube?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock' },
     { href: `/dashboard/entries/customer-payments?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments' },
     { href: `/dashboard/entries/consumption?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back' },
   ]
 
+  const reportLinks = [
+    { href: `/dashboard/reports/summary?org_id=${stationId}`, icon: FileText, label: 'Summary', desc: 'Overview summary report' },
+    { href: `/dashboard/reports/daily-sales-report?org_id=${stationId}`, icon: BarChart3, label: 'Daily Sales Report', desc: 'Nozzle sales, POS, and cash' },
+    { href: `/dashboard/reports/audit-report?org_id=${stationId}`, icon: ClipboardList, label: 'Audit Report', desc: 'Station audit trail' },
+  ]
+
   return (
-    <div className="max-w-lg px-4 sm:px-8 py-8">
-      <div className="flex items-center gap-3 mb-8">
-        <Fuel className="w-6 h-6 text-blue-600" />
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">{station.name}</h1>
-          {station.location && <p className="text-sm text-gray-500">{station.location}</p>}
-          {station.station_group && <p className="text-xs text-gray-400">{station.station_group}</p>}
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+
+      {/* Station header */}
+      <div className="flex items-start justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3">
+          <Fuel className="w-6 h-6 text-blue-600 flex-shrink-0" />
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{station.name}</h1>
+            {station.location && <p className="text-sm text-gray-500">{station.location}</p>}
+            {station.station_group && <p className="text-xs text-gray-400">{station.station_group}</p>}
+          </div>
         </div>
+      </div>
+
+      {/* Sync controls */}
+      <div className="flex items-center gap-2 mb-8 p-3 bg-gray-50 border border-gray-200">
+        <button
+          onClick={handleSync}
+          disabled={syncing || pendingCount === 0}
+          className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
+            pendingCount > 0
+              ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
+              : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
+          Push
+          {pendingCount > 0 && (
+            <span className="bg-yellow-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {pendingCount > 9 ? '9+' : pendingCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
+            pendingPullCount > 0
+              ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100'
+              : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
+          Pull
+          {pendingPullCount > 0 && (
+            <span className="bg-blue-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {pendingPullCount > 9 ? '9+' : pendingPullCount}
+            </span>
+          )}
+        </button>
+        <span className="ml-auto text-xs text-gray-400">
+          {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
+        </span>
       </div>
 
       {/* Entries */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Entries</h2>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {entryLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+              className="flex flex-col gap-2 border border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
             >
-              <link.icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
-              <div className="flex-1">
+              <link.icon className="w-5 h-5 text-blue-600" />
+              <div>
                 <p className="text-sm font-medium text-gray-900">{link.label}</p>
-                <p className="text-sm text-gray-500">{link.desc}</p>
+                <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-300" />
             </Link>
           ))}
         </div>
@@ -231,18 +348,64 @@ export default function StationPage() {
       {/* Reports */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Reports</h2>
-        <div className="grid gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {reportLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex flex-col gap-2 border border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+            >
+              <link.icon className="w-5 h-5 text-blue-600" />
+              <div>
+                <p className="text-sm font-medium text-gray-900">{link.label}</p>
+                <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Navigate */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Navigate</h2>
+        <div className="flex flex-wrap gap-2">
           <Link
-            href={`/dashboard/reports/daily-sales-report?org_id=${stationId}`}
-            className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+            href="/dashboard"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
-            <BarChart3 className="w-5 h-5 text-blue-600 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">Daily Sales Report</p>
-              <p className="text-sm text-gray-500">Nozzle sales, stock summary, POS, and cash</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-300" />
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
           </Link>
+          <Link
+            href="/dashboard/subscribe"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <CreditCard className="w-4 h-4" />
+            Subscribe
+          </Link>
+          <Link
+            href="/dashboard/feedback"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Feedback
+          </Link>
+          {user?.role === 'admin' && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Shield className="w-4 h-4" />
+              Admin
+            </Link>
+          )}
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
         </div>
       </section>
 
