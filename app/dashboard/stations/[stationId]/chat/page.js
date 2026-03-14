@@ -120,22 +120,11 @@ export default function ChatPage() {
   let lastDate = null
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-2xl mx-auto">
+    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-white">
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
+      <div className="flex items-center px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
         <h1 className="text-sm font-semibold text-gray-900">Station Chat</h1>
-        <button
-          onClick={handlePull}
-          disabled={pulling}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 transition-colors"
-        >
-          {pulling
-            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            : <RefreshCw className="w-3.5 h-3.5" />
-          }
-          Pull recent messages
-        </button>
       </div>
 
       {/* Messages area */}
@@ -204,6 +193,16 @@ export default function ChatPage() {
       {/* Input */}
       <div className="shrink-0 border-t border-gray-200 px-4 py-3 bg-white">
         <div className="flex items-center gap-2">
+          <button
+            onClick={handlePull}
+            disabled={pulling}
+            className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 transition-colors flex-shrink-0"
+          >
+            {pulling
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <RefreshCw className="w-3.5 h-3.5" />
+            }
+          </button>
           <input
             ref={inputRef}
             type="text"
