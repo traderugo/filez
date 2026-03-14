@@ -672,8 +672,8 @@ function StockSummary({ report, startDate, endDate }) {
     return dt.toLocaleDateString('en-NG', { day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
-  const yHdr = 'bg-yellow-400 text-black font-bold'
-  const cell = 'border border-gray-800 px-3 py-1.5 text-sm'
+  const hdr = 'bg-blue-600 text-white font-bold'
+  const cell = 'border border-blue-200 px-3 py-1.5 text-sm'
   const cellR = cell + ' text-right'
 
   const fmtOvsh = (n) => {
@@ -700,9 +700,9 @@ function StockSummary({ report, startDate, endDate }) {
 
         return (
           <div key={ft} className="mb-6">
-            <table className="w-full border-collapse border border-gray-800">
+            <table className="w-full border-collapse border border-blue-200">
               <thead>
-                <tr className={yHdr}>
+                <tr className={hdr}>
                   <th className={cell + ' text-left'}>{ft} STOCK POSITION</th>
                   <th className={cell + ' text-right whitespace-nowrap'}>Per Manager&apos;s Computation</th>
                 </tr>
