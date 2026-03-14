@@ -169,19 +169,6 @@ function SummaryContent() {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto min-h-0 mb-3 px-1 sm:px-[15%]">
-          {/* DAY header */}
-          <table className="w-full border-collapse text-sm mb-0">
-            <tbody>
-              <tr className={hdr}>
-                <td className={cell} colSpan={2}>DAY</td>
-                <td className={cell}>{new Date(reportDate + 'T00:00:00').getDate()}</td>
-              </tr>
-              <tr>
-                <td className={`${cell} text-center text-xs text-gray-600 bg-gray-50`} colSpan={3}>{dateLabel}</td>
-              </tr>
-            </tbody>
-          </table>
-
           {/* 1. Closing Meter Readings per entry */}
           {dayReport.entryGroups.map((group) => (
             <div key={group.entryIndex} className="mb-4">
@@ -362,7 +349,7 @@ function ClosingReadings({ fuelType, rows, totals, cell, cellR, subHdr }) {
       </tr>
       {rows.map((r, i) => (
         <tr key={r.label}>
-          <td className={`${cell} font-bold`}>{i + 1}</td>
+          <td className={`${cell} font-bold`}>{fuelType} {i + 1}</td>
           <td className={cellR}>{fmt(r.closing)}</td>
         </tr>
       ))}
