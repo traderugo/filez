@@ -128,7 +128,7 @@ export default function ChatPage() {
         <button
           onClick={handlePull}
           disabled={pulling}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 hover:bg-blue-50 transition-colors"
         >
           {pulling
             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -139,7 +139,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-gray-50">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white">
         {messages?.length === 0 && !pulling && (
           <div className="flex justify-center items-center h-full">
             <p className="text-sm text-gray-400">No messages yet. Pull to load or send the first message.</p>
@@ -157,34 +157,34 @@ export default function ChatPage() {
               {/* Date separator */}
               {showDateSep && (
                 <div className="flex justify-center my-3">
-                  <span className="bg-gray-200 text-gray-500 text-xs px-3 py-0.5 rounded-full">{msgDate}</span>
+                  <span className="bg-blue-50 text-blue-500 text-xs px-3 py-0.5">{msgDate}</span>
                 </div>
               )}
 
               {/* Activity log */}
               {msg.type === 'activity' ? (
                 <div className="flex justify-center my-1">
-                  <div className="flex items-center gap-1.5 bg-white border border-gray-200 text-gray-500 text-xs px-3 py-1.5 rounded-full max-w-[90%]">
+                  <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700 text-xs px-3 py-1.5 max-w-[90%]">
                     <Activity className="w-3 h-3 flex-shrink-0 text-blue-400" />
-                    <span className="font-medium text-gray-700">{msg.userName}</span>
+                    <span className="font-medium text-blue-800">{msg.userName}</span>
                     <span>{msg.content}</span>
-                    <span className="text-gray-400 ml-1 shrink-0">· {fmtTime(msg.createdAt)}</span>
+                    <span className="text-blue-400 ml-1 shrink-0">· {fmtTime(msg.createdAt)}</span>
                   </div>
                 </div>
               ) : (
                 /* Chat message */
                 <div className={`flex flex-col mb-2 ${isMe ? 'items-end' : 'items-start'}`}>
                   {!isMe && (
-                    <span className="text-xs text-gray-400 mb-1 px-1">{msg.userName}</span>
+                    <span className="text-xs text-gray-600 mb-1 px-1">{msg.userName}</span>
                   )}
                   <div className={`max-w-[78%] px-4 py-2.5 text-sm leading-relaxed ${
                     isMe
-                      ? 'bg-blue-600 text-white rounded-2xl rounded-br-sm'
-                      : 'bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-bl-sm'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 text-gray-900'
                   }`}>
                     {msg.content}
                   </div>
-                  <span className="text-[10px] text-gray-400 mt-1 px-1">{fmtTime(msg.createdAt)}</span>
+                  <span className="text-[10px] text-gray-500 mt-1 px-1">{fmtTime(msg.createdAt)}</span>
                 </div>
               )}
             </div>
@@ -211,12 +211,12 @@ export default function ChatPage() {
             onChange={e => setMessage(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+            className="flex-1 px-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
           <button
             onClick={handleSend}
             disabled={sending || !message.trim()}
-            className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 transition-colors flex-shrink-0"
+            className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 transition-colors flex-shrink-0"
           >
             {sending
               ? <Loader2 className="w-4 h-4 animate-spin" />
