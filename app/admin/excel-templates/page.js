@@ -1,15 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabaseClient'
 import {
   Loader2, Upload, Trash2, Download, Pencil, X, Check, FileSpreadsheet,
 } from 'lucide-react'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
 
 function formatBytes(bytes) {
   if (!bytes) return '—'

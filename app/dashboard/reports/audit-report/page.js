@@ -3,9 +3,10 @@
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Download } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildAuditReport } from '@/lib/buildAuditReport'
+import { exportAuditExcel } from '@/lib/exportAuditExcel'
 import DateInput from '@/components/DateInput'
 
 function fmt(n) {
@@ -42,6 +43,7 @@ function AuditReportContent() {
   const [nozzles, setNozzles] = useState([])
   const [banks, setBanks] = useState([])
   const [tanks, setTanks] = useState([])
+  const [stationName, setStationName] = useState('')
 
   const today = new Date()
   const pad = (n) => String(n).padStart(2, '0')
@@ -65,7 +67,6 @@ function AuditReportContent() {
     if (!orgId) { setLoading(false); return }
     let cancelled = false
     const load = async () => {
-
       if (cancelled) return
       const [noz, bnk, tnk] = await Promise.all([
         db.nozzles.where('orgId').equals(orgId).toArray(),
@@ -78,6 +79,14 @@ function AuditReportContent() {
       setBanks(bnk)
       setTanks(tnk)
       setLoading(false)
+
+      // Fetch station name (non-blocking, for export only)
+      fetch('/api/organizations').then(r => r.ok ? r.json() : null).then(data => {
+        if (cancelled || !data) return
+        const all = [...(data.stations || []), ...(data.memberStations || [])]
+        const match = all.find(s => s.id === orgId)
+        if (match) setStationName(match.name || '')
+      }).catch(() => {})
     }
     load()
     return () => { cancelled = true }
@@ -104,6 +113,20 @@ function AuditReportContent() {
     () => orgId ? db.productReceipts.where('orgId').equals(orgId).toArray() : [],
     [orgId]
   )
+  const liveLubeSales = useLiveQuery(
+    () => orgId ? db.lubeSales.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
+  const liveLubeStock = useLiveQuery(
+    () => orgId ? db.lubeStock.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
+  const liveLubeProducts = useLiveQuery(
+    () => orgId ? db.lubeProducts.where('orgId').equals(orgId).toArray() : [],
+    [orgId]
+  )
+
+  const [exporting, setExporting] = useState(false)
 
   const report = useMemo(() => {
     if (!generated || !reportStart || !reportEnd) return null
@@ -123,14 +146,51 @@ function AuditReportContent() {
     })
   }, [generated, reportStart, reportEnd, loading, orgId, nozzles, banks, tanks, liveSales, liveLodgements, liveConsumption, liveCustomers, liveReceipts])
 
+  const dateRangeDays = useMemo(() => {
+    if (!startDate || !endDate) return 0
+    const ms = new Date(endDate + 'T00:00:00') - new Date(startDate + 'T00:00:00')
+    return Math.floor(ms / 86400000) + 1
+  }, [startDate, endDate])
+
   const handleGenerate = () => {
     const s = startDateRef.current
     const e = endDateRef.current
     if (!s || !e) return
+    if (dateRangeDays > 32) {
+      alert('Date range cannot exceed 32 days.')
+      return
+    }
     setReportStart(s)
     setReportEnd(e)
     setGenerated(true)
     setActiveTab('sales-cash')
+  }
+
+  const handleExport = async () => {
+    if (!report || exporting) return
+    setExporting(true)
+    try {
+      const { warnings } = await exportAuditExcel({
+        report,
+        receipts: liveReceipts || [],
+        lubeSales: liveLubeSales || [],
+        lubeStock: liveLubeStock || [],
+        lubeProducts: liveLubeProducts || [],
+        tanks,
+        nozzles,
+        stationName,
+        startDate: reportStart,
+        endDate: reportEnd,
+      })
+      if (warnings?.length) {
+        alert('Export completed with warnings:\n\n' + warnings.join('\n'))
+      }
+    } catch (err) {
+      console.error('Excel export failed:', err)
+      alert('Export failed. Check console for details.')
+    } finally {
+      setExporting(false)
+    }
   }
 
   if (loading) {
@@ -160,12 +220,25 @@ function AuditReportContent() {
           <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
           <button
             onClick={handleGenerate}
-            disabled={!startDate || !endDate || startDate > endDate}
+            disabled={!startDate || !endDate || startDate > endDate || dateRangeDays > 32}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
           >
             Generate
           </button>
+          {report && (
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              className="px-4 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Export Excel
+            </button>
+          )}
         </div>
+        {dateRangeDays > 32 && (
+          <p className="text-xs text-red-500 mt-1">Date range cannot exceed 32 days ({dateRangeDays} days selected).</p>
+        )}
       </div>
 
       {/* Report content */}
