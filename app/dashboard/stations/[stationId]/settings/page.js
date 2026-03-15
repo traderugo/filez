@@ -5,8 +5,9 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Loader2, Fuel, Plus, Trash2, ArrowRight, Landmark,
-  CreditCard, Banknote, MapPin, Save, Droplets, Users
+  CreditCard, Banknote, MapPin, Save, Droplets, Users, Lock
 } from 'lucide-react'
+import { DEFAULT_PHONE } from '@/lib/defaultAccounts'
 
 const FUEL_TYPES = ['PMS', 'AGO', 'DPK']
 const LODGEMENT_TYPES = [
@@ -463,38 +464,49 @@ export default function StationSettingsPage() {
         </p>
         {customers.length > 0 && (
           <div className="divide-y divide-gray-200 mb-3">
-            {customers.map((c, i) => (
-              <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
-                <input
-                  type="text"
-                  placeholder="Customer name"
-                  maxLength={200}
-                  value={c.name}
-                  onChange={(e) => updateCustomer(i, 'name', e.target.value)}
-                  className="flex-1 min-w-[120px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="tel"
-                  placeholder="Phone"
-                  maxLength={20}
-                  value={c.phone}
-                  onChange={(e) => updateCustomer(i, 'phone', e.target.value)}
-                  className="w-32 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="number"
-                  placeholder="Opening balance"
-                  min={0}
-                  step="0.01"
-                  value={c.opening_balance || ''}
-                  onChange={(e) => updateCustomer(i, 'opening_balance', Number(e.target.value))}
-                  className="w-32 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button onClick={() => removeCustomer(i)} className="p-1 text-gray-400 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+            {customers.map((c, i) => {
+              const isDefault = c.phone === DEFAULT_PHONE
+              return (
+                <div key={i} className={`flex items-center gap-2 flex-wrap py-3 first:pt-0 ${isDefault ? 'opacity-60' : ''}`}>
+                  <input
+                    type="text"
+                    placeholder="Customer name"
+                    maxLength={200}
+                    value={c.name}
+                    readOnly={isDefault}
+                    onChange={(e) => updateCustomer(i, 'name', e.target.value)}
+                    className={`flex-1 min-w-[120px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDefault ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                  />
+                  {!isDefault && (
+                    <>
+                      <input
+                        type="tel"
+                        placeholder="Phone"
+                        maxLength={20}
+                        value={c.phone}
+                        onChange={(e) => updateCustomer(i, 'phone', e.target.value)}
+                        className="w-32 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Opening balance"
+                        min={0}
+                        step="0.01"
+                        value={c.opening_balance || ''}
+                        onChange={(e) => updateCustomer(i, 'opening_balance', Number(e.target.value))}
+                        className="w-32 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button onClick={() => removeCustomer(i)} className="p-1 text-gray-400 hover:text-red-600">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                  {isDefault && (
+                    <Lock className="w-3.5 h-3.5 text-gray-400" />
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
         <button onClick={addCustomer} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">

@@ -35,13 +35,16 @@ export async function GET(request) {
     if (error) return error
 
     const { searchParams } = new URL(request.url)
+    const orgId = searchParams.get('org_id')
     const since = searchParams.get('since')
+
+    if (!orgId) return NextResponse.json({ error: 'org_id required' }, { status: 400 })
 
     const supabase = getServiceClient()
     let query = supabase
       .from('station_messages')
       .select('*')
-      .eq('org_id', user.org_id)
+      .eq('org_id', orgId)
       .order('created_at', { ascending: true })
       .limit(300)
 
@@ -62,6 +65,10 @@ export async function POST(request) {
     const { user, error } = await authenticateUser(request)
     if (error) return error
 
+    const { searchParams } = new URL(request.url)
+    const orgId = searchParams.get('org_id')
+    if (!orgId) return NextResponse.json({ error: 'org_id required' }, { status: 400 })
+
     const { content } = await request.json()
     if (!content?.trim()) return NextResponse.json({ error: 'Content required' }, { status: 400 })
 
@@ -69,7 +76,7 @@ export async function POST(request) {
     const { data, error: dbError } = await supabase
       .from('station_messages')
       .insert({
-        org_id: user.org_id,
+        org_id: orgId,
         user_id: user.id,
         user_name: user.name || user.email,
         type: 'message',
@@ -86,7 +93,7 @@ export async function POST(request) {
   }
 }
 
-// DELETE /api/chat?id=<message_id> — soft-delete own message
+// DELETE /api/chat?id=<message_id>&org_id=... — soft-delete own message
 export async function DELETE(request) {
   try {
     const { user, error } = await authenticateUser(request)
@@ -94,14 +101,19 @@ export async function DELETE(request) {
 
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+    const orgId = searchParams.get('org_id')
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
     const supabase = getServiceClient()
-    const { error: dbError } = await supabase
+    let query = supabase
       .from('station_messages')
       .update({ content: null, deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', user.id)
+
+    if (orgId) query = query.eq('org_id', orgId)
+
+    const { error: dbError } = await query
 
     if (dbError) return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
 

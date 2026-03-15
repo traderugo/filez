@@ -121,7 +121,7 @@ export default function ChatPage() {
     // Optimistic update
     await db.stationMessages.update(msg.id, { content: null, deletedAt })
     try {
-      const res = await fetch(`/api/chat?id=${msg.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/chat?id=${msg.id}&org_id=${stationId}`, { method: 'DELETE' })
       if (!res.ok) {
         // Revert
         await db.stationMessages.update(msg.id, { content: msg.content, deletedAt: null })

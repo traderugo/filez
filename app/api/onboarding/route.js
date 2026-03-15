@@ -1,17 +1,24 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
+import { DEFAULT_ACCOUNTS, DEFAULT_PHONE } from '@/lib/defaultAccounts'
 
 // Upsert helper: update items with id, insert new items, delete removed items
-async function upsertConfigTable(supabase, table, orgId, items, buildRow) {
-  // Get existing IDs for this org
+// protectPhone: if set, rows with this phone value are never deleted
+async function upsertConfigTable(supabase, table, orgId, items, buildRow, protectPhone) {
+  // Get existing rows for this org
   const { data: existing } = await supabase
     .from(table)
-    .select('id')
+    .select('id, phone')
     .eq('org_id', orgId)
 
   const existingIds = new Set((existing || []).map((e) => e.id))
   const incomingIds = new Set()
+
+  // IDs that are protected (default accounts)
+  const protectedIds = protectPhone
+    ? new Set((existing || []).filter(e => e.phone === protectPhone).map(e => e.id))
+    : new Set()
 
   const toUpdate = []
   const toInsert = []
@@ -19,8 +26,10 @@ async function upsertConfigTable(supabase, table, orgId, items, buildRow) {
   for (let i = 0; i < items.length; i++) {
     const row = buildRow(items[i], i)
     if (items[i].id && existingIds.has(items[i].id)) {
-      // Existing item — update
-      toUpdate.push({ id: items[i].id, ...row })
+      // Existing item — update (but don't update protected defaults)
+      if (!protectedIds.has(items[i].id)) {
+        toUpdate.push({ id: items[i].id, ...row })
+      }
       incomingIds.add(items[i].id)
     } else {
       // New item — insert
@@ -28,8 +37,8 @@ async function upsertConfigTable(supabase, table, orgId, items, buildRow) {
     }
   }
 
-  // Delete items that were removed by user
-  const toDelete = [...existingIds].filter((id) => !incomingIds.has(id))
+  // Delete items that were removed by user (but never delete protected)
+  const toDelete = [...existingIds].filter((id) => !incomingIds.has(id) && !protectedIds.has(id))
 
   // Execute
   for (const row of toUpdate) {
@@ -47,6 +56,31 @@ async function upsertConfigTable(supabase, table, orgId, items, buildRow) {
   }
 
   return { error: null }
+}
+
+/** Insert default accounts for a station if they don't already exist */
+async function ensureDefaultAccounts(supabase, orgId) {
+  const { data: existing } = await supabase
+    .from('station_customers')
+    .select('name')
+    .eq('org_id', orgId)
+    .eq('phone', DEFAULT_PHONE)
+
+  const existingNames = new Set((existing || []).map(e => e.name))
+  const toInsert = DEFAULT_ACCOUNTS
+    .filter(name => !existingNames.has(name))
+    .map((name, i) => ({
+      org_id: orgId,
+      name,
+      phone: DEFAULT_PHONE,
+      opening_balance: 0,
+      opening_date: new Date().toISOString().split('T')[0],
+      sort_order: 1000 + i, // after user-created accounts
+    }))
+
+  if (toInsert.length > 0) {
+    await supabase.from('station_customers').insert(toInsert)
+  }
 }
 
 // POST — save all onboarding data for a station
@@ -185,7 +219,7 @@ export async function POST(request) {
       }
     }
 
-    // 7. Upsert credit customers
+    // 7. Upsert credit customers (skip deleting defaults)
     if (customers) {
       const { error: custErr } = await upsertConfigTable(
         supabase, 'station_customers', org_id, customers,
@@ -195,12 +229,16 @@ export async function POST(request) {
           opening_balance: c.opening_balance || 0,
           opening_date: c.opening_date || new Date().toISOString().split('T')[0],
           sort_order: i,
-        })
+        }),
+        DEFAULT_PHONE // protect default accounts from deletion
       )
       if (custErr) {
         return NextResponse.json({ error: 'Failed to save customers' }, { status: 500 })
       }
     }
+
+    // 7b. Ensure default accounts exist for this station
+    await ensureDefaultAccounts(supabase, org_id)
 
     // 8. Mark onboarding as complete + ensure owner's org_id is set
     await Promise.all([
