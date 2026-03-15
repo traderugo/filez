@@ -18,6 +18,7 @@ export default function ChatPage() {
   const [showMentions, setShowMentions] = useState(false)
   const [mentionSuggestions, setMentionSuggestions] = useState([])
   const [activeMentionIdx, setActiveMentionIdx] = useState(0)
+  const [showSplash, setShowSplash] = useState(true)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -41,6 +42,8 @@ export default function ChatPage() {
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.json()).then(d => setUser(d.user))
+    const t = setTimeout(() => setShowSplash(false), 2000)
+    return () => clearTimeout(t)
   }, [])
 
   // Initial fetch of message history
@@ -196,6 +199,17 @@ export default function ChatPage() {
   }
 
   let lastDate = null
+
+  if (showSplash) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <p className="text-sm text-gray-600">Please wait...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-white max-w-2xl mx-auto">

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, Home } from 'lucide-react'
 
 // Map sub-page paths to { back, title }
@@ -37,11 +37,18 @@ function getPageInfo(pathname) {
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const isAuth = pathname.startsWith('/auth')
   if (isAuth) return null
 
   const pageInfo = getPageInfo(pathname)
+
+  // Derive station home link: /dashboard/stations/[stationId]
+  // From URL path (station sub-pages) or org_id search param (reports, entries)
+  const stationMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)/)
+  const stationId = stationMatch ? stationMatch[1] : searchParams.get('org_id')
+  const homeHref = stationId ? `/dashboard/stations/${stationId}` : '/dashboard'
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
@@ -59,9 +66,9 @@ export default function Header() {
           )}
         </div>
 
-        {/* Home button (visible on all screen sizes) */}
+        {/* Home button — goes to station overview if station context exists */}
         <Link
-          href="/dashboard"
+          href={homeHref}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition-colors"
         >
           <Home className="w-4 h-4" />

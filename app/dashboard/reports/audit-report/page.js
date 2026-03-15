@@ -159,6 +159,7 @@ function AuditReportContent() {
   )
 
   const [exporting, setExporting] = useState(false)
+  const [generating, setGenerating] = useState(false)
   const [templateUrl, setTemplateUrl] = useState(null)
 
   const report = useMemo(() => {
@@ -193,10 +194,14 @@ function AuditReportContent() {
       alert('Date range cannot exceed 32 days.')
       return
     }
-    setReportStart(s)
-    setReportEnd(e)
-    setGenerated(true)
-    setActiveTab('sales-cash')
+    setGenerating(true)
+    setTimeout(() => {
+      setReportStart(s)
+      setReportEnd(e)
+      setGenerated(true)
+      setActiveTab('sales-cash')
+      setGenerating(false)
+    }, 2000)
   }
 
   const handleExport = async () => {
@@ -263,10 +268,11 @@ function AuditReportContent() {
           <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
           <button
             onClick={handleGenerate}
-            disabled={!startDate || !endDate || startDate > endDate || dateRangeDays > 32}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            disabled={generating || !startDate || !endDate || startDate > endDate || dateRangeDays > 32}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
           >
-            Generate
+            {generating && <Loader2 className="w-4 h-4 animate-spin" />}
+            {generating ? 'Generating...' : 'Generate'}
           </button>
           {report && (
             <button

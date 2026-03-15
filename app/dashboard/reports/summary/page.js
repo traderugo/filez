@@ -33,6 +33,7 @@ function SummaryContent() {
   const [selectedDate, setSelectedDate] = useState(todayStr)
   const [reportDate, setReportDate] = useState(todayStr)
   const [generated, setGenerated] = useState(true)
+  const [generating, setGenerating] = useState(false)
 
   // Config
   const [nozzles, setNozzles] = useState([])
@@ -111,8 +112,12 @@ function SummaryContent() {
 
   const handleGenerate = () => {
     if (!selectedDate) return
-    setReportDate(selectedDate)
-    setGenerated(true)
+    setGenerating(true)
+    setTimeout(() => {
+      setReportDate(selectedDate)
+      setGenerated(true)
+      setGenerating(false)
+    }, 2000)
   }
 
   if (loading) {
@@ -146,10 +151,11 @@ function SummaryContent() {
           />
           <button
             onClick={handleGenerate}
-            disabled={!selectedDate}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            disabled={generating || !selectedDate}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
           >
-            Generate
+            {generating && <Loader2 className="w-4 h-4 animate-spin" />}
+            {generating ? 'Generating...' : 'Generate'}
           </button>
         </div>
       </div>

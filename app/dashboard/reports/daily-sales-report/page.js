@@ -44,6 +44,7 @@ function DailySalesReportContent() {
   const setEndDate = (v) => { endDateRef.current = v; _setEndDate(v) }
   const [viewDate, setViewDate] = useState(todayStr)
   const [generated, setGenerated] = useState(true)
+  const [generating, setGenerating] = useState(false)
   const [reportStart, setReportStart] = useState(monthStartStr)
   const [reportEnd, setReportEnd] = useState(todayStr)
 
@@ -130,9 +131,13 @@ function DailySalesReportContent() {
     const s = startDateRef.current
     const e = endDateRef.current
     if (!s || !e) return
-    setReportStart(s)
-    setReportEnd(e)
-    setGenerated(true)
+    setGenerating(true)
+    setTimeout(() => {
+      setReportStart(s)
+      setReportEnd(e)
+      setGenerated(true)
+      setGenerating(false)
+    }, 2000)
   }
 
   // Clamp viewDate and reset tab offset when committed range changes
@@ -242,10 +247,11 @@ function DailySalesReportContent() {
           />
           <button
             onClick={handleGenerate}
-            disabled={!startDate || !endDate || startDate > endDate}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            disabled={generating || !startDate || !endDate || startDate > endDate}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
           >
-            Generate
+            {generating && <Loader2 className="w-4 h-4 animate-spin" />}
+            {generating ? 'Generating...' : 'Generate'}
           </button>
         </div>
       </div>
