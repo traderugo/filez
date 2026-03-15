@@ -115,10 +115,14 @@ export async function DELETE(request) {
 
     const { error: dbError } = await query
 
-    if (dbError) return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
+    if (dbError) {
+      console.error('Chat delete error:', dbError)
+      return NextResponse.json({ error: 'Failed to delete', detail: dbError.message }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    console.error('Chat delete exception:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
