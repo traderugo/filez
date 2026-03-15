@@ -3,10 +3,11 @@
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil, Download } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { buildDailyReport } from '@/lib/buildDailyReport'
+import { exportDailyReportExcel } from '@/lib/exportDailyReportExcel'
 import DateInput from '@/components/DateInput'
 
 function fmt(n) {
@@ -53,6 +54,8 @@ function DailySalesReportContent() {
   const [tanks, setTanks] = useState([])
   const [banks, setBanks] = useState([])
 
+  const [stationName, setStationName] = useState('')
+  const [exporting, setExporting] = useState(false)
   const [showEditMenu, setShowEditMenu] = useState(false)
   const [tabOffset, setTabOffset] = useState(0)
   const TAB_COUNT = 31
@@ -78,6 +81,14 @@ function DailySalesReportContent() {
       setTanks(tnk)
       setBanks(bnk)
       setLoading(false)
+
+      // Fetch station name (non-blocking, for export filename)
+      fetch('/api/organizations').then(r => r.ok ? r.json() : null).then(data => {
+        if (cancelled || !data) return
+        const all = [...(data.stations || []), ...(data.memberStations || [])]
+        const match = all.find(s => s.id === orgId)
+        if (match) setStationName(match.name || '')
+      }).catch(() => {})
     }
     load()
     return () => { cancelled = true }
@@ -126,6 +137,22 @@ function DailySalesReportContent() {
       endDate: reportEnd,
     })
   }, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
+
+  const handleExport = async () => {
+    if (!report) return
+    setExporting(true)
+    try {
+      await exportDailyReportExcel({
+        report,
+        customerMap,
+        stationName,
+        startDate: reportStart,
+        endDate: reportEnd,
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const handleGenerate = () => {
     const s = startDateRef.current
@@ -252,6 +279,15 @@ function DailySalesReportContent() {
           >
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={exporting || !report}
+            className="px-3 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 flex items-center gap-1.5"
+            title="Export to Excel"
+          >
+            {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            {exporting ? 'Exporting...' : 'Excel'}
           </button>
         </div>
       </div>
