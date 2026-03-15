@@ -7,6 +7,12 @@ import Image from 'next/image'
 import { Mail, Lock, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
+const ERROR_MESSAGES = {
+  callback_failed: 'Email verification failed. Please try again or request a new link.',
+  verification_failed: 'Email verification link is invalid or expired. Please request a new one.',
+  missing_token: 'Invalid verification link. Please request a new one.',
+}
+
 function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,6 +20,7 @@ function LoginForm() {
   const [error, setError] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
+  const urlError = searchParams.get('error')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -76,6 +83,12 @@ function LoginForm() {
         <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
         <p className="text-sm text-gray-500 mt-1">Sign in with your email and password</p>
       </div>
+
+      {urlError && ERROR_MESSAGES[urlError] && (
+        <div className="bg-red-50 border border-red-200 px-4 py-3 mb-4 text-sm text-red-800">
+          {ERROR_MESSAGES[urlError]}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

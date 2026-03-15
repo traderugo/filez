@@ -47,7 +47,7 @@ export default function RegisterPage() {
       return
     }
 
-    router.push('/auth/verify-email')
+    router.push(`/auth/verify-email?email=${encodeURIComponent(form.email.trim().toLowerCase())}`)
   }
 
   return (

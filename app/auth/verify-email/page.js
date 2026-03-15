@@ -1,24 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Mail, Loader2, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
+  const searchParams = useSearchParams()
+  const email = searchParams.get('email') || ''
   const [resending, setResending] = useState(false)
   const [resent, setResent] = useState(false)
   const [error, setError] = useState('')
 
   const handleResend = async () => {
+    if (!email) {
+      setError('Email not found. Please sign up again.')
+      return
+    }
+
     setResending(true)
     setError('')
     setResent(false)
 
     const { error: resendError } = await supabase.auth.resend({
       type: 'signup',
-      email: '', // Supabase uses the current session's email
+      email,
     })
 
     setResending(false)
@@ -38,7 +46,7 @@ export default function VerifyEmailPage() {
         <Mail className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
         <p className="text-sm text-gray-500 mt-2">
-          We sent a verification link to your email address.
+          We sent a verification link to {email ? <strong>{email}</strong> : 'your email address'}.
           Click the link to activate your account.
         </p>
       </div>
@@ -64,7 +72,7 @@ export default function VerifyEmailPage() {
 
       <button
         onClick={handleResend}
-        disabled={resending}
+        disabled={resending || !email}
         className="w-full border border-gray-300 text-gray-700 py-2.5 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 flex items-center justify-center gap-2 mb-4"
       >
         {resending && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -76,5 +84,13 @@ export default function VerifyEmailPage() {
         <Link href="/auth/login" className="text-blue-600 hover:underline">Log in</Link>
       </p>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }
