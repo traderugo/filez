@@ -35,6 +35,31 @@ export default function AuditReportPage() {
   )
 }
 
+const SECTIONS = {
+  PMS: { pumpStart: 9, pumpEnd: 85 },
+  AGO: { pumpStart: 118, pumpEnd: 145 },
+  DPK: { pumpStart: 184, pumpEnd: 206 },
+}
+
+function checkTruncationWarnings(report, nozzles) {
+  const warnings = []
+  if (!report?.salesCash?.fuelSummaries) return warnings
+  for (const ft of report.fuelTypes || []) {
+    const sec = SECTIONS[ft]
+    if (!sec) continue
+    const summary = report.salesCash.fuelSummaries[ft]
+    if (!summary?.rows?.length) continue
+    const pumpCount = nozzles.filter(n => n.fuel_type === ft).length
+    if (!pumpCount) continue
+    const blockSize = pumpCount + 1
+    const maxBlocks = Math.floor((sec.pumpEnd - sec.pumpStart + 1) / blockSize)
+    if (summary.rows.length > maxBlocks) {
+      warnings.push(`${ft}: ${summary.rows.length} price periods but only ${maxBlocks} fit in template. Meter readings will be truncated.`)
+    }
+  }
+  return warnings
+}
+
 function AuditReportContent() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
@@ -87,6 +112,12 @@ function AuditReportContent() {
         const match = all.find(s => s.id === orgId)
         if (match) setStationName(match.name || '')
       }).catch(() => {})
+
+      // Fetch admin-uploaded template URL (non-blocking)
+      fetch('/api/excel-templates?name=AUDIT+REPORT+TEMPLATE').then(r => r.ok ? r.json() : null).then(data => {
+        if (cancelled || !data?.url) return
+        setTemplateUrl(data.url)
+      }).catch(() => {})
     }
     load()
     return () => { cancelled = true }
@@ -127,6 +158,7 @@ function AuditReportContent() {
   )
 
   const [exporting, setExporting] = useState(false)
+  const [templateUrl, setTemplateUrl] = useState(null)
 
   const report = useMemo(() => {
     if (!generated || !reportStart || !reportEnd) return null
@@ -170,7 +202,16 @@ function AuditReportContent() {
     if (!report || exporting) return
     setExporting(true)
     try {
-      const { warnings } = await exportAuditExcel({
+      // Pre-check for truncation warnings
+      const warnings = checkTruncationWarnings(report, nozzles)
+      if (warnings.length) {
+        const proceed = window.confirm(
+          'Some data will be truncated:\n\n' + warnings.join('\n') + '\n\nProceed with export?'
+        )
+        if (!proceed) { setExporting(false); return }
+      }
+
+      const result = await exportAuditExcel({
         report,
         receipts: liveReceipts || [],
         lubeSales: liveLubeSales || [],
@@ -181,9 +222,10 @@ function AuditReportContent() {
         stationName,
         startDate: reportStart,
         endDate: reportEnd,
+        templateUrl,
       })
-      if (warnings?.length) {
-        alert('Export completed with warnings:\n\n' + warnings.join('\n'))
+      if (result.warnings?.length) {
+        alert('Export completed with warnings:\n\n' + result.warnings.join('\n'))
       }
     } catch (err) {
       console.error('Excel export failed:', err)
@@ -461,10 +503,7 @@ function MeterGroup({ row, rowIdx, totalRows, cell, cellR }) {
     <>
       {/* Spacer rows between price period groups */}
       {rowIdx > 0 && (
-        <>
-          <tr><td colSpan={6} className="h-2"></td></tr>
-          <tr><td colSpan={6} className="h-2"></td></tr>
-        </>
+        <tr><td colSpan={6} className="h-2"></td></tr>
       )}
       {row.pumps.map((pump, pIdx) => (
         <tr key={`${rowIdx}-${pIdx}`}>
