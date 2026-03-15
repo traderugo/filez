@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Send, Loader2, Activity, Trash2, RefreshCw } from 'lucide-react'
+import { Send, Loader2, Trash2, RefreshCw } from 'lucide-react'
 import { db } from '@/lib/db'
 
 export default function ChatPage() {
@@ -187,7 +187,7 @@ export default function ChatPage() {
 
   const fmtTime = (ts) => {
     if (!ts) return ''
-    return new Date(ts).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })
+    return new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
   }
 
   const fmtDate = (ts) => {
@@ -198,7 +198,7 @@ export default function ChatPage() {
   let lastDate = null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-white">
+    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-white max-w-2xl mx-auto">
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
@@ -240,12 +240,9 @@ export default function ChatPage() {
               {/* Activity log */}
               {msg.type === 'activity' ? (
                 <div className="flex justify-center my-1">
-                  <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 text-blue-700 text-xs px-3 py-1.5 max-w-[90%]">
-                    <Activity className="w-3 h-3 flex-shrink-0 text-blue-400" />
-                    <span className="font-medium text-blue-800">{msg.userName}</span>
-                    <span>{msg.content}</span>
-                    <span className="text-blue-400 ml-1 shrink-0">· {fmtTime(msg.createdAt)}</span>
-                  </div>
+                  <p className="text-xs text-gray-500 px-3 py-1">
+                    <span className="font-medium text-gray-600">{msg.userName}</span> {msg.content} · {fmtTime(msg.createdAt)}
+                  </p>
                 </div>
               ) : (
                 /* Chat message */
@@ -268,7 +265,7 @@ export default function ChatPage() {
                       isDeleted
                         ? 'bg-gray-100 text-gray-400 italic border border-gray-200'
                         : isMe
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-blue-100 text-blue-900'
                           : 'bg-slate-100 text-gray-900'
                     }`}>
                       {isDeleted
@@ -353,7 +350,7 @@ function MessageContent({ content, currentUserName, isMe }) {
               className={`font-semibold ${
                 isYou
                   ? 'bg-yellow-200 text-yellow-900 px-0.5 rounded'
-                  : isMe ? 'text-blue-200' : 'text-blue-600'
+                  : 'text-blue-600'
               }`}
             >
               {part}

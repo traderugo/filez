@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
+import Footer from './Footer'
 import EmailVerifyBanner from './EmailVerifyBanner'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -30,6 +31,7 @@ export default function AppShell({ children }) {
   const isAuth = pathname.startsWith('/auth')
   const isHome = pathname === '/'
   const isAdmin = pathname.startsWith('/admin')
+  const isChat = pathname.endsWith('/chat')
 
   // Auth pages + homepage: no shell, just content
   if (isAuth || isHome) return <>{children}</>
@@ -39,6 +41,7 @@ export default function AppShell({ children }) {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-1">{children}</main>
+      <Footer />
     </div>
   )
 
@@ -47,6 +50,7 @@ export default function AppShell({ children }) {
       <Header />
       {user && !user.email_verified && pathname === '/dashboard' && <EmailVerifyBanner />}
       <main className="flex-1">{children}</main>
+      {!isChat && <Footer />}
     </div>
   )
 }

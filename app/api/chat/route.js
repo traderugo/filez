@@ -102,7 +102,6 @@ export async function DELETE(request) {
       .update({ content: null, deleted_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', user.id)
-      .eq('org_id', user.org_id)
 
     if (dbError) return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
 
