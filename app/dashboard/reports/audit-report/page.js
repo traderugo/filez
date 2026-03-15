@@ -35,17 +35,18 @@ export default function AuditReportPage() {
   )
 }
 
-const SECTIONS = {
-  PMS: { pumpStart: 9, pumpEnd: 85 },
-  AGO: { pumpStart: 118, pumpEnd: 145 },
-  DPK: { pumpStart: 184, pumpEnd: 206 },
+// Extended template limits (1-indexed) — max capacity for truncation check
+const EXT_SECTIONS = {
+  PMS: { pumpStart: 10, pumpEnd: 163 },
+  AGO: { pumpStart: 196, pumpEnd: 251 },
+  DPK: { pumpStart: 290, pumpEnd: 335 },
 }
 
 function checkTruncationWarnings(report, nozzles) {
   const warnings = []
   if (!report?.salesCash?.fuelSummaries) return warnings
   for (const ft of report.fuelTypes || []) {
-    const sec = SECTIONS[ft]
+    const sec = EXT_SECTIONS[ft]
     if (!sec) continue
     const summary = report.salesCash.fuelSummaries[ft]
     if (!summary?.rows?.length) continue
