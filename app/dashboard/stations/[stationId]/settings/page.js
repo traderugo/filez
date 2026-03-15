@@ -454,10 +454,10 @@ export default function StationSettingsPage() {
         </button>
       </section>
 
-      {/* Credit Customers */}
+      {/* Accounts */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Users className="w-4 h-4 text-blue-600" /> Credit Customers
+          <Users className="w-4 h-4 text-blue-600" /> Accounts
         </h2>
         <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
           Opening balances are automatically adjusted when old entries (&gt;3 months) are consolidated to keep current balances accurate.
@@ -470,7 +470,7 @@ export default function StationSettingsPage() {
                 <div key={i} className={`flex items-center gap-2 flex-wrap py-3 first:pt-0 ${isDefault ? 'opacity-60' : ''}`}>
                   <input
                     type="text"
-                    placeholder="Customer name"
+                    placeholder="Account name"
                     maxLength={200}
                     value={c.name}
                     readOnly={isDefault}
@@ -510,7 +510,7 @@ export default function StationSettingsPage() {
           </div>
         )}
         <button onClick={addCustomer} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
-          <Plus className="w-4 h-4" /> Add customer
+          <Plus className="w-4 h-4" /> Add account
         </button>
       </section>
 

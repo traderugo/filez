@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { lubeSalesRepo } from '@/lib/repositories/lubeSales'
 import { lubeStockRepo } from '@/lib/repositories/lubeStock'
 import DateInput from '@/components/DateInput'
+import SearchableSelect from '@/components/SearchableSelect'
 
 function blankSalesEntry() {
   return { _key: crypto.randomUUID(), id: null, productId: '', unitSold: '', unitReceived: '', price: '', notes: '' }
@@ -216,12 +217,12 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate }) {
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Product</label>
-            <select value={entry.productId} onChange={(e) => updateEntry(idx, 'productId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-              <option value="">Select product</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.product_name}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={entry.productId}
+              onChange={(val) => updateEntry(idx, 'productId', val)}
+              options={products.map((p) => ({ value: p.id, label: p.product_name }))}
+              placeholder="Select product"
+            />
           </div>
           <div className="grid grid-cols-3 divide-x divide-gray-300">
             <div>
@@ -387,12 +388,12 @@ function LubeStockForm({ products, qs, orgId, editId, editDate }) {
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Product</label>
-            <select value={entry.productId} onChange={(e) => updateEntry(idx, 'productId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-              <option value="">Select product</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.product_name}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={entry.productId}
+              onChange={(val) => updateEntry(idx, 'productId', val)}
+              options={products.map((p) => ({ value: p.id, label: p.product_name }))}
+              placeholder="Select product"
+            />
           </div>
           <div>
             <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Stock</label>

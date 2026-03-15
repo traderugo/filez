@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, ShoppingCart, ArrowRight, Fuel } from 'lucide-react'
+import SearchableSelect from '@/components/SearchableSelect'
 
 export default function SubscribePage() {
   return (
@@ -156,16 +157,14 @@ function SubscribeContent() {
             {stations[0].name}
           </div>
         ) : (
-          <select
-            value={selectedStation}
-            onChange={(e) => handleStationChange(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select a station...</option>
-            {stations.map((st) => (
-              <option key={st.id} value={st.id}>{st.name}</option>
-            ))}
-          </select>
+          <div className="border border-gray-300">
+            <SearchableSelect
+              value={selectedStation}
+              onChange={(val) => handleStationChange(val)}
+              options={stations.map((st) => ({ value: st.id, label: st.name }))}
+              placeholder="Select a station..."
+            />
+          </div>
         )}
       </div>
 

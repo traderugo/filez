@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { lodgementsRepo } from '@/lib/repositories/lodgements'
 import DateInput from '@/components/DateInput'
+import SearchableSelect from '@/components/SearchableSelect'
 
 function blankEntry() {
   return { _key: crypto.randomUUID(), id: null, amount: '', bankId: '', lodgementType: 'deposit', salesDate: '', notes: '' }
@@ -187,12 +188,12 @@ export default function LodgementsFormPage() {
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Bank Account</label>
-                <select value={entry.bankId} onChange={(e) => updateEntry(idx, 'bankId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                  <option value="">Select account</option>
-                  {banks.map((b) => (
-                    <option key={b.id} value={b.id}>{b.bank_name} ({b.lodgement_type})</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  value={entry.bankId}
+                  onChange={(val) => updateEntry(idx, 'bankId', val)}
+                  options={banks.map((b) => ({ value: b.id, label: b.bank_name, sub: b.lodgement_type }))}
+                  placeholder="Select account"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 divide-x divide-gray-300">

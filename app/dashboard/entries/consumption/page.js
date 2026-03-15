@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { consumptionRepo } from '@/lib/repositories/consumption'
 import DateInput from '@/components/DateInput'
+import SearchableSelect from '@/components/SearchableSelect'
 
 const FUEL_TYPES = ['PMS', 'AGO', 'DPK']
 
@@ -198,12 +199,12 @@ export default function ConsumptionFormPage() {
             <div className="grid grid-cols-2 divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Account</label>
-                <select value={entry.customerId} onChange={(e) => updateEntry(idx, 'customerId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                  <option value="">Select account</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}{c.phone ? ` (${c.phone})` : ''}</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  value={entry.customerId}
+                  onChange={(val) => updateEntry(idx, 'customerId', val)}
+                  options={customers.map((c) => ({ value: c.id, label: c.name, sub: c.phone || '' }))}
+                  placeholder="Select account"
+                />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Fuel Type</label>

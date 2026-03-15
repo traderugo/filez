@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus, FolderOpen } from 'lucide-react'
+import SearchableSelect from '@/components/SearchableSelect'
 
 export default function AdminSettingsPage() {
   const [stations, setStations] = useState([])
@@ -331,16 +332,14 @@ export default function AdminSettingsPage() {
               {groups.length > 0 && (
                 <div className="flex items-center gap-2 mb-3">
                   <label className="text-xs text-gray-500 shrink-0">Group:</label>
-                  <select
-                    value={station.station_group || ''}
-                    onChange={(e) => assignGroup(station.id, e.target.value)}
-                    className="flex-1 px-2 py-1 border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  >
-                    <option value="">None</option>
-                    {groups.map((g) => (
-                      <option key={g.id} value={g.name}>{g.name}</option>
-                    ))}
-                  </select>
+                  <div className="flex-1 border border-gray-200 bg-white">
+                    <SearchableSelect
+                      value={station.station_group || ''}
+                      onChange={(val) => assignGroup(station.id, val)}
+                      options={[{ value: '', label: 'None' }, ...groups.map((g) => ({ value: g.name, label: g.name }))]}
+                      placeholder="None"
+                    />
+                  </div>
                 </div>
               )}
 

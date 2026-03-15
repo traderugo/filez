@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { productReceiptsRepo } from '@/lib/repositories/productReceipts'
 import DateInput from '@/components/DateInput'
+import SearchableSelect from '@/components/SearchableSelect'
 
 function blankEntry(tanks) {
   return {
@@ -269,12 +270,12 @@ export default function ProductReceiptFormPage() {
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
-                <select value={current.tankId} onChange={(e) => updateEntry(activeTab, 'tankId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                  <option value="">Select tank</option>
-                  {tanks.map((t) => (
-                    <option key={t.id} value={t.id}>Tank {t.tank_number} ({t.fuel_type})</option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  value={current.tankId}
+                  onChange={(val) => updateEntry(activeTab, 'tankId', val)}
+                  options={tanks.map((t) => ({ value: t.id, label: `Tank ${t.tank_number}`, sub: t.fuel_type }))}
+                  placeholder="Select tank"
+                />
               </div>
             </div>
             <div className="bg-gray-50 px-2 py-1">

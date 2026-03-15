@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { customerPaymentsRepo } from '@/lib/repositories/customerPayments'
 import DateInput from '@/components/DateInput'
+import SearchableSelect from '@/components/SearchableSelect'
 
 function blankEntry() {
   return { _key: crypto.randomUUID(), id: null, customerId: '', amountPaid: '', salesAmount: '', notes: '' }
@@ -153,7 +154,7 @@ export default function CustomerPaymentsFormPage() {
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Account Entry'}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Account Payment'}</h1>
         <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
           <List className="w-4 h-4" /> View Entries
         </Link>
@@ -178,13 +179,13 @@ export default function CustomerPaymentsFormPage() {
               )}
             </div>
             <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Customer</label>
-              <select value={entry.customerId} onChange={(e) => updateEntry(idx, 'customerId', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                <option value="">Select customer</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}{c.phone ? ` (${c.phone})` : ''}</option>
-                ))}
-              </select>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Account</label>
+              <SearchableSelect
+                value={entry.customerId}
+                onChange={(val) => updateEntry(idx, 'customerId', val)}
+                options={customers.map((c) => ({ value: c.id, label: c.name, sub: c.phone || '' }))}
+                placeholder="Select account"
+              />
             </div>
             <div className="grid grid-cols-2 divide-x divide-gray-300">
               <div>

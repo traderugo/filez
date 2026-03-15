@@ -494,20 +494,20 @@ export default function SetupWizardPage() {
         </div>
       )}
 
-      {/* Step 7: Credit Customers */}
+      {/* Step 7: Accounts */}
       {step === 7 && (
         <div>
           <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Users className="w-4 h-4 text-blue-600" /> Credit Customers
+            <Users className="w-4 h-4 text-blue-600" /> Accounts
           </h2>
-          <p className="text-xs text-gray-500 mb-4">Add customers who buy on credit with their outstanding balance. Skip if not applicable.</p>
+          <p className="text-xs text-gray-500 mb-4">Add accounts (e.g. credit customers, departments) with their outstanding balance. Skip if not applicable.</p>
 
           <div className="divide-y divide-gray-200 mb-4">
             {customers.map((c, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <input
                   type="text"
-                  placeholder="Customer name"
+                  placeholder="Account name"
                   maxLength={200}
                   value={c.name}
                   onChange={(e) => updateCustomer(i, 'name', e.target.value)}
@@ -541,7 +541,7 @@ export default function SetupWizardPage() {
             onClick={addCustomer}
             className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
-            <Plus className="w-4 h-4" /> Add customer
+            <Plus className="w-4 h-4" /> Add account
           </button>
         </div>
       )}
