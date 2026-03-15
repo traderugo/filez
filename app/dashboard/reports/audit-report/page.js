@@ -235,7 +235,7 @@ function AuditReportContent() {
       }
     } catch (err) {
       console.error('Excel export failed:', err)
-      alert('Export failed. Check console for details.')
+      alert('Export failed: ' + (err?.message || String(err)))
     } finally {
       setExporting(false)
     }
