@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 
-export async function GET() {
+export async function GET(request) {
   try {
     const user = await getAuthUser()
     if (!user) {
@@ -9,6 +9,8 @@ export async function GET() {
     }
 
     const supabase = getAdminClient()
+    const { searchParams } = new URL(request.url)
+    const orgId = searchParams.get('org_id') || user.org_id
 
     // Self-heal: if owner has no org_id, find their station and set it
     if (!user.org_id) {
@@ -24,18 +26,30 @@ export async function GET() {
       }
     }
 
-    // Fetch latest subscription and global services in parallel
-    const [subRes, svcRes] = await Promise.all([
-      supabase
-        .from('subscriptions')
-        .select('id, status, start_date, end_date, created_at, reference_code, payment_deadline, proof_url, plan_type, total_amount')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1),
+    // Build subscription query — filter by org_id if provided
+    let subQuery = supabase
+      .from('subscriptions')
+      .select('id, status, start_date, end_date, created_at, reference_code, payment_deadline, proof_url, plan_type, total_amount, org_id')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (orgId) {
+      subQuery = subQuery.eq('org_id', orgId)
+    }
+
+    // Fetch subscription, stations, and global services in parallel
+    const [subRes, svcRes, stationsRes] = await Promise.all([
+      subQuery,
       supabase
         .from('services')
         .select('id, name, description, price')
         .eq('is_active', true)
+        .order('name'),
+      supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('owner_id', user.id)
         .order('name'),
     ])
 
@@ -43,6 +57,7 @@ export async function GET() {
       profile: user,
       subscription: subRes.data?.[0] || null,
       services: svcRes.data || [],
+      stations: stationsRes.data || [],
     })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

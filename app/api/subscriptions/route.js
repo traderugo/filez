@@ -23,7 +23,11 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
     }
 
-    const { plan_type, total_amount, items } = await request.json()
+    const { plan_type, total_amount, items, org_id } = await request.json()
+
+    if (!org_id) {
+      return NextResponse.json({ error: 'Please select a station' }, { status: 400 })
+    }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'Please select at least one service' }, { status: 400 })
@@ -35,20 +39,33 @@ export async function POST(request) {
 
     const supabase = getAdminClient()
 
-    // Check for existing pending_payment or pending_approval subscription
+    // Verify user owns this station
+    const { data: station } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('id', org_id)
+      .eq('owner_id', user.id)
+      .single()
+
+    if (!station) {
+      return NextResponse.json({ error: 'Station not found or you are not the owner' }, { status: 404 })
+    }
+
+    // Check for existing pending subscription for this station
     const { data: existing } = await supabase
       .from('subscriptions')
       .select('id, status')
       .eq('user_id', user.id)
+      .eq('org_id', org_id)
       .in('status', ['pending_payment', 'pending_approval'])
       .limit(1)
 
     if (existing?.length > 0) {
       const s = existing[0]
       if (s.status === 'pending_payment') {
-        return NextResponse.json({ error: 'You already have a pending subscription. Complete payment or cancel it first.', existingId: s.id }, { status: 409 })
+        return NextResponse.json({ error: 'You already have a pending subscription for this station. Complete payment or cancel it first.', existingId: s.id }, { status: 409 })
       }
-      return NextResponse.json({ error: 'You already have a subscription awaiting approval.' }, { status: 409 })
+      return NextResponse.json({ error: 'You already have a subscription awaiting approval for this station.' }, { status: 409 })
     }
 
     const referenceCode = generateReferenceCode(user.id)
@@ -59,6 +76,7 @@ export async function POST(request) {
       .from('subscriptions')
       .insert({
         user_id: user.id,
+        org_id,
         status: 'pending_payment',
         plan_type: plan_type || 'recurring',
         total_amount,

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
-import { DEFAULT_ACCOUNTS, DEFAULT_PHONE } from '@/lib/defaultAccounts'
+import { DEFAULT_ACCOUNTS, DEFAULT_PHONE, DEFAULT_LUBE_PRODUCTS } from '@/lib/defaultAccounts'
 
 // Upsert helper: update items with id, insert new items, delete removed items
 // protectPhone: if set, rows with this phone value are never deleted
@@ -80,6 +80,30 @@ async function ensureDefaultAccounts(supabase, orgId) {
 
   if (toInsert.length > 0) {
     await supabase.from('station_customers').insert(toInsert)
+  }
+}
+
+/** Insert default lube products for a station if they don't already exist */
+async function ensureDefaultLubeProducts(supabase, orgId) {
+  const { data: existing } = await supabase
+    .from('station_lube_products')
+    .select('product_name')
+    .eq('org_id', orgId)
+
+  const existingNames = new Set((existing || []).map(e => e.product_name))
+  const toInsert = DEFAULT_LUBE_PRODUCTS
+    .filter(name => !existingNames.has(name))
+    .map((name, i) => ({
+      org_id: orgId,
+      product_name: name,
+      unit_price: 0,
+      opening_stock: 0,
+      opening_date: new Date().toISOString().split('T')[0],
+      sort_order: 1000 + i,
+    }))
+
+  if (toInsert.length > 0) {
+    await supabase.from('station_lube_products').insert(toInsert)
   }
 }
 
@@ -239,6 +263,7 @@ export async function POST(request) {
 
     // 7b. Ensure default accounts exist for this station
     await ensureDefaultAccounts(supabase, org_id)
+    await ensureDefaultLubeProducts(supabase, org_id)
 
     // 8. Mark onboarding as complete + ensure owner's org_id is set
     await Promise.all([

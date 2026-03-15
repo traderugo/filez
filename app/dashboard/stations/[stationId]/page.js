@@ -128,7 +128,7 @@ export default function StationPage() {
       if (owned) {
         const [invRes, dashRes] = await Promise.all([
           fetch(`/api/invites/list?org_id=${stationId}`),
-          fetch('/api/dashboard/data'),
+          fetch(`/api/dashboard/data?org_id=${stationId}`),
         ])
         if (invRes.ok) {
           const invData = await invRes.json()
@@ -393,7 +393,7 @@ export default function StationPage() {
             Dashboard
           </Link>
           <Link
-            href="/dashboard/subscribe"
+            href={`/dashboard/subscribe?org_id=${stationId}`}
             className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <CreditCard className="w-4 h-4" />
@@ -472,7 +472,7 @@ export default function StationPage() {
                    'You don\'t have an active subscription.'}
                 </p>
                 <Link
-                  href="/dashboard/subscribe"
+                  href={`/dashboard/subscribe?org_id=${stationId}`}
                   className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
                 >
                   <CreditCard className="w-4 h-4" /> Subscribe now

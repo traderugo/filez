@@ -32,7 +32,7 @@ export async function GET(request) {
     const client = getAdminClient()
     let query = client
       .from('subscriptions')
-      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, total_amount, reference_code, payment_deadline, users(name, email, phone), subscription_items(id, service_name, price)')
+      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, total_amount, reference_code, payment_deadline, org_id, users(name, email, phone), organizations(name), subscription_items(id, service_name, price)')
       .order('created_at', { ascending: false })
 
     if (filter && filter !== 'all') {

@@ -1,37 +1,77 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Loader2, ShoppingCart, ArrowRight } from 'lucide-react'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Loader2, ShoppingCart, ArrowRight, Fuel } from 'lucide-react'
 
 export default function SubscribePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+      <SubscribeContent />
+    </Suspense>
+  )
+}
+
+function SubscribeContent() {
   const [services, setServices] = useState([])
+  const [stations, setStations] = useState([])
+  const [selectedStation, setSelectedStation] = useState('')
   const [selectedItems, setSelectedItems] = useState({})
-  const [servicesLoading, setServicesLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [subscription, setSubscription] = useState(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const initialOrgId = searchParams.get('org_id') || ''
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch('/api/dashboard/data')
+      const url = initialOrgId
+        ? `/api/dashboard/data?org_id=${initialOrgId}`
+        : '/api/dashboard/data'
+      const res = await fetch(url)
       if (!res.ok) {
-        setServicesLoading(false)
+        setLoading(false)
         return
       }
       const data = await res.json()
       setServices(data.services || [])
+      setStations(data.stations || [])
+      setSubscription(data.subscription || null)
 
-      // If there's already a pending_payment subscription, redirect to its pay page
+      // Pre-select station from URL param or first station
+      const orgId = initialOrgId || data.stations?.[0]?.id || ''
+      setSelectedStation(orgId)
+
+      // If there's already a pending_payment subscription for this station, redirect to its pay page
       if (data.subscription?.status === 'pending_payment') {
         router.replace(`/dashboard/subscribe/pay/${data.subscription.id}`)
         return
       }
 
-      setServicesLoading(false)
+      setLoading(false)
     }
     load()
-  }, [router])
+  }, [router, initialOrgId])
+
+  // When station changes, re-fetch subscription for that station
+  const handleStationChange = async (orgId) => {
+    setSelectedStation(orgId)
+    setSubscription(null)
+    setError('')
+
+    if (!orgId) return
+
+    const res = await fetch(`/api/dashboard/data?org_id=${orgId}`)
+    if (!res.ok) return
+    const data = await res.json()
+    setSubscription(data.subscription || null)
+
+    if (data.subscription?.status === 'pending_payment') {
+      router.replace(`/dashboard/subscribe/pay/${data.subscription.id}`)
+    }
+  }
 
   const toggleItem = (serviceId) => {
     setSelectedItems((prev) => ({
@@ -45,6 +85,10 @@ export default function SubscribePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!selectedStation) {
+      setError('Please select a station')
+      return
+    }
     if (selectedServices.length === 0) {
       setError('Please select at least one service')
       return
@@ -56,6 +100,7 @@ export default function SubscribePage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        org_id: selectedStation,
         total_amount: total,
         items: selectedServices.map((s) => ({
           service_id: s.id,
@@ -69,7 +114,6 @@ export default function SubscribePage() {
     setSubmitting(false)
 
     if (!res.ok) {
-      // If they already have a pending_payment sub, redirect to it
       if (res.status === 409 && data.existingId) {
         router.push(`/dashboard/subscribe/pay/${data.existingId}`)
         return
@@ -78,11 +122,10 @@ export default function SubscribePage() {
       return
     }
 
-    // Redirect to payment page
     router.push(`/dashboard/subscribe/pay/${data.subscription.id}`)
   }
 
-  if (servicesLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
@@ -90,12 +133,53 @@ export default function SubscribePage() {
     )
   }
 
+  // Show active subscription info
+  const hasApproved = subscription?.status === 'approved'
+  const hasPendingApproval = subscription?.status === 'pending_approval'
+
   return (
     <div className="max-w-lg px-4 sm:px-8 py-8">
       <h1 className="text-xl font-bold text-gray-900 mb-1">Subscribe</h1>
       <p className="text-sm text-gray-500 mb-8">
-        Select your services to get started. You&apos;ll pay via bank transfer next.
+        Select your station and services to get started. You&apos;ll pay via bank transfer next.
       </p>
+
+      {/* Station selector */}
+      <div className="mb-6">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <Fuel className="w-4 h-4" /> Station
+        </h2>
+        {stations.length === 0 ? (
+          <p className="text-sm text-gray-500">You don&apos;t own any stations yet.</p>
+        ) : stations.length === 1 ? (
+          <div className="border border-blue-200 bg-blue-50 p-3 text-sm font-medium text-gray-900">
+            {stations[0].name}
+          </div>
+        ) : (
+          <select
+            value={selectedStation}
+            onChange={(e) => handleStationChange(e.target.value)}
+            className="w-full px-3 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select a station...</option>
+            {stations.map((st) => (
+              <option key={st.id} value={st.id}>{st.name}</option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Subscription status for selected station */}
+      {hasApproved && (
+        <div className="bg-green-50 border border-green-200 px-4 py-3 mb-6 text-sm text-green-800">
+          This station has an active subscription (expires {subscription.end_date}).
+        </div>
+      )}
+      {hasPendingApproval && (
+        <div className="bg-blue-50 border border-blue-200 px-4 py-3 mb-6 text-sm text-blue-800">
+          This station has a subscription awaiting admin approval.
+        </div>
+      )}
 
       {services.length === 0 ? (
         <p className="text-sm text-gray-500 py-8 text-center">No services available yet.</p>
@@ -144,7 +228,7 @@ export default function SubscribePage() {
 
           <button
             type="submit"
-            disabled={submitting || selectedServices.length === 0}
+            disabled={submitting || selectedServices.length === 0 || !selectedStation || hasApproved || hasPendingApproval}
             className="w-full bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {submitting ? (
