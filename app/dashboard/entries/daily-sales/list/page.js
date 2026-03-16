@@ -51,7 +51,7 @@ export default function DailySalesListPage() {
   if (!ready) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>
 
   if (hasConfig === 0) return (
-    <div className="max-w-3xl px-4 sm:px-8 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="text-center py-16">
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
@@ -62,7 +62,7 @@ export default function DailySalesListPage() {
   )
 
   return (
-    <div className="max-w-3xl px-4 sm:px-8 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-900">Daily Sales Entries</h1>
         <Link href={`/dashboard/entries/daily-sales?${qs}`} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">

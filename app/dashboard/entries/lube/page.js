@@ -53,7 +53,7 @@ export default function LubeFormPage() {
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
 
   if (locked) return (
-    <div className="max-w-3xl px-4 sm:px-8 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="text-center py-16">
         <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
@@ -70,7 +70,7 @@ export default function LubeFormPage() {
   const nextDate = currentDateIdx < allDates.length - 1 ? allDates[currentDateIdx + 1] : null
 
   return (
-    <div className="max-w-3xl px-4 sm:px-8 py-8">
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Lube Entry'}</h1>
         <div className="flex items-center gap-2">
