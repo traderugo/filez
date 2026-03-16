@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock, Plus } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { lubeSalesRepo } from '@/lib/repositories/lubeSales'
@@ -20,6 +20,7 @@ function blankStockEntry() {
 
 export default function LubeFormPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
   const editDate = searchParams.get('edit_date') || null
@@ -30,6 +31,7 @@ export default function LubeFormPage() {
   const [locked, setLocked] = useState(false)
   const [loading, setLoading] = useState(true)
   const [products, setProducts] = useState([])
+  const [allDates, setAllDates] = useState([])
 
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
@@ -37,10 +39,16 @@ export default function LubeFormPage() {
       const prods = await db.lubeProducts.where('orgId').equals(orgId).toArray()
       if (prods.length === 0) setLocked(true)
       setProducts(prods)
+
+      const table = tab === 'stock' ? db.lubeStock : db.lubeSales
+      const allEntries = await table.where('orgId').equals(orgId).toArray()
+      const uniqueDates = [...new Set(allEntries.map(e => e.entryDate).filter(Boolean))].sort()
+      setAllDates(uniqueDates)
+
       setLoading(false)
     }
     load()
-  }, [orgId])
+  }, [orgId, tab])
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
 
@@ -57,13 +65,25 @@ export default function LubeFormPage() {
 
   const isEditing = !!(editId || editDate)
 
+  const currentDateIdx = editDate ? allDates.indexOf(editDate) : -1
+  const prevDate = currentDateIdx > 0 ? allDates[currentDateIdx - 1] : null
+  const nextDate = currentDateIdx < allDates.length - 1 ? allDates[currentDateIdx + 1] : null
+
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Lube Entry'}</h1>
-        <Link href={`/dashboard/entries/lube/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
-          <List className="w-4 h-4" /> View Entries
-        </Link>
+        <div className="flex items-center gap-2">
+          {isEditing && editDate && (
+            <>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/lube?${qs}&edit_date=${prevDate}&type=${tab}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/lube?${qs}&edit_date=${nextDate}&type=${tab}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+            </>
+          )}
+          <Link href={`/dashboard/entries/lube/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
+            <List className="w-4 h-4" /> View Entries
+          </Link>
+        </div>
       </div>
 
       {!editId && !editDate && (
