@@ -59,6 +59,9 @@ export default function StationPage() {
   const [saving, setSaving] = useState(false)
   const [leaving, setLeaving] = useState(false)
 
+  // Consolidation countdown
+  const [consolidationCountdown, setConsolidationCountdown] = useState('')
+
   // Sync state
   const [syncing, setSyncing] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
@@ -73,6 +76,30 @@ export default function StationPage() {
   const { pendingPullCount, resetPullCount } = useRemoteChanges(stationId)
 
   useEffect(() => { pendingPullRef.current = pendingPullCount }, [pendingPullCount])
+
+  useEffect(() => {
+    function getNextConsolidation() {
+      const now = new Date()
+      const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 2, 0, 0, 0))
+      let daysToAdd = (7 - now.getUTCDay()) % 7
+      if (daysToAdd === 0 && now >= next) daysToAdd = 7
+      next.setUTCDate(next.getUTCDate() + daysToAdd)
+      return next
+    }
+    function format(ms) {
+      const s = Math.floor(ms / 1000)
+      const d = Math.floor(s / 86400)
+      const h = Math.floor((s % 86400) / 3600)
+      const m = Math.floor((s % 3600) / 60)
+      const sec = s % 60
+      if (d > 0) return `${d}d ${h}h ${String(m).padStart(2, '0')}m`
+      return `${h}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`
+    }
+    const tick = () => setConsolidationCountdown(format(getNextConsolidation() - new Date()))
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const handleSync = async () => {
     if (syncing) return
@@ -324,6 +351,12 @@ export default function StationPage() {
           {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
         </span>
       </div>
+      {consolidationCountdown && (
+        <div className="flex items-center gap-2 mb-8 px-3 py-2 bg-gray-50 border border-gray-200 border-t-0 text-xs text-gray-400">
+          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+          Next consolidation in <span className="font-mono text-gray-500">{consolidationCountdown}</span>
+        </div>
+      )}
 
       {/* Entries */}
       <section className="mb-8">
