@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock, Plus } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
@@ -83,6 +83,7 @@ export default function DailySalesFormPage() {
   const [originalIds, setOriginalIds] = useState([])
   // Previous day's last closing meter per pump_id — used when the user leaves a nozzle blank
   const [prevClosing, setPrevClosing] = useState({})
+  const [allDates, setAllDates] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -125,6 +126,9 @@ export default function DailySalesFormPage() {
       }
 
       if (!cancelled) {
+        const allSales = await db.dailySales.where('orgId').equals(orgId).toArray()
+        const uniqueDates = [...new Set(allSales.map(e => e.entryDate || e.entry_date).filter(Boolean))].sort()
+        setAllDates(uniqueDates)
         setEntries(prev => prev.length > 0 ? prev : [blankEntry(noz, tnk)])
         setLoading(false)
       }
@@ -312,13 +316,25 @@ export default function DailySalesFormPage() {
 
   const current = entries[activeTab]
 
+  const currentDateIdx = editDate ? allDates.indexOf(editDate) : -1
+  const prevDate = currentDateIdx > 0 ? allDates[currentDateIdx - 1] : null
+  const nextDate = currentDateIdx < allDates.length - 1 ? allDates[currentDateIdx + 1] : null
+
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Daily Sales Entry'}</h1>
-        <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
-          <List className="w-4 h-4" /> View Entries
-        </Link>
+        <div className="flex items-center gap-2">
+          {isEditing && editDate && (
+            <>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+            </>
+          )}
+          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
+            <List className="w-4 h-4" /> View Entries
+          </Link>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>

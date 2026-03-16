@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock, Plus } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { customerPaymentsRepo } from '@/lib/repositories/customerPayments'
@@ -30,6 +30,7 @@ export default function CustomerPaymentsFormPage() {
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
   const [entries, setEntries] = useState([blankEntry()])
   const [originalIds, setOriginalIds] = useState([])
+  const [allDates, setAllDates] = useState([])
 
   useEffect(() => {
     let cancelled = false
@@ -72,7 +73,12 @@ export default function CustomerPaymentsFormPage() {
         }
       }
 
-      if (!cancelled) setLoading(false)
+      if (!cancelled) {
+        const allPayments = await db.customerPayments.where('orgId').equals(orgId).toArray()
+        const uniqueDates = [...new Set(allPayments.map(e => e.entryDate).filter(Boolean))].sort()
+        setAllDates(uniqueDates)
+        setLoading(false)
+      }
     }
     load()
     return () => { cancelled = true }
@@ -151,13 +157,25 @@ export default function CustomerPaymentsFormPage() {
     </div>
   )
 
+  const currentDateIdx = editDate ? allDates.indexOf(editDate) : -1
+  const prevDate = currentDateIdx > 0 ? allDates[currentDateIdx - 1] : null
+  const nextDate = currentDateIdx < allDates.length - 1 ? allDates[currentDateIdx + 1] : null
+
   return (
     <div className="max-w-3xl px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Account Payment'}</h1>
-        <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
-          <List className="w-4 h-4" /> View Entries
-        </Link>
+        <div className="flex items-center gap-2">
+          {isEditing && editDate && (
+            <>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/customer-payments?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/customer-payments?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+            </>
+          )}
+          <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
+            <List className="w-4 h-4" /> View Entries
+          </Link>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit}>
