@@ -451,7 +451,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
           {(summary.consumption.pourBackByPrice || []).map((group, gi) => (
             <tr key={`pbg-${gi}`}>
               <td className={cell}></td>
-              <td className={cell}>{group.entries.map(e => e.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</td>
+              <td className={cell}>{group.name}</td>
               <td className={cellR}>{fmt(group.totalQty)}</td>
               <td className={cellR}>{fmt(group.price)}</td>
               <td className={cellR}>{fmt(group.totalAmt)}</td>
@@ -475,7 +475,7 @@ function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr
           {(summary.consumption.consumedByPrice || []).map((group, gi) => (
             <tr key={`cg-${gi}`}>
               <td className={cell}></td>
-              <td className={cell}>{group.entries.map(e => e.name).filter((v, i, a) => a.indexOf(v) === i).join(', ')}</td>
+              <td className={cell}>{group.name}</td>
               <td className={cellR}>{fmt(group.totalQty)}</td>
               <td className={cellR}>{fmt(group.price)}</td>
               <td className={cellR}>{fmt(group.totalAmt)}</td>
