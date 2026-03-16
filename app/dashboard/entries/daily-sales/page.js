@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
+import { consumptionRepo } from '@/lib/repositories/consumption'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
+import SearchableSelect from '@/components/SearchableSelect'
 
 function blankEntry(nozzles, tanks) {
   return {
@@ -16,9 +18,11 @@ function blankEntry(nozzles, tanks) {
     nozzleReadings: nozzles.map(n => ({
       pump_id: n.id,
       label: `${n.fuel_type} ${n.pump_number}`,
+      fuel_type: n.fuel_type,
       closing_meter: '',
       consumption: '',
       pour_back: '',
+      consumption_customer_id: '',
     })),
     tankReadings: tanks.map(t => ({
       tank_id: t.id,
@@ -43,9 +47,11 @@ function entryFromRecord(entry, nozzles, tanks) {
       return {
         pump_id: n.id,
         label: `${n.fuel_type} ${n.pump_number}`,
+        fuel_type: n.fuel_type,
         closing_meter: match ? String(match.closing_meter || '') : '',
         consumption: match ? String(match.consumption || '') : '',
         pour_back: match ? String(match.pour_back || '') : '',
+        consumption_customer_id: match?.consumption_customer_id || '',
       }
     }),
     tankReadings: tanks.map(t => {
@@ -74,6 +80,7 @@ export default function DailySalesFormPage() {
   const [locked, setLocked] = useState(false)
   const [nozzles, setNozzles] = useState([])
   const [tanks, setTanks] = useState([])
+  const [customers, setCustomers] = useState([])
 
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -107,6 +114,10 @@ export default function DailySalesFormPage() {
       tnk.sort((a, b) => (fuelOrder[a.fuel_type] ?? 99) - (fuelOrder[b.fuel_type] ?? 99) || Number(a.tank_number || 0) - Number(b.tank_number || 0))
       setNozzles(noz)
       setTanks(tnk)
+
+      const cust = await db.customers.where('orgId').equals(orgId).toArray()
+      cust.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      setCustomers(cust)
 
       if (editId) {
         const entry = await dailySalesRepo.getById(editId)
@@ -256,12 +267,14 @@ export default function DailySalesFormPage() {
         const readings = entry.nozzleReadings.map(r => ({
           pump_id: r.pump_id,
           nozzle_label: r.label,
+          fuel_type: r.fuel_type,
           // If blank, fall back to the previous day's last closing meter for this nozzle
           closing_meter: r.closing_meter !== '' && r.closing_meter !== undefined
             ? Number(r.closing_meter)
             : (prevClosing[r.pump_id] ?? 0),
           consumption: Number(r.consumption) || 0,
           pour_back: Number(r.pour_back) || 0,
+          consumption_customer_id: r.consumption_customer_id || '',
         }))
         const tankData = entry.tankReadings.map(r => ({
           tank_id: r.tank_id,
@@ -291,6 +304,39 @@ export default function DailySalesFormPage() {
         } else {
           record.createdAt = now
           await dailySalesRepo.create(record)
+        }
+
+        // Auto-create/update/delete consumption_entries for nozzles with consumption + customer
+        for (const r of readings) {
+          const consId = `cons_${record.id}_${r.pump_id}`
+          const existing = await db.consumption.get(consId)
+          const qty = Number(r.consumption) || 0
+          const custId = r.consumption_customer_id
+
+          if (qty > 0 && custId) {
+            const ft = r.fuel_type || ''
+            const price = Number(entry.prices[ft]) || 0
+            const consRecord = {
+              id: consId,
+              orgId,
+              entryDate: formDate,
+              customerId: custId,
+              quantity: qty,
+              fuelType: ft,
+              isPourBack: false,
+              price,
+              notes: `${r.nozzle_label || ''} consumption`,
+              createdAt: existing?.createdAt || now,
+              updatedAt: now,
+            }
+            if (existing) {
+              await consumptionRepo.update(consRecord)
+            } else {
+              await consumptionRepo.create(consRecord)
+            }
+          } else if (existing) {
+            await consumptionRepo.remove(consId, orgId)
+          }
         }
       }
 
@@ -416,6 +462,17 @@ export default function DailySalesFormPage() {
                         <input type="number" value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                       </div>
                     </div>
+                    {Number(r.consumption) > 0 && (
+                      <div className="px-2 py-1.5 bg-amber-50/50 border-t border-gray-200">
+                        <SearchableSelect
+                          value={r.consumption_customer_id}
+                          onChange={(val) => updateNozzleReading(activeTab, idx, 'consumption_customer_id', val)}
+                          options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed' }))}
+                          placeholder="Attach account to consumption"
+                          className="text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 ))}
               </>

@@ -12,38 +12,61 @@ import SearchableSelect from '@/components/SearchableSelect'
 function blankEntry(tanks) {
   return {
     _key: crypto.randomUUID(),
-    id: null,
+    ids: [],
     loadedDate: '', driverName: '', waybillNumber: '', ticketNumber: '', truckNumber: '',
     chartUllage: '', chartLiquidHeight: '', depotUllage: '', depotLiquidHeight: '',
     stationUllage: '', stationLiquidHeight: '',
     firstCompartment: '', secondCompartment: '', thirdCompartment: '',
-    actualVolume: '', depotName: '', tankId: '', notes: '',
+    tankVolumes: Object.fromEntries(tanks.map(t => [t.id, ''])),
+    depotName: '', notes: '',
   }
 }
 
-function entryFromRecord(entry) {
-  return {
-    _key: entry.id,
-    id: entry.id,
-    loadedDate: entry.loadedDate || '',
-    driverName: entry.driverName || '',
-    waybillNumber: entry.waybillNumber || '',
-    ticketNumber: entry.ticketNumber || '',
-    truckNumber: entry.truckNumber || '',
-    chartUllage: entry.chartUllage ?? '',
-    chartLiquidHeight: entry.chartLiquidHeight ?? '',
-    depotUllage: entry.depotUllage ?? '',
-    depotLiquidHeight: entry.depotLiquidHeight ?? '',
-    stationUllage: entry.stationUllage ?? '',
-    stationLiquidHeight: entry.stationLiquidHeight ?? '',
-    firstCompartment: entry.firstCompartment ?? '',
-    secondCompartment: entry.secondCompartment ?? '',
-    thirdCompartment: entry.thirdCompartment ?? '',
-    actualVolume: entry.actualVolume ?? '',
-    depotName: entry.depotName || '',
-    tankId: entry.tankId || '',
-    notes: entry.notes || '',
+/**
+ * Group raw DB records (one per tank) into form entries (one per delivery).
+ * Groups by shared delivery fields; old single-tank entries become their own group.
+ */
+function groupRecordsIntoEntries(records, tanks) {
+  const groups = {}
+  for (const r of records) {
+    // Group key: shared delivery info (waybill + truck + driver + depot + loadedDate)
+    const parts = [r.waybillNumber, r.truckNumber, r.driverName, r.depotName, r.loadedDate].map(s => s || '')
+    const key = parts.some(Boolean) ? parts.join('|') : r.id
+    if (!groups[key]) groups[key] = []
+    groups[key].push(r)
   }
+  return Object.values(groups).map(group => {
+    const first = group[0]
+    const tankVolumes = Object.fromEntries(tanks.map(t => [t.id, '']))
+    const ids = []
+    for (const r of group) {
+      ids.push(r.id)
+      if (r.tankId && Number(r.actualVolume || 0) > 0) {
+        tankVolumes[r.tankId] = String(r.actualVolume)
+      }
+    }
+    return {
+      _key: first.id,
+      ids,
+      loadedDate: first.loadedDate || '',
+      driverName: first.driverName || '',
+      waybillNumber: first.waybillNumber || '',
+      ticketNumber: first.ticketNumber || '',
+      truckNumber: first.truckNumber || '',
+      chartUllage: first.chartUllage ?? '',
+      chartLiquidHeight: first.chartLiquidHeight ?? '',
+      depotUllage: first.depotUllage ?? '',
+      depotLiquidHeight: first.depotLiquidHeight ?? '',
+      stationUllage: first.stationUllage ?? '',
+      stationLiquidHeight: first.stationLiquidHeight ?? '',
+      firstCompartment: first.firstCompartment ?? '',
+      secondCompartment: first.secondCompartment ?? '',
+      thirdCompartment: first.thirdCompartment ?? '',
+      tankVolumes,
+      depotName: first.depotName || '',
+      notes: first.notes || '',
+    }
+  })
 }
 
 export default function ProductReceiptFormPage() {
@@ -85,7 +108,7 @@ export default function ProductReceiptFormPage() {
         if (entry && !cancelled) {
           setFormDate(entry.entryDate || '')
           setOriginalIds([entry.id])
-          setEntries([entryFromRecord(entry)])
+          setEntries(groupRecordsIntoEntries([entry], tnk))
         }
       } else if (editDate) {
         const all = await db.productReceipts.where('orgId').equals(orgId).toArray()
@@ -93,7 +116,7 @@ export default function ProductReceiptFormPage() {
         if (dateEntries.length > 0 && !cancelled) {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
-          setEntries(dateEntries.map(e => entryFromRecord(e)))
+          setEntries(groupRecordsIntoEntries(dateEntries, tnk))
         }
       }
 
@@ -133,46 +156,44 @@ export default function ProductReceiptFormPage() {
 
     try {
       const now = new Date().toISOString()
-      const currentIds = entries.filter(e => e.id).map(e => e.id)
 
+      // Delete all old records when editing
       if (isEditing) {
-        const deletedIds = originalIds.filter(id => !currentIds.includes(id))
-        for (const id of deletedIds) {
+        for (const id of originalIds) {
           await productReceiptsRepo.remove(id, orgId)
         }
       }
 
       for (const entry of entries) {
-        const record = {
-          id: entry.id || crypto.randomUUID(),
-          orgId,
-          entryDate: formDate,
-          loadedDate: entry.loadedDate || null,
-          driverName: entry.driverName,
-          waybillNumber: entry.waybillNumber,
-          ticketNumber: entry.ticketNumber,
-          truckNumber: entry.truckNumber,
-          chartUllage: Number(entry.chartUllage) || 0,
-          chartLiquidHeight: Number(entry.chartLiquidHeight) || 0,
-          depotUllage: Number(entry.depotUllage) || 0,
-          depotLiquidHeight: Number(entry.depotLiquidHeight) || 0,
-          stationUllage: Number(entry.stationUllage) || 0,
-          stationLiquidHeight: Number(entry.stationLiquidHeight) || 0,
-          firstCompartment: Number(entry.firstCompartment) || 0,
-          secondCompartment: Number(entry.secondCompartment) || 0,
-          thirdCompartment: Number(entry.thirdCompartment) || 0,
-          actualVolume: Number(entry.actualVolume) || 0,
-          depotName: entry.depotName,
-          tankId: entry.tankId || null,
-          notes: entry.notes,
-          updatedAt: now,
-        }
+        // Create one record per tank with volume > 0
+        const tanksWithVolume = Object.entries(entry.tankVolumes || {}).filter(([, v]) => Number(v) > 0)
 
-        if (entry.id) {
-          const existing = await productReceiptsRepo.getById(entry.id)
-          await productReceiptsRepo.update({ ...existing, ...record })
-        } else {
-          record.createdAt = now
+        for (const [tankId, volumeStr] of tanksWithVolume) {
+          const record = {
+            id: crypto.randomUUID(),
+            orgId,
+            entryDate: formDate,
+            loadedDate: entry.loadedDate || null,
+            driverName: entry.driverName,
+            waybillNumber: entry.waybillNumber,
+            ticketNumber: entry.ticketNumber,
+            truckNumber: entry.truckNumber,
+            chartUllage: Number(entry.chartUllage) || 0,
+            chartLiquidHeight: Number(entry.chartLiquidHeight) || 0,
+            depotUllage: Number(entry.depotUllage) || 0,
+            depotLiquidHeight: Number(entry.depotLiquidHeight) || 0,
+            stationUllage: Number(entry.stationUllage) || 0,
+            stationLiquidHeight: Number(entry.stationLiquidHeight) || 0,
+            firstCompartment: Number(entry.firstCompartment) || 0,
+            secondCompartment: Number(entry.secondCompartment) || 0,
+            thirdCompartment: Number(entry.thirdCompartment) || 0,
+            actualVolume: Number(volumeStr) || 0,
+            depotName: entry.depotName,
+            tankId,
+            notes: entry.notes,
+            createdAt: now,
+            updatedAt: now,
+          }
           await productReceiptsRepo.create(record)
         }
       }
@@ -279,20 +300,9 @@ export default function ProductReceiptFormPage() {
                 <input type="text" value={current.ticketNumber} onChange={(e) => updateEntry(activeTab, 'ticketNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-gray-300">
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Truck Number</label>
-                <input type="text" value={current.truckNumber} onChange={(e) => updateEntry(activeTab, 'truckNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receiving Tank</label>
-                <SearchableSelect
-                  value={current.tankId}
-                  onChange={(val) => updateEntry(activeTab, 'tankId', val)}
-                  options={tanks.map((t) => ({ value: t.id, label: `Tank ${t.tank_number}`, sub: t.fuel_type }))}
-                  placeholder="Select tank"
-                />
-              </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Truck Number</label>
+              <input type="text" value={current.truckNumber} onChange={(e) => updateEntry(activeTab, 'truckNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div className="bg-gray-50 px-2 py-1">
               <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
@@ -342,10 +352,30 @@ export default function ProductReceiptFormPage() {
                 <input type="number" value={current.thirdCompartment} onChange={(e) => updateEntry(activeTab, 'thirdCompartment', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
             </div>
-            <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Actual Volume</label>
-              <input type="number" value={current.actualVolume} onChange={(e) => updateEntry(activeTab, 'actualVolume', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Volume Received Per Tank</span>
             </div>
+            {tanks.map((t) => (
+              <div key={t.id} className="grid grid-cols-2 divide-x divide-gray-300">
+                <div className="flex items-center px-3 py-2.5 bg-gray-50/50">
+                  <span className="text-xs text-gray-600">{t.fuel_type} Tank {t.tank_number}</span>
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    value={current.tankVolumes?.[t.id] || ''}
+                    onChange={(e) => {
+                      const updated = { ...current.tankVolumes, [t.id]: e.target.value }
+                      updateEntry(activeTab, 'tankVolumes', updated)
+                    }}
+                    step="0.01"
+                    min="0"
+                    placeholder="0"
+                    className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50"
+                  />
+                </div>
+              </div>
+            ))}
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
               <textarea value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
