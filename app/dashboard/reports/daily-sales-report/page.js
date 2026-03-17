@@ -232,7 +232,8 @@ function DailySalesReportContent() {
         </div>
       )}
       {/* Header — fixed at top */}
-      <div className="flex items-center justify-end py-3 gap-2 flex-wrap shrink-0">
+      <div className="flex items-center justify-end py-3 shrink-0">
+        <div className="flex items-center gap-2">
           <DateInput
             value={startDate}
             onChange={setStartDate}
@@ -261,6 +262,7 @@ function DailySalesReportContent() {
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {exporting ? 'Exporting...' : 'Excel'}
           </button>
+        </div>
       </div>
 
       {/* Scrollable content area */}

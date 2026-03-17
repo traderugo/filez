@@ -141,7 +141,8 @@ function SummaryContent() {
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-2 sm:px-6">
       {/* Header */}
-      <div className="flex items-center justify-end py-3 gap-2 flex-wrap shrink-0">
+      <div className="flex items-center justify-end py-3 shrink-0">
+        <div className="flex items-center gap-2">
           <DateInput
             value={selectedDate}
             onChange={setSelectedDate}
@@ -155,6 +156,7 @@ function SummaryContent() {
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
           </button>
+        </div>
       </div>
 
       {/* Content */}
