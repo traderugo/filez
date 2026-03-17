@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [registered, setRegistered] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e) => {
@@ -24,7 +25,7 @@ export default function RegisterPage() {
 
     setLoading(true)
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email: form.email.trim().toLowerCase(),
       password: form.password,
       options: {
@@ -47,7 +48,23 @@ export default function RegisterPage() {
       return
     }
 
-    router.push(`/auth/verify-email?email=${encodeURIComponent(form.email.trim().toLowerCase())}`)
+    setRegistered(true)
+  }
+
+  if (registered) {
+    return (
+      <div className="max-w-sm mx-auto px-4 py-20 text-center">
+        <Image src="/icon-192.png" alt="StationMGR" width={48} height={48} className="mx-auto mb-3 rounded-lg" />
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">Account created</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Your account has been created and is pending verification by an administrator.
+          You will be able to log in once your account is verified.
+        </p>
+        <Link href="/auth/login" className="text-blue-600 hover:underline text-sm font-medium">
+          Go to login
+        </Link>
+      </div>
+    )
   }
 
   return (
