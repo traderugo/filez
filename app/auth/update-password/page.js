@@ -37,7 +37,7 @@ export default function UpdatePasswordPage() {
     }
 
     setSuccess(true)
-    setTimeout(() => router.push('/dashboard'), 2000)
+    setTimeout(() => router.push('/auth/login'), 2000)
   }
 
   if (success) {
@@ -47,7 +47,7 @@ export default function UpdatePasswordPage() {
           <Image src="/icon-192.png" alt="StationMGR" width={48} height={48} className="mx-auto mb-3 rounded-lg" />
           <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900">Password updated</h1>
-          <p className="text-sm text-gray-500 mt-2">Redirecting to dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">Redirecting to login...</p>
         </div>
       </div>
     )
