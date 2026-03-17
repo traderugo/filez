@@ -553,6 +553,10 @@ function CashReconciliation({ data, startDate, endDate, hdr, subHdr, cell, cellR
             <td className={cell}>Total POS for the Period</td>
             <td className={cellR}>{fmt(data.totalPOS)}</td>
           </tr>
+          <tr className="font-bold">
+            <td className={cell}>Total Transfer for the Period</td>
+            <td className={cellR}>{fmt(data.totalTransfer)}</td>
+          </tr>
           <tr className={`${subHdr} font-bold`}>
             <td className={cell}>Overage/Shortage</td>
             <td className={`${cellR} ${overshortColor}`}>
@@ -572,10 +576,11 @@ function LodgementSheet({ report }) {
   if (!lodgementSheet) return null
 
   const { rows, banks, totals } = lodgementSheet
-  // Only show non-deposit banks as columns (POS, cash, other)
+  // Only show non-deposit banks as columns (POS, transfer, cash, other)
   const displayBanks = banks.filter(b => b.lodgement_type !== 'bank_deposit')
   const posBanks = displayBanks.filter(b => b.lodgement_type === 'pos')
-  const otherBanks = displayBanks.filter(b => b.lodgement_type !== 'pos')
+  const transferBanks = displayBanks.filter(b => b.lodgement_type === 'transfer')
+  const otherBanks = displayBanks.filter(b => b.lodgement_type !== 'pos' && b.lodgement_type !== 'transfer')
 
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-600'
@@ -596,7 +601,7 @@ function LodgementSheet({ report }) {
 
   const ovshColor = (v) => v !== 0 ? 'text-red-600' : ''
 
-  const totalCols = 3 + displayBanks.length + 3
+  const totalCols = 3 + displayBanks.length + 4
   const visibleRows = rows.filter(r => r.hasData)
 
   return (
@@ -617,12 +622,18 @@ function LodgementSheet({ report }) {
                 Analysis of POS by Banks
               </th>
             )}
+            {transferBanks.length > 0 && (
+              <th colSpan={transferBanks.length} className={`${cell} text-center font-bold`}>
+                Transfer
+              </th>
+            )}
             {otherBanks.length > 0 && (
               <th colSpan={otherBanks.length} className={`${cell} text-center font-bold`}>
                 Other Lodgements
               </th>
             )}
             <th className={`${cellR} font-bold`}>Total POS</th>
+            <th className={`${cellR} font-bold`}>Total Transfer</th>
             <th className={`${cellR} font-bold`}>Actual</th>
             <th className={`${cellR} font-bold`}>OV/SH</th>
           </tr>
@@ -636,6 +647,7 @@ function LodgementSheet({ report }) {
                   {bank.bank_name}
                 </th>
               ))}
+              <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
@@ -654,6 +666,7 @@ function LodgementSheet({ report }) {
                 </td>
               ))}
               <td className={cellR}>{fmt(row.totalPOS)}</td>
+              <td className={cellR}>{fmt(row.totalTransfer)}</td>
               <td className={cellR}>{fmt(row.actual)}</td>
               <td className={`${cellR} font-bold ${ovshColor(row.ovsh)}`}>
                 {fmtOvsh(row.ovsh)}
@@ -671,6 +684,7 @@ function LodgementSheet({ report }) {
                 </td>
               ))}
               <td className={cellR}>{fmt(totals.totalPOS)}</td>
+              <td className={cellR}>{fmt(totals.totalTransfer)}</td>
               <td className={cellR}>{fmt(totals.actual)}</td>
               <td className={`${cellR} ${ovshColor(totals.ovsh)}`}>
                 {fmtOvsh(totals.ovsh)}

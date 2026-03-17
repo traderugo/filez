@@ -316,7 +316,7 @@ function SummaryContent() {
                   <tr key={row.bankId}>
                     <td colSpan={2} className={`${cell} text-xs pl-3`}>
                       {row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}
-                      {row.lodgementType !== 'pos' && (
+                      {row.lodgementType !== 'pos' && row.lodgementType !== 'transfer' && (
                         <span className="text-gray-400 ml-1">({row.lodgementType})</span>
                       )}
                     </td>
@@ -327,6 +327,10 @@ function SummaryContent() {
               <tr className="font-bold">
                 <td colSpan={2} className={cell}>TOTAL POS</td>
                 <td className={cellR}>{fmt(dayReport.lodgement.totalPOS)}</td>
+              </tr>
+              <tr className="font-bold">
+                <td colSpan={2} className={cell}>TOTAL TRANSFER</td>
+                <td className={cellR}>{fmt(dayReport.lodgement.totalTransfer)}</td>
               </tr>
               <tr className={`${subHdr} font-bold`}>
                 <td colSpan={2} className={cell}>CASH</td>

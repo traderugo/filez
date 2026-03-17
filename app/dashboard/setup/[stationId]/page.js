@@ -11,6 +11,7 @@ import {
 const FUEL_TYPES = ['PMS', 'AGO', 'DPK']
 const LODGEMENT_TYPES = [
   { value: 'pos', label: 'POS' },
+  { value: 'transfer', label: 'Transfer' },
   { value: 'bank_deposit', label: 'Bank Deposit' },
   { value: 'cash', label: 'Cash' },
   { value: 'other', label: 'Other' },
