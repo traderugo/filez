@@ -340,16 +340,22 @@ export default function DailySalesFormPage() {
         // Auto-create/update/delete consumption_entries for nozzles with consumption + customer
         for (const r of readings) {
           const sourceKey = `${record.id}_${r.pump_id}`
-          // Look up by sourceKey first, fall back to legacy cons_ id
-          const existing = await db.consumption
+          const qty = Number(r.consumption) || 0
+          const custId = r.consumption_customer_id
+          const ft = r.fuel_type || ''
+          // Look up by sourceKey first, then legacy id, then date+fuel+customer (for records from initial sync without sourceKey)
+          let existing = await db.consumption
             .where('orgId').equals(orgId)
             .filter(c => c.sourceKey === sourceKey)
             .first() || await db.consumption.get(`cons_${record.id}_${r.pump_id}`)
-          const qty = Number(r.consumption) || 0
-          const custId = r.consumption_customer_id
+          if (!existing && qty > 0 && custId) {
+            existing = await db.consumption
+              .where('orgId').equals(orgId)
+              .filter(c => c.entryDate === formDate && c.fuelType === ft && c.customerId === custId && !c.isPourBack)
+              .first()
+          }
 
           if (qty > 0 && custId) {
-            const ft = r.fuel_type || ''
             const price = Number(entry.prices[ft]) || 0
             const consRecord = {
               id: existing?.id || crypto.randomUUID(),
