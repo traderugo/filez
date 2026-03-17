@@ -575,17 +575,17 @@ function LodgementSheet({ report }) {
   if (!lodgementSheet) return null
 
   const { rows, banks, totals } = lodgementSheet
-  // Only show non-deposit banks as columns (POS, transfer, cash, other)
-  const displayBanks = banks.filter(b => b.lodgement_type !== 'bank_deposit')
-  const posBanks = displayBanks.filter(b => b.lodgement_type === 'pos')
-  const transferBanks = displayBanks.filter(b => b.lodgement_type === 'transfer')
-  const otherBanks = displayBanks.filter(b => b.lodgement_type !== 'pos' && b.lodgement_type !== 'transfer')
+  // POS + Transfer banks shown together in "Analysis of POS by Banks" (matching Excel)
+  const displayBanks = banks.filter(b => b.lodgement_type === 'pos' || b.lodgement_type === 'transfer')
+  const posOnly = banks.filter(b => b.lodgement_type === 'pos')
+  const transferOnly = banks.filter(b => b.lodgement_type === 'transfer')
 
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-600'
   const bdr = 'border border-blue-200'
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
+  const cellEmpty = `${bdr} px-1.5 py-1 bg-gray-50`
 
   const fmtDate = (d) => {
     const dt = new Date(d + 'T00:00:00')
@@ -594,13 +594,12 @@ function LodgementSheet({ report }) {
 
   const fmtOvsh = (v) => {
     if (v === 0) return ''
-    if (v < 0) return `(${fmt(Math.abs(v))})`
-    return fmt(v)
+    return v < 0 ? `(${fmt(Math.abs(v))})` : fmt(v)
   }
 
-  const ovshColor = (v) => v !== 0 ? 'text-red-600' : ''
+  const sumBanks = (amounts, list) => list.reduce((s, b) => s + (amounts[b.id] || 0), 0)
 
-  const totalCols = 3 + displayBanks.length + 4
+  const totalCols = 4 + displayBanks.length + 5
   const visibleRows = rows.filter(r => r.hasData)
 
   return (
@@ -613,26 +612,18 @@ function LodgementSheet({ report }) {
             </th>
           </tr>
           <tr className={subHdr}>
-            <th className={`${cell} font-bold`}>Date</th>
+            <th className={`${cell} font-bold`}>Sales Date</th>
             <th className={`${cellR} font-bold`}>Total Sales</th>
-            <th className={`${cellR} font-bold`}>Expected</th>
-            {posBanks.length > 0 && (
-              <th colSpan={posBanks.length} className={`${cell} text-center font-bold`}>
+            <th className={`${cellR} font-bold`}>Cash Sales</th>
+            <th className={`${cell} font-bold text-center`}>Credit</th>
+            {displayBanks.length > 0 && (
+              <th colSpan={displayBanks.length} className={`${cell} text-center font-bold`}>
                 Analysis of POS by Banks
-              </th>
-            )}
-            {transferBanks.length > 0 && (
-              <th colSpan={transferBanks.length} className={`${cell} text-center font-bold`}>
-                Transfer
-              </th>
-            )}
-            {otherBanks.length > 0 && (
-              <th colSpan={otherBanks.length} className={`${cell} text-center font-bold`}>
-                Other Lodgements
               </th>
             )}
             <th className={`${cellR} font-bold`}>Total POS</th>
             <th className={`${cellR} font-bold`}>Total Transfer</th>
+            <th className={`${cellR} font-bold`}>Expected</th>
             <th className={`${cellR} font-bold`}>Actual</th>
             <th className={`${cellR} font-bold`}>OV/SH</th>
           </tr>
@@ -641,11 +632,13 @@ function LodgementSheet({ report }) {
               <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
+              <th className={cell}></th>
               {displayBanks.map(bank => (
                 <th key={bank.id} className={`${cellR} font-bold text-xs`}>
-                  {bank.bank_name}
+                  {bank.bank_name}{bank.lodgement_type === 'transfer' ? ' (T)' : ''}
                 </th>
               ))}
+              <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
@@ -654,42 +647,56 @@ function LodgementSheet({ report }) {
           )}
         </thead>
         <tbody>
-          {visibleRows.map((row) => (
-            <tr key={row.date}>
-              <td className={cell}>{fmtDate(row.date)}</td>
-              <td className={cellR}>{fmt(row.totalSales)}</td>
-              <td className={cellR}>{fmt(row.expected)}</td>
-              {displayBanks.map(bank => (
-                <td key={bank.id} className={cellR}>
-                  {fmt(row.bankAmounts[bank.id] || 0)}
+          {visibleRows.map((row) => {
+            const tPOS = sumBanks(row.bankAmounts, posOnly)
+            const tTransfer = sumBanks(row.bankAmounts, transferOnly)
+            const cashSales = row.totalSales - tPOS - tTransfer
+            return (
+              <tr key={row.date}>
+                <td className={cell}>{fmtDate(row.date)}</td>
+                <td className={cellR}>{fmt(row.totalSales)}</td>
+                <td className={cellR}>{fmt(cashSales)}</td>
+                <td className={cellEmpty}></td>
+                {displayBanks.map(bank => (
+                  <td key={bank.id} className={cellR}>
+                    {fmt(row.bankAmounts[bank.id] || 0)}
+                  </td>
+                ))}
+                <td className={cellR}>{fmt(tPOS)}</td>
+                <td className={cellR}>{fmt(tTransfer)}</td>
+                <td className={cellR}>{fmt(cashSales)}</td>
+                <td className={cellR}>{fmt(row.actual)}</td>
+                <td className={`${cellR} font-bold ${row.ovsh !== 0 ? 'text-red-600' : ''}`}>
+                  {fmtOvsh(row.ovsh)}
                 </td>
-              ))}
-              <td className={cellR}>{fmt(row.totalPOS)}</td>
-              <td className={cellR}>{fmt(row.totalTransfer)}</td>
-              <td className={cellR}>{fmt(row.actual)}</td>
-              <td className={`${cellR} font-bold ${ovshColor(row.ovsh)}`}>
-                {fmtOvsh(row.ovsh)}
-              </td>
-            </tr>
-          ))}
-          {visibleRows.length > 0 && (
-            <tr className={`${subHdr} font-bold`}>
-              <td className={cell}>Total</td>
-              <td className={cellR}>{fmt(totals.totalSales)}</td>
-              <td className={cellR}>{fmt(totals.expected)}</td>
-              {displayBanks.map(bank => (
-                <td key={bank.id} className={cellR}>
-                  {fmt(totals.bankTotals[bank.id] || 0)}
+              </tr>
+            )
+          })}
+          {visibleRows.length > 0 && (() => {
+            const gPOS = sumBanks(totals.bankTotals, posOnly)
+            const gTransfer = sumBanks(totals.bankTotals, transferOnly)
+            const gCash = totals.totalSales - gPOS - gTransfer
+            return (
+              <tr className={`${subHdr} font-bold`}>
+                <td className={cell}>Total</td>
+                <td className={cellR}>{fmt(totals.totalSales)}</td>
+                <td className={cellR}>{fmt(gCash)}</td>
+                <td className={cellEmpty}></td>
+                {displayBanks.map(bank => (
+                  <td key={bank.id} className={cellR}>
+                    {fmt(totals.bankTotals[bank.id] || 0)}
+                  </td>
+                ))}
+                <td className={cellR}>{fmt(gPOS)}</td>
+                <td className={cellR}>{fmt(gTransfer)}</td>
+                <td className={cellR}>{fmt(gCash)}</td>
+                <td className={cellR}>{fmt(totals.actual)}</td>
+                <td className={`${cellR} ${totals.ovsh !== 0 ? 'text-red-600' : ''}`}>
+                  {fmtOvsh(totals.ovsh)}
                 </td>
-              ))}
-              <td className={cellR}>{fmt(totals.totalPOS)}</td>
-              <td className={cellR}>{fmt(totals.totalTransfer)}</td>
-              <td className={cellR}>{fmt(totals.actual)}</td>
-              <td className={`${cellR} ${ovshColor(totals.ovsh)}`}>
-                {fmtOvsh(totals.ovsh)}
-              </td>
-            </tr>
-          )}
+              </tr>
+            )
+          })()}
         </tbody>
       </table>
     </div>
