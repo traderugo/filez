@@ -156,7 +156,9 @@ export default function DailySalesFormPage() {
         }
       } else if (editDate) {
         const all = await db.dailySales.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => (e.entryDate || e.entry_date) === editDate)
+        const dateEntries = all
+          .filter(e => (e.entryDate || e.entry_date) === editDate)
+          .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0))
         if (dateEntries.length > 0 && !cancelled) {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
