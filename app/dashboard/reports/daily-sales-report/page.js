@@ -232,8 +232,7 @@ function DailySalesReportContent() {
         </div>
       )}
       {/* Header — fixed at top */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 py-3 shrink-0">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center justify-end py-3 gap-2 flex-wrap shrink-0">
           <DateInput
             value={startDate}
             onChange={setStartDate}
@@ -245,8 +244,6 @@ function DailySalesReportContent() {
             onChange={setEndDate}
             className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
-        <div className="flex items-center gap-2 sm:ml-auto">
           <button
             onClick={handleGenerate}
             disabled={generating || !startDate || !endDate || startDate > endDate}
@@ -264,7 +261,6 @@ function DailySalesReportContent() {
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {exporting ? 'Exporting...' : 'Excel'}
           </button>
-        </div>
       </div>
 
       {/* Scrollable content area */}

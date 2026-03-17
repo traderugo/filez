@@ -226,16 +226,16 @@ export default function ProductReceiptFormPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-      <div className="flex items-center gap-2 mb-6">
-        {isEditing && editDate && (
-          <>
-            <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-            <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
-          </>
-        )}
-        <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50 ml-auto">
-          <List className="w-4 h-4" /> View Entries
-        </Link>
+      <div className="flex items-center justify-end mb-6 gap-2">
+          {isEditing && editDate && (
+            <>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+            </>
+          )}
+          <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
+            <List className="w-4 h-4" /> View Entries
+          </Link>
       </div>
 
       <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>

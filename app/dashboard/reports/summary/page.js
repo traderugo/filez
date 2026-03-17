@@ -141,15 +141,12 @@ function SummaryContent() {
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-2 sm:px-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 py-3 shrink-0">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-end py-3 gap-2 flex-wrap shrink-0">
           <DateInput
             value={selectedDate}
             onChange={setSelectedDate}
             className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
-        <div className="flex items-center gap-2 sm:ml-auto">
           <button
             onClick={handleGenerate}
             disabled={generating || !selectedDate}
@@ -158,7 +155,6 @@ function SummaryContent() {
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
           </button>
-        </div>
       </div>
 
       {/* Content */}
