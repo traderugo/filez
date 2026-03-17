@@ -7,9 +7,10 @@ import { DEFAULT_ACCOUNTS, DEFAULT_PHONE, DEFAULT_LUBE_PRODUCTS } from '@/lib/de
 // protectPhone: if set, rows with this phone value are never deleted
 async function upsertConfigTable(supabase, table, orgId, items, buildRow, protectPhone) {
   // Get existing rows for this org
+  const cols = protectPhone ? 'id, phone' : 'id'
   const { data: existing } = await supabase
     .from(table)
-    .select('id, phone')
+    .select(cols)
     .eq('org_id', orgId)
 
   const existingIds = new Set((existing || []).map((e) => e.id))
