@@ -2,9 +2,9 @@
 
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Pencil, Download } from 'lucide-react'
 import Link from 'next/link'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Download } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildDailyReport } from '@/lib/buildDailyReport'
 import { exportDailyReportExcel } from '@/lib/exportDailyReportExcel'
@@ -56,7 +56,6 @@ function DailySalesReportContent() {
 
   const [stationName, setStationName] = useState('')
   const [exporting, setExporting] = useState(false)
-  const [showEditMenu, setShowEditMenu] = useState(false)
   const [tabOffset, setTabOffset] = useState(0)
   const TAB_COUNT = 31
 
@@ -236,31 +235,6 @@ function DailySalesReportContent() {
       <div className="flex items-center justify-between py-3 gap-2 flex-wrap shrink-0">
         <h1 className="text-lg font-bold text-gray-900">Daily Sales Operation Report</h1>
         <div className="flex items-center gap-2">
-          {/* Edit entries dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowEditMenu(!showEditMenu)}
-              className="flex items-center gap-1 px-3 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              <Pencil className="w-3.5 h-3.5" /> Edit <ChevronDown className="w-3.5 h-3.5" />
-            </button>
-            {showEditMenu && (() => {
-              const dailySalesId = currentDayReport?.entryGroups?.[0]?.entryId
-              const ids = currentDayReport?.editIds || {}
-              const link = (type, id) => id ? `/dashboard/entries/${type}?${qs}&edit=${id}` : `/dashboard/entries/${type}?${qs}`
-              return (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowEditMenu(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-20 bg-white border border-gray-200 shadow-lg min-w-[200px]">
-                    <Link href={link('daily-sales', dailySalesId)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Daily Sales</Link>
-                    <Link href={link('product-receipt', ids.receipt)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Product Receipt</Link>
-                    <Link href={link('lodgements', ids.lodgement)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Lodgements</Link>
-                    <Link href={link('consumption', ids.consumption)} onClick={() => setShowEditMenu(false)} className="block px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600">Consumption</Link>
-                  </div>
-                </>
-              )
-            })()}
-          </div>
           <DateInput
             value={startDate}
             onChange={setStartDate}
@@ -434,40 +408,6 @@ function DailySalesReportContent() {
                   </tbody>
                 </table>
               )}
-
-              {/* Consumption comparison notice */}
-              {(() => {
-                const cmp = currentDayReport.consumptionComparison
-                const hasMismatch = report.fuelTypes.some(ft => cmp[ft] && (!cmp[ft].consumedMatch || !cmp[ft].pourBackMatch))
-                const hasAnyData = report.fuelTypes.some(ft => cmp[ft] && (cmp[ft].entryConsumed || cmp[ft].nozzleConsumed || cmp[ft].entryPourBack || cmp[ft].nozzlePourBack))
-                if (!hasAnyData) return null
-                return (
-                  <div className={`text-xs px-3 py-2 mb-4 border rounded ${hasMismatch ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
-                    {report.fuelTypes.map(ft => {
-                      const c = cmp[ft]
-                      if (!c || (!c.entryConsumed && !c.nozzleConsumed && !c.entryPourBack && !c.nozzlePourBack)) return null
-                      const parts = []
-                      if (c.nozzleConsumed || c.entryConsumed) {
-                        parts.push(
-                          <span key={`${ft}-c`}>
-                            <strong>{ft}</strong> consumption: {fmt(c.nozzleConsumed)}L dispensed vs {fmt(c.entryConsumed)}L entered
-                            {!c.consumedMatch && <span className="font-bold text-red-600"> (mismatch)</span>}
-                          </span>
-                        )
-                      }
-                      if (c.nozzlePourBack || c.entryPourBack) {
-                        parts.push(
-                          <span key={`${ft}-p`}>
-                            <strong>{ft}</strong> pour back: {fmt(c.nozzlePourBack)}L dispensed vs {fmt(c.entryPourBack)}L entered
-                            {!c.pourBackMatch && <span className="font-bold text-red-600"> (mismatch)</span>}
-                          </span>
-                        )
-                      }
-                      return parts.map((p, i) => <div key={`${ft}-${i}`}>{p}</div>)
-                    })}
-                  </div>
-                )
-              })()}
 
               {/* Summary */}
               <table className="w-full border-collapse text-sm">

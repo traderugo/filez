@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
@@ -91,6 +91,7 @@ export default function DailySalesFormPage() {
   // Previous day's last closing meter per pump_id — used when the user leaves a nozzle blank
   const [prevClosing, setPrevClosing] = useState({})
   const [allDates, setAllDates] = useState([])
+  const [consModal, setConsModal] = useState(null) // { entryIdx, nozzleIdx }
 
   useEffect(() => {
     let cancelled = false
@@ -479,39 +480,45 @@ export default function DailySalesFormPage() {
                   <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Nozzle Readings</span>
                   <span className="text-xs text-gray-400 ml-2">— leave blank to use prev. day closing</span>
                 </div>
-                {current.nozzleReadings.map((r, idx) => (
-                  <div key={r.pump_id}>
-                    <div className="grid grid-cols-[2fr_1fr] divide-x divide-gray-300">
-                      <div>
-                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{r.label}</label>
-                        <input
-                          type="number"
-                          value={r.closing_meter}
-                          onChange={(e) => updateNozzleReading(activeTab, idx, 'closing_meter', e.target.value)}
-                          step="0.01"
-                          min="0"
-                          placeholder={prevClosing[r.pump_id] != null ? String(prevClosing[r.pump_id]) : ''}
-                          className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50"
-                        />
+                {current.nozzleReadings.map((r, idx) => {
+                  const custName = Number(r.consumption) > 0 && r.consumption_customer_id
+                    ? customers.find(c => c.id === r.consumption_customer_id)?.name
+                    : null
+                  return (
+                    <div key={r.pump_id}>
+                      <div className="grid grid-cols-[2fr_1fr] divide-x divide-gray-300">
+                        <div>
+                          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{r.label}</label>
+                          <input
+                            type="number"
+                            value={r.closing_meter}
+                            onChange={(e) => updateNozzleReading(activeTab, idx, 'closing_meter', e.target.value)}
+                            step="0.01"
+                            min="0"
+                            placeholder={prevClosing[r.pump_id] != null ? String(prevClosing[r.pump_id]) : ''}
+                            className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
+                          <div className="flex items-center">
+                            <input type="number" value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            {Number(r.consumption) > 0 && (
+                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${custName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={custName || 'Attach account'}>
+                                <User className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
-                        <input type="number" value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                      </div>
+                      {custName && Number(r.consumption) > 0 && (
+                        <div className="px-2 pb-0.5 -mt-0.5">
+                          <span className="text-xs text-blue-600">{custName}</span>
+                        </div>
+                      )}
                     </div>
-                    {Number(r.consumption) > 0 && (
-                      <div className="px-2 py-1.5 bg-amber-50/50 border-t border-gray-200">
-                        <SearchableSelect
-                          value={r.consumption_customer_id}
-                          onChange={(val) => updateNozzleReading(activeTab, idx, 'consumption_customer_id', val)}
-                          options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed', sub: c.phone || '' }))}
-                          placeholder="Attach account to consumption"
-                          className="text-sm"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )
+                })}
               </>
             )}
 
@@ -564,6 +571,45 @@ export default function DailySalesFormPage() {
           </button>
         </div>
       </form>
+
+      {/* Consumption account modal */}
+      {consModal && (() => {
+        const r = entries[consModal.entryIdx]?.nozzleReadings[consModal.nozzleIdx]
+        if (!r) return null
+        const custName = r.consumption_customer_id ? customers.find(c => c.id === r.consumption_customer_id)?.name : null
+        return (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setConsModal(null)}>
+            <div className="bg-white w-full sm:max-w-sm sm:rounded-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Consumption Account</h3>
+                  <p className="text-xs text-gray-500">{r.label} — {r.consumption} litres</p>
+                </div>
+                <button type="button" onClick={() => setConsModal(null)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-4">
+                <SearchableSelect
+                  value={r.consumption_customer_id}
+                  onChange={(val) => {
+                    updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, 'consumption_customer_id', val)
+                    setConsModal(null)
+                  }}
+                  options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed', sub: c.phone || '' }))}
+                  placeholder="Select account..."
+                  className="text-sm"
+                />
+                {custName && (
+                  <button type="button" onClick={() => { updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, 'consumption_customer_id', ''); setConsModal(null) }} className="mt-2 text-xs text-red-500 hover:text-red-700">
+                    Remove account
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
