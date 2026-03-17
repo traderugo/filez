@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Search, ShieldCheck, ShieldX } from 'lucide-react'
-import { supabase } from '@/lib/supabaseClient'
 import { format } from 'date-fns'
 
 export default function AdminUsersPage() {
@@ -22,11 +21,15 @@ export default function AdminUsersPage() {
   }, [])
 
   const loadUsers = async () => {
-    const { data } = await supabase
-      .from('users')
-      .select('id, name, email, phone, role, email_verified, created_at, org_id')
-      .order('created_at', { ascending: false })
-    setUsers(data || [])
+    try {
+      const res = await fetch('/api/admin/users')
+      if (res.ok) {
+        const data = await res.json()
+        setUsers(data || [])
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') return
+    }
     setLoading(false)
   }
 
@@ -46,18 +49,9 @@ export default function AdminUsersPage() {
     setVerifying(false)
   }
 
-  const selectUser = async (user) => {
+  const selectUser = (user) => {
     setSelectedUser(user)
-    const fieldValuesData = await supabase
-      .from('user_field_values')
-      .select('value, org_custom_fields(field_name)')
-      .eq('user_id', user.id)
-    setCustomData(
-      (fieldValuesData.data || []).map((fv) => ({
-        label: fv.org_custom_fields?.field_name || 'Field',
-        value: fv.value,
-      }))
-    )
+    setCustomData([])
   }
 
   const filtered = users.filter((u) => {
