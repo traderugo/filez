@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Search, KeyRound, Copy, ShieldCheck, ShieldX, ChevronDown } from 'lucide-react'
+import { Loader2, Search, ShieldCheck, ShieldX } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { format } from 'date-fns'
 
@@ -11,11 +11,6 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all') // all, verified, unverified
   const [selectedUser, setSelectedUser] = useState(null)
-
-  // PIN reset
-  const [resetPin, setResetPin] = useState(null)
-  const [resettingPin, setResettingPin] = useState(false)
-  const [pinCopied, setPinCopied] = useState(false)
 
   // Verify
   const [verifying, setVerifying] = useState(false)
@@ -33,26 +28,6 @@ export default function AdminUsersPage() {
       .order('created_at', { ascending: false })
     setUsers(data || [])
     setLoading(false)
-  }
-
-  const handleResetPin = async (userId) => {
-    if (!confirm('Reset this user\'s PIN? They will need the new PIN to log in.')) return
-    setResettingPin(true)
-    setResetPin(null)
-    const res = await fetch('/api/admin/users/reset-pin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    })
-    const data = await res.json()
-    setResettingPin(false)
-    if (res.ok) setResetPin(data.pin)
-  }
-
-  const copyResetPin = () => {
-    navigator.clipboard.writeText(resetPin)
-    setPinCopied(true)
-    setTimeout(() => setPinCopied(false), 2000)
   }
 
   const handleVerify = async (userId, verified) => {
@@ -73,7 +48,6 @@ export default function AdminUsersPage() {
 
   const selectUser = async (user) => {
     setSelectedUser(user)
-    setResetPin(null)
     const fieldValuesData = await supabase
       .from('user_field_values')
       .select('value, org_custom_fields(field_name)')
@@ -145,26 +119,7 @@ export default function AdminUsersPage() {
             </button>
           )}
 
-          <button
-            onClick={() => handleResetPin(selectedUser.id)}
-            disabled={resettingPin}
-            className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50"
-          >
-            {resettingPin ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-            Reset PIN
-          </button>
         </div>
-
-        {resetPin && (
-          <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 mb-6 w-fit">
-            <span className="text-sm text-green-800">New PIN:</span>
-            <span className="font-mono font-bold text-green-800 tracking-widest">{resetPin}</span>
-            <button onClick={copyResetPin} className="text-green-600 hover:text-green-800">
-              <Copy className="w-4 h-4" />
-            </button>
-            {pinCopied && <span className="text-xs text-green-600">Copied!</span>}
-          </div>
-        )}
 
         {/* Details */}
         <div className="border-t border-gray-200 pt-4 space-y-2 text-sm">
