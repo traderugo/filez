@@ -3,8 +3,8 @@
 -- Station: RAINOIL LUCKY WAY (467559c8-c0ad-48ca-b3f7-9fc2a35f7f92)
 -- =============================================================================
 -- Deletes all consumption_entries for the org, looks up customer IDs for
--- "Manager Car" (S.M) and "Generator" (Gen), then inserts 16 days of
--- March 2026 consumption data.
+-- "Manager Car" (S.M) and "Generator" (Gen), then inserts 15 days of
+-- March 2026 consumption data (Days 1-15).
 -- =============================================================================
 -- Run this in Supabase SQL Editor, then hit "Refresh data" on the station page.
 -- =============================================================================
@@ -98,10 +98,5 @@ BEGIN
   INSERT INTO consumption_entries (id, org_id, entry_date, customer_id, quantity, fuel_type, is_pour_back, price, notes, created_by, created_at, updated_at) VALUES
     (gen_random_uuid(), v_org, '2026-03-15', c_gen, 32, 'AGO', false, 1700, NULL, v_owner, now(), now());
 
-  -- DAY 16 — 2026-03-16 (S.M=50 PMS @ 1300, Gen=32 AGO @ 1670)
-  INSERT INTO consumption_entries (id, org_id, entry_date, customer_id, quantity, fuel_type, is_pour_back, price, notes, created_by, created_at, updated_at) VALUES
-    (gen_random_uuid(), v_org, '2026-03-16', c_sm,  50, 'PMS', false, 1300, NULL, v_owner, now(), now()),
-    (gen_random_uuid(), v_org, '2026-03-16', c_gen, 32, 'AGO', false, 1670, NULL, v_owner, now(), now());
-
-  RAISE NOTICE 'Done — inserted 22 consumption entries across 16 days (Mar 1-16)';
+  RAISE NOTICE 'Done — inserted 20 consumption entries across 15 days (Mar 1-15)';
 END $$;
