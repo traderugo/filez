@@ -504,7 +504,7 @@ export default function DailySalesFormPage() {
                         <SearchableSelect
                           value={r.consumption_customer_id}
                           onChange={(val) => updateNozzleReading(activeTab, idx, 'consumption_customer_id', val)}
-                          options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed', sub: c.phone && c.phone !== 'DEFAULT' ? c.phone : '' }))}
+                          options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed', sub: c.phone || '' }))}
                           placeholder="Attach account to consumption"
                           className="text-sm"
                         />

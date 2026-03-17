@@ -93,6 +93,7 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
       >
         <span className={selectedOption ? 'text-gray-900 truncate' : 'text-gray-400 truncate'}>
           {selectedOption ? selectedOption.label : placeholder}
+          {selectedOption?.sub && <span className="text-gray-400 text-xs ml-1">({selectedOption.sub})</span>}
         </span>
         <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 ml-1" />
       </button>
