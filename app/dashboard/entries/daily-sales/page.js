@@ -308,8 +308,12 @@ export default function DailySalesFormPage() {
 
         // Auto-create/update/delete consumption_entries for nozzles with consumption + customer
         for (const r of readings) {
-          const consId = `cons_${record.id}_${r.pump_id}`
-          const existing = await db.consumption.get(consId)
+          const sourceKey = `${record.id}_${r.pump_id}`
+          // Look up by sourceKey first, fall back to legacy cons_ id
+          const existing = await db.consumption
+            .where('orgId').equals(orgId)
+            .filter(c => c.sourceKey === sourceKey)
+            .first() || await db.consumption.get(`cons_${record.id}_${r.pump_id}`)
           const qty = Number(r.consumption) || 0
           const custId = r.consumption_customer_id
 
@@ -317,7 +321,8 @@ export default function DailySalesFormPage() {
             const ft = r.fuel_type || ''
             const price = Number(entry.prices[ft]) || 0
             const consRecord = {
-              id: consId,
+              id: existing?.id || crypto.randomUUID(),
+              sourceKey,
               orgId,
               entryDate: formDate,
               customerId: custId,
@@ -329,13 +334,17 @@ export default function DailySalesFormPage() {
               createdAt: existing?.createdAt || now,
               updatedAt: now,
             }
-            if (existing) {
+            // Delete legacy cons_ entry if migrating
+            if (existing?.id?.startsWith('cons_')) {
+              await db.consumption.delete(existing.id)
+              await consumptionRepo.create(consRecord)
+            } else if (existing) {
               await consumptionRepo.update(consRecord)
             } else {
               await consumptionRepo.create(consRecord)
             }
           } else if (existing) {
-            await consumptionRepo.remove(consId, orgId)
+            await consumptionRepo.remove(existing.id, orgId)
           }
         }
       }
@@ -467,7 +476,7 @@ export default function DailySalesFormPage() {
                         <SearchableSelect
                           value={r.consumption_customer_id}
                           onChange={(val) => updateNozzleReading(activeTab, idx, 'consumption_customer_id', val)}
-                          options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed' }))}
+                          options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed', sub: c.phone && c.phone !== 'DEFAULT' ? c.phone : '' }))}
                           placeholder="Attach account to consumption"
                           className="text-sm"
                         />
