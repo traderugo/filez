@@ -119,12 +119,39 @@ export default function DailySalesFormPage() {
       cust.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
       setCustomers(cust)
 
+      // Backfill missing consumption_customer_id from consumption_entries in IndexedDB
+      async function backfillCustomerIds(formEntries, date) {
+        const consEntries = await db.consumption
+          .where('orgId').equals(orgId)
+          .filter(c => c.entryDate === date)
+          .toArray()
+        if (!consEntries.length) return formEntries
+
+        return formEntries.map(fe => ({
+          ...fe,
+          nozzleReadings: fe.nozzleReadings.map(r => {
+            if (r.consumption_customer_id || !Number(r.consumption)) return r
+            // Match by fuel type and quantity
+            const match = consEntries.find(c =>
+              c.fuelType === r.fuel_type && c.quantity === Number(r.consumption)
+            )
+            if (match) return { ...r, consumption_customer_id: match.customerId }
+            // Fall back to matching by fuel type only (single customer for that fuel)
+            const byFuel = consEntries.filter(c => c.fuelType === r.fuel_type)
+            if (byFuel.length === 1) return { ...r, consumption_customer_id: byFuel[0].customerId }
+            return r
+          }),
+        }))
+      }
+
       if (editId) {
         const entry = await dailySalesRepo.getById(editId)
         if (entry && !cancelled) {
-          setFormDate(entry.entryDate || entry.entry_date || '')
+          const date = entry.entryDate || entry.entry_date || ''
+          setFormDate(date)
           setOriginalIds([entry.id])
-          setEntries([entryFromRecord(entry, noz, tnk)])
+          const built = [entryFromRecord(entry, noz, tnk)]
+          setEntries(await backfillCustomerIds(built, date))
         }
       } else if (editDate) {
         const all = await db.dailySales.where('orgId').equals(orgId).toArray()
@@ -132,7 +159,8 @@ export default function DailySalesFormPage() {
         if (dateEntries.length > 0 && !cancelled) {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
-          setEntries(dateEntries.map(e => entryFromRecord(e, noz, tnk)))
+          const built = dateEntries.map(e => entryFromRecord(e, noz, tnk))
+          setEntries(await backfillCustomerIds(built, editDate))
         }
       }
 
