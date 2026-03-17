@@ -81,7 +81,6 @@ export default function AdminServicesPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-xl font-bold text-gray-900 mb-1">Services</h1>
       <p className="text-sm text-gray-500 mb-6">
         Set subscription prices for each service. Only active services are shown on the subscribe page.
       </p>

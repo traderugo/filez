@@ -260,9 +260,7 @@ function AuditReportContent() {
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Header + date range */}
-      <div className="flex items-center justify-between py-3 gap-2 flex-wrap shrink-0">
-        <h1 className="text-lg font-bold text-gray-900">Audit Report</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-end py-3 gap-2 flex-wrap shrink-0">
           <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
           <span className="text-sm text-gray-400">to</span>
           <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
@@ -284,11 +282,10 @@ function AuditReportContent() {
               Export Excel
             </button>
           )}
-        </div>
-        {dateRangeDays > 32 && (
-          <p className="text-xs text-red-500 mt-1">Date range cannot exceed 32 days ({dateRangeDays} days selected).</p>
-        )}
       </div>
+      {dateRangeDays > 32 && (
+        <p className="text-xs text-red-500 mt-1">Date range cannot exceed 32 days ({dateRangeDays} days selected).</p>
+      )}
 
       {/* Report content */}
       {report ? (

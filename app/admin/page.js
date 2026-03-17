@@ -47,7 +47,6 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">Subscriptions</h1>
 
       {/* Filter tabs */}
       <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">

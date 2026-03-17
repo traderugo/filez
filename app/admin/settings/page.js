@@ -245,8 +245,7 @@ export default function AdminSettingsPage() {
         {groupError && <p className="text-sm text-red-600 mt-2">{groupError}</p>}
       </section>
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Stations</h1>
+      <div className="flex items-center justify-end mb-6">
         <button
           onClick={() => setShowAdd(!showAdd)}
           className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"

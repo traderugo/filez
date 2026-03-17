@@ -77,7 +77,7 @@ export default function AdminUsersPage() {
 
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{selectedUser.name}</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{selectedUser.name}</h1>
             <p className="text-sm text-gray-500">{selectedUser.email}</p>
             {selectedUser.phone && <p className="text-sm text-gray-500">{selectedUser.phone}</p>}
           </div>
@@ -144,14 +144,13 @@ export default function AdminUsersPage() {
 
   return (
     <div className="max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Users</h1>
-        {unverifiedCount > 0 && (
+      {unverifiedCount > 0 && (
+        <div className="flex justify-end mb-4">
           <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
             {unverifiedCount} pending
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Search + filter */}
       <div className="flex gap-2 mb-6">

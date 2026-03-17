@@ -71,9 +71,7 @@ export default function LubeFormPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Entries' : 'New Lube Entry'}</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-end mb-6 gap-2">
           {isEditing && editDate && (
             <>
               <button type="button" onClick={() => router.push(`/dashboard/entries/lube?${qs}&edit_date=${prevDate}&type=${tab}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
@@ -83,7 +81,6 @@ export default function LubeFormPage() {
           <Link href={`/dashboard/entries/lube/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
             <List className="w-4 h-4" /> View Entries
           </Link>
-        </div>
       </div>
 
       {!editId && !editDate && (

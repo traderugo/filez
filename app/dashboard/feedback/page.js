@@ -60,7 +60,6 @@ export default function FeedbackPage() {
 
   return (
     <div className="max-w-lg px-4 sm:px-8 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-1">Feedback</h1>
       <p className="text-sm text-gray-500 mb-8">Let us know how we can improve.</p>
 
       <form onSubmit={handleSubmit} className="space-y-6">

@@ -39,8 +39,7 @@ export default function LubeListPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Lube Entries</h1>
+      <div className="flex items-center justify-end mb-6">
         <Link href={`/dashboard/entries/lube?${qs}&type=${tab}`} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
           <Plus className="w-4 h-4" /> New Entry
         </Link>

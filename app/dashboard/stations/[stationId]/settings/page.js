@@ -247,7 +247,6 @@ export default function StationSettingsPage() {
 
   return (
     <div className="max-w-lg px-4 sm:px-8 py-8">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">{stationName} Settings</h1>
 
       {/* Location */}
       <Accordion icon={MapPin} title="Location" defaultOpen>

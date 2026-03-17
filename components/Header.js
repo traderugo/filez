@@ -4,32 +4,59 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, Home } from 'lucide-react'
 
-// Map sub-page paths to { back, title }
-const PAGE_MAP = {
-  '/dashboard/entries/daily-sales': { back: '/dashboard/entries', title: 'Daily Sales' },
-  '/dashboard/entries/product-receipt': { back: '/dashboard/entries', title: 'Product Receipt' },
-  '/dashboard/entries/lodgements': { back: '/dashboard/entries', title: 'Lodgements' },
-  '/dashboard/entries/lube': { back: '/dashboard/entries', title: 'Lube' },
-  '/dashboard/entries/customer-payments': { back: '/dashboard/entries', title: 'Customer Payments' },
-  '/dashboard/entries': { back: '/dashboard', title: 'Entries' },
-  '/dashboard/subscribe': { back: '/dashboard', title: 'Subscribe' },
-  '/dashboard/feedback': { back: '/dashboard', title: 'Feedback' },
+// Map paths to page titles. Back always uses router.back().
+const PAGE_TITLES = {
+  // Dashboard
+  '/dashboard': 'Dashboard',
+  '/dashboard/subscribe': 'Subscribe',
+  '/dashboard/feedback': 'Feedback',
+
+  // Entries
+  '/dashboard/entries': 'Entries',
+  '/dashboard/entries/daily-sales': 'Daily Sales',
+  '/dashboard/entries/daily-sales/list': 'Daily Sales Entries',
+  '/dashboard/entries/product-receipt': 'Product Receipt',
+  '/dashboard/entries/product-receipt/list': 'Receipt Entries',
+  '/dashboard/entries/lodgements': 'Lodgements',
+  '/dashboard/entries/lodgements/list': 'Lodgement Entries',
+  '/dashboard/entries/lube': 'Lube',
+  '/dashboard/entries/lube/list': 'Lube Entries',
+  '/dashboard/entries/customer-payments': 'Account Payment',
+  '/dashboard/entries/customer-payments/list': 'Account Entries',
+  '/dashboard/entries/consumption': 'Consumption',
+  '/dashboard/entries/consumption/list': 'Consumption Entries',
+
+  // Reports
+  '/dashboard/reports/summary': 'Summary',
+  '/dashboard/reports/daily-sales-report': 'Daily Sales Report',
+  '/dashboard/reports/audit-report': 'Audit Report',
+
+  // Admin
+  '/admin': 'Subscriptions',
+  '/admin/services': 'Services',
+  '/admin/users': 'Staff',
+  '/admin/analytics': 'Analytics',
+  '/admin/settings': 'Stations',
+  '/admin/excel-templates': 'Excel Templates',
 }
 
-function getPageInfo(pathname) {
-  if (PAGE_MAP[pathname]) return PAGE_MAP[pathname]
+function getTitle(pathname) {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname]
 
   const settingsMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)\/settings$/)
-  if (settingsMatch) return { back: `/dashboard/stations/${settingsMatch[1]}`, title: 'Settings' }
+  if (settingsMatch) return 'Settings'
 
   const chatMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)\/chat$/)
-  if (chatMatch) return { back: `/dashboard/stations/${chatMatch[1]}`, title: 'Chat' }
+  if (chatMatch) return 'Chat'
 
   const stationMatch = pathname.match(/^\/dashboard\/stations\/[^/]+$/)
-  if (stationMatch) return { back: '/dashboard', title: 'Station' }
+  if (stationMatch) return 'Station'
 
   const setupMatch = pathname.match(/^\/dashboard\/setup\/[^/]+$/)
-  if (setupMatch) return { back: '/dashboard', title: 'Setup' }
+  if (setupMatch) return 'Setup'
+
+  const payMatch = pathname.match(/^\/dashboard\/subscribe\/pay\//)
+  if (payMatch) return 'Payment'
 
   return null
 }
@@ -42,10 +69,10 @@ export default function Header() {
   const isAuth = pathname.startsWith('/auth')
   if (isAuth) return null
 
-  const pageInfo = getPageInfo(pathname)
+  const title = getTitle(pathname)
+  const isDashboardHome = pathname === '/dashboard'
 
-  // Derive station home link: /dashboard/stations/[stationId]
-  // From URL path (station sub-pages) or org_id search param (reports, entries)
+  // Derive station home link
   const stationMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)/)
   const stationId = stationMatch ? stationMatch[1] : searchParams.get('org_id')
   const homeHref = stationId ? `/dashboard/stations/${stationId}` : '/dashboard'
@@ -55,18 +82,14 @@ export default function Header() {
       <div className="px-4 sm:px-6 h-14 flex items-center justify-between">
 
         <div className="flex items-center gap-2">
-          {/* Back button + title or page name */}
-          {pageInfo ? (
-            <button onClick={() => router.push(pageInfo.back)} className="flex items-center gap-1 text-gray-700 hover:text-gray-900">
+          {!isDashboardHome && (
+            <button onClick={() => router.back()} className="flex items-center gap-1 text-gray-700 hover:text-gray-900">
               <ChevronLeft className="w-5 h-5" />
-              <span className="text-sm font-semibold">{pageInfo.title}</span>
             </button>
-          ) : (
-            <h1 className="text-sm font-semibold text-gray-900">Dashboard</h1>
           )}
+          <span className="text-sm font-semibold text-gray-900">{title || 'Dashboard'}</span>
         </div>
 
-        {/* Home button — goes to station overview if station context exists */}
         <Link
           href={homeHref}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition-colors"
