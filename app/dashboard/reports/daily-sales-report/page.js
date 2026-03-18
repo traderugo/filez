@@ -260,7 +260,7 @@ function DailySalesReportContent() {
             title="Export to Excel"
           >
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {exporting ? 'Exporting...' : 'Excel'}
+            {exporting ? 'Exporting...' : 'Export'}
           </button>
         </div>
       </div>
