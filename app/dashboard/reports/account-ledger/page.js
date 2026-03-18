@@ -121,19 +121,27 @@ function AccountLedgerContent() {
     })
   }, [creditCustomers, allPayments, selectedAccount, startDate, endDate])
 
-  // Grand totals
+  // For "All Accounts": sort by most debt (highest closing balance) and limit to 20
+  const displayData = useMemo(() => {
+    if (selectedAccount !== '__all__') return ledgerData
+    return [...ledgerData]
+      .sort((a, b) => b.closingBalance - a.closingBalance)
+      .slice(0, 20)
+  }, [ledgerData, selectedAccount])
+
+  // Grand totals (of displayed accounts)
   const totals = useMemo(() => {
-    return ledgerData.reduce((acc, c) => ({
+    return displayData.reduce((acc, c) => ({
       openingBalance: acc.openingBalance + c.openingBalance,
       totalDebit: acc.totalDebit + c.totalDebit,
       totalCredit: acc.totalCredit + c.totalCredit,
       closingBalance: acc.closingBalance + c.closingBalance,
     }), { openingBalance: 0, totalDebit: 0, totalCredit: 0, closingBalance: 0 })
-  }, [ledgerData])
+  }, [displayData])
 
   const isSingleAccount = selectedAccount !== '__all__'
 
-  const cell = 'border border-gray-200 px-3 py-1.5 text-sm'
+  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
   const hdr = 'bg-blue-600 text-white font-bold text-sm'
 
@@ -173,8 +181,8 @@ function AccountLedgerContent() {
         <JournalTable data={ledgerData[0]} startDate={startDate} endDate={endDate} />
       )}
 
-      {/* All accounts — summary table, click to select */}
-      {!isSingleAccount && ledgerData.length > 0 && (
+      {/* All accounts — top 20 by most debt, click to select */}
+      {!isSingleAccount && displayData.length > 0 && (
         <table className="w-full border-collapse border border-gray-200">
           <thead>
             <tr className={hdr}>
@@ -186,7 +194,7 @@ function AccountLedgerContent() {
             </tr>
           </thead>
           <tbody>
-            {ledgerData.map(acct => (
+            {displayData.map(acct => (
               <tr
                 key={acct.id}
                 className="cursor-pointer hover:bg-blue-50 transition-colors"
@@ -215,7 +223,7 @@ function AccountLedgerContent() {
 }
 
 function JournalTable({ data, startDate, endDate }) {
-  const cell = 'border border-gray-200 px-3 py-1.5 text-sm'
+  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
   const hdr = 'bg-blue-600 text-white font-bold text-sm'
 
