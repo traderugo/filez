@@ -6,9 +6,10 @@ import Link from 'next/link'
 import {
   MessageSquare, Loader2,
   Building2, Check, Plus,
-  Fuel, ChevronRight
+  Fuel, ChevronRight, CreditCard, Shield, LogOut
 } from 'lucide-react'
 import InstallPWABanner from '@/components/InstallPWABanner'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -250,11 +251,41 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Quick links */}
+      {/* Navigate */}
       <div className="border-t border-gray-200 pt-6">
-        <Link href="/dashboard/feedback" className="inline-flex items-center gap-2 text-base text-gray-600 hover:text-gray-900">
-          <MessageSquare className="w-4 h-4" /> Send feedback
-        </Link>
+        <h2 className="text-base font-semibold text-gray-900 uppercase tracking-wide mb-3">Navigate</h2>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/dashboard/subscribe"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <CreditCard className="w-4 h-4" />
+            Subscribe
+          </Link>
+          <Link
+            href="/dashboard/feedback"
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Feedback
+          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Shield className="w-4 h-4" />
+              Admin
+            </Link>
+          )}
+          <button
+            onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   )

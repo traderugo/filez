@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users, Flame,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, MessageSquare, Shield, ArrowUpFromLine, ArrowDownToLine, LayoutDashboard, MessagesSquare, BookOpen
+  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -313,51 +313,53 @@ export default function StationPage() {
       </div>
 
       {/* Sync controls */}
-      <div className="flex items-center gap-2 mb-8 p-3 bg-gray-50 border border-gray-200">
-        <button
-          onClick={handleSync}
-          disabled={syncing || pendingCount === 0}
-          className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
-            pendingCount > 0
-              ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
-              : 'border-gray-200 text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
-          Push
-          {pendingCount > 0 && (
-            <span className="bg-yellow-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-              {pendingCount > 9 ? '9+' : pendingCount}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
-            pendingPullCount > 0
-              ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100'
-              : 'border-gray-200 text-gray-600 hover:bg-gray-100'
-          }`}
-        >
-          {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
-          Pull
-          {pendingPullCount > 0 && (
-            <span className="bg-blue-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-              {pendingPullCount > 9 ? '9+' : pendingPullCount}
-            </span>
-          )}
-        </button>
-        <span className="ml-auto text-xs text-gray-400">
-          {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
-        </span>
-      </div>
-      {consolidationCountdown && (
-        <div className="flex items-center gap-2 mb-8 px-3 py-2 bg-gray-50 border border-gray-200 border-t-0 text-xs text-gray-400">
-          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-          Next consolidation in <span className="font-mono text-gray-500">{consolidationCountdown}</span>
+      <div className="mb-8 bg-gray-50 border border-gray-200 p-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSync}
+            disabled={syncing || pendingCount === 0}
+            className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
+              pendingCount > 0
+                ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
+                : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
+            Push
+            {pendingCount > 0 && (
+              <span className="bg-yellow-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {pendingCount > 9 ? '9+' : pendingCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
+              pendingPullCount > 0
+                ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100'
+                : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
+            Pull
+            {pendingPullCount > 0 && (
+              <span className="bg-blue-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {pendingPullCount > 9 ? '9+' : pendingPullCount}
+              </span>
+            )}
+          </button>
+          <span className="ml-auto text-xs text-gray-400">
+            {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
+          </span>
         </div>
-      )}
+        {consolidationCountdown && (
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200 text-xs text-gray-400">
+            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+            Next consolidation in <span className="font-mono text-gray-500">{consolidationCountdown}</span>
+          </div>
+        )}
+      </div>
 
       {/* Entries */}
       <section className="mb-8">
@@ -415,48 +417,15 @@ export default function StationPage() {
         </Link>
       </section>
 
-      {/* Navigate */}
+      {/* Sign out */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Navigate</h2>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            Dashboard
-          </Link>
-          <Link
-            href={`/dashboard/subscribe?org_id=${stationId}`}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <CreditCard className="w-4 h-4" />
-            Subscribe
-          </Link>
-          <Link
-            href="/dashboard/feedback"
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Feedback
-          </Link>
-          {user?.role === 'admin' && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <Shield className="w-4 h-4" />
-              Admin
-            </Link>
-          )}
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign out
-          </button>
-        </div>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </button>
       </section>
 
       {/* Subscription (owner only) */}
