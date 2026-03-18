@@ -10,7 +10,7 @@ import {
   MessageSquare, Shield, LogOut, X, ChevronLeft, ChevronRight, ChevronDown,
   FileSpreadsheet, ClipboardList, Droplets, Users, Flame, BarChart3, FileText,
   SquarePen, ChartNoAxesCombined, Cloud, RefreshCw, Loader2, Building2,
-  ArrowUpFromLine, ArrowDownToLine
+  ArrowUpFromLine, ArrowDownToLine, BookOpen
 } from 'lucide-react'
 import { db } from '@/lib/db'
 import { processQueue } from '@/lib/sync'
@@ -36,6 +36,7 @@ const reportItems = [
   { key: 'summary', label: 'Summary', icon: FileText },
   { key: 'daily-sales-report', label: 'Daily Sales Report', icon: BarChart3 },
   { key: 'audit-report', label: 'Audit Report', icon: ClipboardList },
+  { key: 'account-ledger', label: 'Account Ledger', icon: BookOpen },
 ]
 
 export default function Sidebar({ user, open, collapsed, onClose, onToggleCollapse, onSignOut }) {
