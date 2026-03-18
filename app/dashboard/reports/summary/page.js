@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildDailyReport } from '@/lib/buildDailyReport'
 import DateInput from '@/components/DateInput'
@@ -37,6 +37,7 @@ function SummaryContent() {
   const endDateRef = useRef(todayStr)
   const setStartDate = (v) => { startDateRef.current = v; _setStartDate(v) }
   const setEndDate = (v) => { endDateRef.current = v; _setEndDate(v) }
+  const [viewDate, setViewDate] = useState(todayStr)
   const [generated, setGenerated] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [reportStart, setReportStart] = useState(monthStartStr)
@@ -112,11 +113,31 @@ function SummaryContent() {
     })
   }, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
 
-  // Show the latest day's report
-  const dayReport = useMemo(() => {
-    if (!report?.dateReports?.length) return null
-    return report.dateReports[report.dateReports.length - 1]
-  }, [report])
+  // Current day index and report
+  const dayIndex = useMemo(() => {
+    if (!report?.dateReports?.length) return -1
+    const idx = report.dateReports.findIndex(r => r.date === viewDate)
+    return idx >= 0 ? idx : report.dateReports.length - 1
+  }, [report, viewDate])
+
+  const dayReport = report?.dateReports?.[dayIndex] || null
+  const totalDays = report?.dateReports?.length || 0
+
+  const goPrev = () => {
+    if (!report?.dateReports || dayIndex <= 0) return
+    setViewDate(report.dateReports[dayIndex - 1].date)
+  }
+  const goNext = () => {
+    if (!report?.dateReports || dayIndex >= totalDays - 1) return
+    setViewDate(report.dateReports[dayIndex + 1].date)
+  }
+
+  // Clamp viewDate when range changes
+  useEffect(() => {
+    if (!reportStart || !reportEnd) return
+    if (viewDate < reportStart || viewDate > reportEnd) setViewDate(reportEnd)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportStart, reportEnd])
 
   const handleGenerate = () => {
     const s = startDateRef.current
@@ -171,6 +192,30 @@ function SummaryContent() {
           </button>
         </div>
       </div>
+
+      {/* Day navigation */}
+      {report && totalDays > 1 && dayReport && (
+        <div className="flex items-center justify-between shrink-0 mb-2 px-1 sm:px-[15%]">
+          <button
+            onClick={goPrev}
+            disabled={dayIndex <= 0}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Prev
+          </button>
+          <span className="text-sm text-gray-600 font-medium">
+            {new Date(dayReport.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            <span className="text-gray-400 ml-1">({dayIndex + 1} of {totalDays})</span>
+          </span>
+          <button
+            onClick={goNext}
+            disabled={dayIndex >= totalDays - 1}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+          >
+            Next <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Content */}
       {!generated ? (
