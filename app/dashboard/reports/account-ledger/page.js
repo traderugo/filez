@@ -147,11 +147,11 @@ function AccountLedgerContent() {
       <div className="flex flex-wrap gap-3 items-end mb-6">
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
-          <DateInput value={startDate} onChange={setStartDate} className="w-36" />
+          <DateInput value={startDate} onChange={setStartDate} className="w-36 px-2 py-2 border border-gray-300 text-sm font-medium" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
-          <DateInput value={endDate} onChange={setEndDate} className="w-36" />
+          <DateInput value={endDate} onChange={setEndDate} className="w-36 px-2 py-2 border border-gray-300 text-sm font-medium" />
         </div>
         <div className="min-w-[200px]">
           <label className="block text-xs font-medium text-gray-500 mb-1">Account</label>
