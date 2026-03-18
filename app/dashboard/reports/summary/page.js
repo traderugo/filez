@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useMemo } from 'react'
+import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2 } from 'lucide-react'
@@ -29,11 +29,18 @@ function SummaryContent() {
   const today = new Date()
   const pad = (n) => String(n).padStart(2, '0')
   const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`
+  const monthStartStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-01`
 
-  const [selectedDate, setSelectedDate] = useState(todayStr)
-  const [reportDate, setReportDate] = useState(todayStr)
+  const [startDate, _setStartDate] = useState(monthStartStr)
+  const [endDate, _setEndDate] = useState(todayStr)
+  const startDateRef = useRef(monthStartStr)
+  const endDateRef = useRef(todayStr)
+  const setStartDate = (v) => { startDateRef.current = v; _setStartDate(v) }
+  const setEndDate = (v) => { endDateRef.current = v; _setEndDate(v) }
   const [generated, setGenerated] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [reportStart, setReportStart] = useState(monthStartStr)
+  const [reportEnd, setReportEnd] = useState(todayStr)
 
   // Config
   const [nozzles, setNozzles] = useState([])
@@ -90,7 +97,7 @@ function SummaryContent() {
   }, [liveCustomers])
 
   const report = useMemo(() => {
-    if (!generated || !reportDate) return null
+    if (!generated || !reportStart || !reportEnd) return null
     if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return null
     return buildDailyReport({
       sales: liveSales,
@@ -100,21 +107,25 @@ function SummaryContent() {
       nozzles,
       tanks,
       banks,
-      startDate: reportDate,
-      endDate: reportDate,
+      startDate: reportStart,
+      endDate: reportEnd,
     })
-  }, [generated, reportDate, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
+  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
 
+  // Show the latest day's report
   const dayReport = useMemo(() => {
     if (!report?.dateReports?.length) return null
-    return report.dateReports[0]
+    return report.dateReports[report.dateReports.length - 1]
   }, [report])
 
   const handleGenerate = () => {
-    if (!selectedDate) return
+    const s = startDateRef.current
+    const e = endDateRef.current
+    if (!s || !e) return
     setGenerating(true)
     setTimeout(() => {
-      setReportDate(selectedDate)
+      setReportStart(s)
+      setReportEnd(e)
       setGenerated(true)
       setGenerating(false)
     }, 2000)
@@ -134,23 +145,25 @@ function SummaryContent() {
   const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
 
-  const dateLabel = reportDate
-    ? new Date(reportDate + 'T00:00:00').toLocaleDateString('en-NG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-    : ''
-
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-2 sm:px-6">
       {/* Header */}
       <div className="flex items-center justify-end py-3 shrink-0">
         <div className="flex items-center gap-2">
           <DateInput
-            value={selectedDate}
-            onChange={setSelectedDate}
+            value={startDate}
+            onChange={setStartDate}
+            className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-400">to</span>
+          <DateInput
+            value={endDate}
+            onChange={setEndDate}
             className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={handleGenerate}
-            disabled={generating || !selectedDate}
+            disabled={generating || !startDate || !endDate || startDate > endDate}
             className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
           >
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -162,7 +175,7 @@ function SummaryContent() {
       {/* Content */}
       {!generated ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Select a date and click Generate.</p>
+          <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
         </div>
       ) : !report ? (
         <div className="flex justify-center py-20">
@@ -170,7 +183,7 @@ function SummaryContent() {
         </div>
       ) : !dayReport ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">No data for this date.</p>
+          <p className="text-gray-400 text-sm">No data for this period.</p>
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto min-h-0 mb-3 px-1 sm:px-[15%]">
@@ -288,7 +301,7 @@ function SummaryContent() {
             </table>
           )}
 
-          {/* 5. Sales (replaces Stock) */}
+          {/* 5. Sales */}
           <table className="w-full border-collapse text-sm mb-4">
             <thead>
               <tr className={subHdr}>
