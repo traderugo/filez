@@ -18,6 +18,7 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [highlightIdx, setHighlightIdx] = useState(0)
+  const [dropUp, setDropUp] = useState(false)
   const containerRef = useRef(null)
   const inputRef = useRef(null)
   const listRef = useRef(null)
@@ -60,6 +61,16 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
   // Reset highlight when filtered list changes
   useEffect(() => { setHighlightIdx(0) }, [search])
 
+  const handleOpen = () => {
+    if (disabled) return
+    if (!open && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setDropUp(spaceBelow < 280)
+    }
+    setOpen(!open)
+  }
+
   const select = useCallback((val) => {
     onChange(val)
     setOpen(false)
@@ -88,7 +99,7 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
       <button
         type="button"
         disabled={disabled}
-        onClick={() => { if (!disabled) setOpen(!open) }}
+        onClick={handleOpen}
         className="w-full px-3 py-2.5 text-base bg-transparent text-left flex items-center justify-between focus:outline-none focus:bg-blue-50 disabled:opacity-50"
       >
         <span className={selectedOption ? 'text-gray-900 truncate' : 'text-gray-400 truncate'}>
@@ -100,9 +111,11 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 left-0 right-0 mt-0.5 bg-white border border-gray-300 shadow-lg max-h-64 flex flex-col">
+        <div className={`absolute z-50 left-0 right-0 bg-white border border-gray-300 shadow-lg max-h-64 flex flex-col ${
+          dropUp ? 'bottom-full mb-0.5' : 'top-full mt-0.5'
+        }`}>
           {/* Search input */}
-          <div className="flex items-center border-b border-gray-200 px-2">
+          <div className={`flex items-center border-b border-gray-200 px-2 ${dropUp ? 'order-last border-b-0 border-t' : ''}`}>
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <input
               ref={inputRef}
