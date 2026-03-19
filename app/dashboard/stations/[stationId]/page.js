@@ -124,16 +124,16 @@ export default function StationPage() {
     setRefreshing(true)
     refreshingRef.current = true
     const tables = ['dailySales', 'productReceipts', 'lodgements', 'lubeSales', 'lubeStock', 'customerPayments', 'consumption']
-    const countsBefore = {}
-    for (const t of tables) countsBefore[t] = await db[t].where('orgId').equals(stationId).count()
+    let syncResult = null
     try {
-      await initialSync(stationId, { force: true })
+      syncResult = await initialSync(stationId, { force: true })
     } catch (e) { /* offline */ }
     const lines = []
     for (const t of tables) {
-      const after = await db[t].where('orgId').equals(stationId).count()
+      const local = await db[t].where('orgId').equals(stationId).count()
+      const server = syncResult?.serverCounts?.[t] ?? '?'
       const label = t.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())
-      lines.push(`${label}: ${after} entries`)
+      lines.push(`${label}: ${server} from server → ${local} local`)
     }
     setSyncModal({ title: 'Pull Results', lines })
     setRefreshing(false)
