@@ -367,20 +367,6 @@ function SummaryContent() {
                 <td colSpan={2} className={cell}>SALES</td>
                 <td className={cellR}>{fmt(dayReport.totalSales)}</td>
               </tr>
-              {dayReport.lodgement.bankRows
-                .filter(r => r.lodgementType !== 'bank_deposit' && r.deposited > 0)
-                .map(row => (
-                  <tr key={row.bankId}>
-                    <td colSpan={2} className={`${cell} text-xs pl-3`}>
-                      {row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}
-                      {row.lodgementType !== 'pos' && row.lodgementType !== 'transfer' && (
-                        <span className="text-gray-400 ml-1">({row.lodgementType})</span>
-                      )}
-                    </td>
-                    <td className={cellR}>{fmt(row.deposited)}</td>
-                  </tr>
-                ))
-              }
               <tr className="font-bold">
                 <td colSpan={2} className={cell}>TOTAL POS</td>
                 <td className={cellR}>{fmt(dayReport.lodgement.totalPOS)}</td>
