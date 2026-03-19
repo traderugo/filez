@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
@@ -97,10 +97,13 @@ export default function CustomerPaymentsFormPage() {
 
   const isEditing = !!(editId || editDate)
 
+  const submittingRef = useRef(false)
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     for (let i = 0; i < entries.length; i++) {
-      if (!entries[i].customerId) { setError(`Entry ${i + 1}: Customer is required`); return }
+      if (!entries[i].customerId) { setError(`Entry ${i + 1}: Customer is required`); submittingRef.current = false; return }
     }
     setSaving(true)
     setError('')
@@ -142,6 +145,7 @@ export default function CustomerPaymentsFormPage() {
       setError('Failed to save')
     }
     setSaving(false)
+    submittingRef.current = false
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>

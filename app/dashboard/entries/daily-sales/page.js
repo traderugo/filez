@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User, X } from 'lucide-react'
 import Link from 'next/link'
@@ -248,25 +248,28 @@ export default function DailySalesFormPage() {
     setActiveTab(Math.min(activeTab, entries.length - 2))
   }
 
+  const submittingRef = useRef(false)
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
 
     for (let i = 0; i < entries.length; i++) {
       const entry = entries[i]
       if (!entry.prices.PMS && !entry.prices.AGO && !entry.prices.DPK) {
-        setError(`Entry ${i + 1}: At least one fuel price is required`); setActiveTab(i); return
+        setError(`Entry ${i + 1}: At least one fuel price is required`); setActiveTab(i); submittingRef.current = false; return
       }
       if (entry.closeOfBusiness) {
         const missingTank = entry.tankReadings.find(r => r.closing_stock === '' || r.closing_stock === undefined)
         if (missingTank) {
-          setError(`Entry ${i + 1}: Closing stock is required for ${missingTank.label}`); setActiveTab(i); return
+          setError(`Entry ${i + 1}: Closing stock is required for ${missingTank.label}`); setActiveTab(i); submittingRef.current = false; return
         }
       }
     }
 
     const cobEntries = entries.filter(e => e.closeOfBusiness)
     if (cobEntries.length > 1) {
-      setError('Only one entry can be marked as close-of-business'); return
+      setError('Only one entry can be marked as close-of-business'); submittingRef.current = false; return
     }
     if (cobEntries.length === 1) {
       const dateEntries = await db.dailySales.where('orgId').equals(orgId).toArray()
@@ -276,7 +279,7 @@ export default function DailySalesFormPage() {
           && !originalIds.includes(e.id)
       )
       if (existingCob) {
-        setError('A close-of-business entry already exists for this date.'); return
+        setError('A close-of-business entry already exists for this date.'); submittingRef.current = false; return
       }
     }
 
@@ -375,6 +378,7 @@ export default function DailySalesFormPage() {
       setError('Failed to save')
     }
     setSaving(false)
+    submittingRef.current = false
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
@@ -163,10 +163,13 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate }) {
     setEntries(prev => prev.filter((_, i) => i !== idx))
   }
 
+  const submittingRef = useRef(false)
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     for (let i = 0; i < entries.length; i++) {
-      if (!entries[i].productId) { setError(`Entry ${i + 1}: Product is required`); return }
+      if (!entries[i].productId) { setError(`Entry ${i + 1}: Product is required`); submittingRef.current = false; return }
     }
     setSaving(true)
     setError('')
@@ -209,6 +212,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate }) {
       setError('Failed to save')
     }
     setSaving(false)
+    submittingRef.current = false
   }
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -336,10 +340,13 @@ function LubeStockForm({ products, qs, orgId, editId, editDate }) {
     setEntries(prev => prev.filter((_, i) => i !== idx))
   }
 
+  const submittingRef = useRef(false)
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     for (let i = 0; i < entries.length; i++) {
-      if (!entries[i].productId) { setError(`Entry ${i + 1}: Product is required`); return }
+      if (!entries[i].productId) { setError(`Entry ${i + 1}: Product is required`); submittingRef.current = false; return }
     }
     setSaving(true)
     setError('')
@@ -380,6 +387,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate }) {
       setError('Failed to save')
     }
     setSaving(false)
+    submittingRef.current = false
   }
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>

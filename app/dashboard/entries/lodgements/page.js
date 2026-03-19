@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
@@ -31,6 +31,7 @@ export default function LodgementsFormPage() {
   const [entries, setEntries] = useState([blankEntry()])
   const [originalIds, setOriginalIds] = useState([])
   const [allDates, setAllDates] = useState([])
+  const submittingRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -86,6 +87,28 @@ export default function LodgementsFormPage() {
     return () => { cancelled = true }
   }, [editId, editDate, orgId])
 
+  // When date changes in create mode, auto-load existing entries for that date
+  const handleDateChange = async (newDate) => {
+    setFormDate(newDate)
+    if (editId || editDate || !orgId || !newDate) return
+    const all = await db.lodgements.where('orgId').equals(orgId).toArray()
+    const dateEntries = all.filter(e => e.entryDate === newDate)
+    if (dateEntries.length > 0) {
+      setOriginalIds(dateEntries.map(e => e.id))
+      setEntries(dateEntries.map(e => ({
+        _key: e.id, id: e.id,
+        amount: String(e.amount ?? ''),
+        bankId: e.bankId || '',
+        lodgementType: e.lodgementType || 'deposit',
+        salesDate: e.salesDate || '',
+        notes: e.notes || '',
+      })))
+    } else {
+      setOriginalIds([])
+      setEntries([blankEntry()])
+    }
+  }
+
   const updateEntry = (idx, field, value) => {
     setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
   }
@@ -97,12 +120,14 @@ export default function LodgementsFormPage() {
     setEntries(prev => prev.filter((_, i) => i !== idx))
   }
 
-  const isEditing = !!(editId || editDate)
+  const isEditing = !!(editId || editDate || originalIds.length > 0)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     for (let i = 0; i < entries.length; i++) {
-      if (!entries[i].bankId) { setError(`Entry ${i + 1}: Bank account is required`); return }
+      if (!entries[i].bankId) { setError(`Entry ${i + 1}: Bank account is required`); submittingRef.current = false; return }
     }
     setSaving(true)
     setError('')
@@ -145,6 +170,7 @@ export default function LodgementsFormPage() {
       setError('Failed to save')
     }
     setSaving(false)
+    submittingRef.current = false
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -182,7 +208,7 @@ export default function LodgementsFormPage() {
         {/* Shared date */}
         <div className="border border-gray-300 mb-4">
           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
         </div>
 
         {/* Entry cards */}

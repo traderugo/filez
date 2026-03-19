@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
@@ -149,8 +149,11 @@ export default function ProductReceiptFormPage() {
     setActiveTab(Math.min(activeTab, entries.length - 2))
   }
 
+  const submittingRef = useRef(false)
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submittingRef.current) return
+    submittingRef.current = true
     setSaving(true)
     setError('')
 
@@ -203,6 +206,7 @@ export default function ProductReceiptFormPage() {
       setError('Failed to save')
     }
     setSaving(false)
+    submittingRef.current = false
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
