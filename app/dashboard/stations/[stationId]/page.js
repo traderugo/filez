@@ -296,7 +296,7 @@ export default function StationPage() {
     { href: `/dashboard/entries/lodgements/list?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS' },
     { href: `/dashboard/entries/lube/list?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock' },
     { href: `/dashboard/entries/customer-payments/list?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments' },
-    { href: `/dashboard/entries/consumption?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back' },
+    { href: `/dashboard/entries/consumption/list?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back' },
   ]
 
   const reportLinks = [
