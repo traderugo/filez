@@ -343,16 +343,26 @@ export default function DailySalesFormPage() {
           const qty = Number(r.consumption) || 0
           const custId = r.consumption_customer_id
           const ft = r.fuel_type || ''
-          // Look up by sourceKey first, then legacy id, then date+fuel+customer (for records from initial sync without sourceKey)
+          // Look up by sourceKey first, then legacy id, then date+fuel+customer
           let existing = await db.consumption
             .where('orgId').equals(orgId)
             .filter(c => c.sourceKey === sourceKey)
             .first() || await db.consumption.get(`cons_${record.id}_${r.pump_id}`)
-          if (!existing && qty > 0 && custId) {
-            existing = await db.consumption
-              .where('orgId').equals(orgId)
-              .filter(c => c.entryDate === formDate && c.fuelType === ft && c.customerId === custId && !c.isPourBack)
-              .first()
+          if (!existing) {
+            // Broader search: match by date + fuel + customer (for server-synced records without sourceKey)
+            if (custId) {
+              existing = await db.consumption
+                .where('orgId').equals(orgId)
+                .filter(c => c.entryDate === formDate && c.fuelType === ft && c.customerId === custId && !c.isPourBack)
+                .first()
+            }
+            // If removing consumption (qty=0 or no customer), find any matching record by date + fuel for cleanup
+            if (!existing && !(qty > 0 && custId)) {
+              existing = await db.consumption
+                .where('orgId').equals(orgId)
+                .filter(c => c.entryDate === formDate && c.fuelType === ft && !c.isPourBack)
+                .first()
+            }
           }
 
           if (qty > 0 && custId) {
