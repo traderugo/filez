@@ -66,7 +66,8 @@ export async function POST(request) {
       .single()
 
     if (dbError) {
-      return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 })
+      console.error('consumption POST error:', dbError.message, dbError.code)
+      return NextResponse.json({ error: dbError.message || 'Failed to create entry' }, { status: 500 })
     }
 
     logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'added a consumption entry', actionType: 'created_entry' }).catch(() => {})
@@ -105,7 +106,8 @@ export async function PATCH(request) {
       .single()
 
     if (dbError) {
-      return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 })
+      console.error('consumption PATCH error:', dbError.message, dbError.code)
+      return NextResponse.json({ error: dbError.message || 'Failed to update entry' }, { status: 500 })
     }
 
     logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'updated a consumption entry', actionType: 'updated_entry' }).catch(() => {})
