@@ -3,10 +3,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pencil, Loader2, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
 import { db } from '@/lib/db'
+import { consumptionRepo } from '@/lib/repositories/consumption'
+import Modal from '@/components/Modal'
 
 export default function ConsumptionListPage() {
   const searchParams = useSearchParams()
@@ -14,6 +16,8 @@ export default function ConsumptionListPage() {
   const qs = `org_id=${orgId}`
   const [page, setPage] = useState(1)
   const [ready, setReady] = useState(false)
+  const [repairing, setRepairing] = useState(false)
+  const [repairModal, setRepairModal] = useState(null)
   const limit = 10
 
   useEffect(() => { setReady(true) }, [orgId])
@@ -30,6 +34,72 @@ export default function ConsumptionListPage() {
     [orgId, ready], {}
   )
 
+  const repairConsumption = async () => {
+    if (repairing || !orgId) return
+    setRepairing(true)
+    let created = 0
+    let updated = 0
+    try {
+      const allSales = await db.dailySales.where('orgId').equals(orgId).toArray()
+      const now = new Date().toISOString()
+
+      for (const sale of allSales) {
+        const readings = sale.nozzleReadings || []
+        for (const r of readings) {
+          const qty = Number(r.consumption) || 0
+          const custId = r.consumption_customer_id
+          const ft = r.fuel_type || ''
+          if (!(qty > 0 && custId)) continue
+
+          const sourceKey = `${sale.id}_${r.pump_id}`
+          // Check if consumption entry already exists
+          let existing = await db.consumption
+            .where('orgId').equals(orgId)
+            .filter(c => c.sourceKey === sourceKey)
+            .first()
+          if (!existing) {
+            existing = await db.consumption
+              .where('orgId').equals(orgId)
+              .filter(c => c.entryDate === sale.entryDate && c.fuelType === ft && c.customerId === custId && !c.isPourBack)
+              .first()
+          }
+
+          const price = Number(sale.prices?.[ft]) || 0
+          const consRecord = {
+            id: existing?.id || crypto.randomUUID(),
+            sourceKey,
+            orgId,
+            entryDate: sale.entryDate,
+            customerId: custId,
+            quantity: qty,
+            fuelType: ft,
+            isPourBack: false,
+            price,
+            notes: `${r.nozzle_label || ''} consumption`,
+            createdAt: existing?.createdAt || now,
+            updatedAt: now,
+          }
+
+          if (existing) {
+            await consumptionRepo.update(consRecord)
+            updated++
+          } else {
+            await consumptionRepo.create(consRecord)
+            created++
+          }
+        }
+      }
+      setRepairModal({ title: 'Repair Complete', lines: [
+        `Scanned ${allSales.length} daily sales entries`,
+        created > 0 ? `${created} missing consumption entries created` : 'No missing entries found',
+        updated > 0 ? `${updated} existing entries updated` : '',
+      ].filter(Boolean) })
+    } catch (err) {
+      setRepairModal({ title: 'Repair Failed', lines: [err.message] })
+    }
+    setRepairing(false)
+  }
+
   // Group entries by date
   const groupedEntries = useMemo(() => {
     const groups = {}
@@ -39,10 +109,9 @@ export default function ConsumptionListPage() {
       groups[date].push(entry)
     }
     return Object.entries(groups).map(([date, entries]) => {
-      const totalQty = entries.reduce((s, e) => s + (Number(e.quantity) || 0), 0)
       const consumed = entries.filter(e => !e.isPourBack)
       const pourBack = entries.filter(e => e.isPourBack)
-      return { date, entries, totalQty, consumed, pourBack }
+      return { date, entries, consumed, pourBack }
     })
   }, [allEntries])
 
@@ -54,6 +123,13 @@ export default function ConsumptionListPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+      <div className="flex items-center justify-end mb-6">
+        <button onClick={repairConsumption} disabled={repairing} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50 disabled:opacity-50">
+          {repairing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+          Rebuild from Daily Sales
+        </button>
+      </div>
+
       {pageGroups.length === 0 ? (
         <p className="text-sm text-gray-500 py-8 text-center">No consumption entries yet.</p>
       ) : (
@@ -101,6 +177,15 @@ export default function ConsumptionListPage() {
           )}
         </>
       )}
+
+      <Modal open={!!repairModal} onClose={() => setRepairModal(null)} title={repairModal?.title || 'Repair'}>
+        <div className="space-y-2">
+          {repairModal?.lines.map((line, i) => (
+            <p key={i} className="text-sm text-gray-700">{line}</p>
+          ))}
+          <button onClick={() => setRepairModal(null)} className="w-full mt-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">OK</button>
+        </div>
+      </Modal>
     </div>
   )
 }
