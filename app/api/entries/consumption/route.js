@@ -66,6 +66,10 @@ export async function POST(request) {
       .single()
 
     if (dbError) {
+      // FK violation or conflict — return 400 so sync drops the invalid item
+      if (dbError.code === '23503' || dbError.code === '23505' || dbError.code === 'PGRST116') {
+        return NextResponse.json({ error: dbError.message }, { status: 400 })
+      }
       console.error('consumption POST error:', dbError.message, dbError.code)
       return NextResponse.json({ error: dbError.message || 'Failed to create entry' }, { status: 500 })
     }
@@ -106,6 +110,10 @@ export async function PATCH(request) {
       .single()
 
     if (dbError) {
+      // Row not found — return 400 so sync drops the stale item
+      if (dbError.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Entry not found' }, { status: 400 })
+      }
       console.error('consumption PATCH error:', dbError.message, dbError.code)
       return NextResponse.json({ error: dbError.message || 'Failed to update entry' }, { status: 500 })
     }
