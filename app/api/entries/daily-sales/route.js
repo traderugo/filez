@@ -72,7 +72,7 @@ export async function POST(request) {
 
     const { data, error: dbError } = await supabase
       .from(TABLE)
-      .insert({
+      .upsert({
         ...(id ? { id } : {}),
         org_id: user.org_id,
         entry_date,

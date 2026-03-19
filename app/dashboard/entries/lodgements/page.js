@@ -218,6 +218,7 @@ export default function LodgementsFormPage() {
                   <option value="deposit">Deposit</option>
                   <option value="lube-deposit">Lube Deposit</option>
                   <option value="pos">POS</option>
+                  <option value="transfer">Transfer</option>
                 </select>
               </div>
               <div>

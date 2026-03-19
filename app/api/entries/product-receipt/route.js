@@ -49,7 +49,7 @@ export async function POST(request) {
     const supabase = getServiceClient()
     const { data, error: dbError } = await supabase
       .from(TABLE)
-      .insert({
+      .upsert({
         ...(body.id ? { id: body.id } : {}),
         org_id: user.org_id,
         entry_date: body.entry_date,
