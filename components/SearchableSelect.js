@@ -18,6 +18,7 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [highlightIdx, setHighlightIdx] = useState(0)
+  const [dropdownStyle, setDropdownStyle] = useState({})
   const containerRef = useRef(null)
   const inputRef = useRef(null)
   const listRef = useRef(null)
@@ -32,7 +33,29 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
       })
     : options
 
-  // Close on outside click
+  // Position dropdown using fixed coords so it escapes overflow:hidden parents (mobile).
+  // On mobile (<768px) always open upward so the keyboard doesn't cover the search input.
+  const calcDropdownStyle = useCallback(() => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const isMobile = window.innerWidth < 768
+    const dropH = Math.min(264, window.innerHeight * 0.5)
+
+    if (isMobile) {
+      const spaceAbove = rect.top
+      setDropdownStyle({ position: 'fixed', bottom: window.innerHeight - rect.top + 2, left: rect.left, width: rect.width, maxHeight: Math.min(dropH, spaceAbove - 8) })
+    } else {
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      if (spaceBelow >= dropH || spaceBelow >= spaceAbove) {
+        setDropdownStyle({ position: 'fixed', top: rect.bottom + 2, left: rect.left, width: rect.width, maxHeight: Math.min(dropH, spaceBelow - 8) })
+      } else {
+        setDropdownStyle({ position: 'fixed', bottom: window.innerHeight - rect.top + 2, left: rect.left, width: rect.width, maxHeight: Math.min(dropH, spaceAbove - 8) })
+      }
+    }
+  }, [])
+
+  // Close on outside click or scroll
   useEffect(() => {
     if (!open) return
     function handleClick(e) {
@@ -42,8 +65,16 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
       }
     }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open])
+    document.addEventListener('touchstart', handleClick)
+    window.addEventListener('scroll', calcDropdownStyle, true)
+    window.addEventListener('resize', calcDropdownStyle)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('touchstart', handleClick)
+      window.removeEventListener('scroll', calcDropdownStyle, true)
+      window.removeEventListener('resize', calcDropdownStyle)
+    }
+  }, [open, calcDropdownStyle])
 
   // Focus input when opened
   useEffect(() => {
@@ -82,13 +113,19 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
     }
   }
 
+  const handleOpen = () => {
+    if (disabled) return
+    if (!open) calcDropdownStyle()
+    setOpen(!open)
+  }
+
   return (
     <div ref={containerRef} className={`relative ${className}`}>
       {/* Trigger button */}
       <button
         type="button"
         disabled={disabled}
-        onClick={() => { if (!disabled) setOpen(!open) }}
+        onClick={handleOpen}
         className="w-full px-3 py-2.5 text-base bg-transparent text-left flex items-center justify-between focus:outline-none focus:bg-blue-50 disabled:opacity-50"
       >
         <span className={selectedOption ? 'text-gray-900 truncate' : 'text-gray-400 truncate'}>
@@ -97,11 +134,14 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
         <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 ml-1" />
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown — fixed position to escape overflow:hidden parents on mobile */}
       {open && (
-        <div className="absolute z-50 left-0 right-0 mt-0.5 bg-white border border-gray-300 shadow-lg max-h-64 flex flex-col">
+        <div
+          className="z-[9999] bg-white border border-gray-300 shadow-lg flex flex-col"
+          style={{ ...dropdownStyle, maxHeight: dropdownStyle.maxHeight || 256 }}
+        >
           {/* Search input */}
-          <div className="flex items-center border-b border-gray-200 px-2">
+          <div className="flex items-center border-b border-gray-200 px-2 flex-shrink-0">
             <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
             <input
               ref={inputRef}
