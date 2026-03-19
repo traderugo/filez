@@ -61,13 +61,26 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
   // Reset highlight when filtered list changes
   useEffect(() => { setHighlightIdx(0) }, [search])
 
+  const recalcDrop = useCallback(() => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight
+    const spaceBelow = vh - rect.bottom
+    setDropUp(spaceBelow < 280)
+  }, [])
+
+  // Recalculate when virtual keyboard opens/closes
+  useEffect(() => {
+    if (!open || !window.visualViewport) return
+    const vv = window.visualViewport
+    const handler = () => recalcDrop()
+    vv.addEventListener('resize', handler)
+    return () => vv.removeEventListener('resize', handler)
+  }, [open, recalcDrop])
+
   const handleOpen = () => {
     if (disabled) return
-    if (!open && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      const spaceBelow = window.innerHeight - rect.bottom
-      setDropUp(spaceBelow < 280)
-    }
+    if (!open) recalcDrop()
     setOpen(!open)
   }
 
