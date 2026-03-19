@@ -102,14 +102,19 @@ export default function StationPage() {
     if (syncing) return
     setSyncing(true)
     const before = await db.syncQueue.where('orgId').equals(stationId).count()
-    try { await processQueue() } catch (e) { /* offline */ }
-    const after = await db.syncQueue.where('orgId').equals(stationId).count()
-    const pushed = before - after
+    let result = { pushed: 0, dropped: 0, pending: 0, errors: [] }
+    try { result = await processQueue() || result } catch (e) { /* offline */ }
     const lines = []
-    if (pushed > 0) lines.push(`${pushed} item${pushed > 1 ? 's' : ''} pushed to server`)
-    if (after > 0) lines.push(`${after} item${after > 1 ? 's' : ''} still pending (auth or network issue)`)
     if (before === 0) lines.push('Queue was empty — nothing to push')
-    if (pushed > 0 && after === 0) lines.push('All synced!')
+    if (result.pushed > 0) lines.push(`${result.pushed} item${result.pushed > 1 ? 's' : ''} pushed successfully`)
+    if (result.dropped > 0) lines.push(`${result.dropped} item${result.dropped > 1 ? 's' : ''} rejected by server`)
+    if (result.pending > 0) lines.push(`${result.pending} item${result.pending > 1 ? 's' : ''} still pending`)
+    if (result.errors.length > 0) {
+      lines.push('')
+      lines.push('Errors:')
+      result.errors.forEach(e => lines.push(`• ${e}`))
+    }
+    if (result.pushed > 0 && result.dropped === 0 && result.pending === 0) lines.push('All synced!')
     setSyncModal({ title: 'Push Results', lines })
     setSyncing(false)
   }

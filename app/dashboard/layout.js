@@ -14,7 +14,7 @@ function BackgroundSync() {
 
   // One-time repair: re-queue lodgements that were dropped due to missing 'transfer' type
   useEffect(() => {
-    if (orgId) repairSync('lodgement-repair-v2', 'lodgements', orgId)
+    if (orgId) repairSync('lodgement-repair-v3', 'lodgements', orgId)
   }, [orgId])
 
   return null
