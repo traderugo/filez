@@ -30,5 +30,13 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
   }
 
+  const { error: authError } = await supabase.auth.admin.updateUserById(userId, {
+    email_confirm: verified
+  })
+
+  if (authError) {
+    return NextResponse.json({ error: 'Profile updated but auth confirmation failed' }, { status: 500 })
+  }
+
   return NextResponse.json({ ok: true })
 }
