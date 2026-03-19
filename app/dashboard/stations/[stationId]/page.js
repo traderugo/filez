@@ -66,7 +66,6 @@ export default function StationPage() {
   const [syncing, setSyncing] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const refreshingRef = useRef(false)
-  const pendingPullRef = useRef(0)
 
   const pendingCount = useLiveQuery(
     () => stationId ? db.syncQueue.where('orgId').equals(stationId).count() : 0,
@@ -74,8 +73,6 @@ export default function StationPage() {
     0
   )
   const { pendingPullCount, resetPullCount } = useRemoteChanges(stationId)
-
-  useEffect(() => { pendingPullRef.current = pendingPullCount }, [pendingPullCount])
 
   useEffect(() => {
     function getNextConsolidation() {
@@ -120,17 +117,6 @@ export default function StationPage() {
     refreshingRef.current = false
   }, [stationId, resetPullCount])
 
-  // Auto-pull every 5s when Realtime detects remote changes and tab is visible
-  useEffect(() => {
-    if (!stationId) return
-    const interval = setInterval(() => {
-      if (document.visibilityState !== 'visible') return
-      if (pendingPullRef.current > 0 && !refreshingRef.current) {
-        handleRefresh()
-      }
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [stationId, handleRefresh])
 
   useEffect(() => {
     const load = async () => {
