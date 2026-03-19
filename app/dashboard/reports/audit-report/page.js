@@ -518,7 +518,7 @@ function MeterGroup({ row, rowIdx, totalRows, cell, cellR }) {
           <td className={cellR}>{fmt(pump.closing)}</td>
           <td className={cellR}>{fmt(pump.dispensed)}</td>
           <td className={cellR}>{fmt(row.price)}</td>
-          <td className={cellR}>{fmt(pump.dispensed * row.price)}</td>
+          <td className={cellR}>{fmt((pump.actual != null ? pump.actual : pump.dispensed) * row.price)}</td>
         </tr>
       ))}
     </>
