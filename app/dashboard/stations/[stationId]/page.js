@@ -291,11 +291,11 @@ export default function StationPage() {
   }
 
   const entryLinks = [
-    { href: `/dashboard/entries/daily-sales?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, pricing' },
-    { href: `/dashboard/entries/product-receipt?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries and waybills' },
-    { href: `/dashboard/entries/lodgements?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS' },
-    { href: `/dashboard/entries/lube?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock' },
-    { href: `/dashboard/entries/customer-payments?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments' },
+    { href: `/dashboard/entries/daily-sales/list?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, pricing' },
+    { href: `/dashboard/entries/product-receipt/list?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries and waybills' },
+    { href: `/dashboard/entries/lodgements/list?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS' },
+    { href: `/dashboard/entries/lube/list?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock' },
+    { href: `/dashboard/entries/customer-payments/list?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments' },
     { href: `/dashboard/entries/consumption?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back' },
   ]
 
