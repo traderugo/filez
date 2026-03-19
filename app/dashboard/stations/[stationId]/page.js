@@ -65,6 +65,7 @@ export default function StationPage() {
   const [syncing, setSyncing] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
   const refreshingRef = useRef(false)
+  const [syncModal, setSyncModal] = useState(null) // { title, lines[] }
 
   const pendingCount = useLiveQuery(
     () => stationId ? db.syncQueue.where('orgId').equals(stationId).count() : 0,
@@ -100,7 +101,16 @@ export default function StationPage() {
   const handleSync = async () => {
     if (syncing) return
     setSyncing(true)
+    const before = await db.syncQueue.where('orgId').equals(stationId).count()
     try { await processQueue() } catch (e) { /* offline */ }
+    const after = await db.syncQueue.where('orgId').equals(stationId).count()
+    const pushed = before - after
+    const lines = []
+    if (pushed > 0) lines.push(`${pushed} item${pushed > 1 ? 's' : ''} pushed to server`)
+    if (after > 0) lines.push(`${after} item${after > 1 ? 's' : ''} still pending (auth or network issue)`)
+    if (before === 0) lines.push('Queue was empty — nothing to push')
+    if (pushed > 0 && after === 0) lines.push('All synced!')
+    setSyncModal({ title: 'Push Results', lines })
     setSyncing(false)
   }
 
@@ -108,9 +118,19 @@ export default function StationPage() {
     if (refreshingRef.current || !stationId) return
     setRefreshing(true)
     refreshingRef.current = true
+    const tables = ['dailySales', 'productReceipts', 'lodgements', 'lubeSales', 'lubeStock', 'customerPayments', 'consumption']
+    const countsBefore = {}
+    for (const t of tables) countsBefore[t] = await db[t].where('orgId').equals(stationId).count()
     try {
       await initialSync(stationId, { force: true })
     } catch (e) { /* offline */ }
+    const lines = []
+    for (const t of tables) {
+      const after = await db[t].where('orgId').equals(stationId).count()
+      const label = t.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())
+      lines.push(`${label}: ${after} entries`)
+    }
+    setSyncModal({ title: 'Pull Results', lines })
     setRefreshing(false)
     refreshingRef.current = false
   }, [stationId])
@@ -720,6 +740,18 @@ export default function StationPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Sync Result Modal */}
+      <Modal open={!!syncModal} onClose={() => setSyncModal(null)} title={syncModal?.title || 'Sync'}>
+        <div className="space-y-2">
+          {syncModal?.lines.map((line, i) => (
+            <p key={i} className="text-sm text-gray-700">{line}</p>
+          ))}
+          <button onClick={() => setSyncModal(null)} className="w-full mt-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+            OK
+          </button>
+        </div>
       </Modal>
     </div>
   )
