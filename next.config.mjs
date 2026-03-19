@@ -7,15 +7,34 @@ const withPWA = withPWAInit({
   skipWaiting: true,
   runtimeCaching: [
     {
+      // Never cache API routes — always hit the server
+      urlPattern: /\/api\/.*/,
+      handler: 'NetworkOnly',
+    },
+    {
+      // Next.js page data and JS chunks — network first, fast fallback
+      urlPattern: /\/_next\/.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'next-assets',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+        },
+        networkTimeoutSeconds: 5,
+      },
+    },
+    {
+      // Other assets (images, fonts, etc.)
       urlPattern: /^https?.*/,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'offlineCache',
         expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxEntries: 100,
+          maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
         },
-        networkTimeoutSeconds: 10,
+        networkTimeoutSeconds: 5,
       },
     },
   ],
