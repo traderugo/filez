@@ -16,7 +16,6 @@ import { format, differenceInDays } from 'date-fns'
 import { db } from '@/lib/db'
 import { processQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
-import { useRemoteChanges } from '@/lib/hooks/useRemoteChanges'
 import { supabase } from '@/lib/supabaseClient'
 
 const PAGE_OPTIONS = [
@@ -72,7 +71,7 @@ export default function StationPage() {
     [stationId],
     0
   )
-  const { pendingPullCount, resetPullCount } = useRemoteChanges(stationId)
+  const pendingPullCount = 0
 
   useEffect(() => {
     function getNextConsolidation() {
@@ -111,11 +110,10 @@ export default function StationPage() {
     refreshingRef.current = true
     try {
       await initialSync(stationId, { force: true })
-      resetPullCount()
     } catch (e) { /* offline */ }
     setRefreshing(false)
     refreshingRef.current = false
-  }, [stationId, resetPullCount])
+  }, [stationId])
 
 
   useEffect(() => {
