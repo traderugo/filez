@@ -51,13 +51,18 @@ export default function ConsumptionListPage() {
       // 2. Recreate from daily sales nozzle readings
       const allSales = await db.dailySales.where('orgId').equals(orgId).toArray()
       const now = new Date().toISOString()
+      const skipped = []
 
       for (const sale of allSales) {
         const readings = sale.nozzleReadings || []
         for (const r of readings) {
           const qty = Number(r.consumption) || 0
+          if (!qty) continue
           const custId = r.consumption_customer_id
-          if (!(qty > 0 && custId)) continue
+          if (!custId) {
+            skipped.push(`${sale.entryDate} ${r.nozzle_label || r.fuel_type} ${qty}L (no customer)`)
+            continue
+          }
 
           const ft = r.fuel_type || ''
           const price = Number(sale.prices?.[ft]) || 0
@@ -78,11 +83,16 @@ export default function ConsumptionListPage() {
           created++
         }
       }
-      setRepairModal({ title: 'Rebuild Complete', lines: [
+      const lines = [
         `Deleted ${allCons.length} old entries`,
         `Scanned ${allSales.length} daily sales entries`,
-        `Created ${created} consumption entries from nozzle readings`,
-      ] })
+        `Created ${created} consumption entries`,
+      ]
+      if (skipped.length) {
+        lines.push(`⚠ ${skipped.length} skipped (consumption without customer):`)
+        skipped.forEach(s => lines.push(`  · ${s}`))
+      }
+      setRepairModal({ title: 'Rebuild Complete', lines })
     } catch (err) {
       setRepairModal({ title: 'Rebuild Failed', lines: [err.message] })
     }
