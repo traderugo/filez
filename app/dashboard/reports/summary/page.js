@@ -233,7 +233,7 @@ function SummaryContent() {
       ) : (
         <div className="flex-1 overflow-y-auto min-h-0 mb-3 px-1 sm:px-[15%]">
           {/* 1. Closing Meter Readings per entry */}
-          {dayReport.entryGroups.map((group) => (
+          {dayReport.entryGroups.map((group, groupIdx) => (
             <div key={group.entryIndex} className="mb-4">
               {dayReport.entryCount > 1 && (
                 <table className="w-full border-collapse text-sm">
@@ -251,12 +251,14 @@ function SummaryContent() {
                   {report.fuelTypes.map(ft => {
                     const fuelGroup = group.nozzleRows.find(nr => nr.fuelType === ft)
                     if (!fuelGroup) return null
+                    const isLastGroup = groupIdx === dayReport.entryGroups.length - 1
                     return (
                       <ClosingReadings
                         key={ft}
                         fuelType={ft}
                         rows={fuelGroup.rows}
                         totals={fuelGroup.totals}
+                        dayTotals={isLastGroup ? dayReport.dayFuelTotals[ft] : null}
                         cell={cell}
                         cellR={cellR}
                         subHdr={subHdr}
@@ -388,12 +390,14 @@ function SummaryContent() {
 }
 
 /** Renders closing meter readings for one fuel type + dispensed minus consumed */
-function ClosingReadings({ fuelType, rows, totals, cell, cellR, subHdr }) {
-  const dispensed = totals.dispensed
-  const consumed = totals.consumed
-  const pourBack = totals.pourBack || 0
+function ClosingReadings({ fuelType, rows, totals, dayTotals, cell, cellR, subHdr }) {
+  // Use day-level totals from consumption_entries when available (last entry group)
+  const src = dayTotals || totals
+  const dispensed = src.dispensed
+  const consumed = src.consumed || 0
+  const pourBack = src.pourBack || 0
   const adjustment = consumed + pourBack
-  const actual = totals.actual
+  const actual = src.actual
 
   return (
     <>
@@ -406,11 +410,19 @@ function ClosingReadings({ fuelType, rows, totals, cell, cellR, subHdr }) {
           <td className={cellR}>{fmt(r.closing)}</td>
         </tr>
       ))}
-      <tr className="bg-gray-50 font-bold">
-        <td className={cell} colSpan={2}>
-          {fmt(dispensed)} &minus; {fmt(adjustment)} = {fmt(actual)}
-        </td>
-      </tr>
+      {dayTotals ? (
+        <tr className="bg-gray-50 font-bold">
+          <td className={cell} colSpan={2}>
+            {fmt(dispensed)} &minus; {fmt(adjustment)} = {fmt(actual)}
+          </td>
+        </tr>
+      ) : (
+        <tr className="bg-gray-50 font-bold">
+          <td className={cell} colSpan={2}>
+            Dispensed: {fmt(totals.dispensed)}
+          </td>
+        </tr>
+      )}
     </>
   )
 }

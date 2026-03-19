@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User, X } from 'lucide-react'
 import Link from 'next/link'
-import { db } from '@/lib/db'
+import { db } from '@/lib/db'import { consumptionRepo } from '@/lib/repositories/consumption'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
-import { consumptionRepo } from '@/lib/repositories/consumption'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
 import SearchableSelect from '@/components/SearchableSelect'
@@ -337,62 +336,42 @@ export default function DailySalesFormPage() {
           await dailySalesRepo.create(record)
         }
 
-        // Auto-create/update/delete consumption_entries for nozzles with consumption + customer
+        // Sync consumption_entries: delete all non-pour-back entries for this date
+        // sourced from this record (by sourceKey) or with no sourceKey (server-synced orphans),
+        // then recreate from current nozzle readings. Prevents phantom entries.
+        const sourcePrefix = `${record.id}_`
+        const oldCons = await db.consumption
+          .where('orgId').equals(orgId)
+          .filter(c => c.entryDate === formDate && !c.isPourBack)
+          .toArray()
+        for (const old of oldCons) {
+          // Delete if: belongs to this record, is a legacy entry, or has no sourceKey (server orphan)
+          if (old.sourceKey?.startsWith(sourcePrefix) || old.id?.startsWith(`cons_${record.id}_`) || !old.sourceKey) {
+            await consumptionRepo.remove(old.id, orgId)
+          }
+        }
+
         for (const r of readings) {
-          const sourceKey = `${record.id}_${r.pump_id}`
           const qty = Number(r.consumption) || 0
           const custId = r.consumption_customer_id
-          const ft = r.fuel_type || ''
-          // Look up by sourceKey first, then legacy id, then date+fuel+customer
-          let existing = await db.consumption
-            .where('orgId').equals(orgId)
-            .filter(c => c.sourceKey === sourceKey)
-            .first() || await db.consumption.get(`cons_${record.id}_${r.pump_id}`)
-          if (!existing) {
-            // Broader search: match by date + fuel + customer (for server-synced records without sourceKey)
-            if (custId) {
-              existing = await db.consumption
-                .where('orgId').equals(orgId)
-                .filter(c => c.entryDate === formDate && c.fuelType === ft && c.customerId === custId && !c.isPourBack)
-                .first()
-            }
-            // If removing consumption (qty=0 or no customer), find any matching record by date + fuel for cleanup
-            if (!existing && !(qty > 0 && custId)) {
-              existing = await db.consumption
-                .where('orgId').equals(orgId)
-                .filter(c => c.entryDate === formDate && c.fuelType === ft && !c.isPourBack)
-                .first()
-            }
-          }
+          if (!(qty > 0 && custId)) continue
 
-          if (qty > 0 && custId) {
-            const price = Number(entry.prices[ft]) || 0
-            const consRecord = {
-              id: existing?.id || crypto.randomUUID(),
-              sourceKey,
-              orgId,
-              entryDate: formDate,
-              customerId: custId,
-              quantity: qty,
-              fuelType: ft,
-              isPourBack: false,
-              price,
-              notes: `${r.nozzle_label || ''} consumption`,
-              createdAt: existing?.createdAt || now,
-              updatedAt: now,
-            }
-            // Delete legacy cons_ entry if migrating
-            if (existing?.id?.startsWith('cons_')) {
-              await db.consumption.delete(existing.id)
-              await consumptionRepo.create(consRecord)
-            } else if (existing) {
-              await consumptionRepo.update(consRecord)
-            } else {
-              await consumptionRepo.create(consRecord)
-            }
-          } else if (existing) {
-            await consumptionRepo.remove(existing.id, orgId)
-          }
+          const ft = r.fuel_type || ''
+          const price = Number(entry.prices[ft]) || 0
+          await consumptionRepo.create({
+            id: crypto.randomUUID(),
+            sourceKey: `${record.id}_${r.pump_id}`,
+            orgId,
+            entryDate: formDate,
+            customerId: custId,
+            quantity: qty,
+            fuelType: ft,
+            isPourBack: false,
+            price,
+            notes: `${r.nozzle_label || ''} consumption`,
+            createdAt: now,
+            updatedAt: now,
+          })
         }
       }
 
