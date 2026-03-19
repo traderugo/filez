@@ -45,7 +45,7 @@ export async function POST(request) {
 
     if (!entry_date) return NextResponse.json({ error: 'Date is required' }, { status: 400 })
     if (!bank_id) return NextResponse.json({ error: 'Bank account is required' }, { status: 400 })
-    if (!['deposit', 'lube-deposit', 'pos'].includes(lodgement_type)) {
+    if (!['deposit', 'lube-deposit', 'pos', 'transfer'].includes(lodgement_type)) {
       return NextResponse.json({ error: 'Invalid lodgement type' }, { status: 400 })
     }
 
@@ -92,7 +92,7 @@ export async function PATCH(request) {
     if (amount !== undefined) updates.amount = Number(amount) || 0
     if (bank_id !== undefined) updates.bank_id = bank_id
     if (lodgement_type !== undefined) {
-      if (!['deposit', 'lube-deposit', 'pos'].includes(lodgement_type)) {
+      if (!['deposit', 'lube-deposit', 'pos', 'transfer'].includes(lodgement_type)) {
         return NextResponse.json({ error: 'Invalid lodgement type' }, { status: 400 })
       }
       updates.lodgement_type = lodgement_type
