@@ -38,8 +38,17 @@ export default function ConsumptionListPage() {
     if (repairing || !orgId) return
     setRepairing(true)
     let created = 0
-    let updated = 0
     try {
+      // 1. Delete ALL non-pour-back consumption entries (wipe clean)
+      const allCons = await db.consumption
+        .where('orgId').equals(orgId)
+        .filter(c => !c.isPourBack)
+        .toArray()
+      for (const old of allCons) {
+        await consumptionRepo.remove(old.id, orgId)
+      }
+
+      // 2. Recreate from daily sales nozzle readings
       const allSales = await db.dailySales.where('orgId').equals(orgId).toArray()
       const now = new Date().toISOString()
 
@@ -48,26 +57,13 @@ export default function ConsumptionListPage() {
         for (const r of readings) {
           const qty = Number(r.consumption) || 0
           const custId = r.consumption_customer_id
-          const ft = r.fuel_type || ''
           if (!(qty > 0 && custId)) continue
 
-          const sourceKey = `${sale.id}_${r.pump_id}`
-          // Check if consumption entry already exists
-          let existing = await db.consumption
-            .where('orgId').equals(orgId)
-            .filter(c => c.sourceKey === sourceKey)
-            .first()
-          if (!existing) {
-            existing = await db.consumption
-              .where('orgId').equals(orgId)
-              .filter(c => c.entryDate === sale.entryDate && c.fuelType === ft && c.customerId === custId && !c.isPourBack)
-              .first()
-          }
-
+          const ft = r.fuel_type || ''
           const price = Number(sale.prices?.[ft]) || 0
-          const consRecord = {
-            id: existing?.id || crypto.randomUUID(),
-            sourceKey,
+          await consumptionRepo.create({
+            id: crypto.randomUUID(),
+            sourceKey: `${sale.id}_${r.pump_id}`,
             orgId,
             entryDate: sale.entryDate,
             customerId: custId,
@@ -76,26 +72,19 @@ export default function ConsumptionListPage() {
             isPourBack: false,
             price,
             notes: `${r.nozzle_label || ''} consumption`,
-            createdAt: existing?.createdAt || now,
+            createdAt: now,
             updatedAt: now,
-          }
-
-          if (existing) {
-            await consumptionRepo.update(consRecord)
-            updated++
-          } else {
-            await consumptionRepo.create(consRecord)
-            created++
-          }
+          })
+          created++
         }
       }
-      setRepairModal({ title: 'Repair Complete', lines: [
+      setRepairModal({ title: 'Rebuild Complete', lines: [
+        `Deleted ${allCons.length} old entries`,
         `Scanned ${allSales.length} daily sales entries`,
-        created > 0 ? `${created} missing consumption entries created` : 'No missing entries found',
-        updated > 0 ? `${updated} existing entries updated` : '',
-      ].filter(Boolean) })
+        `Created ${created} consumption entries from nozzle readings`,
+      ] })
     } catch (err) {
-      setRepairModal({ title: 'Repair Failed', lines: [err.message] })
+      setRepairModal({ title: 'Rebuild Failed', lines: [err.message] })
     }
     setRepairing(false)
   }
