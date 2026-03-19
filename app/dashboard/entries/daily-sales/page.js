@@ -294,12 +294,20 @@ export default function DailySalesFormPage() {
         }
       }
 
+      // Delete ALL non-pour-back consumption entries for this date before saving
+      const oldCons = await db.consumption
+        .where('orgId').equals(orgId)
+        .filter(c => c.entryDate === formDate && !c.isPourBack)
+        .toArray()
+      for (const old of oldCons) {
+        await consumptionRepo.remove(old.id, orgId)
+      }
+
       for (const entry of entries) {
         const readings = entry.nozzleReadings.map(r => ({
           pump_id: r.pump_id,
           nozzle_label: r.label,
           fuel_type: r.fuel_type,
-          // If blank, fall back to the previous day's last closing meter for this nozzle
           closing_meter: r.closing_meter !== '' && r.closing_meter !== undefined
             ? Number(r.closing_meter)
             : (prevClosing[r.pump_id] ?? 0),
@@ -337,21 +345,7 @@ export default function DailySalesFormPage() {
           await dailySalesRepo.create(record)
         }
 
-        // Sync consumption_entries: delete all non-pour-back entries for this date
-        // sourced from this record (by sourceKey) or with no sourceKey (server-synced orphans),
-        // then recreate from current nozzle readings. Prevents phantom entries.
-        const sourcePrefix = `${record.id}_`
-        const oldCons = await db.consumption
-          .where('orgId').equals(orgId)
-          .filter(c => c.entryDate === formDate && !c.isPourBack)
-          .toArray()
-        for (const old of oldCons) {
-          // Delete if: belongs to this record, is a legacy entry, or has no sourceKey (server orphan)
-          if (old.sourceKey?.startsWith(sourcePrefix) || old.id?.startsWith(`cons_${record.id}_`) || !old.sourceKey) {
-            await consumptionRepo.remove(old.id, orgId)
-          }
-        }
-
+        // Recreate consumption entries from nozzle readings
         for (const r of readings) {
           const qty = Number(r.consumption) || 0
           const custId = r.consumption_customer_id
