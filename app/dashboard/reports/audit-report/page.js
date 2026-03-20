@@ -666,7 +666,7 @@ function LodgementSheet({ report }) {
                 <td className={cellR}>{fmt(tTransfer)}</td>
                 <td className={cellR}>{fmt(cashSales)}</td>
                 <td className={cellR}>{fmt(row.actual)}</td>
-                <td className={`${cellR} font-bold ${row.ovsh !== 0 ? 'text-red-600' : ''}`}>
+                <td className={`${cellR} font-bold ${row.ovsh > 0 ? 'text-green-600' : row.ovsh < 0 ? 'text-red-600' : ''}`}>
                   {fmtOvsh(row.ovsh)}
                 </td>
               </tr>
@@ -691,7 +691,7 @@ function LodgementSheet({ report }) {
                 <td className={cellR}>{fmt(gTransfer)}</td>
                 <td className={cellR}>{fmt(gCash)}</td>
                 <td className={cellR}>{fmt(totals.actual)}</td>
-                <td className={`${cellR} ${totals.ovsh !== 0 ? 'text-red-600' : ''}`}>
+                <td className={`${cellR} ${totals.ovsh > 0 ? 'text-green-600' : totals.ovsh < 0 ? 'text-red-600' : ''}`}>
                   {fmtOvsh(totals.ovsh)}
                 </td>
               </tr>
