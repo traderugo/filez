@@ -71,6 +71,21 @@ export default function CustomerPaymentsFormPage() {
             notes: e.notes || '',
           })))
         }
+      } else {
+        // Create mode: auto-load existing entries for today's date
+        const today = new Date().toISOString().split('T')[0]
+        const all = await db.customerPayments.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === today)
+        if (dateEntries.length > 0 && !cancelled) {
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => ({
+            _key: e.id, id: e.id,
+            customerId: e.customerId || '',
+            amountPaid: String(e.amountPaid ?? ''),
+            salesAmount: String(e.salesAmount ?? ''),
+            notes: e.notes || '',
+          })))
+        }
       }
 
       if (!cancelled) {
@@ -84,6 +99,27 @@ export default function CustomerPaymentsFormPage() {
     return () => { cancelled = true }
   }, [editId, editDate, orgId])
 
+  // When date changes in create mode, auto-load existing entries for that date
+  const handleDateChange = async (newDate) => {
+    setFormDate(newDate)
+    if (editId || editDate || !orgId || !newDate) return
+    const all = await db.customerPayments.where('orgId').equals(orgId).toArray()
+    const dateEntries = all.filter(e => e.entryDate === newDate)
+    if (dateEntries.length > 0) {
+      setOriginalIds(dateEntries.map(e => e.id))
+      setEntries(dateEntries.map(e => ({
+        _key: e.id, id: e.id,
+        customerId: e.customerId || '',
+        amountPaid: String(e.amountPaid ?? ''),
+        salesAmount: String(e.salesAmount ?? ''),
+        notes: e.notes || '',
+      })))
+    } else {
+      setOriginalIds([])
+      setEntries([blankEntry()])
+    }
+  }
+
   const updateEntry = (idx, field, value) => {
     setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
   }
@@ -95,7 +131,7 @@ export default function CustomerPaymentsFormPage() {
     setEntries(prev => prev.filter((_, i) => i !== idx))
   }
 
-  const isEditing = !!(editId || editDate)
+  const isEditing = !!(editId || editDate || originalIds.length > 0)
 
   const submittingRef = useRef(false)
   const handleSubmit = async (e) => {
@@ -183,7 +219,7 @@ export default function CustomerPaymentsFormPage() {
         {/* Shared date */}
         <div className="border border-gray-300 mb-4">
           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Transaction Date</label>
-          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
         </div>
 
         {/* Entry cards */}

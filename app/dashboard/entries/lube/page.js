@@ -112,10 +112,9 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate }) {
   const [entries, setEntries] = useState([blankSalesEntry()])
   const [originalIds, setOriginalIds] = useState([])
 
-  const isEditing = !!(editId || editDate)
+  const isEditing = !!(editId || editDate || originalIds.length > 0)
 
   useEffect(() => {
-    if (!editId && !editDate) return
     const load = async () => {
       if (editId) {
         const entry = await lubeSalesRepo.getById(editId)
@@ -146,11 +145,49 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate }) {
             notes: e.notes || '',
           })))
         }
+      } else {
+        // Create mode: auto-load existing entries for today's date
+        const today = new Date().toISOString().split('T')[0]
+        const all = await db.lubeSales.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === today)
+        if (dateEntries.length > 0) {
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => ({
+            _key: e.id, id: e.id,
+            productId: e.productId || '',
+            unitSold: String(e.unitSold ?? ''),
+            unitReceived: String(e.unitReceived ?? ''),
+            price: String(e.price ?? ''),
+            notes: e.notes || '',
+          })))
+        }
       }
       setLoading(false)
     }
     load()
   }, [editId, editDate, orgId])
+
+  // When date changes in create mode, auto-load existing entries for that date
+  const handleDateChange = async (newDate) => {
+    setFormDate(newDate)
+    if (editId || editDate || !orgId || !newDate) return
+    const all = await db.lubeSales.where('orgId').equals(orgId).toArray()
+    const dateEntries = all.filter(e => e.entryDate === newDate)
+    if (dateEntries.length > 0) {
+      setOriginalIds(dateEntries.map(e => e.id))
+      setEntries(dateEntries.map(e => ({
+        _key: e.id, id: e.id,
+        productId: e.productId || '',
+        unitSold: String(e.unitSold ?? ''),
+        unitReceived: String(e.unitReceived ?? ''),
+        price: String(e.price ?? ''),
+        notes: e.notes || '',
+      })))
+    } else {
+      setOriginalIds([])
+      setEntries([blankSalesEntry()])
+    }
+  }
 
   const updateEntry = (idx, field, value) => {
     setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
@@ -222,7 +259,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate }) {
       {/* Shared date */}
       <div className="border border-gray-300 mb-4">
         <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-        <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+        <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
       </div>
 
       {/* Entry cards */}
@@ -293,10 +330,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate }) {
   const [entries, setEntries] = useState([blankStockEntry()])
   const [originalIds, setOriginalIds] = useState([])
 
-  const isEditing = !!(editId || editDate)
-
   useEffect(() => {
-    if (!editId && !editDate) return
     const load = async () => {
       if (editId) {
         const entry = await lubeStockRepo.getById(editId)
@@ -323,11 +357,47 @@ function LubeStockForm({ products, qs, orgId, editId, editDate }) {
             notes: e.notes || '',
           })))
         }
+      } else {
+        // Create mode: auto-load existing entries for today's date
+        const today = new Date().toISOString().split('T')[0]
+        const all = await db.lubeStock.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === today)
+        if (dateEntries.length > 0) {
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => ({
+            _key: e.id, id: e.id,
+            productId: e.productId || '',
+            stock: String(e.stock ?? ''),
+            notes: e.notes || '',
+          })))
+        }
       }
       setLoading(false)
     }
     load()
   }, [editId, editDate, orgId])
+
+  // When date changes in create mode, auto-load existing entries for that date
+  const handleStockDateChange = async (newDate) => {
+    setFormDate(newDate)
+    if (editId || editDate || !orgId || !newDate) return
+    const all = await db.lubeStock.where('orgId').equals(orgId).toArray()
+    const dateEntries = all.filter(e => e.entryDate === newDate)
+    if (dateEntries.length > 0) {
+      setOriginalIds(dateEntries.map(e => e.id))
+      setEntries(dateEntries.map(e => ({
+        _key: e.id, id: e.id,
+        productId: e.productId || '',
+        stock: String(e.stock ?? ''),
+        notes: e.notes || '',
+      })))
+    } else {
+      setOriginalIds([])
+      setEntries([blankStockEntry()])
+    }
+  }
+
+  const isEditing = !!(editId || editDate || originalIds.length > 0)
 
   const updateEntry = (idx, field, value) => {
     setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
@@ -397,7 +467,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate }) {
       {/* Shared date */}
       <div className="border border-gray-300 mb-4">
         <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-        <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+        <DateInput value={formDate} onChange={handleStockDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
       </div>
 
       {/* Entry cards */}

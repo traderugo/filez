@@ -165,6 +165,18 @@ export default function DailySalesFormPage() {
           const built = dateEntries.map(e => entryFromRecord(e, noz, tnk))
           setEntries(await backfillCustomerIds(built, editDate))
         }
+      } else {
+        // Create mode: auto-load existing entries for today's date
+        const today = new Date().toISOString().split('T')[0]
+        const all = await db.dailySales.where('orgId').equals(orgId).toArray()
+        const dateEntries = all
+          .filter(e => (e.entryDate || e.entry_date) === today)
+          .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0))
+        if (dateEntries.length > 0 && !cancelled) {
+          setOriginalIds(dateEntries.map(e => e.id))
+          const built = dateEntries.map(e => entryFromRecord(e, noz, tnk))
+          setEntries(await backfillCustomerIds(built, today))
+        }
       }
 
       if (!cancelled) {
@@ -210,7 +222,24 @@ export default function DailySalesFormPage() {
     load()
   }, [orgId, formDate])
 
-  const isEditing = !!(editId || editDate)
+  // When date changes in create mode, auto-load existing entries for that date
+  const handleDateChange = async (newDate) => {
+    setFormDate(newDate)
+    if (editId || editDate || !orgId || !newDate) return
+    const all = await db.dailySales.where('orgId').equals(orgId).toArray()
+    const dateEntries = all
+      .filter(e => (e.entryDate || e.entry_date) === newDate)
+      .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0))
+    if (dateEntries.length > 0) {
+      setOriginalIds(dateEntries.map(e => e.id))
+      setEntries(dateEntries.map(e => entryFromRecord(e, nozzles, tanks)))
+    } else {
+      setOriginalIds([])
+      setEntries([blankEntry(nozzles, tanks)])
+    }
+  }
+
+  const isEditing = !!(editId || editDate || originalIds.length > 0)
 
   const updateEntry = (idx, field, value) => {
     setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
@@ -418,7 +447,7 @@ export default function DailySalesFormPage() {
         {/* Shared date */}
         <div className="border border-gray-300 mb-4">
           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
         </div>
 
         {/* Entry tabs */}

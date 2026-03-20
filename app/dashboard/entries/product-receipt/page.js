@@ -118,6 +118,15 @@ export default function ProductReceiptFormPage() {
           setOriginalIds(dateEntries.map(e => e.id))
           setEntries(groupRecordsIntoEntries(dateEntries, tnk))
         }
+      } else {
+        // Create mode: auto-load existing entries for today's date
+        const today = new Date().toISOString().split('T')[0]
+        const all = await db.productReceipts.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === today)
+        if (dateEntries.length > 0 && !cancelled) {
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(groupRecordsIntoEntries(dateEntries, tnk))
+        }
       }
 
       if (!cancelled) {
@@ -132,7 +141,22 @@ export default function ProductReceiptFormPage() {
     return () => { cancelled = true }
   }, [editId, editDate, orgId])
 
-  const isEditing = !!(editId || editDate)
+  const isEditing = !!(editId || editDate || originalIds.length > 0)
+
+  // When date changes in create mode, auto-load existing entries for that date
+  const handleDateChange = async (newDate) => {
+    setFormDate(newDate)
+    if (editId || editDate || !orgId || !newDate) return
+    const all = await db.productReceipts.where('orgId').equals(orgId).toArray()
+    const dateEntries = all.filter(e => e.entryDate === newDate)
+    if (dateEntries.length > 0) {
+      setOriginalIds(dateEntries.map(e => e.id))
+      setEntries(groupRecordsIntoEntries(dateEntries, tanks))
+    } else {
+      setOriginalIds([])
+      setEntries([blankEntry(tanks)])
+    }
+  }
 
   const updateEntry = (idx, field, value) => {
     setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
@@ -246,7 +270,7 @@ export default function ProductReceiptFormPage() {
         {/* Shared date */}
         <div className="border border-gray-300 mb-4">
           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-          <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
         </div>
 
         {/* Entry tabs */}

@@ -74,6 +74,22 @@ export default function LodgementsFormPage() {
             notes: e.notes || '',
           })))
         }
+      } else {
+        // Create mode: auto-load existing entries for today's date
+        const today = new Date().toISOString().split('T')[0]
+        const all = await db.lodgements.where('orgId').equals(orgId).toArray()
+        const dateEntries = all.filter(e => e.entryDate === today)
+        if (dateEntries.length > 0 && !cancelled) {
+          setOriginalIds(dateEntries.map(e => e.id))
+          setEntries(dateEntries.map(e => ({
+            _key: e.id, id: e.id,
+            amount: String(e.amount ?? ''),
+            bankId: e.bankId || '',
+            lodgementType: e.lodgementType || 'deposit',
+            salesDate: e.salesDate || '',
+            notes: e.notes || '',
+          })))
+        }
       }
 
       if (!cancelled) {
