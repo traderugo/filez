@@ -195,21 +195,22 @@ export default function DailySalesFormPage() {
   useEffect(() => {
     if (!orgId || !formDate) return
     const load = async () => {
-      const prevDate = new Date(formDate)
-      prevDate.setDate(prevDate.getDate() - 1)
-      const prevDateStr = prevDate.toISOString().split('T')[0]
+      // Find the last entry before formDate (any previous date, not just yesterday)
+      const allSales = await db.dailySales.where('orgId').equals(orgId).toArray()
+      const prevEntries = allSales
+        .filter(e => (e.entryDate || e.entry_date) < formDate)
+        .sort((a, b) => (b.entryDate || b.entry_date || '').localeCompare(a.entryDate || a.entry_date || ''))
 
-      const prevDayEntries = await db.dailySales
-        .where('orgId').equals(orgId)
-        .filter(e => (e.entryDate || e.entry_date) === prevDateStr)
-        .toArray()
+      if (!prevEntries.length) { setPrevClosing({}); return }
 
-      if (!prevDayEntries.length) { setPrevClosing({}); return }
+      // Get entries from the most recent previous date
+      const lastDate = prevEntries[0].entryDate || prevEntries[0].entry_date
+      const lastDateEntries = prevEntries.filter(e => (e.entryDate || e.entry_date) === lastDate)
 
       // Prefer the close-of-business entry; otherwise use the latest by createdAt
       const lastEntry =
-        prevDayEntries.find(e => e.closeOfBusiness || e.close_of_business) ||
-        prevDayEntries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
+        lastDateEntries.find(e => e.closeOfBusiness || e.close_of_business) ||
+        lastDateEntries.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0]
 
       const map = {}
       for (const r of (lastEntry?.nozzleReadings || [])) {
