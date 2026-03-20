@@ -413,7 +413,6 @@ function DailySalesReportContent() {
                 <thead>
                   <tr className={subHdr}>
                     <th className={`${cell} text-left font-bold`}></th>
-                    <th className={`${cellR} font-bold`}>P/b</th>
                     <th className={`${cellR} font-bold`}>Sales</th>
                     <th className={`${cellR} font-bold`}>Amount</th>
                   </tr>
@@ -422,39 +421,24 @@ function DailySalesReportContent() {
                   {report.fuelTypes.map(ft => (
                     <tr key={ft}>
                       <td className={`${cell} font-bold`}>{ft}</td>
-                      <td className={cellR}>{fmt(currentDayReport.dayFuelTotals[ft]?.pourBack)}</td>
                       <td className={cellR}>{fmt(currentDayReport.dayFuelTotals[ft]?.actual)}</td>
                       <td className={cellR}>{fmt(currentDayReport.dayFuelTotals[ft]?.amount)}</td>
                     </tr>
                   ))}
                   <tr className={`${subHdr} font-bold`}>
-                    <td colSpan={3} className={cell}>SALES</td>
+                    <td colSpan={2} className={cell}>SALES</td>
                     <td className={cellR}>{fmt(currentDayReport.totalSales)}</td>
                   </tr>
-                  {currentDayReport.lodgement.bankRows
-                    .filter(r => r.lodgementType !== 'bank_deposit' && r.deposited > 0)
-                    .map(row => (
-                      <tr key={row.bankId}>
-                        <td colSpan={3} className={`${cell} text-xs pl-3`}>
-                          {row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}
-                          {row.lodgementType !== 'pos' && row.lodgementType !== 'transfer' && (
-                            <span className="text-gray-400 ml-1">({row.lodgementType})</span>
-                          )}
-                        </td>
-                        <td className={cellR}>{fmt(row.deposited)}</td>
-                      </tr>
-                    ))
-                  }
                   <tr className="font-bold">
-                    <td colSpan={3} className={cell}>TOTAL POS</td>
+                    <td colSpan={2} className={cell}>TOTAL POS</td>
                     <td className={cellR}>{fmt(currentDayReport.lodgement.totalPOS)}</td>
                   </tr>
                   <tr className="font-bold">
-                    <td colSpan={3} className={cell}>TOTAL TRANSFER</td>
+                    <td colSpan={2} className={cell}>TOTAL TRANSFER</td>
                     <td className={cellR}>{fmt(currentDayReport.lodgement.totalTransfer)}</td>
                   </tr>
                   <tr className={`${subHdr} font-bold`}>
-                    <td colSpan={3} className={cell}>CASH</td>
+                    <td colSpan={2} className={cell}>CASH</td>
                     <td className={cellR}>{fmt(currentDayReport.cashBalance)}</td>
                   </tr>
                 </tbody>
