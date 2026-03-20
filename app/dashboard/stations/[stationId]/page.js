@@ -14,7 +14,7 @@ import Modal from '@/components/Modal'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { format, differenceInDays } from 'date-fns'
 import { db } from '@/lib/db'
-import { processQueue } from '@/lib/sync'
+import { processQueue, clearQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -83,6 +83,8 @@ export default function StationPage() {
   const [refreshing, setRefreshing] = useState(false)
   const refreshingRef = useRef(false)
   const [syncModal, setSyncModal] = useState(null) // { title, lines[] }
+  const [clearConfirm, setClearConfirm] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   const pendingCount = useLiveQuery(
     () => stationId ? db.syncQueue.where('orgId').equals(stationId).count() : 0,
@@ -157,6 +159,27 @@ export default function StationPage() {
     refreshingRef.current = false
   }, [stationId])
 
+  const handleClearQueue = async () => {
+    setClearing(true)
+    try {
+      const result = await clearQueue(stationId)
+      const lines = []
+      if (result.cleared === 0) {
+        lines.push('Queue was already empty.')
+      } else {
+        lines.push(`${result.cleared} queued item${result.cleared > 1 ? 's' : ''} cleared`)
+        if (result.reverted > 0) {
+          lines.push(`${result.reverted} unsaved entr${result.reverted > 1 ? 'ies' : 'y'} removed from local data`)
+        }
+        lines.push('', 'Pull from server to restore your data.')
+      }
+      setSyncModal({ title: 'Queue Cleared', lines })
+    } catch {
+      setSyncModal({ title: 'Error', lines: ['Failed to clear queue.'] })
+    }
+    setClearing(false)
+    setClearConfirm(false)
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -353,7 +376,7 @@ export default function StationPage() {
         <button
           onClick={handleSync}
           disabled={syncing || pendingCount === 0}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-40 ${
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
             pendingCount > 0
               ? 'bg-yellow-500 text-white hover:bg-yellow-600'
               : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
@@ -370,7 +393,7 @@ export default function StationPage() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-40 ${
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
             pendingPullCount > 0
               ? 'bg-blue-500 text-white hover:bg-blue-600'
               : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
@@ -387,6 +410,15 @@ export default function StationPage() {
         <span className="text-xs text-gray-400">
           {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
         </span>
+        {pendingCount > 0 && (
+          <button
+            onClick={() => setClearConfirm(true)}
+            disabled={clearing}
+            className="text-xs text-red-500 hover:text-red-700 font-medium"
+          >
+            Clear
+          </button>
+        )}
         {consolidationCountdown && (
           <span className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
             <Clock className="w-3.5 h-3.5" />
@@ -800,6 +832,39 @@ export default function StationPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Clear Queue Confirmation Modal */}
+      <Modal open={clearConfirm} onClose={() => setClearConfirm(false)} title="Clear Pending Items?">
+        <div className="space-y-3">
+          <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-gray-700">
+              <p className="font-medium mb-1">This will:</p>
+              <ul className="list-disc ml-4 space-y-1">
+                <li>Remove all {pendingCount} pending item{pendingCount > 1 ? 's' : ''} from the queue</li>
+                <li>Delete any new entries that haven&apos;t been pushed yet</li>
+              </ul>
+              <p className="mt-2 text-gray-500">You can pull from the server afterwards to restore your data.</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setClearConfirm(false)}
+              className="flex-1 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleClearQueue}
+              disabled={clearing}
+              className="flex-1 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {clearing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Clear Queue
+            </button>
+          </div>
+        </div>
       </Modal>
 
       {/* Sync Result Modal */}

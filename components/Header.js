@@ -1,8 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft, Home } from 'lucide-react'
+import { ChevronLeft, Home, Loader2 } from 'lucide-react'
 
 // Map paths to page titles. Back always uses router.back().
 const PAGE_TITLES = {
@@ -30,6 +31,9 @@ const PAGE_TITLES = {
   '/dashboard/reports/summary': 'Summary',
   '/dashboard/reports/daily-sales-report': 'Daily Sales Report',
   '/dashboard/reports/audit-report': 'Audit Report',
+  '/dashboard/reports/account-ledger': 'Account Ledger',
+  '/dashboard/reports/product-received': 'Product Received',
+  '/dashboard/reports/dip-calculator': 'Dip Calculator',
 
   // Admin
   '/admin': 'Subscriptions',
@@ -65,6 +69,10 @@ export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [navigating, setNavigating] = useState(false)
+
+  // Reset spinner when route changes
+  useEffect(() => { setNavigating(false) }, [pathname])
 
   const isAuth = pathname.startsWith('/auth')
   if (isAuth) return null
@@ -76,6 +84,14 @@ export default function Header() {
   const stationMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)/)
   const stationId = stationMatch ? stationMatch[1] : searchParams.get('org_id')
   const homeHref = stationId ? `/dashboard/stations/${stationId}` : '/dashboard'
+  const isAlreadyHome = pathname === homeHref
+
+  const handleHomeClick = (e) => {
+    e.preventDefault()
+    if (isAlreadyHome || navigating) return
+    setNavigating(true)
+    router.push(homeHref)
+  }
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
@@ -92,9 +108,10 @@ export default function Header() {
 
         <Link
           href={homeHref}
+          onClick={handleHomeClick}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition-colors"
         >
-          <Home className="w-4 h-4" />
+          {navigating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Home className="w-4 h-4" />}
           <span>Home</span>
         </Link>
       </div>

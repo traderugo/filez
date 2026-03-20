@@ -7,6 +7,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, Calculator } from 'lucide-react'
 import { db } from '@/lib/db'
 import DateInput from '@/components/DateInput'
+import { fmtDate } from '@/lib/formatDate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -146,7 +147,7 @@ function ProductReceivedReportContent() {
 
   const hdr = 'bg-blue-600 text-white'
   const bdr = 'border border-blue-200'
-  const cell = `${bdr} px-2 py-1`
+  const cell = `${bdr} px-2 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
   return (
@@ -182,7 +183,7 @@ function ProductReceivedReportContent() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4">
+      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-gray-200">
         {!generated ? (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
@@ -210,6 +211,7 @@ function ProductReceivedReportContent() {
                 <th className={`${cell} ${hdr} text-left`}>Waybill No.</th>
                 <th className={`${cell} ${hdr} text-right`}>Shortage</th>
                 <th className={`${cell} ${hdr} text-left`}>Depot</th>
+                <th className={`${cell} ${hdr} text-center`}></th>
               </tr>
             </thead>
             <tbody>
@@ -217,8 +219,8 @@ function ProductReceivedReportContent() {
                 const shortageColor = row.shortage > 0 ? 'text-red-600 font-medium' : row.shortage < 0 ? 'text-green-600 font-medium' : ''
                 return (
                   <tr key={i} className="hover:bg-blue-50/40">
-                    <td className={cell}>{row.dischargeDate ? formatDate(row.dischargeDate) : '—'}</td>
-                    <td className={cell}>{row.loadingDate ? formatDate(row.loadingDate) : '—'}</td>
+                    <td className={cell}>{row.dischargeDate ? fmtDate(row.dischargeDate) : '—'}</td>
+                    <td className={cell}>{row.loadingDate ? fmtDate(row.loadingDate) : '—'}</td>
                     <td className={cell}>{row.product}</td>
                     <td className={cellR}>{fmt(row.qtyLoaded)}</td>
                     <td className={cellR}>{fmt(row.qtySupplied)}</td>
@@ -228,6 +230,15 @@ function ProductReceivedReportContent() {
                     <td className={cell}>{row.waybillNumber || '—'}</td>
                     <td className={`${cellR} ${shortageColor}`}>{fmt(row.shortage)}</td>
                     <td className={cell}>{row.depot || '—'}</td>
+                    <td className={`${cell} text-center`}>
+                      <Link
+                        href={`/dashboard/reports/dip-calculator?org_id=${orgId}`}
+                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                        title="Dip Calculator"
+                      >
+                        <Calculator className="w-3.5 h-3.5" />
+                      </Link>
+                    </td>
                   </tr>
                 )
               })}
@@ -242,6 +253,7 @@ function ProductReceivedReportContent() {
                   {fmt(deliveries.totalShortage)}
                 </td>
                 <td className={cell}></td>
+                <td className={cell}></td>
               </tr>
             </tfoot>
           </table>
@@ -251,10 +263,3 @@ function ProductReceivedReportContent() {
   )
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  const d = new Date(dateStr + 'T00:00:00')
-  const day = d.getDate()
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`
-}

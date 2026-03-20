@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { buildAuditReport } from '@/lib/buildAuditReport'
 import { exportAuditExcel } from '@/lib/exportAuditExcel'
 import DateInput from '@/components/DateInput'
+import { fmtDate as fmtDateShared } from '@/lib/formatDate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -291,7 +292,7 @@ function AuditReportContent() {
 
       {/* Report content */}
       {report ? (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-gray-200">
           <div className="px-4 sm:px-8 py-4">
             {activeTab === 'sales-cash' && (
               <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
@@ -354,10 +355,7 @@ function SalesCashPosition({ report, startDate, endDate }) {
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
-  const formatDate = (d) => {
-    const dt = new Date(d + 'T00:00:00')
-    return dt.toLocaleDateString('en-NG', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  }
+  const formatDate = fmtDateShared
 
   return (
     <div className="min-w-[700px] pb-4 px-[10%]">
@@ -399,10 +397,7 @@ function SalesCashPosition({ report, startDate, endDate }) {
 }
 
 function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr, cell, cellR }) {
-  const formatDate = (d) => {
-    const dt = new Date(d + 'T00:00:00')
-    return dt.toLocaleDateString('en-NG', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  }
+  const formatDate = fmtDateShared
 
   return (
     <div className="mb-4">
@@ -526,10 +521,7 @@ function MeterGroup({ row, rowIdx, totalRows, cell, cellR }) {
 }
 
 function CashReconciliation({ data, startDate, endDate, hdr, subHdr, cell, cellR }) {
-  const formatDate = (d) => {
-    const dt = new Date(d + 'T00:00:00')
-    return dt.toLocaleDateString('en-NG', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  }
+  const formatDate = fmtDateShared
 
   const overshortColor = data.overshort < 0 ? 'text-red-600' : data.overshort > 0 ? 'text-green-600' : ''
 
@@ -583,14 +575,11 @@ function LodgementSheet({ report }) {
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-600'
   const bdr = 'border border-blue-200'
-  const cell = `${bdr} px-1.5 py-1`
+  const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
-  const cellEmpty = `${bdr} px-1.5 py-1 bg-gray-50`
+  const cellEmpty = `${bdr} px-1.5 py-1 whitespace-nowrap bg-gray-50`
 
-  const fmtDate = (d) => {
-    const dt = new Date(d + 'T00:00:00')
-    return `${dt.getDate()}-${dt.getMonth() + 1}-${dt.getFullYear()}`
-  }
+  const fmtDate = fmtDateShared
 
   const fmtOvsh = (v) => {
     if (v === 0) return ''
@@ -599,7 +588,7 @@ function LodgementSheet({ report }) {
 
   const sumBanks = (amounts, list) => list.reduce((s, b) => s + (amounts[b.id] || 0), 0)
 
-  const totalCols = 4 + displayBanks.length + 5
+  const totalCols = 4 + displayBanks.length + 6
   const visibleRows = rows.filter(r => r.hasData)
 
   return (
@@ -626,6 +615,7 @@ function LodgementSheet({ report }) {
             <th className={`${cellR} font-bold`}>Expected</th>
             <th className={`${cellR} font-bold`}>Actual</th>
             <th className={`${cellR} font-bold`}>OV/SH</th>
+            <th className={`${cell} font-bold`}>Date Lodged</th>
           </tr>
           {displayBanks.length > 0 && (
             <tr className={subHdr}>
@@ -638,6 +628,7 @@ function LodgementSheet({ report }) {
                   {bank.bank_name}{bank.lodgement_type === 'transfer' ? ' (T)' : ''}
                 </th>
               ))}
+              <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
               <th className={cell}></th>
@@ -669,6 +660,7 @@ function LodgementSheet({ report }) {
                 <td className={`${cellR} font-bold ${row.ovsh > 0 ? 'text-green-600' : row.ovsh < 0 ? 'text-red-600' : ''}`}>
                   {fmtOvsh(row.ovsh)}
                 </td>
+                <td className={cell}>{row.dateLodged ? fmtDate(row.dateLodged) : ''}</td>
               </tr>
             )
           })}
@@ -694,6 +686,7 @@ function LodgementSheet({ report }) {
                 <td className={`${cellR} ${totals.ovsh > 0 ? 'text-green-600' : totals.ovsh < 0 ? 'text-red-600' : ''}`}>
                   {fmtOvsh(totals.ovsh)}
                 </td>
+                <td className={cell}></td>
               </tr>
             )
           })()}
@@ -717,10 +710,7 @@ function StockPosition({ report }) {
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
-  const fmtDate = (d) => {
-    const dt = new Date(d + 'T00:00:00')
-    return `${dt.getDate()}-${dt.getMonth() + 1}-${dt.getFullYear()}`
-  }
+  const fmtDate = fmtDateShared
 
   const ovshColor = (v) => {
     if (v == null || v === 0) return ''

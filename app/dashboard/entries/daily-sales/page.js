@@ -444,7 +444,17 @@ export default function DailySalesFormPage() {
           </Link>
       </div>
 
-      <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
+      <form onSubmit={handleSubmit} onFocus={(e) => { if (e.target.tagName === 'INPUT' && (e.target.type === 'number' || e.target.type === 'text')) e.target.select() }} onKeyDown={(e) => {
+        if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) {
+          e.preventDefault()
+          const allFields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea'))
+          const curIdx = allFields.indexOf(e.target)
+          if (curIdx < 0) return
+          for (let i = curIdx + 1; i < allFields.length; i++) {
+            if (!allFields[i].dataset.skipEnter) { allFields[i].focus(); return }
+          }
+        }
+      }}>
         {/* Shared date */}
         <div className="border border-gray-300 mb-4">
           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
@@ -525,7 +535,7 @@ export default function DailySalesFormPage() {
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
                           <div className="flex items-center">
-                            <input type="number" value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            <input type="number" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                             {Number(r.consumption) > 0 && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${custName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={custName || 'Attach account'}>
                                 <User className="w-4 h-4" />

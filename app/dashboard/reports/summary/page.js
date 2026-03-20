@@ -231,7 +231,7 @@ function SummaryContent() {
           <p className="text-gray-400 text-sm">No data for this period.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto min-h-0 mb-3 px-1 sm:px-[15%]">
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-200 px-1 sm:px-[15%]">
           {/* 1. Closing Meter Readings per entry */}
           {dayReport.entryGroups.map((group, groupIdx) => (
             <div key={group.entryIndex} className="mb-4">

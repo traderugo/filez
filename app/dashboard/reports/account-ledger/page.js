@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { DEFAULT_PHONE } from '@/lib/defaultAccounts'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
+import { fmtDate } from '@/lib/formatDate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -19,12 +20,6 @@ function fmtBal(n) {
   const v = Number(n)
   if (v < 0) return `(${fmt(Math.abs(v))})`
   return fmt(v)
-}
-
-function fmtDate(d) {
-  if (!d) return ''
-  const dt = new Date(d + 'T00:00:00')
-  return dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 const PAGE_SIZE = 15
@@ -261,8 +256,8 @@ function AccountLedgerContent() {
   if (!orgId) return <div className="p-6 text-gray-500">No station selected.</div>
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-5xl mx-auto px-4 sm:px-6">
+      <div className="shrink-0 pt-4 flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold">Account Ledger</h1>
         {!showNewForm && (
           <button
@@ -333,7 +328,7 @@ function AccountLedgerContent() {
       )}
 
       {/* Controls */}
-      <div className="flex flex-wrap gap-3 items-end mb-6">
+      <div className="shrink-0 flex flex-wrap gap-3 items-end mb-4">
         <div>
           <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
           <DateInput value={startDate} onChange={setStartDate} className="w-36 px-2 py-2 border border-gray-300 text-sm font-medium" />
@@ -367,97 +362,100 @@ function AccountLedgerContent() {
         </div>
       </div>
 
-      {creditCustomers.length === 0 && !showNewForm && (
-        <p className="text-gray-500 text-sm">No credit customers configured.</p>
-      )}
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-gray-200">
+        {creditCustomers.length === 0 && !showNewForm && (
+          <p className="text-gray-500 text-sm p-4">No credit customers configured.</p>
+        )}
 
-      {/* Two accounts — merged journal */}
-      {selectedAccounts.length === 2 && mergedJournal && (
-        <MergedJournalTable data={mergedJournal} startDate={startDate} endDate={endDate} />
-      )}
+        {/* Two accounts — merged journal */}
+        {selectedAccounts.length === 2 && mergedJournal && (
+          <MergedJournalTable data={mergedJournal} startDate={startDate} endDate={endDate} />
+        )}
 
-      {/* Single account — full journal view */}
-      {selectedAccounts.length === 1 && selectedData[0] && (
-        <JournalTable data={selectedData[0]} startDate={startDate} endDate={endDate} />
-      )}
+        {/* Single account — full journal view */}
+        {selectedAccounts.length === 1 && selectedData[0] && (
+          <JournalTable data={selectedData[0]} startDate={startDate} endDate={endDate} />
+        )}
 
-      {/* All accounts — simple clickable list */}
-      {selectedAccounts.length === 0 && pagedData.length > 0 && (
-        <>
-          {/* Grand totals summary */}
-          <table className="w-full border-collapse border border-gray-200 mb-4">
-            <thead>
-              <tr className={hdr}>
-                <th className={cell + ' text-left'}>All Accounts ({sortedAll.length})</th>
-                <th className={cell + ' text-right'}>Opening Bal</th>
-                <th className={cell + ' text-right'}>Debit (Dr)</th>
-                <th className={cell + ' text-right'}>Credit (Cr)</th>
-                <th className={cell + ' text-right'}>Closing Bal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="bg-gray-50 font-bold">
-                <td className={cell}>Totals</td>
-                <td className={cellR}>{fmtBal(totals.openingBalance)}</td>
-                <td className={cellR}>{fmt(totals.totalDebit)}</td>
-                <td className={cellR}>{fmt(totals.totalCredit)}</td>
-                <td className={cellR}>{fmtBal(totals.closingBalance)}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Account list */}
-          <table className="w-full border-collapse border border-gray-200">
-            <thead>
-              <tr className="bg-gray-100 text-sm font-semibold">
-                <th className={cell + ' text-left'}>Account</th>
-                <th className={cell + ' text-right'}>Opening Bal</th>
-                <th className={cell + ' text-right'}>Debit (Dr)</th>
-                <th className={cell + ' text-right'}>Credit (Cr)</th>
-                <th className={cell + ' text-right'}>Closing Bal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pagedData.map(acct => (
-                <tr
-                  key={acct.id}
-                  onClick={() => handleAccountChange(acct.id)}
-                  className="cursor-pointer hover:bg-blue-50"
-                >
-                  <td className={cell + ' text-blue-600 font-medium'}>{acct.name}</td>
-                  <td className={cellR}>{fmtBal(acct.openingBalance)}</td>
-                  <td className={cellR}>{acct.totalDebit ? fmt(acct.totalDebit) : ''}</td>
-                  <td className={cellR}>{acct.totalCredit ? fmt(acct.totalCredit) : ''}</td>
-                  <td className={cellR + ' font-medium'}>{fmtBal(acct.closingBalance)}</td>
+        {/* All accounts — simple clickable list */}
+        {selectedAccounts.length === 0 && pagedData.length > 0 && (
+          <div className="p-2">
+            {/* Grand totals summary */}
+            <table className="w-full border-collapse border border-gray-200 mb-4">
+              <thead>
+                <tr className={hdr}>
+                  <th className={cell + ' text-left'}>All Accounts ({sortedAll.length})</th>
+                  <th className={cell + ' text-right'}>Opening Bal</th>
+                  <th className={cell + ' text-right'}>Debit (Dr)</th>
+                  <th className={cell + ' text-right'}>Credit (Cr)</th>
+                  <th className={cell + ' text-right'}>Closing Bal</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <tr className="bg-gray-50 font-bold">
+                  <td className={cell}>Totals</td>
+                  <td className={cellR}>{fmtBal(totals.openingBalance)}</td>
+                  <td className={cellR}>{fmt(totals.totalDebit)}</td>
+                  <td className={cellR}>{fmt(totals.totalCredit)}</td>
+                  <td className={cellR}>{fmtBal(totals.closingBalance)}</td>
+                </tr>
+              </tbody>
+            </table>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 mt-6">
-              <button
-                onClick={() => setPage(p => p - 1)}
-                disabled={page === 0}
-                className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                <ChevronLeft className="w-4 h-4" /> Prev
-              </button>
-              <span className="text-sm text-gray-600">
-                Page {page + 1} of {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={page >= totalPages - 1}
-                className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                Next <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-        </>
-      )}
+            {/* Account list */}
+            <table className="w-full border-collapse border border-gray-200">
+              <thead>
+                <tr className="bg-gray-100 text-sm font-semibold">
+                  <th className={cell + ' text-left'}>Account</th>
+                  <th className={cell + ' text-right'}>Opening Bal</th>
+                  <th className={cell + ' text-right'}>Debit (Dr)</th>
+                  <th className={cell + ' text-right'}>Credit (Cr)</th>
+                  <th className={cell + ' text-right'}>Closing Bal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pagedData.map(acct => (
+                  <tr
+                    key={acct.id}
+                    onClick={() => handleAccountChange(acct.id)}
+                    className="cursor-pointer hover:bg-blue-50"
+                  >
+                    <td className={cell + ' text-blue-600 font-medium'}>{acct.name}</td>
+                    <td className={cellR}>{fmtBal(acct.openingBalance)}</td>
+                    <td className={cellR}>{acct.totalDebit ? fmt(acct.totalDebit) : ''}</td>
+                    <td className={cellR}>{acct.totalCredit ? fmt(acct.totalCredit) : ''}</td>
+                    <td className={cellR + ' font-medium'}>{fmtBal(acct.closingBalance)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-6">
+                <button
+                  onClick={() => setPage(p => p - 1)}
+                  disabled={page === 0}
+                  className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Prev
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {page + 1} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={page >= totalPages - 1}
+                  className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
