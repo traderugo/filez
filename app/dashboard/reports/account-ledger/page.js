@@ -3,7 +3,7 @@
 import { Suspense, useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Loader2, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { DEFAULT_PHONE } from '@/lib/defaultAccounts'
 import DateInput from '@/components/DateInput'
@@ -48,7 +48,7 @@ function AccountLedgerContent() {
 
   const [startDate, setStartDate] = useState(monthStartStr)
   const [endDate, setEndDate] = useState(todayStr)
-  const [selectedAccount, setSelectedAccount] = useState('__all__')
+  const [selectedAccounts, setSelectedAccounts] = useState([])
   const [page, setPage] = useState(0)
 
   // New account form
@@ -80,6 +80,14 @@ function AccountLedgerContent() {
     { value: '__all__', label: 'All Accounts' },
     ...creditCustomers.map(c => ({ value: c.id, label: c.name || 'Unnamed' })),
   ], [creditCustomers])
+
+  // Labels for selected accounts
+  const selectedLabels = useMemo(() => {
+    return selectedAccounts.map(id => {
+      const c = creditCustomers.find(c => c.id === id)
+      return { id, name: c?.name || 'Unnamed' }
+    })
+  }, [selectedAccounts, creditCustomers])
 
   // Build ledger data for ALL accounts (needed for "All" view pagination)
   const allLedgerData = useMemo(() => {
@@ -128,11 +136,39 @@ function AccountLedgerContent() {
     })
   }, [creditCustomers, allPayments, startDate, endDate])
 
-  // Single account data
-  const singleAccountData = useMemo(() => {
-    if (selectedAccount === '__all__') return null
-    return allLedgerData.find(d => d.id === selectedAccount) || null
-  }, [allLedgerData, selectedAccount])
+  // Selected accounts data
+  const selectedData = useMemo(() => {
+    return selectedAccounts.map(id => allLedgerData.find(d => d.id === id)).filter(Boolean)
+  }, [allLedgerData, selectedAccounts])
+
+  // Two-account merged journal
+  const mergedJournal = useMemo(() => {
+    if (selectedData.length !== 2) return null
+    const [a, b] = selectedData
+    const combinedOpening = a.openingBalance + b.openingBalance
+    const allRows = [
+      ...a.rows.map(r => ({ ...r, account: a.name })),
+      ...b.rows.map(r => ({ ...r, account: b.name })),
+    ].sort((x, y) => (x.date || '').localeCompare(y.date || '') || (x.id || '').localeCompare(y.id || ''))
+
+    let balance = combinedOpening
+    const rows = allRows.map(r => {
+      balance += r.debit - r.credit
+      return { ...r, balance }
+    })
+
+    const totalDebit = rows.reduce((s, r) => s + r.debit, 0)
+    const totalCredit = rows.reduce((s, r) => s + r.credit, 0)
+
+    return {
+      names: [a.name, b.name],
+      openingBalance: combinedOpening,
+      closingBalance: combinedOpening + totalDebit - totalCredit,
+      totalDebit,
+      totalCredit,
+      rows,
+    }
+  }, [selectedData])
 
   // "All" view: sorted by most debt, paginated
   const sortedAll = useMemo(() => {
@@ -155,9 +191,18 @@ function AccountLedgerContent() {
     }), { openingBalance: 0, totalDebit: 0, totalCredit: 0, closingBalance: 0 })
   }, [allLedgerData])
 
-  // Reset page when switching views
+  // Toggle account selection (max 2)
   const handleAccountChange = useCallback((val) => {
-    setSelectedAccount(val)
+    if (val === '__all__') {
+      setSelectedAccounts([])
+      setPage(0)
+      return
+    }
+    setSelectedAccounts(prev => {
+      if (prev.includes(val)) return prev.filter(id => id !== val)
+      if (prev.length >= 2) return [prev[1], val]
+      return [...prev, val]
+    })
     setPage(0)
   }, [])
 
@@ -202,14 +247,12 @@ function AccountLedgerContent() {
       setNewPhone('')
       setNewBalance('')
       setShowNewForm(false)
-      setSelectedAccount(newId)
+      setSelectedAccounts([newId])
     } catch {
       setNewError('Failed to create account')
     }
     setSavingNew(false)
   }
-
-  const isSingleAccount = selectedAccount !== '__all__'
 
   const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
@@ -300,13 +343,27 @@ function AccountLedgerContent() {
           <DateInput value={endDate} onChange={setEndDate} className="w-36 px-2 py-2 border border-gray-300 text-sm font-medium" />
         </div>
         <div className="min-w-[200px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Account</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Account (select up to 2)</label>
           <SearchableSelect
-            value={selectedAccount}
+            value={selectedAccounts.length === 0 ? '__all__' : ''}
             onChange={handleAccountChange}
             options={accountOptions}
             placeholder="Select account..."
           />
+          {selectedLabels.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {selectedLabels.map(s => (
+                <span
+                  key={s.id}
+                  className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 cursor-pointer hover:bg-blue-200"
+                  onClick={() => handleAccountChange(s.id)}
+                >
+                  {s.name}
+                  <X className="w-3 h-3" />
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -314,13 +371,18 @@ function AccountLedgerContent() {
         <p className="text-gray-500 text-sm">No credit customers configured.</p>
       )}
 
-      {/* Single account — full journal view */}
-      {isSingleAccount && singleAccountData && (
-        <JournalTable data={singleAccountData} startDate={startDate} endDate={endDate} />
+      {/* Two accounts — merged journal */}
+      {selectedAccounts.length === 2 && mergedJournal && (
+        <MergedJournalTable data={mergedJournal} startDate={startDate} endDate={endDate} />
       )}
 
-      {/* All accounts — paginated, each as standalone journal table */}
-      {!isSingleAccount && pagedData.length > 0 && (
+      {/* Single account — full journal view */}
+      {selectedAccounts.length === 1 && selectedData[0] && (
+        <JournalTable data={selectedData[0]} startDate={startDate} endDate={endDate} />
+      )}
+
+      {/* All accounts — simple clickable list */}
+      {selectedAccounts.length === 0 && pagedData.length > 0 && (
         <>
           {/* Grand totals summary */}
           <table className="w-full border-collapse border border-gray-200 mb-4">
@@ -344,18 +406,33 @@ function AccountLedgerContent() {
             </tbody>
           </table>
 
-          {/* Per-account journal tables */}
-          <div className="space-y-6">
-            {pagedData.map(acct => (
-              <JournalTable
-                key={acct.id}
-                data={acct}
-                startDate={startDate}
-                endDate={endDate}
-                onSelect={() => handleAccountChange(acct.id)}
-              />
-            ))}
-          </div>
+          {/* Account list */}
+          <table className="w-full border-collapse border border-gray-200">
+            <thead>
+              <tr className="bg-gray-100 text-sm font-semibold">
+                <th className={cell + ' text-left'}>Account</th>
+                <th className={cell + ' text-right'}>Opening Bal</th>
+                <th className={cell + ' text-right'}>Debit (Dr)</th>
+                <th className={cell + ' text-right'}>Credit (Cr)</th>
+                <th className={cell + ' text-right'}>Closing Bal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pagedData.map(acct => (
+                <tr
+                  key={acct.id}
+                  onClick={() => handleAccountChange(acct.id)}
+                  className="cursor-pointer hover:bg-blue-50"
+                >
+                  <td className={cell + ' text-blue-600 font-medium'}>{acct.name}</td>
+                  <td className={cellR}>{fmtBal(acct.openingBalance)}</td>
+                  <td className={cellR}>{acct.totalDebit ? fmt(acct.totalDebit) : ''}</td>
+                  <td className={cellR}>{acct.totalCredit ? fmt(acct.totalCredit) : ''}</td>
+                  <td className={cellR + ' font-medium'}>{fmtBal(acct.closingBalance)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -385,19 +462,14 @@ function AccountLedgerContent() {
   )
 }
 
-function JournalTable({ data, startDate, endDate, onSelect }) {
+function JournalTable({ data, startDate, endDate }) {
   const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
   const hdr = 'bg-blue-600 text-white font-bold text-sm'
 
   return (
     <div>
-      <h2
-        className={`text-sm font-bold mb-2 ${onSelect ? 'text-blue-600 cursor-pointer hover:underline' : ''}`}
-        onClick={onSelect}
-      >
-        {data.name}
-      </h2>
+      <h2 className="text-sm font-bold mb-2">{data.name}</h2>
       <table className="w-full border-collapse border border-gray-200">
         <thead>
           <tr className={hdr}>
@@ -440,6 +512,68 @@ function JournalTable({ data, startDate, endDate, onSelect }) {
           {/* Closing balance / totals */}
           <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
             <td className={cell}>{fmtDate(endDate)}</td>
+            <td className={cell}>Closing Balance</td>
+            <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
+            <td className={cellR}>{data.totalCredit ? fmt(data.totalCredit) : ''}</td>
+            <td className={cellR}>{fmtBal(data.closingBalance)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function MergedJournalTable({ data, startDate, endDate }) {
+  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
+  const cellR = cell + ' text-right'
+  const hdr = 'bg-blue-600 text-white font-bold text-sm'
+
+  return (
+    <div>
+      <h2 className="text-sm font-bold mb-2">{data.names.join(' & ')}</h2>
+      <table className="w-full border-collapse border border-gray-200">
+        <thead>
+          <tr className={hdr}>
+            <th className={cell + ' text-left w-24'}>Date</th>
+            <th className={cell + ' text-left'}>Account</th>
+            <th className={cell + ' text-left'}>Particulars</th>
+            <th className={cell + ' text-right w-28'}>Debit (Dr)</th>
+            <th className={cell + ' text-right w-28'}>Credit (Cr)</th>
+            <th className={cell + ' text-right w-32'}>Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="bg-gray-50 font-semibold">
+            <td className={cell}>{fmtDate(startDate)}</td>
+            <td className={cell}></td>
+            <td className={cell}>Opening Balance</td>
+            <td className={cellR}></td>
+            <td className={cellR}></td>
+            <td className={cellR}>{fmtBal(data.openingBalance)}</td>
+          </tr>
+
+          {data.rows.map((row, i) => (
+            <tr key={`${row.id}-${i}`}>
+              <td className={cell}>{fmtDate(row.date)}</td>
+              <td className={cell + ' text-xs text-gray-500'}>{row.account}</td>
+              <td className={cell}>{row.particulars}</td>
+              <td className={cellR}>{row.debit ? fmt(row.debit) : ''}</td>
+              <td className={cellR}>{row.credit ? fmt(row.credit) : ''}</td>
+              <td className={cellR + ' font-medium'}>{fmtBal(row.balance)}</td>
+            </tr>
+          ))}
+
+          {data.rows.length === 0 && (
+            <tr>
+              <td colSpan={6} className={cell + ' text-center text-gray-400 italic'}>
+                No transactions in this period
+              </td>
+            </tr>
+          )}
+
+          <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
+            <td className={cell}>{fmtDate(endDate)}</td>
+            <td className={cell}></td>
             <td className={cell}>Closing Balance</td>
             <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
             <td className={cellR}>{data.totalCredit ? fmt(data.totalCredit) : ''}</td>

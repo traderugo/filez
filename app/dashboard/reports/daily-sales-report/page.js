@@ -305,26 +305,6 @@ function DailySalesReportContent() {
                         hdr={hdr}
                       />
                     ))}
-                    {currentDayReport.entryCount > 1 && (
-                      <tr className={`${hdr} font-bold`}>
-                        <td className={cell}>DAY TOTAL</td>
-                        <td className={cellR}></td>
-                        <td className={cellR}></td>
-                        <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].dispensed, 0))}
-                        </td>
-                        <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].consumed, 0))}
-                        </td>
-                        <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].actual, 0))}
-                        </td>
-                        <td className={cellR}></td>
-                        <td className={cellR}>
-                          {fmt(report.fuelTypes.reduce((s, ft) => s + currentDayReport.dayFuelTotals[ft].amount, 0))}
-                        </td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>

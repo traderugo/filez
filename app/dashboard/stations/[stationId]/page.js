@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users, Flame,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen
+  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -18,13 +18,26 @@ import { processQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
 import { supabase } from '@/lib/supabaseClient'
 
-const PAGE_OPTIONS = [
+const ENTRY_PAGE_OPTIONS = [
   { key: 'daily-sales', label: 'Daily Sales' },
   { key: 'product-receipt', label: 'Product Receipt' },
   { key: 'lodgements', label: 'Lodgements' },
   { key: 'lube', label: 'Lube' },
   { key: 'customer-payments', label: 'Accounts' },
   { key: 'consumption', label: 'Consumption' },
+]
+
+const REPORT_PAGE_OPTIONS = [
+  { key: 'report-summary', label: 'Summary' },
+  { key: 'report-daily-sales', label: 'Daily Sales Report' },
+  { key: 'report-audit', label: 'Audit Report' },
+  { key: 'report-account-ledger', label: 'Account Ledger' },
+  { key: 'report-product-received', label: 'Product Received' },
+]
+
+const ALL_PAGE_KEYS = [
+  ...ENTRY_PAGE_OPTIONS.map(p => p.key),
+  ...REPORT_PAGE_OPTIONS.map(p => p.key),
 ]
 
 export default function StationPage() {
@@ -48,6 +61,10 @@ export default function StationPage() {
   // Delete staff modal
   const [deleteModal, setDeleteModal] = useState(null) // { id, email }
   const [deleting, setDeleting] = useState(false)
+
+  // Staff page access
+  const [visiblePages, setVisiblePages] = useState(ALL_PAGE_KEYS) // default: all visible
+  const [accessDeniedModal, setAccessDeniedModal] = useState(false)
 
   // Subscription (owner only)
   const [subscription, setSubscription] = useState(null)
@@ -174,6 +191,13 @@ export default function StationPage() {
           const dashData = await dashRes.json()
           setSubscription(dashData.subscription || null)
         }
+      } else {
+        // Staff — fetch their visible_pages
+        const permRes = await fetch(`/api/invites?org_id=${stationId}`)
+        if (permRes.ok) {
+          const permData = await permRes.json()
+          if (permData.visiblePages) setVisiblePages(permData.visiblePages)
+        }
       }
       setLoading(false)
     }
@@ -290,20 +314,23 @@ export default function StationPage() {
     )
   }
 
+  const canAccess = (pageKey) => isOwner || visiblePages.includes(pageKey)
+
   const entryLinks = [
-    { href: `/dashboard/entries/daily-sales/list?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, pricing' },
-    { href: `/dashboard/entries/product-receipt/list?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries and waybills' },
-    { href: `/dashboard/entries/lodgements/list?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS' },
-    { href: `/dashboard/entries/lube/list?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock' },
-    { href: `/dashboard/entries/customer-payments/list?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments' },
-    { href: `/dashboard/entries/consumption/list?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back' },
+    { href: `/dashboard/entries/daily-sales/list?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, pricing', pageKey: 'daily-sales' },
+    { href: `/dashboard/entries/product-receipt/list?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries and waybills', pageKey: 'product-receipt' },
+    { href: `/dashboard/entries/lodgements/list?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS', pageKey: 'lodgements' },
+    { href: `/dashboard/entries/lube/list?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock', pageKey: 'lube' },
+    { href: `/dashboard/entries/customer-payments/list?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments', pageKey: 'customer-payments' },
+    { href: `/dashboard/entries/consumption/list?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back', pageKey: 'consumption' },
   ]
 
   const reportLinks = [
-    { href: `/dashboard/reports/summary?org_id=${stationId}`, icon: FileText, label: 'Summary', desc: 'Overview summary report' },
-    { href: `/dashboard/reports/daily-sales-report?org_id=${stationId}`, icon: BarChart3, label: 'Daily Sales Report', desc: 'Nozzle sales, POS, and cash' },
-    { href: `/dashboard/reports/audit-report?org_id=${stationId}`, icon: ClipboardList, label: 'Audit Report', desc: 'Station audit trail' },
-    { href: `/dashboard/reports/account-ledger?org_id=${stationId}`, icon: BookOpen, label: 'Account Ledger', desc: 'Credit accounts and balances' },
+    { href: `/dashboard/reports/summary?org_id=${stationId}`, icon: FileText, label: 'Summary', desc: 'Overview summary report', pageKey: 'report-summary' },
+    { href: `/dashboard/reports/daily-sales-report?org_id=${stationId}`, icon: BarChart3, label: 'Daily Sales Report', desc: 'Nozzle sales, POS, and cash', pageKey: 'report-daily-sales' },
+    { href: `/dashboard/reports/audit-report?org_id=${stationId}`, icon: ClipboardList, label: 'Audit Report', desc: 'Station audit trail', pageKey: 'report-audit' },
+    { href: `/dashboard/reports/account-ledger?org_id=${stationId}`, icon: BookOpen, label: 'Account Ledger', desc: 'Credit accounts and balances', pageKey: 'report-account-ledger' },
+    { href: `/dashboard/reports/product-received?org_id=${stationId}`, icon: Truck, label: 'Product Received', desc: 'Deliveries, waybills, shortages', pageKey: 'report-product-received' },
   ]
 
   return (
@@ -322,91 +349,105 @@ export default function StationPage() {
       </div>
 
       {/* Sync controls */}
-      <div className="mb-8 bg-gray-50 border border-gray-200 p-3">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSync}
-            disabled={syncing || pendingCount === 0}
-            className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
-              pendingCount > 0
-                ? 'border-yellow-300 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
-            Push
-            {pendingCount > 0 && (
-              <span className="bg-yellow-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {pendingCount > 9 ? '9+' : pendingCount}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className={`relative flex items-center gap-2 px-4 py-2 text-sm font-medium border transition-colors disabled:opacity-40 ${
-              pendingPullCount > 0
-                ? 'border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
-            Pull
-            {pendingPullCount > 0 && (
-              <span className="bg-blue-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {pendingPullCount > 9 ? '9+' : pendingPullCount}
-              </span>
-            )}
-          </button>
-          <span className="ml-auto text-xs text-gray-400">
-            {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
-          </span>
-        </div>
+      <div className="mb-8 flex items-center gap-3 flex-wrap">
+        <button
+          onClick={handleSync}
+          disabled={syncing || pendingCount === 0}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-40 ${
+            pendingCount > 0
+              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
+          Push
+          {pendingCount > 0 && (
+            <span className="bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {pendingCount > 9 ? '9+' : pendingCount}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-all disabled:opacity-40 ${
+            pendingPullCount > 0
+              ? 'bg-blue-500 text-white hover:bg-blue-600'
+              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+          }`}
+        >
+          {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
+          Pull
+          {pendingPullCount > 0 && (
+            <span className="bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {pendingPullCount > 9 ? '9+' : pendingPullCount}
+            </span>
+          )}
+        </button>
+        <span className="text-xs text-gray-400">
+          {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
+        </span>
         {consolidationCountdown && (
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200 text-xs text-gray-400">
-            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-            Next consolidation in <span className="font-mono text-gray-500">{consolidationCountdown}</span>
-          </div>
+          <span className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
+            <Clock className="w-3.5 h-3.5" />
+            <span className="font-mono text-gray-500">{consolidationCountdown}</span>
+          </span>
         )}
       </div>
-
-      {/* Entries */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Entries</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {entryLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="flex flex-col gap-2 border border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-            >
-              <link.icon className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">{link.label}</p>
-                <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
 
       {/* Reports */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Reports</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {reportLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="flex flex-col gap-2 border border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
-            >
-              <link.icon className="w-5 h-5 text-blue-600" />
-              <div>
-                <p className="text-sm font-medium text-gray-900">{link.label}</p>
-                <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
-              </div>
-            </Link>
-          ))}
+          {reportLinks.map((link) => {
+            const allowed = canAccess(link.pageKey)
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
+                className={`flex flex-col gap-2 border p-4 transition-colors ${
+                  allowed
+                    ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
+                    : 'border-gray-100 opacity-50'
+                }`}
+              >
+                <link.icon className={`w-5 h-5 ${allowed ? 'text-blue-600' : 'text-gray-400'}`} />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{link.label}</p>
+                  <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* Entries */}
+      <section className="mb-8">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Entries</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {entryLinks.map((link) => {
+            const allowed = canAccess(link.pageKey)
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
+                className={`flex flex-col gap-2 border p-4 transition-colors ${
+                  allowed
+                    ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
+                    : 'border-gray-100 opacity-50'
+                }`}
+              >
+                <link.icon className={`w-5 h-5 ${allowed ? 'text-blue-600' : 'text-gray-400'}`} />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{link.label}</p>
+                  <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       </section>
 
@@ -545,9 +586,23 @@ export default function StationPage() {
                     {/* Expanded: page permissions + delete */}
                     {isExpanded && (
                       <div className="border-t border-gray-100 px-3 py-3 bg-gray-50">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Page Access</p>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Entries</p>
+                        <div className="space-y-2 mb-3">
+                          {ENTRY_PAGE_OPTIONS.map((page) => (
+                            <label key={page.key} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={pages.includes(page.key)}
+                                onChange={() => togglePagePermission(inv.id, page.key, pages)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                              />
+                              <span className="text-sm text-gray-700">{page.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Reports</p>
                         <div className="space-y-2 mb-4">
-                          {PAGE_OPTIONS.map((page) => (
+                          {REPORT_PAGE_OPTIONS.map((page) => (
                             <label key={page.key} className="flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
@@ -754,6 +809,24 @@ export default function StationPage() {
             <p key={i} className="text-sm text-gray-700">{line}</p>
           ))}
           <button onClick={() => setSyncModal(null)} className="w-full mt-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+            OK
+          </button>
+        </div>
+      </Modal>
+
+      {/* Access Denied Modal */}
+      <Modal open={accessDeniedModal} onClose={() => setAccessDeniedModal(false)} title="Access Denied">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded">
+            <ShieldX className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-red-700">
+              You don&apos;t have permission to access this page. Contact the station owner to update your access.
+            </p>
+          </div>
+          <button
+            onClick={() => setAccessDeniedModal(false)}
+            className="w-full py-2 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 rounded"
+          >
             OK
           </button>
         </div>

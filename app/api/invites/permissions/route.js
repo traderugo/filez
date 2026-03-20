@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 
-const VALID_PAGES = ['dso', 'lube']
+const VALID_PAGES = [
+  'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments', 'consumption',
+  'report-summary', 'report-daily-sales', 'report-audit', 'report-account-ledger', 'report-product-received',
+]
 
 // PATCH — manager updates visible_pages for a staff invite
 export async function PATCH(request) {

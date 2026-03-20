@@ -31,7 +31,10 @@ export async function GET(request) {
         .eq('org_id', org_id)
         .eq('status', 'accepted')
         .single()
-      visiblePages = membership?.visible_pages ?? ['dso', 'lube']
+      visiblePages = membership?.visible_pages ?? [
+        'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments', 'consumption',
+        'report-summary', 'report-daily-sales', 'report-audit', 'report-account-ledger', 'report-product-received',
+      ]
     }
 
     return NextResponse.json({ invites: invites || [], visiblePages })
