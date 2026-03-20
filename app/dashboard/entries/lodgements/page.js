@@ -109,8 +109,24 @@ export default function LodgementsFormPage() {
     }
   }
 
+  // Map bank lodgement_type to form lodgementType
+  const bankTypeToFormType = (bankType) => {
+    if (bankType === 'pos') return 'pos'
+    if (bankType === 'transfer') return 'transfer'
+    return 'deposit'
+  }
+
   const updateEntry = (idx, field, value) => {
-    setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
+    setEntries(prev => prev.map((e, i) => {
+      if (i !== idx) return e
+      const updated = { ...e, [field]: value }
+      // Auto-set lodgementType when bank changes
+      if (field === 'bankId') {
+        const bank = banks.find(b => b.id === value)
+        if (bank) updated.lodgementType = bankTypeToFormType(bank.lodgement_type)
+      }
+      return updated
+    }))
   }
 
   const addEntry = () => setEntries(prev => [...prev, blankEntry()])
@@ -239,17 +255,12 @@ export default function LodgementsFormPage() {
             </div>
             <div className="grid grid-cols-2 divide-x divide-gray-300">
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Type</label>
-                <select value={entry.lodgementType} onChange={(e) => updateEntry(idx, 'lodgementType', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50">
-                  <option value="deposit">Deposit</option>
-                  <option value="lube-deposit">Lube Deposit</option>
-                  <option value="pos">POS</option>
-                  <option value="transfer">Transfer</option>
-                </select>
-              </div>
-              <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Date</label>
                 <DateInput value={entry.salesDate} onChange={(v) => updateEntry(idx, 'salesDate', v)} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Type</label>
+                <div className="px-3 py-2.5 text-base text-gray-500 capitalize">{entry.lodgementType || '—'}</div>
               </div>
             </div>
             <div>
