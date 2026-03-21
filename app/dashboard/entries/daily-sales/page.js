@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User, X } from 'lucide-react'
+import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User, X, Check } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
@@ -82,6 +82,7 @@ export default function DailySalesFormPage() {
   const [customers, setCustomers] = useState([])
 
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
   const [entries, setEntries] = useState([])
@@ -345,12 +346,14 @@ export default function DailySalesFormPage() {
 
       }
 
+      setSaving(false)
+      setSaved(true)
       router.push(`/dashboard/entries/daily-sales/list?${qs}`)
     } catch (err) {
       setError('Failed to save')
+      setSaving(false)
+      submittingRef.current = false
     }
-    setSaving(false)
-    submittingRef.current = false
   }
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
@@ -540,9 +543,10 @@ export default function DailySalesFormPage() {
 
         <div className="flex gap-2 mt-3">
           <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
-          <button type="submit" disabled={saving} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50">
+          <button type="submit" disabled={saving || saved} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isEditing ? 'Update' : 'Save All'}
+            {saved && <Check className="w-4 h-4" />}
+            {saved ? 'Saved!' : isEditing ? 'Update' : 'Save All'}
           </button>
         </div>
       </form>
