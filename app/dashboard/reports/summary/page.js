@@ -83,10 +83,6 @@ function SummaryContent() {
     () => orgId ? db.lodgements.where('orgId').equals(orgId).toArray() : [],
     [orgId]
   )
-  const liveConsumption = useLiveQuery(
-    () => orgId ? db.consumption.where('orgId').equals(orgId).toArray() : [],
-    [orgId]
-  )
   const liveCustomers = useLiveQuery(
     () => orgId ? db.customers.where('orgId').equals(orgId).toArray() : [],
     [orgId]
@@ -99,19 +95,18 @@ function SummaryContent() {
 
   const report = useMemo(() => {
     if (!generated || !reportStart || !reportEnd) return null
-    if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements || !liveConsumption) return null
+    if (loading || !orgId || !nozzles.length || !liveSales || !liveReceipts || !liveLodgements) return null
     return buildDailyReport({
       sales: liveSales,
       receipts: liveReceipts,
       lodgements: liveLodgements,
-      consumption: liveConsumption,
       nozzles,
       tanks,
       banks,
       startDate: reportStart,
       endDate: reportEnd,
     })
-  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements, liveConsumption])
+  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, banks, liveSales, liveReceipts, liveLodgements])
 
   // Current day index and report
   const dayIndex = useMemo(() => {

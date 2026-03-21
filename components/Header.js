@@ -24,8 +24,6 @@ const PAGE_TITLES = {
   '/dashboard/entries/lube/list': 'Lube Entries',
   '/dashboard/entries/customer-payments': 'Account Payment',
   '/dashboard/entries/customer-payments/list': 'Account Entries',
-  '/dashboard/entries/consumption': 'Consumption',
-  '/dashboard/entries/consumption/list': 'Consumption Entries',
 
   // Reports
   '/dashboard/reports/summary': 'Summary',

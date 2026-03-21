@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 
 const VALID_PAGES = [
-  'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments', 'consumption',
+  'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments',
   'report-summary', 'report-daily-sales', 'report-audit', 'report-account-ledger', 'report-product-received',
 ]
 

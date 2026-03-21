@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User, X } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
-import { consumptionRepo } from '@/lib/repositories/consumption'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
@@ -120,31 +119,6 @@ export default function DailySalesFormPage() {
       cust.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
       setCustomers(cust)
 
-      // Backfill missing consumption_customer_id from consumption_entries in IndexedDB
-      async function backfillCustomerIds(formEntries, date) {
-        const consEntries = await db.consumption
-          .where('orgId').equals(orgId)
-          .filter(c => c.entryDate === date)
-          .toArray()
-        if (!consEntries.length) return formEntries
-
-        return formEntries.map(fe => ({
-          ...fe,
-          nozzleReadings: fe.nozzleReadings.map(r => {
-            if (r.consumption_customer_id || !Number(r.consumption)) return r
-            // Match by fuel type and quantity
-            const match = consEntries.find(c =>
-              c.fuelType === r.fuel_type && c.quantity === Number(r.consumption)
-            )
-            if (match) return { ...r, consumption_customer_id: match.customerId }
-            // Fall back to matching by fuel type only (single customer for that fuel)
-            const byFuel = consEntries.filter(c => c.fuelType === r.fuel_type)
-            if (byFuel.length === 1) return { ...r, consumption_customer_id: byFuel[0].customerId }
-            return r
-          }),
-        }))
-      }
-
       if (editId) {
         const entry = await dailySalesRepo.getById(editId)
         if (entry && !cancelled) {
@@ -152,7 +126,7 @@ export default function DailySalesFormPage() {
           setFormDate(date)
           setOriginalIds([entry.id])
           const built = [entryFromRecord(entry, noz, tnk)]
-          setEntries(await backfillCustomerIds(built, date))
+          setEntries(built)
         }
       } else if (editDate) {
         const all = await db.dailySales.where('orgId').equals(orgId).toArray()
@@ -163,7 +137,7 @@ export default function DailySalesFormPage() {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
           const built = dateEntries.map(e => entryFromRecord(e, noz, tnk))
-          setEntries(await backfillCustomerIds(built, editDate))
+          setEntries(built)
         }
       } else {
         // Create mode: auto-load existing entries for today's date
@@ -175,7 +149,7 @@ export default function DailySalesFormPage() {
         if (dateEntries.length > 0 && !cancelled) {
           setOriginalIds(dateEntries.map(e => e.id))
           const built = dateEntries.map(e => entryFromRecord(e, noz, tnk))
-          setEntries(await backfillCustomerIds(built, today))
+          setEntries(built)
         }
       }
 
@@ -327,15 +301,6 @@ export default function DailySalesFormPage() {
         }
       }
 
-      // Delete ALL non-pour-back consumption entries for this date before saving
-      const oldCons = await db.consumption
-        .where('orgId').equals(orgId)
-        .filter(c => c.entryDate === formDate && !c.isPourBack)
-        .toArray()
-      for (const old of oldCons) {
-        await consumptionRepo.remove(old.id, orgId)
-      }
-
       for (const entry of entries) {
         const readings = entry.nozzleReadings.map(r => ({
           pump_id: r.pump_id,
@@ -378,29 +343,6 @@ export default function DailySalesFormPage() {
           await dailySalesRepo.create(record)
         }
 
-        // Recreate consumption entries from nozzle readings
-        for (const r of readings) {
-          const qty = Number(r.consumption) || 0
-          const custId = r.consumption_customer_id
-          if (!(qty > 0 && custId)) continue
-
-          const ft = r.fuel_type || ''
-          const price = Number(entry.prices[ft]) || 0
-          await consumptionRepo.create({
-            id: crypto.randomUUID(),
-            sourceKey: `${record.id}_${r.pump_id}`,
-            orgId,
-            entryDate: formDate,
-            customerId: custId,
-            quantity: qty,
-            fuelType: ft,
-            isPourBack: false,
-            price,
-            notes: `${r.nozzle_label || ''} consumption`,
-            createdAt: now,
-            updatedAt: now,
-          })
-        }
       }
 
       router.push(`/dashboard/entries/daily-sales/list?${qs}`)

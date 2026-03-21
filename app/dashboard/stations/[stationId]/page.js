@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
-  FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users, Flame,
+  FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
   FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck
 } from 'lucide-react'
@@ -24,7 +24,6 @@ const ENTRY_PAGE_OPTIONS = [
   { key: 'lodgements', label: 'Lodgements' },
   { key: 'lube', label: 'Lube' },
   { key: 'customer-payments', label: 'Accounts' },
-  { key: 'consumption', label: 'Consumption' },
 ]
 
 const REPORT_PAGE_OPTIONS = [
@@ -142,7 +141,7 @@ export default function StationPage() {
     if (refreshingRef.current || !stationId) return
     setRefreshing(true)
     refreshingRef.current = true
-    const tables = ['dailySales', 'productReceipts', 'lodgements', 'lubeSales', 'lubeStock', 'customerPayments', 'consumption']
+    const tables = ['dailySales', 'productReceipts', 'lodgements', 'lubeSales', 'lubeStock', 'customerPayments']
     let syncResult = null
     try {
       syncResult = await initialSync(stationId, { force: true })
@@ -345,7 +344,6 @@ export default function StationPage() {
     { href: `/dashboard/entries/lodgements/list?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS', pageKey: 'lodgements' },
     { href: `/dashboard/entries/lube/list?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock', pageKey: 'lube' },
     { href: `/dashboard/entries/customer-payments/list?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments', pageKey: 'customer-payments' },
-    { href: `/dashboard/entries/consumption/list?org_id=${stationId}`, icon: Flame, label: 'Consumption', desc: 'Fuel consumption and pour back', pageKey: 'consumption' },
   ]
 
   const reportLinks = [

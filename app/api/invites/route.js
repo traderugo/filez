@@ -32,7 +32,7 @@ export async function GET(request) {
         .eq('status', 'accepted')
         .single()
       visiblePages = membership?.visible_pages ?? [
-        'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments', 'consumption',
+        'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments',
         'report-summary', 'report-daily-sales', 'report-audit', 'report-account-ledger', 'report-product-received',
       ]
     }

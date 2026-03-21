@@ -134,10 +134,6 @@ function AuditReportContent() {
     () => orgId ? db.lodgements.where('orgId').equals(orgId).toArray() : [],
     [orgId]
   )
-  const liveConsumption = useLiveQuery(
-    () => orgId ? db.consumption.where('orgId').equals(orgId).toArray() : [],
-    [orgId]
-  )
   const liveCustomers = useLiveQuery(
     () => orgId ? db.customers.where('orgId').equals(orgId).toArray() : [],
     [orgId]
@@ -165,12 +161,11 @@ function AuditReportContent() {
 
   const report = useMemo(() => {
     if (!generated || !reportStart || !reportEnd) return null
-    if (loading || !orgId || !nozzles.length || !liveSales || !liveLodgements || !liveConsumption) return null
+    if (loading || !orgId || !nozzles.length || !liveSales || !liveLodgements) return null
 
     return buildAuditReport({
       sales: liveSales,
       lodgements: liveLodgements,
-      consumption: liveConsumption,
       receipts: liveReceipts || [],
       nozzles,
       banks,
@@ -179,7 +174,7 @@ function AuditReportContent() {
       startDate: reportStart,
       endDate: reportEnd,
     })
-  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, banks, tanks, liveSales, liveLodgements, liveConsumption, liveCustomers, liveReceipts])
+  }, [generated, reportStart, reportEnd, loading, orgId, nozzles, banks, tanks, liveSales, liveLodgements, liveCustomers, liveReceipts])
 
   const dateRangeDays = useMemo(() => {
     if (!startDate || !endDate) return 0

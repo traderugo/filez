@@ -8,7 +8,6 @@ const TABLES = [
   { server: 'lube_sales_entries',        key: 'lubeSales' },
   { server: 'lube_stock_entries',        key: 'lubeStock' },
   { server: 'customer_payment_entries',  key: 'customerPayments' },
-  { server: 'consumption_entries',       key: 'consumption' },
 ]
 
 /**
