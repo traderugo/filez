@@ -252,27 +252,21 @@ function LubeReportContent() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
-      {/* Header */}
-      <div className="shrink-0 py-4 flex flex-wrap items-center gap-2">
-        <h1 className="text-lg font-bold text-gray-900 mr-auto">Lube Report</h1>
-        <DateInput
-          value={startDate}
-          onChange={setStartDate}
-          className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <span className="text-sm text-gray-400">to</span>
-        <DateInput
-          value={endDate}
-          onChange={setEndDate}
-          className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={handleGenerate}
-          disabled={!startDate || !endDate || startDate > endDate}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-        >
-          Generate
-        </button>
+      {/* Header + date range */}
+      <div className="flex items-center justify-between py-3 shrink-0">
+        <h1 className="text-lg font-bold text-gray-900">Lube Report</h1>
+        <div className="flex items-center gap-2">
+          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
+          <span className="text-sm text-gray-400">to</span>
+          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
+          <button
+            onClick={handleGenerate}
+            disabled={!startDate || !endDate || startDate > endDate}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          >
+            Generate
+          </button>
+        </div>
       </div>
 
       {/* Content */}

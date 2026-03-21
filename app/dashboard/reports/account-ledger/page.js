@@ -136,15 +136,13 @@ function AccountLedgerContent() {
     return selectedAccounts.map(id => allLedgerData.find(d => d.id === id)).filter(Boolean)
   }, [allLedgerData, selectedAccounts])
 
-  // Two-account merged journal
+  // Multi-account merged journal
   const mergedJournal = useMemo(() => {
-    if (selectedData.length !== 2) return null
-    const [a, b] = selectedData
-    const combinedOpening = a.openingBalance + b.openingBalance
-    const allRows = [
-      ...a.rows.map(r => ({ ...r, account: a.name })),
-      ...b.rows.map(r => ({ ...r, account: b.name })),
-    ].sort((x, y) => (x.date || '').localeCompare(y.date || '') || (x.id || '').localeCompare(y.id || ''))
+    if (selectedData.length < 2) return null
+    const combinedOpening = selectedData.reduce((s, d) => s + d.openingBalance, 0)
+    const allRows = selectedData.flatMap(d =>
+      d.rows.map(r => ({ ...r, account: d.name }))
+    ).sort((x, y) => (x.date || '').localeCompare(y.date || '') || (x.id || '').localeCompare(y.id || ''))
 
     let balance = combinedOpening
     const rows = allRows.map(r => {
@@ -156,7 +154,7 @@ function AccountLedgerContent() {
     const totalCredit = rows.reduce((s, r) => s + r.credit, 0)
 
     return {
-      names: [a.name, b.name],
+      names: selectedData.map(d => d.name),
       openingBalance: combinedOpening,
       closingBalance: combinedOpening + totalDebit - totalCredit,
       totalDebit,
@@ -186,7 +184,7 @@ function AccountLedgerContent() {
     }), { openingBalance: 0, totalDebit: 0, totalCredit: 0, closingBalance: 0 })
   }, [allLedgerData])
 
-  // Toggle account selection (max 2)
+  // Toggle account selection (max 10)
   const handleAccountChange = useCallback((val) => {
     if (val === '__all__') {
       setSelectedAccounts([])
@@ -195,7 +193,7 @@ function AccountLedgerContent() {
     }
     setSelectedAccounts(prev => {
       if (prev.includes(val)) return prev.filter(id => id !== val)
-      if (prev.length >= 2) return [prev[1], val]
+      if (prev.length >= 10) return [...prev.slice(1), val]
       return [...prev, val]
     })
     setPage(0)
@@ -338,7 +336,7 @@ function AccountLedgerContent() {
           <DateInput value={endDate} onChange={setEndDate} className="w-36 px-2 py-2 border border-gray-300 text-sm font-medium" />
         </div>
         <div className="min-w-[200px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Account (select up to 2)</label>
+          <label className="block text-xs font-medium text-gray-500 mb-1">Account (select up to 10)</label>
           <SearchableSelect
             value={selectedAccounts.length === 0 ? '__all__' : ''}
             onChange={handleAccountChange}
@@ -368,8 +366,8 @@ function AccountLedgerContent() {
           <p className="text-gray-500 text-sm p-4">No credit customers configured.</p>
         )}
 
-        {/* Two accounts — merged journal */}
-        {selectedAccounts.length === 2 && mergedJournal && (
+        {/* Multiple accounts — merged journal */}
+        {selectedAccounts.length >= 2 && mergedJournal && (
           <MergedJournalTable data={mergedJournal} startDate={startDate} endDate={endDate} />
         )}
 
@@ -522,13 +520,19 @@ function JournalTable({ data, startDate, endDate }) {
 }
 
 function MergedJournalTable({ data, startDate, endDate }) {
+  const [page, setPage] = useState(0)
   const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
   const hdr = 'bg-blue-600 text-white font-bold text-sm'
 
+  const totalPages = Math.ceil(data.rows.length / PAGE_SIZE)
+  const pagedRows = data.rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
   return (
     <div>
-      <h2 className="text-sm font-bold mb-2">{data.names.join(' & ')}</h2>
+      <h2 className="text-sm font-bold mb-2">
+        {data.names.length <= 3 ? data.names.join(' & ') : `${data.names.slice(0, 3).join(', ')} + ${data.names.length - 3} more`}
+      </h2>
       <table className="w-full border-collapse border border-gray-200">
         <thead>
           <tr className={hdr}>
@@ -541,16 +545,18 @@ function MergedJournalTable({ data, startDate, endDate }) {
           </tr>
         </thead>
         <tbody>
-          <tr className="bg-gray-50 font-semibold">
-            <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
-            <td className={cell}></td>
-            <td className={cell}>Opening Balance</td>
-            <td className={cellR}></td>
-            <td className={cellR}></td>
-            <td className={cellR}>{fmtBal(data.openingBalance)}</td>
-          </tr>
+          {page === 0 && (
+            <tr className="bg-gray-50 font-semibold">
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
+              <td className={cell}></td>
+              <td className={cell}>Opening Balance</td>
+              <td className={cellR}></td>
+              <td className={cellR}></td>
+              <td className={cellR}>{fmtBal(data.openingBalance)}</td>
+            </tr>
+          )}
 
-          {data.rows.map((row, i) => (
+          {pagedRows.map((row, i) => (
             <tr key={`${row.id}-${i}`}>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
               <td className={cell + ' text-xs text-gray-500'}>{row.account}</td>
@@ -569,16 +575,40 @@ function MergedJournalTable({ data, startDate, endDate }) {
             </tr>
           )}
 
-          <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
-            <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
-            <td className={cell}></td>
-            <td className={cell}>Closing Balance</td>
-            <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
-            <td className={cellR}>{data.totalCredit ? fmt(data.totalCredit) : ''}</td>
-            <td className={cellR}>{fmtBal(data.closingBalance)}</td>
-          </tr>
+          {page === totalPages - 1 && (
+            <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
+              <td className={cell}></td>
+              <td className={cell}>Closing Balance</td>
+              <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
+              <td className={cellR}>{data.totalCredit ? fmt(data.totalCredit) : ''}</td>
+              <td className={cellR}>{fmtBal(data.closingBalance)}</td>
+            </tr>
+          )}
         </tbody>
       </table>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <button
+            onClick={() => setPage(p => p - 1)}
+            disabled={page === 0}
+            className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4" /> Prev
+          </button>
+          <span className="text-sm text-gray-600">
+            Page {page + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= totalPages - 1}
+            className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Next <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   )
 }
