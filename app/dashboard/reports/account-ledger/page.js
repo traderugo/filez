@@ -385,8 +385,8 @@ function AccountLedgerContent() {
                 <tr className={hdr}>
                   <th className={cell + ' text-left'}>All Accounts ({sortedAll.length})</th>
                   <th className={cell + ' text-right'}>Opening Bal</th>
-                  <th className={cell + ' text-right'}>Debit (Dr)</th>
-                  <th className={cell + ' text-right'}>Credit (Cr)</th>
+                  <th className={cell + ' text-right'}>Sales</th>
+                  <th className={cell + ' text-right'}>Payment</th>
                   <th className={cell + ' text-right'}>Closing Bal</th>
                 </tr>
               </thead>
@@ -407,8 +407,8 @@ function AccountLedgerContent() {
                 <tr className="bg-gray-100 text-sm font-semibold">
                   <th className={cell + ' text-left'}>Account</th>
                   <th className={cell + ' text-right'}>Opening Bal</th>
-                  <th className={cell + ' text-right'}>Debit (Dr)</th>
-                  <th className={cell + ' text-right'}>Credit (Cr)</th>
+                  <th className={cell + ' text-right'}>Sales</th>
+                  <th className={cell + ' text-right'}>Payment</th>
                   <th className={cell + ' text-right'}>Closing Bal</th>
                 </tr>
               </thead>
@@ -471,8 +471,8 @@ function JournalTable({ data, startDate, endDate }) {
           <tr className={hdr}>
             <th className={cell + ' text-left w-24'}>Date</th>
             <th className={cell + ' text-left'}>Particulars</th>
-            <th className={cell + ' text-right w-28'}>Debit (Dr)</th>
-            <th className={cell + ' text-right w-28'}>Credit (Cr)</th>
+            <th className={cell + ' text-right w-28'}>Sales</th>
+            <th className={cell + ' text-right w-28'}>Payment</th>
             <th className={cell + ' text-right w-32'}>Balance</th>
           </tr>
         </thead>
@@ -539,8 +539,8 @@ function MergedJournalTable({ data, startDate, endDate }) {
             <th className={cell + ' text-left w-24'}>Date</th>
             <th className={cell + ' text-left'}>Account</th>
             <th className={cell + ' text-left'}>Particulars</th>
-            <th className={cell + ' text-right w-28'}>Debit (Dr)</th>
-            <th className={cell + ' text-right w-28'}>Credit (Cr)</th>
+            <th className={cell + ' text-right w-28'}>Sales</th>
+            <th className={cell + ' text-right w-28'}>Payment</th>
             <th className={cell + ' text-right w-32'}>Balance</th>
           </tr>
         </thead>
