@@ -36,6 +36,7 @@ const REPORT_PAGE_OPTIONS = [
     { key: 'report-audit-stock-position', label: 'Record of Stock Position' },
     { key: 'report-audit-stock-summary', label: 'Stock Position' },
     { key: 'report-audit-consumption', label: 'Consumption & Pour Back' },
+    { key: 'report-audit-calculator', label: 'Calculator' },
   ]},
   { key: 'report-account-ledger', label: 'Account Ledger' },
   { key: 'report-product-received', label: 'Product Received' },

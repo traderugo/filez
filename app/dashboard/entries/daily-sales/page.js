@@ -396,7 +396,7 @@ export default function DailySalesFormPage() {
           const curIdx = allFields.indexOf(e.target)
           if (curIdx < 0) return
           for (let i = curIdx + 1; i < allFields.length; i++) {
-            if (!allFields[i].dataset.skipEnter) { allFields[i].focus(); return }
+            if (!allFields[i].hasAttribute('data-skip-enter')) { allFields[i].focus(); return }
           }
         }
       }}>

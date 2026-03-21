@@ -17,15 +17,11 @@ function fmt(n) {
 
 const SUB_REPORTS = [
   { key: 'sales-cash', label: 'Sales/Cash Position' },
-  // Future sub-reports will be added here:
   { key: 'stock-position', label: 'Record of Stock Position' },
   { key: 'stock-summary', label: 'Stock Position' },
   { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
   { key: 'consumption', label: 'Consumption & Pour Back' },
-  // { key: 'product-received', label: 'Product Received' },
-  // { key: 'expenses', label: 'Expenses' },
-  // { key: 'record-stock', label: 'Record of Stock Position' },
-  // { key: 'customers-ledger', label: "Customers' Ledger" },
+  { key: 'calculator', label: 'Calculator' },
 ]
 
 export default function AuditReportPage() {
@@ -333,6 +329,9 @@ function AuditReportContent() {
               )}
               {activeTab === 'consumption' && (
                 <ConsumptionReport report={report} startDate={reportStart} endDate={reportEnd} />
+              )}
+              {activeTab === 'calculator' && (
+                <CalculatorReport report={report} startDate={reportStart} endDate={reportEnd} />
               )}
             </div>
           )}
@@ -1006,6 +1005,223 @@ function ConsumptionReport({ report, startDate, endDate }) {
           No consumption entries for {activeFuel} in this period.
         </p>
       )}
+    </div>
+  )
+}
+
+// ─── Calculator sub-report ───
+
+function CalculatorReport({ report, startDate, endDate }) {
+  const { salesCash, stockPosition, fuelTypes } = report
+
+  // Build initial actual values from report data
+  const initFuelValues = () => {
+    if (!salesCash || !stockPosition) return {}
+    const vals = {}
+    for (const ft of (fuelTypes || [])) {
+      const summary = salesCash.fuelSummaries[ft] || {}
+      const sp = stockPosition[ft]?.totals || {}
+      vals[ft] = {
+        dispensed: summary.totalDispensed || 0,
+        consumption: summary.totalConsumedQty || 0,
+        pourBack: summary.totalPourBackQty || 0,
+        openingStock: sp.opening || 0,
+        closingStock: sp.closing || 0,
+      }
+    }
+    return vals
+  }
+
+  const initOtherValues = () => ({
+    bankDeposit: salesCash?.cashReconciliation?.totalLodgement || 0,
+  })
+
+  const [fuelEstimates, setFuelEstimates] = useState(initFuelValues)
+  const [otherEstimates, setOtherEstimates] = useState(initOtherValues)
+
+  // Reset estimates when report regenerates
+  const reportKey = `${startDate}-${endDate}-${(fuelTypes || []).join(',')}`
+  const prevKeyRef = useRef(reportKey)
+  useEffect(() => {
+    if (prevKeyRef.current !== reportKey) {
+      setFuelEstimates(initFuelValues())
+      setOtherEstimates(initOtherValues())
+      prevKeyRef.current = reportKey
+    }
+  }, [reportKey])
+
+  if (!salesCash || !stockPosition) return null
+
+  const formatDate = fmtDate
+
+  const updateFuelEstimate = (ft, field, value) => {
+    setFuelEstimates(prev => ({
+      ...prev,
+      [ft]: { ...prev[ft], [field]: Number(value) || 0 }
+    }))
+  }
+
+  const updateOtherEstimate = (field, value) => {
+    setOtherEstimates(prev => ({ ...prev, [field]: Number(value) || 0 }))
+  }
+
+  const hdr = 'bg-blue-600 text-white'
+  const subHdr = 'bg-blue-50 text-blue-600'
+  const bdr = 'border border-blue-200'
+  const cell = `${bdr} px-1.5 py-1`
+  const cellR = `${cell} text-right`
+
+  const varianceCell = (actual, estimate) => {
+    const diff = estimate - actual
+    if (diff === 0) return <td className={cellR}>—</td>
+    return (
+      <td className={`${cellR} font-medium ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
+        {diff > 0 ? '+' : ''}{fmt(diff)}
+      </td>
+    )
+  }
+
+  const editInput = (value, onChange) => (
+    <input
+      type="number"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onFocus={(e) => e.target.select()}
+      step="0.01"
+      className="w-full text-right bg-yellow-50 px-1.5 py-1 text-sm focus:outline-none focus:bg-yellow-100 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+    />
+  )
+
+  return (
+    <div className="min-w-[700px] pb-4 px-[10%]">
+      <h2 className="text-base font-bold text-gray-900 mb-1">
+        Calculator — {formatDate(startDate)} to {formatDate(endDate)}
+      </h2>
+      <p className="text-xs text-gray-400 mb-4">
+        Yellow fields are editable estimates. Changes are not saved and reset on next generation.
+      </p>
+
+      {fuelTypes.map(ft => {
+        const summary = salesCash.fuelSummaries[ft] || {}
+        const sp = stockPosition[ft]?.totals || {}
+        const est = fuelEstimates[ft] || {}
+
+        // Read-only derived values from report
+        const actualProductSupplied = sp.supply || 0
+        const actualProductReceived = sp.actualLitresReceived || 0
+        const actualDriverOvSh = sp.truckDriverOvsh || 0
+        const actualActualSales = summary.expectedSalesQty || 0
+        const actualStockOvSh = sp.actualOvsh || 0
+
+        // Estimated derived values
+        const estActualSales = est.dispensed - est.consumption - est.pourBack
+        const estExpectedClosing = est.openingStock + actualProductSupplied - estActualSales
+        const estStockOvSh = est.closingStock - estExpectedClosing
+
+        // Actuals
+        const actuals = {
+          dispensed: summary.totalDispensed || 0,
+          consumption: summary.totalConsumedQty || 0,
+          pourBack: summary.totalPourBackQty || 0,
+          openingStock: sp.opening || 0,
+          closingStock: sp.closing || 0,
+        }
+
+        const rows = [
+          { label: 'Dispensed (litres)', field: 'dispensed', editable: true },
+          { label: 'Consumption', field: 'consumption', editable: true },
+          { label: 'Pour Back', field: 'pourBack', editable: true },
+          { label: 'Opening Stock', field: 'openingStock', editable: true },
+          { label: 'Product Supplied', actual: actualProductSupplied, estimate: actualProductSupplied },
+          { label: 'Product Received', actual: actualProductReceived, estimate: actualProductReceived },
+          { label: 'Driver OV/SH', actual: actualDriverOvSh, estimate: actualDriverOvSh },
+          { label: 'Closing Stock', field: 'closingStock', editable: true },
+          { label: 'Actual Sales (Disp − Cons − PB)', actual: actualActualSales, estimate: estActualSales },
+          { label: 'Stock OV/SH', actual: actualStockOvSh, estimate: estStockOvSh },
+        ]
+
+        return (
+          <div key={ft} className="mb-6">
+            <div className={`${hdr} px-2 py-1.5 text-sm font-bold`}>{ft}</div>
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className={subHdr}>
+                  <th className={`${cell} text-left font-bold w-[40%]`}>Field</th>
+                  <th className={`${cellR} font-bold w-[20%]`}>Actual</th>
+                  <th className={`${bdr} text-right font-bold w-[20%] px-1.5 py-1 bg-yellow-50`}>Estimate</th>
+                  <th className={`${cellR} font-bold w-[20%]`}>Variance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, i) => {
+                  const actual = row.field ? actuals[row.field] : row.actual
+                  const estimate = row.field ? (est[row.field] || 0) : row.estimate
+                  return (
+                    <tr key={i}>
+                      <td className={`${cell} font-medium`}>{row.label}</td>
+                      <td className={cellR}>{fmt(actual)}</td>
+                      <td className={`${bdr} p-0`}>
+                        {row.editable
+                          ? editInput(estimate, (v) => updateFuelEstimate(ft, row.field, v))
+                          : <span className={`block text-right px-1.5 py-1`}>{fmt(estimate)}</span>
+                        }
+                      </td>
+                      {varianceCell(actual, estimate)}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )
+      })}
+
+      {/* Others — Cash/Lodgement section */}
+      <div className="mb-6">
+        <div className={`${hdr} px-2 py-1.5 text-sm font-bold`}>Cash / Lodgement</div>
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className={subHdr}>
+              <th className={`${cell} text-left font-bold w-[40%]`}>Field</th>
+              <th className={`${cellR} font-bold w-[20%]`}>Actual</th>
+              <th className={`${bdr} text-right font-bold w-[20%] px-1.5 py-1 bg-yellow-50`}>Estimate</th>
+              <th className={`${cellR} font-bold w-[20%]`}>Variance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(() => {
+              const cr = salesCash.cashReconciliation || {}
+              const actualBankDeposit = cr.totalLodgement || 0
+              const actualPosTransfer = (cr.totalPOS || 0) + (cr.totalTransfer || 0)
+              const actualExpectedSales = cr.expectedSalesTotal || 0
+              const actualBalance = cr.overshort || 0
+
+              // Estimated balance: expected sales - est bank deposit - pos+transfer
+              const estBalance = actualExpectedSales - otherEstimates.bankDeposit - actualPosTransfer
+
+              const rows = [
+                { label: 'Bank Deposit', actual: actualBankDeposit, estimate: otherEstimates.bankDeposit, editable: true, field: 'bankDeposit' },
+                { label: 'Total POS + Transfer', actual: actualPosTransfer, estimate: actualPosTransfer },
+                { label: 'Balance (Overage/Shortage)', actual: actualBalance, estimate: estBalance },
+              ]
+
+              return rows.map((row, i) => (
+                <tr key={i}>
+                  <td className={`${cell} font-medium`}>{row.label}</td>
+                  <td className={cellR}>{fmt(row.actual)}</td>
+                  <td className={`${bdr} p-0`}>
+                    {row.editable
+                      ? editInput(row.estimate, (v) => updateOtherEstimate(row.field, v))
+                      : <span className={`block text-right px-1.5 py-1`}>{fmt(row.estimate)}</span>
+                    }
+                  </td>
+                  {varianceCell(row.actual, row.estimate)}
+                </tr>
+              ))
+            })()}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
