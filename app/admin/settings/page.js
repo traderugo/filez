@@ -23,6 +23,9 @@ export default function AdminSettingsPage() {
   const [inviteEmail, setInviteEmail] = useState({}) // { stationId: 'email' }
   const [inviting, setInviting] = useState(null)
 
+  // Busy guard for async actions (prevents double-click)
+  const [busyAction, setBusyAction] = useState(null)
+
   // Groups
   const [groups, setGroups] = useState([])
   const [newGroup, setNewGroup] = useState('')
@@ -96,14 +99,20 @@ export default function AdminSettingsPage() {
   }
 
   const deleteStation = async (id, name) => {
+    if (busyAction) return
     if (!confirm(`Delete "${name}"? All staff accounts, subscriptions, and data for this station will be permanently removed.`)) return
 
-    await fetch('/api/organizations', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
-    loadData()
+    setBusyAction(`del-station-${id}`)
+    try {
+      await fetch('/api/organizations', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      await loadData()
+    } finally {
+      setBusyAction(null)
+    }
   }
 
   const addInvite = async (stationId) => {
@@ -130,16 +139,21 @@ export default function AdminSettingsPage() {
   }
 
   const removeInvite = async (inviteId, stationId) => {
-    await fetch('/api/invites', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: inviteId }),
-    })
-    // Reload invites for this station
-    const r = await fetch(`/api/invites/list?org_id=${stationId}`)
-    if (r.ok) {
-      const d = await r.json()
-      setInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
+    if (busyAction) return
+    setBusyAction(`rm-invite-${inviteId}`)
+    try {
+      await fetch('/api/invites', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: inviteId }),
+      })
+      const r = await fetch(`/api/invites/list?org_id=${stationId}`)
+      if (r.ok) {
+        const d = await r.json()
+        setInvites((prev) => ({ ...prev, [stationId]: d.invites || [] }))
+      }
+    } finally {
+      setBusyAction(null)
     }
   }
 
@@ -165,20 +179,26 @@ export default function AdminSettingsPage() {
   }
 
   const removeGroup = async (id) => {
+    if (busyAction) return
     if (!confirm('Delete this group? Stations in this group will be unassigned.')) return
-    const deleted = groups.find((g) => g.id === id)
-    const res = await fetch('/api/station-groups', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    })
-    if (res.ok) {
-      setGroups((prev) => prev.filter((g) => g.id !== id))
-      if (deleted) {
-        setStations((prev) => prev.map((s) =>
-          s.station_group === deleted.name ? { ...s, station_group: null } : s
-        ))
+    setBusyAction(`rm-group-${id}`)
+    try {
+      const deleted = groups.find((g) => g.id === id)
+      const res = await fetch('/api/station-groups', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      if (res.ok) {
+        setGroups((prev) => prev.filter((g) => g.id !== id))
+        if (deleted) {
+          setStations((prev) => prev.map((s) =>
+            s.station_group === deleted.name ? { ...s, station_group: null } : s
+          ))
+        }
       }
+    } finally {
+      setBusyAction(null)
     }
   }
 
@@ -214,7 +234,7 @@ export default function AdminSettingsPage() {
             {groups.map((g) => (
               <div key={g.id} className="flex items-center justify-between px-3 py-2.5">
                 <span className="text-sm text-gray-900">{g.name}</span>
-                <button onClick={() => removeGroup(g.id)} className="p-1 text-gray-400 hover:text-red-600" title="Delete group">
+                <button onClick={() => removeGroup(g.id)} disabled={busyAction === `rm-group-${g.id}`} className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50" title="Delete group">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -322,7 +342,7 @@ export default function AdminSettingsPage() {
                     </button>
                   </div>
                 )}
-                <button onClick={() => deleteStation(station.id, station.name)} className="p-1.5 text-gray-400 hover:text-red-600">
+                <button onClick={() => deleteStation(station.id, station.name)} disabled={busyAction === `del-station-${station.id}`} className="p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-50">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -390,7 +410,8 @@ export default function AdminSettingsPage() {
                         </div>
                         <button
                           onClick={() => removeInvite(inv.id, station.id)}
-                          className="p-1 text-gray-400 hover:text-red-600"
+                          disabled={busyAction === `rm-invite-${inv.id}`}
+                          className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50"
                         >
                           <X className="w-3 h-3" />
                         </button>

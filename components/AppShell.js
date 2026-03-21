@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
 import Footer from './Footer'
 import EmailVerifyBanner from './EmailVerifyBanner'
+import NavigationLoader from './NavigationLoader'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function AppShell({ children }) {
@@ -39,6 +40,7 @@ export default function AppShell({ children }) {
   // Admin pages: header only, no main sidebar (admin layout has its own)
   if (isAdmin) return (
     <div className="flex flex-col min-h-screen">
+      <Suspense fallback={null}><NavigationLoader /></Suspense>
       <Suspense fallback={null}><Header /></Suspense>
       <main className="flex-1">{children}</main>
       <Footer />
@@ -47,6 +49,7 @@ export default function AppShell({ children }) {
 
   return (
     <div className="flex flex-col min-h-screen">
+      <Suspense fallback={null}><NavigationLoader /></Suspense>
       <Suspense fallback={null}><Header /></Suspense>
       {user && !user.email_verified && pathname === '/dashboard' && <EmailVerifyBanner />}
       <main className="flex-1">{children}</main>

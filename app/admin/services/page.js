@@ -14,6 +14,7 @@ export default function AdminServicesPage() {
   const [loading, setLoading] = useState(true)
   const [editingId, setEditingId] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [toggling, setToggling] = useState(null)
   const [error, setError] = useState('')
   const [price, setPrice] = useState('')
 
@@ -63,12 +64,18 @@ export default function AdminServicesPage() {
   }
 
   const toggleActive = async (svc) => {
-    await fetch('/api/services', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: svc.id, is_active: !svc.is_active }),
-    })
-    loadServices()
+    if (toggling) return
+    setToggling(svc.id)
+    try {
+      await fetch('/api/services', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: svc.id, is_active: !svc.is_active }),
+      })
+      await loadServices()
+    } finally {
+      setToggling(null)
+    }
   }
 
   if (loading) {
@@ -138,7 +145,7 @@ export default function AdminServicesPage() {
                     <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
                       {Number(svc.price).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
                     </span>
-                    <button onClick={() => toggleActive(svc)} className="p-1.5 text-gray-400 hover:text-blue-600" title={svc.is_active ? 'Deactivate' : 'Activate'}>
+                    <button onClick={() => toggleActive(svc)} disabled={toggling === svc.id} className="p-1.5 text-gray-400 hover:text-blue-600 disabled:opacity-50" title={svc.is_active ? 'Deactivate' : 'Activate'}>
                       {svc.is_active ? <ToggleRight className="w-5 h-5 text-green-600" /> : <ToggleLeft className="w-5 h-5" />}
                     </button>
                     <button onClick={() => startEdit(svc)} className="p-1.5 text-gray-400 hover:text-gray-600" title="Edit price">
