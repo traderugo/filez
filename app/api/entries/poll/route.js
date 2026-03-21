@@ -29,6 +29,7 @@ export async function GET(request) {
     const result = {}
 
     await Promise.all(TABLES.map(async ({ server, key }) => {
+      // Include soft-deleted records so clients can propagate deletions
       const { data } = await supabase
         .from(server)
         .select('*')

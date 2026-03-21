@@ -17,7 +17,7 @@ export async function GET(request) {
     // Single entry by ID
     const id = searchParams.get('id')
     if (id) {
-      const { data } = await supabase.from(TABLE).select('*, users:created_by(name)').eq('id', id).eq('org_id', user.org_id).single()
+      const { data } = await supabase.from(TABLE).select('*, users:created_by(name)').eq('id', id).eq('org_id', user.org_id).is('deleted_at', null).single()
       return NextResponse.json({ entry: data })
     }
 
@@ -25,6 +25,7 @@ export async function GET(request) {
       .from(TABLE)
       .select('*, users:created_by(name)', { count: 'exact' })
       .eq('org_id', user.org_id)
+      .is('deleted_at', null)
       .order('entry_date', { ascending: false })
       .range(from, to)
 
@@ -160,7 +161,8 @@ export async function DELETE(request) {
     if (!id) return NextResponse.json({ error: 'Entry id required' }, { status: 400 })
 
     const supabase = getServiceClient()
-    await supabase.from(TABLE).delete().eq('id', id).eq('org_id', user.org_id)
+    const now = new Date().toISOString()
+    await supabase.from(TABLE).update({ deleted_at: now, updated_at: now }).eq('id', id).eq('org_id', user.org_id)
 
     return NextResponse.json({ ok: true })
   } catch {

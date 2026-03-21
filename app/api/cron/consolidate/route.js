@@ -28,6 +28,7 @@ export async function GET(request) {
       .from('lodgement_entries')
       .select('bank_id, amount')
       .lt('entry_date', cutoffDate)
+      .is('deleted_at', null)
       .not('bank_id', 'is', null)
 
     if (oldLodgements && oldLodgements.length > 0) {
@@ -59,6 +60,7 @@ export async function GET(request) {
       .from('lube_sales_entries')
       .select('product_id, unit_sold, unit_received')
       .lt('entry_date', cutoffDate)
+      .is('deleted_at', null)
       .not('product_id', 'is', null)
 
     if (oldLubeSales && oldLubeSales.length > 0) {
@@ -91,6 +93,7 @@ export async function GET(request) {
       .from('customer_payment_entries')
       .select('customer_id, amount_paid, sales_amount')
       .lt('entry_date', cutoffDate)
+      .is('deleted_at', null)
       .not('customer_id', 'is', null)
 
     if (oldPayments && oldPayments.length > 0) {
@@ -123,6 +126,7 @@ export async function GET(request) {
       .from('product_receipt_entries')
       .select('tank_id, actual_volume')
       .lt('entry_date', cutoffDate)
+      .is('deleted_at', null)
       .not('tank_id', 'is', null)
 
     if (oldReceipts && oldReceipts.length > 0) {
@@ -157,6 +161,7 @@ export async function GET(request) {
       .from('daily_sales_entries')
       .select('nozzle_readings')
       .lt('entry_date', cutoffDate)
+      .is('deleted_at', null)
 
     if (oldDailySales && oldDailySales.length > 0) {
       // Aggregate max closing_meter and total pour_back per pump
