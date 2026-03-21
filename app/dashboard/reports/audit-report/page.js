@@ -1065,40 +1065,56 @@ function CalculatorReport({ report, startDate, endDate }) {
     setOtherEstimates(prev => ({ ...prev, [field]: Number(value) || 0 }))
   }
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
-  const bdr = 'border border-blue-200'
-  const cell = `${bdr} px-1.5 py-1`
-  const cellR = `${cell} text-right`
-
-  const varianceCell = (actual, estimate) => {
+  const varianceBadge = (actual, estimate) => {
     const diff = estimate - actual
-    if (diff === 0) return <td className={cellR}>—</td>
+    if (diff === 0) return null
     return (
-      <td className={`${cellR} font-medium ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
+      <span className={`text-xs font-medium ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
         {diff > 0 ? '+' : ''}{fmt(diff)}
-      </td>
+      </span>
     )
   }
 
-  const editInput = (value, onChange) => (
-    <input
-      type="number"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      onFocus={(e) => e.target.select()}
-      step="0.01"
-      className="w-full text-right bg-yellow-50 px-1.5 py-1 text-sm focus:outline-none focus:bg-yellow-100 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-    />
+  const CalcRow = ({ label, actual, estimate, editable, onChange }) => (
+    <div className="border-b border-gray-100 py-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs text-gray-500 font-medium">{label}</span>
+        {varianceBadge(actual, estimate)}
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-gray-50 rounded px-2.5 py-1.5">
+          <span className="text-[10px] text-gray-400 uppercase">Actual</span>
+          <p className="text-sm font-medium text-gray-800">{fmt(actual)}</p>
+        </div>
+        {editable ? (
+          <div className="bg-yellow-50 rounded px-2.5 py-0.5">
+            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
+            <input
+              type="number"
+              value={estimate}
+              onChange={(e) => onChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              step="0.01"
+              className="w-full text-sm font-medium text-gray-800 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+          </div>
+        ) : (
+          <div className="bg-gray-50 rounded px-2.5 py-1.5">
+            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
+            <p className="text-sm font-medium text-gray-800">{fmt(estimate)}</p>
+          </div>
+        )}
+      </div>
+    </div>
   )
 
   return (
-    <div className="min-w-[700px] pb-4 px-[10%]">
-      <h2 className="text-base font-bold text-gray-900 mb-1">
+    <div className="pb-4 max-w-lg mx-auto">
+      <h2 className="text-base font-bold text-gray-900 mb-0.5">
         Calculator — {formatDate(startDate)} to {formatDate(endDate)}
       </h2>
       <p className="text-xs text-gray-400 mb-4">
-        Yellow fields are editable estimates. Changes are not saved and reset on next generation.
+        Yellow fields are editable. Resets on next generation.
       </p>
 
       {fuelTypes.map(ft => {
@@ -1106,19 +1122,16 @@ function CalculatorReport({ report, startDate, endDate }) {
         const sp = stockPosition[ft]?.totals || {}
         const est = fuelEstimates[ft] || {}
 
-        // Read-only derived values from report
         const actualProductSupplied = sp.supply || 0
         const actualProductReceived = sp.actualLitresReceived || 0
         const actualDriverOvSh = sp.truckDriverOvsh || 0
         const actualActualSales = summary.expectedSalesQty || 0
         const actualStockOvSh = sp.actualOvsh || 0
 
-        // Estimated derived values
         const estActualSales = est.dispensed - est.consumption - est.pourBack
         const estExpectedClosing = est.openingStock + actualProductSupplied - estActualSales
         const estStockOvSh = est.closingStock - estExpectedClosing
 
-        // Actuals
         const actuals = {
           dispensed: summary.totalDispensed || 0,
           consumption: summary.totalConsumedQty || 0,
@@ -1141,86 +1154,58 @@ function CalculatorReport({ report, startDate, endDate }) {
         ]
 
         return (
-          <div key={ft} className="mb-6">
-            <div className={`${hdr} px-2 py-1.5 text-sm font-bold`}>{ft}</div>
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className={subHdr}>
-                  <th className={`${cell} text-left font-bold w-[40%]`}>Field</th>
-                  <th className={`${cellR} font-bold w-[20%]`}>Actual</th>
-                  <th className={`${bdr} text-right font-bold w-[20%] px-1.5 py-1 bg-yellow-50`}>Estimate</th>
-                  <th className={`${cellR} font-bold w-[20%]`}>Variance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => {
-                  const actual = row.field ? actuals[row.field] : row.actual
-                  const estimate = row.field ? (est[row.field] || 0) : row.estimate
-                  return (
-                    <tr key={i}>
-                      <td className={`${cell} font-medium`}>{row.label}</td>
-                      <td className={cellR}>{fmt(actual)}</td>
-                      <td className={`${bdr} p-0`}>
-                        {row.editable
-                          ? editInput(estimate, (v) => updateFuelEstimate(ft, row.field, v))
-                          : <span className={`block text-right px-1.5 py-1`}>{fmt(estimate)}</span>
-                        }
-                      </td>
-                      {varianceCell(actual, estimate)}
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+          <div key={ft} className="mb-5">
+            <div className="bg-blue-600 text-white px-3 py-1.5 text-sm font-bold rounded-t">{ft}</div>
+            <div className="border border-t-0 border-gray-200 rounded-b px-3">
+              {rows.map((row, i) => {
+                const actual = row.field ? actuals[row.field] : row.actual
+                const estimate = row.field ? (est[row.field] || 0) : row.estimate
+                return (
+                  <CalcRow
+                    key={i}
+                    label={row.label}
+                    actual={actual}
+                    estimate={estimate}
+                    editable={row.editable}
+                    onChange={row.editable ? (v) => updateFuelEstimate(ft, row.field, v) : undefined}
+                  />
+                )
+              })}
+            </div>
           </div>
         )
       })}
 
-      {/* Others — Cash/Lodgement section */}
-      <div className="mb-6">
-        <div className={`${hdr} px-2 py-1.5 text-sm font-bold`}>Cash / Lodgement</div>
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className={subHdr}>
-              <th className={`${cell} text-left font-bold w-[40%]`}>Field</th>
-              <th className={`${cellR} font-bold w-[20%]`}>Actual</th>
-              <th className={`${bdr} text-right font-bold w-[20%] px-1.5 py-1 bg-yellow-50`}>Estimate</th>
-              <th className={`${cellR} font-bold w-[20%]`}>Variance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(() => {
-              const cr = salesCash.cashReconciliation || {}
-              const actualBankDeposit = cr.totalLodgement || 0
-              const actualPosTransfer = (cr.totalPOS || 0) + (cr.totalTransfer || 0)
-              const actualExpectedSales = cr.expectedSalesTotal || 0
-              const actualBalance = cr.overshort || 0
+      {/* Cash / Lodgement section */}
+      <div className="mb-5">
+        <div className="bg-blue-600 text-white px-3 py-1.5 text-sm font-bold rounded-t">Cash / Lodgement</div>
+        <div className="border border-t-0 border-gray-200 rounded-b px-3">
+          {(() => {
+            const cr = salesCash.cashReconciliation || {}
+            const actualBankDeposit = cr.totalLodgement || 0
+            const actualPosTransfer = (cr.totalPOS || 0) + (cr.totalTransfer || 0)
+            const actualExpectedSales = cr.expectedSalesTotal || 0
+            const actualBalance = cr.overshort || 0
+            const estBalance = actualExpectedSales - otherEstimates.bankDeposit - actualPosTransfer
 
-              // Estimated balance: expected sales - est bank deposit - pos+transfer
-              const estBalance = actualExpectedSales - otherEstimates.bankDeposit - actualPosTransfer
+            const rows = [
+              { label: 'Bank Deposit', actual: actualBankDeposit, estimate: otherEstimates.bankDeposit, editable: true, field: 'bankDeposit' },
+              { label: 'Total POS + Transfer', actual: actualPosTransfer, estimate: actualPosTransfer },
+              { label: 'Balance (Overage/Shortage)', actual: actualBalance, estimate: estBalance },
+            ]
 
-              const rows = [
-                { label: 'Bank Deposit', actual: actualBankDeposit, estimate: otherEstimates.bankDeposit, editable: true, field: 'bankDeposit' },
-                { label: 'Total POS + Transfer', actual: actualPosTransfer, estimate: actualPosTransfer },
-                { label: 'Balance (Overage/Shortage)', actual: actualBalance, estimate: estBalance },
-              ]
-
-              return rows.map((row, i) => (
-                <tr key={i}>
-                  <td className={`${cell} font-medium`}>{row.label}</td>
-                  <td className={cellR}>{fmt(row.actual)}</td>
-                  <td className={`${bdr} p-0`}>
-                    {row.editable
-                      ? editInput(row.estimate, (v) => updateOtherEstimate(row.field, v))
-                      : <span className={`block text-right px-1.5 py-1`}>{fmt(row.estimate)}</span>
-                    }
-                  </td>
-                  {varianceCell(row.actual, row.estimate)}
-                </tr>
-              ))
-            })()}
-          </tbody>
-        </table>
+            return rows.map((row, i) => (
+              <CalcRow
+                key={i}
+                label={row.label}
+                actual={row.actual}
+                estimate={row.estimate}
+                editable={row.editable}
+                onChange={row.editable ? (v) => updateOtherEstimate(row.field, v) : undefined}
+              />
+            ))
+          })()}
+        </div>
       </div>
     </div>
   )
