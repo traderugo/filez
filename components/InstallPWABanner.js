@@ -7,15 +7,14 @@ export default function InstallPWABanner() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [dismissed, setDismissed] = useState(false)
   const [installed, setInstalled] = useState(false)
+  const [showGuide, setShowGuide] = useState(false)
 
   useEffect(() => {
-    // Check if already dismissed this session
     if (sessionStorage.getItem('pwa-install-dismissed')) {
       setDismissed(true)
     }
 
-    // Check if already installed (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
       setInstalled(true)
       return
     }
@@ -39,14 +38,17 @@ export default function InstallPWABanner() {
     }
   }, [])
 
+  const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
+
   const handleInstall = async () => {
-    if (!deferredPrompt) return
-    deferredPrompt.prompt()
-    const result = await deferredPrompt.userChoice
-    if (result.outcome === 'accepted') {
-      setInstalled(true)
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const result = await deferredPrompt.userChoice
+      if (result.outcome === 'accepted') setInstalled(true)
+      setDeferredPrompt(null)
+    } else {
+      setShowGuide(true)
     }
-    setDeferredPrompt(null)
   }
 
   const handleDismiss = () => {
@@ -54,29 +56,56 @@ export default function InstallPWABanner() {
     setDismissed(true)
   }
 
-  // Don't show if installed, dismissed, or no prompt available
-  if (installed || dismissed || !deferredPrompt) return null
+  if (installed || dismissed) return null
 
   return (
-    <div className="bg-blue-50 border border-blue-200 px-4 py-3 flex items-center justify-between gap-3">
-      <div className="flex items-center gap-3">
-        <Download className="w-5 h-5 text-blue-600 flex-shrink-0" />
-        <div>
-          <p className="text-sm font-medium text-gray-900">Install StationMGR</p>
-          <p className="text-sm text-gray-600">Install as an app for offline access and faster loading.</p>
+    <>
+      <div className="bg-green-50 border border-green-200 px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Download className="w-5 h-5 text-green-600 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium text-gray-900">Install StationMGR</p>
+            <p className="text-sm text-gray-600">Install as an app for offline access and faster loading.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={handleInstall}
+            className="px-3 py-1.5 bg-green-600 text-white text-sm font-medium hover:bg-green-700"
+          >
+            Install
+          </button>
+          <button onClick={handleDismiss} className="p-1 text-gray-400 hover:text-gray-600">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <button
-          onClick={handleInstall}
-          className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
-        >
-          Install
-        </button>
-        <button onClick={handleDismiss} className="p-1 text-gray-400 hover:text-gray-600">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
+
+      {showGuide && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowGuide(false)}>
+          <div className="bg-white mx-4 p-5 max-w-sm w-full shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base font-bold text-gray-900 mb-3">Install StationMGR</h3>
+            {isIOS ? (
+              <ol className="text-sm text-gray-700 space-y-2 list-decimal list-inside">
+                <li>Tap the <strong>Share</strong> button (box with arrow) in Safari</li>
+                <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
+                <li>Tap <strong>Add</strong></li>
+              </ol>
+            ) : (
+              <ol className="text-sm text-gray-700 space-y-2 list-decimal list-inside">
+                <li>Tap the <strong>menu</strong> (three dots) in your browser</li>
+                <li>Tap <strong>Install app</strong> or <strong>Add to Home Screen</strong></li>
+              </ol>
+            )}
+            <button
+              onClick={() => setShowGuide(false)}
+              className="mt-4 w-full py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
