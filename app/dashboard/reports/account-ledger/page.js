@@ -481,7 +481,7 @@ function JournalTable({ data, startDate, endDate }) {
         <tbody>
           {/* Opening balance */}
           <tr className="bg-gray-50 font-semibold">
-            <td className={cell}>{fmtDate(startDate)}</td>
+            <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
             <td className={cell}>Opening Balance</td>
             <td className={cellR}></td>
             <td className={cellR}></td>
@@ -491,7 +491,7 @@ function JournalTable({ data, startDate, endDate }) {
           {/* Transaction rows */}
           {data.rows.map(row => (
             <tr key={row.id}>
-              <td className={cell}>{fmtDate(row.date)}</td>
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
               <td className={cell}>{row.particulars}</td>
               <td className={cellR}>{row.debit ? fmt(row.debit) : ''}</td>
               <td className={cellR}>{row.credit ? fmt(row.credit) : ''}</td>
@@ -509,7 +509,7 @@ function JournalTable({ data, startDate, endDate }) {
 
           {/* Closing balance / totals */}
           <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
-            <td className={cell}>{fmtDate(endDate)}</td>
+            <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
             <td className={cell}>Closing Balance</td>
             <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
             <td className={cellR}>{data.totalCredit ? fmt(data.totalCredit) : ''}</td>
@@ -542,7 +542,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
         </thead>
         <tbody>
           <tr className="bg-gray-50 font-semibold">
-            <td className={cell}>{fmtDate(startDate)}</td>
+            <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
             <td className={cell}></td>
             <td className={cell}>Opening Balance</td>
             <td className={cellR}></td>
@@ -552,7 +552,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
 
           {data.rows.map((row, i) => (
             <tr key={`${row.id}-${i}`}>
-              <td className={cell}>{fmtDate(row.date)}</td>
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
               <td className={cell + ' text-xs text-gray-500'}>{row.account}</td>
               <td className={cell}>{row.particulars}</td>
               <td className={cellR}>{row.debit ? fmt(row.debit) : ''}</td>
@@ -570,7 +570,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           )}
 
           <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
-            <td className={cell}>{fmtDate(endDate)}</td>
+            <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
             <td className={cell}></td>
             <td className={cell}>Closing Balance</td>
             <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>

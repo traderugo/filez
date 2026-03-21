@@ -219,8 +219,8 @@ function ProductReceivedReportContent() {
                 const shortageColor = row.shortage > 0 ? 'text-red-600 font-medium' : row.shortage < 0 ? 'text-green-600 font-medium' : ''
                 return (
                   <tr key={i} className="hover:bg-blue-50/40">
-                    <td className={cell}>{row.dischargeDate ? fmtDate(row.dischargeDate) : '—'}</td>
-                    <td className={cell}>{row.loadingDate ? fmtDate(row.loadingDate) : '—'}</td>
+                    <td className={`${cellR} whitespace-nowrap`}>{row.dischargeDate ? fmtDate(row.dischargeDate) : '—'}</td>
+                    <td className={`${cellR} whitespace-nowrap`}>{row.loadingDate ? fmtDate(row.loadingDate) : '—'}</td>
                     <td className={cell}>{row.product}</td>
                     <td className={cellR}>{fmt(row.qtyLoaded)}</td>
                     <td className={cellR}>{fmt(row.qtySupplied)}</td>

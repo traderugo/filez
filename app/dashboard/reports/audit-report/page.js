@@ -639,7 +639,7 @@ function LodgementSheet({ report }) {
             const cashSales = row.totalSales - tPOS - tTransfer
             return (
               <tr key={row.date}>
-                <td className={cell}>{fmtDate(row.date)}</td>
+                <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
                 <td className={cellR}>{fmt(row.totalSales)}</td>
                 <td className={cellR}>{fmt(cashSales)}</td>
                 <td className={cellEmpty}></td>
@@ -655,7 +655,7 @@ function LodgementSheet({ report }) {
                 <td className={`${cellR} font-bold ${row.ovsh > 0 ? 'text-green-600' : row.ovsh < 0 ? 'text-red-600' : ''}`}>
                   {fmtOvsh(row.ovsh)}
                 </td>
-                <td className={cell}>{row.dateLodged ? fmtDate(row.dateLodged) : ''}</td>
+                <td className={`${cellR} whitespace-nowrap`}>{row.dateLodged ? fmtDate(row.dateLodged) : ''}</td>
               </tr>
             )
           })}
@@ -758,7 +758,7 @@ function StockPosition({ report }) {
         <tbody>
           {visibleRows.map(row => (
             <tr key={row.date}>
-              <td className={cell}>{fmtDate(row.date)}</td>
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
               <td className={cellR}>{fmt(row.opening)}</td>
               <td className={cellR}>{fmt(row.supply)}</td>
               <td className={cellR}>{fmt(row.qtySold)}</td>
@@ -937,7 +937,7 @@ function ConsumptionReport({ report, startDate, endDate }) {
               const hasAnyValue = row.hasData || customers.some(c => row.customerQtys[c.id]) || row.pourBack
               return (
                 <tr key={row.date} className={hasAnyValue ? '' : 'text-gray-400'}>
-                  <td className={cell}>
+                  <td className={`${cellR} whitespace-nowrap`}>
                     {fmtDate(row.date)}
                   </td>
                   <td className={cellR}>{fmt(row.rate)}</td>
