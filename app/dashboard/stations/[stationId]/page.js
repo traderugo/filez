@@ -386,7 +386,7 @@ export default function StationPage() {
           disabled={syncing || pendingCount === 0}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
             pendingCount > 0
-              ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+              ? 'bg-green-600 text-white hover:bg-green-700'
               : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
           }`}
         >
@@ -403,7 +403,7 @@ export default function StationPage() {
           disabled={refreshing}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
             pendingPullCount > 0
-              ? 'bg-blue-500 text-white hover:bg-blue-600'
+              ? 'bg-green-600 text-white hover:bg-green-700'
               : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
           }`}
         >

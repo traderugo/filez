@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
-import Footer from './Footer'
+
 import EmailVerifyBanner from './EmailVerifyBanner'
 import NavigationLoader from './NavigationLoader'
 import { supabase } from '@/lib/supabaseClient'
@@ -43,7 +43,6 @@ export default function AppShell({ children }) {
       <Suspense fallback={null}><NavigationLoader /></Suspense>
       <Suspense fallback={null}><Header /></Suspense>
       <main className="flex-1">{children}</main>
-      <Footer />
     </div>
   )
 
@@ -53,7 +52,6 @@ export default function AppShell({ children }) {
       <Suspense fallback={null}><Header /></Suspense>
       {user && !user.email_verified && pathname === '/dashboard' && <EmailVerifyBanner />}
       <main className="flex-1">{children}</main>
-      {!isChat && <Footer />}
     </div>
   )
 }

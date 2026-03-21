@@ -117,7 +117,7 @@ function DipCalculatorContent() {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-2 text-sm bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
             >
               {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Excel
             </button>

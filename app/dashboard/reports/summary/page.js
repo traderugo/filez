@@ -195,7 +195,7 @@ function SummaryContent() {
           <button
             onClick={goPrev}
             disabled={dayIndex <= 0}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-30 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
@@ -206,7 +206,7 @@ function SummaryContent() {
           <button
             onClick={goNext}
             disabled={dayIndex >= totalDays - 1}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-30 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-30 transition-colors"
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>

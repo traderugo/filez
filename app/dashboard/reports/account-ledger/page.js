@@ -435,7 +435,7 @@ function AccountLedgerContent() {
                 <button
                   onClick={() => setPage(p => p - 1)}
                   disabled={page === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-4 h-4" /> Prev
                 </button>
@@ -445,7 +445,7 @@ function AccountLedgerContent() {
                 <button
                   onClick={() => setPage(p => p + 1)}
                   disabled={page >= totalPages - 1}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
@@ -593,7 +593,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           <button
             onClick={() => setPage(p => p - 1)}
             disabled={page === 0}
-            className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
@@ -603,7 +603,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           <button
             onClick={() => setPage(p => p + 1)}
             disabled={page >= totalPages - 1}
-            className="flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>
