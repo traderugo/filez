@@ -12,7 +12,8 @@ import {
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
-import { format, differenceInDays } from 'date-fns'
+import { differenceInDays } from 'date-fns'
+import { fmtDate } from '@/lib/formatDate'
 import { db } from '@/lib/db'
 import { processQueue, clearQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
@@ -524,7 +525,7 @@ export default function StationPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2 text-gray-600">
                   <Clock className="w-4 h-4" />
-                  Expires {format(new Date(subscription.end_date), 'MMM d, yyyy')}
+                  Expires {fmtDate(subscription.end_date)}
                   {daysLeft !== null && daysLeft <= 7 && (
                     <span className="text-orange-500 font-medium">({daysLeft} days left)</span>
                   )}

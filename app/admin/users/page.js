@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Search, ShieldCheck, ShieldX } from 'lucide-react'
-import { format } from 'date-fns'
+import { fmtDate, fmtDateShort } from '@/lib/formatDate'
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([])
@@ -123,7 +123,7 @@ export default function AdminUsersPage() {
           </div>
           <div className="flex gap-2">
             <span className="text-gray-500">Joined:</span>
-            <span className="text-gray-900">{format(new Date(selectedUser.created_at), 'MMM d, yyyy')}</span>
+            <span className="text-gray-900">{fmtDate(selectedUser.created_at)}</span>
           </div>
         </div>
 
@@ -200,7 +200,7 @@ export default function AdminUsersPage() {
                 </div>
                 <p className="text-xs text-gray-500">{user.email}</p>
               </div>
-              <span className="text-xs text-gray-400">{format(new Date(user.created_at), 'MMM d')}</span>
+              <span className="text-xs text-gray-400">{fmtDateShort(user.created_at)}</span>
             </div>
           ))}
         </div>

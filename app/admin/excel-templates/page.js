@@ -13,9 +13,7 @@ function formatBytes(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
-function formatDate(iso) {
-  return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
-}
+import { fmtDate as formatDate } from '@/lib/formatDate'
 
 export default function ExcelTemplatesPage() {
   const [templates, setTemplates] = useState([])

@@ -22,7 +22,7 @@ export default function DateInput({ value, onChange, className = '' }) {
   const maskRef = useRef(null)
 
   const [inputValue, setInputValue] = useState(
-    value ? format(new Date(value + 'T00:00:00'), 'dd/MM/yyyy') : ''
+    value ? format(new Date(value + 'T00:00:00'), 'dd-MM-yyyy') : ''
   )
   const [error, setError] = useState('')
   const [showCalendar, setShowCalendar] = useState(false)
@@ -30,7 +30,7 @@ export default function DateInput({ value, onChange, className = '' }) {
   // Sync display when value prop changes externally
   useEffect(() => {
     if (value) {
-      const formatted = format(new Date(value + 'T00:00:00'), 'dd/MM/yyyy')
+      const formatted = format(new Date(value + 'T00:00:00'), 'dd-MM-yyyy')
       setInputValue(formatted)
     } else {
       setInputValue('')
@@ -41,7 +41,7 @@ export default function DateInput({ value, onChange, className = '' }) {
   useEffect(() => {
     if (!inputRef.current) return
     maskRef.current = IMask(inputRef.current, {
-      mask: '00/00/0000',
+      mask: '00-00-0000',
       lazy: true,
       overwrite: true,
     })
@@ -96,7 +96,7 @@ export default function DateInput({ value, onChange, className = '' }) {
     }
 
     // Standard fallback
-    const parsed = parse(trimmed, 'dd/MM/yyyy', refDate)
+    const parsed = parse(trimmed, 'dd-MM-yyyy', refDate)
     if (isValid(parsed)) return parsed
     return null
   }
@@ -104,7 +104,7 @@ export default function DateInput({ value, onChange, className = '' }) {
   const commitDate = (dateObj) => {
     if (dateObj && isValid(dateObj)) {
       const iso = format(dateObj, 'yyyy-MM-dd')
-      const display = format(dateObj, 'dd/MM/yyyy')
+      const display = format(dateObj, 'dd-MM-yyyy')
       onChange(iso)
       setInputValue(display)
       setError('')
@@ -163,7 +163,7 @@ export default function DateInput({ value, onChange, className = '' }) {
           onFocus={(e) => e.target.select()}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
-          placeholder="DD/MM/YYYY"
+          placeholder="DD-MM-YYYY"
           autoComplete="off"
           className={`block w-full focus:outline-none ${error ? 'text-red-600' : ''}`}
         />
@@ -184,7 +184,7 @@ export default function DateInput({ value, onChange, className = '' }) {
             selected={value ? new Date(value + 'T00:00:00') : null}
             onChange={handleCalendarChange}
             inline
-            dateFormat="dd/MM/yyyy"
+            dateFormat="dd-MM-yyyy"
             onClickOutside={() => setShowCalendar(false)}
           />
         </div>

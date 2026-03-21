@@ -5,8 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
-import { format } from 'date-fns'
 import { db } from '@/lib/db'
+import { fmtDate } from '@/lib/formatDate'
 
 export default function CustomerPaymentsListPage() {
   const searchParams = useSearchParams()
@@ -87,7 +87,7 @@ export default function CustomerPaymentsListPage() {
               <div key={group.date} className="py-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
-                    {group.date !== 'no-date' ? format(new Date(group.date + 'T00:00:00'), 'MMM d, yyyy') : 'No date'}
+                    {group.date !== 'no-date' ? fmtDate(group.date) : 'No date'}
                     <span className="ml-2 text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{group.entries.length} {group.entries.length === 1 ? 'entry' : 'entries'}</span>
                   </p>
                   <p className="text-xs text-gray-500">

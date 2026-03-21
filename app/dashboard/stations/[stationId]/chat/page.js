@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Send, Loader2, Trash2, RefreshCw } from 'lucide-react'
 import { db } from '@/lib/db'
+import { fmtDate } from '@/lib/formatDate'
 
 export default function ChatPage() {
   const params = useParams()
@@ -193,10 +194,7 @@ export default function ChatPage() {
     return new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
   }
 
-  const fmtDate = (ts) => {
-    if (!ts) return ''
-    return new Date(ts).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
+  // fmtDate imported from @/lib/formatDate
 
   let lastDate = null
 

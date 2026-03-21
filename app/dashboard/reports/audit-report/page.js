@@ -8,7 +8,7 @@ import { db } from '@/lib/db'
 import { buildAuditReport } from '@/lib/buildAuditReport'
 import { exportAuditExcel } from '@/lib/exportAuditExcel'
 import DateInput from '@/components/DateInput'
-import { fmtDate as fmtDateShared } from '@/lib/formatDate'
+import { fmtDate } from '@/lib/formatDate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -350,7 +350,7 @@ function SalesCashPosition({ report, startDate, endDate }) {
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
-  const formatDate = fmtDateShared
+  const formatDate = fmtDate
 
   return (
     <div className="min-w-[700px] pb-4 px-[10%]">
@@ -392,7 +392,7 @@ function SalesCashPosition({ report, startDate, endDate }) {
 }
 
 function FuelSection({ fuelType, index, summary, startDate, endDate, hdr, subHdr, cell, cellR }) {
-  const formatDate = fmtDateShared
+  const formatDate = fmtDate
 
   return (
     <div className="mb-4">
@@ -516,7 +516,7 @@ function MeterGroup({ row, rowIdx, totalRows, cell, cellR }) {
 }
 
 function CashReconciliation({ data, startDate, endDate, hdr, subHdr, cell, cellR }) {
-  const formatDate = fmtDateShared
+  const formatDate = fmtDate
 
   const overshortColor = data.overshort < 0 ? 'text-red-600' : data.overshort > 0 ? 'text-green-600' : ''
 
@@ -574,7 +574,7 @@ function LodgementSheet({ report }) {
   const cellR = `${cell} text-right`
   const cellEmpty = `${bdr} px-1.5 py-1 whitespace-nowrap bg-gray-50`
 
-  const fmtDate = fmtDateShared
+  // fmtDate imported from @/lib/formatDate
 
   const fmtOvsh = (v) => {
     if (v === 0) return ''
@@ -705,7 +705,7 @@ function StockPosition({ report }) {
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
-  const fmtDate = fmtDateShared
+  // fmtDate imported from @/lib/formatDate
 
   const ovshColor = (v) => {
     if (v == null || v === 0) return ''
@@ -790,11 +790,7 @@ function StockSummary({ report, startDate, endDate }) {
   const { stockPosition, fuelTypes } = report
   if (!stockPosition) return null
 
-  const fmtDate = (d) => {
-    if (!d) return ''
-    const dt = new Date(d + 'T00:00:00')
-    return dt.toLocaleDateString('en-NG', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  }
+  // fmtDate imported from @/lib/formatDate
 
   const hdr = 'bg-blue-600 text-white font-bold'
   const cell = 'border border-blue-200 px-3 py-1.5 text-sm'
@@ -893,11 +889,7 @@ function ConsumptionReport({ report, startDate, endDate }) {
 
   if (!consumptionReport) return null
 
-  const fmtDate = (d) => {
-    if (!d) return ''
-    const dt = new Date(d + 'T00:00:00')
-    return dt.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
-  }
+  // fmtDate imported from @/lib/formatDate
 
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-900'
@@ -942,12 +934,11 @@ function ConsumptionReport({ report, startDate, endDate }) {
           </thead>
           <tbody>
             {rows.map(row => {
-              const d = new Date(row.date + 'T00:00:00')
               const hasAnyValue = row.hasData || customers.some(c => row.customerQtys[c.id]) || row.pourBack
               return (
                 <tr key={row.date} className={hasAnyValue ? '' : 'text-gray-400'}>
                   <td className={cell}>
-                    {d.toLocaleDateString('en-NG', { day: 'numeric', month: 'numeric', year: 'numeric' })}
+                    {fmtDate(row.date)}
                   </td>
                   <td className={cellR}>{fmt(row.rate)}</td>
                   {customers.map(c => (

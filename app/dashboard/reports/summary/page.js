@@ -6,6 +6,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildDailyReport } from '@/lib/buildDailyReport'
+import { fmtDate } from '@/lib/formatDate'
 import DateInput from '@/components/DateInput'
 
 function fmt(n) {
@@ -199,7 +200,7 @@ function SummaryContent() {
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
           <span className="text-sm text-gray-600 font-medium">
-            {new Date(dayReport.date + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+            {fmtDate(dayReport.date)}
             <span className="text-gray-400 ml-1">({dayIndex + 1} of {totalDays})</span>
           </span>
           <button

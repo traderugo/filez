@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Loader2, Check, X, Eye, ChevronDown, ChevronUp } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
-import { format } from 'date-fns'
+import { fmtDate, fmtDateShort } from '@/lib/formatDate'
 
 export default function AdminSubscriptionsPage() {
   const [subs, setSubs] = useState([])
@@ -91,7 +91,7 @@ export default function AdminSubscriptionsPage() {
                   <p className="text-xs text-gray-500">{sub.users?.email}</p>
                 </div>
                 <SubscriptionBadge status={sub.status} />
-                <span className="text-xs text-gray-400">{format(new Date(sub.created_at), 'MMM d')}</span>
+                <span className="text-xs text-gray-400">{fmtDateShort(sub.created_at)}</span>
                 {expandedId === sub.id ? (
                   <ChevronUp className="w-4 h-4 text-gray-400" />
                 ) : (
@@ -123,14 +123,14 @@ export default function AdminSubscriptionsPage() {
                     {sub.payment_deadline && sub.status === 'pending_payment' && (
                       <div className="flex gap-2">
                         <span className="text-gray-500">Deadline:</span>
-                        <span className="text-gray-900">{format(new Date(sub.payment_deadline), 'MMM d, yyyy h:mm a')}</span>
+                        <span className="text-gray-900">{fmtDate(sub.payment_deadline)}</span>
                       </div>
                     )}
                     {sub.start_date && (
                       <div className="flex gap-2">
                         <span className="text-gray-500">Period:</span>
                         <span className="text-gray-900">
-                          {format(new Date(sub.start_date), 'MMM d')} — {format(new Date(sub.end_date), 'MMM d, yyyy')}
+                          {fmtDateShort(sub.start_date)} — {fmtDate(sub.end_date)}
                         </span>
                       </div>
                     )}

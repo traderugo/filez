@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { Loader2, Users, CreditCard, TrendingUp, Star } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { format, subMonths, startOfMonth } from 'date-fns'
+import { subMonths, startOfMonth, format } from 'date-fns'
+import { fmtDateShort } from '@/lib/formatDate'
 
 export default function AdminAnalyticsPage() {
   const [stats, setStats] = useState(null)
@@ -113,7 +114,7 @@ export default function AdminAnalyticsPage() {
                       />
                     ))}
                   </div>
-                  <span className="text-xs text-gray-400">{format(new Date(fb.submitted_at), 'MMM d')}</span>
+                  <span className="text-xs text-gray-400">{fmtDateShort(fb.submitted_at)}</span>
                 </div>
                 <p className="text-sm text-gray-600">{fb.message}</p>
               </div>
