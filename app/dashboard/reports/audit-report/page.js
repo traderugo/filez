@@ -3,7 +3,7 @@
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, Download } from 'lucide-react'
+import { Loader2, Download, ShieldX } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildAuditReport } from '@/lib/buildAuditReport'
 import { exportAuditExcel } from '@/lib/exportAuditExcel'
@@ -71,6 +71,7 @@ function AuditReportContent() {
   const [banks, setBanks] = useState([])
   const [tanks, setTanks] = useState([])
   const [stationName, setStationName] = useState('')
+  const [allowedSubReports, setAllowedSubReports] = useState(null) // null = all (owner)
 
   const today = new Date()
   const pad = (n) => String(n).padStart(2, '0')
@@ -85,6 +86,9 @@ function AuditReportContent() {
   const setEndDate = (v) => { endDateRef.current = v; _setEndDate(v) }
   const [generated, setGenerated] = useState(true)
   const [activeTab, setActiveTab] = useState('sales-cash')
+
+  // Check sub-report access (null = owner/legacy = all allowed)
+  const canAccessTab = (tabKey) => allowedSubReports === null || allowedSubReports.includes(tabKey)
 
   // Committed date range (only updates on Generate)
   const [reportStart, setReportStart] = useState(monthStartStr)
@@ -119,6 +123,22 @@ function AuditReportContent() {
       fetch('/api/excel-templates?name=AUDIT+REPORT+TEMPLATE').then(r => r.ok ? r.json() : null).then(data => {
         if (cancelled || !data?.url) return
         setTemplateUrl(data.url)
+      }).catch(() => {})
+
+      // Fetch staff permissions to filter sub-reports (non-blocking)
+      fetch(`/api/invites?org_id=${orgId}`).then(r => r.ok ? r.json() : null).then(data => {
+        if (cancelled || !data?.visiblePages) return
+        const pages = data.visiblePages
+        // Old key 'report-audit' without sub-keys = show all sub-reports
+        const hasLegacyKey = pages.includes('report-audit')
+        const subKeys = pages.filter(p => p.startsWith('report-audit-'))
+        if (subKeys.length > 0) {
+          // Map page keys to sub-report keys: 'report-audit-sales-cash' -> 'sales-cash'
+          setAllowedSubReports(subKeys.map(k => k.replace('report-audit-', '')))
+        } else if (!hasLegacyKey) {
+          setAllowedSubReports([]) // no audit access at all
+        }
+        // null (default) = owner or legacy key = show all
       }).catch(() => {})
     }
     load()
@@ -288,23 +308,34 @@ function AuditReportContent() {
       {/* Report content */}
       {report ? (
         <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-gray-200">
-          <div className="px-4 sm:px-8 py-4">
-            {activeTab === 'sales-cash' && (
-              <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
-            )}
-            {activeTab === 'lodgement-sheet' && (
-              <LodgementSheet report={report} />
-            )}
-            {activeTab === 'stock-position' && (
-              <StockPosition report={report} />
-            )}
-            {activeTab === 'stock-summary' && (
-              <StockSummary report={report} startDate={reportStart} endDate={reportEnd} />
-            )}
-            {activeTab === 'consumption' && (
-              <ConsumptionReport report={report} startDate={reportStart} endDate={reportEnd} />
-            )}
-          </div>
+          {!canAccessTab(activeTab) ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded max-w-md">
+                <ShieldX className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-700">
+                  You don&apos;t have permission to view this report. Contact the station owner to update your access.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="px-4 sm:px-8 py-4">
+              {activeTab === 'sales-cash' && (
+                <SalesCashPosition report={report} startDate={reportStart} endDate={reportEnd} />
+              )}
+              {activeTab === 'lodgement-sheet' && (
+                <LodgementSheet report={report} />
+              )}
+              {activeTab === 'stock-position' && (
+                <StockPosition report={report} />
+              )}
+              {activeTab === 'stock-summary' && (
+                <StockSummary report={report} startDate={reportStart} endDate={reportEnd} />
+              )}
+              {activeTab === 'consumption' && (
+                <ConsumptionReport report={report} startDate={reportStart} endDate={reportEnd} />
+              )}
+            </div>
+          )}
         </div>
       ) : generated ? (
         <div className="flex-1 flex justify-center py-20">
@@ -319,19 +350,26 @@ function AuditReportContent() {
       {/* Sub-report tabs (bottom, Excel-style) */}
       {generated && report && (
         <div className="flex overflow-x-auto shrink-0 border-t border-blue-200 bg-gray-50">
-          {SUB_REPORTS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-4 py-1.5 text-sm font-medium border-r border-blue-200 shrink-0 whitespace-nowrap transition-colors ${
-                activeTab === tab.key
-                  ? 'bg-white text-blue-600 border-t-2 border-t-blue-600 -mt-px'
-                  : 'bg-gray-50 text-gray-500 hover:bg-white hover:text-blue-600'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {SUB_REPORTS.map(tab => {
+            const allowed = canAccessTab(tab.key)
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-1.5 text-sm font-medium border-r border-blue-200 shrink-0 whitespace-nowrap transition-colors ${
+                  activeTab === tab.key
+                    ? allowed
+                      ? 'bg-white text-blue-600 border-t-2 border-t-blue-600 -mt-px'
+                      : 'bg-white text-red-400 border-t-2 border-t-red-400 -mt-px'
+                    : allowed
+                      ? 'bg-gray-50 text-gray-500 hover:bg-white hover:text-blue-600'
+                      : 'bg-gray-50 text-gray-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

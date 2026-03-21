@@ -30,14 +30,21 @@ const ENTRY_PAGE_OPTIONS = [
 const REPORT_PAGE_OPTIONS = [
   { key: 'report-summary', label: 'Summary' },
   { key: 'report-daily-sales', label: 'Daily Sales Report' },
-  { key: 'report-audit', label: 'Audit Report' },
+  { key: 'report-audit', label: 'Audit Report', children: [
+    { key: 'report-audit-sales-cash', label: 'Sales/Cash Position' },
+    { key: 'report-audit-lodgement-sheet', label: 'Lodgement Sheet' },
+    { key: 'report-audit-stock-position', label: 'Record of Stock Position' },
+    { key: 'report-audit-stock-summary', label: 'Stock Position' },
+    { key: 'report-audit-consumption', label: 'Consumption & Pour Back' },
+  ]},
   { key: 'report-account-ledger', label: 'Account Ledger' },
   { key: 'report-product-received', label: 'Product Received' },
+  { key: 'report-lube', label: 'Lube Report' },
 ]
 
 const ALL_PAGE_KEYS = [
   ...ENTRY_PAGE_OPTIONS.map(p => p.key),
-  ...REPORT_PAGE_OPTIONS.map(p => p.key),
+  ...REPORT_PAGE_OPTIONS.flatMap(p => p.children ? [p.key, ...p.children.map(c => c.key)] : [p.key]),
 ]
 
 export default function StationPage() {
@@ -353,6 +360,7 @@ export default function StationPage() {
     { href: `/dashboard/reports/audit-report?org_id=${stationId}`, icon: ClipboardList, label: 'Audit Report', desc: 'Station audit trail', pageKey: 'report-audit' },
     { href: `/dashboard/reports/account-ledger?org_id=${stationId}`, icon: BookOpen, label: 'Account Ledger', desc: 'Credit accounts and balances', pageKey: 'report-account-ledger' },
     { href: `/dashboard/reports/product-received?org_id=${stationId}`, icon: Truck, label: 'Product Received', desc: 'Deliveries, waybills, shortages', pageKey: 'report-product-received' },
+    { href: `/dashboard/reports/lube-report?org_id=${stationId}`, icon: Droplets, label: 'Lube Report', desc: 'Lube sales, stock, and lodgements', pageKey: 'report-lube' },
   ]
 
   return (
@@ -634,15 +642,58 @@ export default function StationPage() {
                         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Reports</p>
                         <div className="space-y-2 mb-4">
                           {REPORT_PAGE_OPTIONS.map((page) => (
-                            <label key={page.key} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={pages.includes(page.key)}
-                                onChange={() => togglePagePermission(inv.id, page.key, pages)}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
-                              />
-                              <span className="text-sm text-gray-700">{page.label}</span>
-                            </label>
+                            <div key={page.key}>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={page.children
+                                    ? page.children.every(c => pages.includes(c.key))
+                                    : pages.includes(page.key)
+                                  }
+                                  ref={page.children ? (el) => {
+                                    if (el) el.indeterminate = page.children.some(c => pages.includes(c.key)) && !page.children.every(c => pages.includes(c.key))
+                                  } : undefined}
+                                  onChange={() => {
+                                    if (page.children) {
+                                      const allChecked = page.children.every(c => pages.includes(c.key))
+                                      const childKeys = page.children.map(c => c.key)
+                                      const base = pages.filter(p => !childKeys.includes(p) && p !== page.key)
+                                      const updated = allChecked ? base : [...base, page.key, ...childKeys]
+                                      setInvites((prev) => prev.map((i) => i.id === inv.id ? { ...i, visible_pages: updated } : i))
+                                      fetch('/api/invites/permissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invite_id: inv.id, visible_pages: updated }) })
+                                    } else {
+                                      togglePagePermission(inv.id, page.key, pages)
+                                    }
+                                  }}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                />
+                                <span className="text-sm text-gray-700">{page.label}</span>
+                              </label>
+                              {page.children && (
+                                <div className="ml-6 mt-1 space-y-1">
+                                  {page.children.map((child) => (
+                                    <label key={child.key} className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={pages.includes(child.key)}
+                                        onChange={() => {
+                                          const updated = pages.includes(child.key)
+                                            ? pages.filter(p => p !== child.key)
+                                            : [...pages, child.key]
+                                          // Also ensure parent key is present if any child is checked
+                                          const hasChild = page.children.some(c => updated.includes(c.key))
+                                          const withParent = hasChild && !updated.includes(page.key) ? [...updated, page.key] : hasChild ? updated : updated.filter(p => p !== page.key)
+                                          setInvites((prev) => prev.map((i) => i.id === inv.id ? { ...i, visible_pages: withParent } : i))
+                                          fetch('/api/invites/permissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invite_id: inv.id, visible_pages: withParent }) })
+                                        }}
+                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                      />
+                                      <span className="text-xs text-gray-600">{child.label}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           ))}
                         </div>
                         <button
