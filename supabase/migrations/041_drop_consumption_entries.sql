@@ -13,7 +13,3 @@ UPDATE public.org_invites
 SET visible_pages = visible_pages - 'consumption'
 WHERE visible_pages ? 'consumption';
 
--- Also strip from org_members visible_pages if it exists
-UPDATE public.org_members
-SET visible_pages = visible_pages - 'consumption'
-WHERE visible_pages ? 'consumption';
