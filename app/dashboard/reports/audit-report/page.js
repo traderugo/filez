@@ -1009,6 +1009,53 @@ function ConsumptionReport({ report, startDate, endDate }) {
   )
 }
 
+// ─── Calculator helpers ───
+
+function VarianceBadge({ actual, estimate }) {
+  const diff = estimate - actual
+  if (diff === 0) return null
+  return (
+    <span className={`text-xs font-medium ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
+      {diff > 0 ? '+' : ''}{fmt(diff)}
+    </span>
+  )
+}
+
+function CalcRow({ label, actual, estimate, editable, onChange }) {
+  return (
+    <div className="border-b border-gray-100 py-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs text-gray-500 font-medium">{label}</span>
+        <VarianceBadge actual={actual} estimate={estimate} />
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-gray-50 rounded px-2.5 py-1.5">
+          <span className="text-[10px] text-gray-400 uppercase">Actual</span>
+          <p className="text-sm font-medium text-gray-800">{fmt(actual)}</p>
+        </div>
+        {editable ? (
+          <div className="bg-yellow-50 rounded px-2.5 py-0.5">
+            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
+            <input
+              type="number"
+              value={estimate}
+              onChange={(e) => onChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              step="0.01"
+              className="w-full text-sm font-medium text-gray-800 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+          </div>
+        ) : (
+          <div className="bg-gray-50 rounded px-2.5 py-1.5">
+            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
+            <p className="text-sm font-medium text-gray-800">{fmt(estimate)}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Calculator sub-report ───
 
 function CalculatorReport({ report, startDate, endDate }) {
@@ -1064,49 +1111,6 @@ function CalculatorReport({ report, startDate, endDate }) {
   const updateOtherEstimate = (field, value) => {
     setOtherEstimates(prev => ({ ...prev, [field]: Number(value) || 0 }))
   }
-
-  const varianceBadge = (actual, estimate) => {
-    const diff = estimate - actual
-    if (diff === 0) return null
-    return (
-      <span className={`text-xs font-medium ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
-        {diff > 0 ? '+' : ''}{fmt(diff)}
-      </span>
-    )
-  }
-
-  const CalcRow = ({ label, actual, estimate, editable, onChange }) => (
-    <div className="border-b border-gray-100 py-2">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-gray-500 font-medium">{label}</span>
-        {varianceBadge(actual, estimate)}
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-gray-50 rounded px-2.5 py-1.5">
-          <span className="text-[10px] text-gray-400 uppercase">Actual</span>
-          <p className="text-sm font-medium text-gray-800">{fmt(actual)}</p>
-        </div>
-        {editable ? (
-          <div className="bg-yellow-50 rounded px-2.5 py-0.5">
-            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
-            <input
-              type="number"
-              value={estimate}
-              onChange={(e) => onChange(e.target.value)}
-              onFocus={(e) => e.target.select()}
-              step="0.01"
-              className="w-full text-sm font-medium text-gray-800 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            />
-          </div>
-        ) : (
-          <div className="bg-gray-50 rounded px-2.5 py-1.5">
-            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
-            <p className="text-sm font-medium text-gray-800">{fmt(estimate)}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
 
   return (
     <div className="pb-4 max-w-lg mx-auto">
