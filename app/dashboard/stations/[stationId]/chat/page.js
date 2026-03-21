@@ -251,9 +251,9 @@ export default function ChatPage() {
 
               {/* Activity log */}
               {msg.type === 'activity' ? (
-                <div className="flex justify-center my-1">
-                  <p className="text-xs text-gray-500 px-3 py-1">
-                    <span className="font-medium text-gray-600">{msg.userName}</span> {msg.content} · {fmtTime(msg.createdAt)}
+                <div className="my-1">
+                  <p className="text-sm text-gray-500 px-3 py-1">
+                    {fmtTime(msg.createdAt)} · <span className="font-medium text-gray-600">{msg.userName}</span> {msg.content}
                   </p>
                 </div>
               ) : (
