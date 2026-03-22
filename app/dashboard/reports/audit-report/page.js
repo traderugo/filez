@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
+import { Fragment, Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, Download, ShieldX } from 'lucide-react'
@@ -17,10 +17,11 @@ function fmt(n) {
 
 const SUB_REPORTS = [
   { key: 'sales-cash', label: 'Sales/Cash Position' },
-  { key: 'stock-position', label: 'Record of Stock Position' },
   { key: 'stock-summary', label: 'Stock Position' },
   { key: 'lodgement-sheet', label: 'Lodgement Sheet' },
   { key: 'consumption', label: 'Consumption & Pour Back' },
+  { key: 'product-received', label: 'Product Received' },
+  { key: 'stock-position', label: 'Record of Stock Position' },
   { key: 'calculator', label: 'Calculator' },
 ]
 
@@ -329,6 +330,9 @@ function AuditReportContent() {
               )}
               {activeTab === 'consumption' && (
                 <ConsumptionReport report={report} startDate={reportStart} endDate={reportEnd} />
+              )}
+              {activeTab === 'product-received' && (
+                <ProductReceived receipts={liveReceipts || []} tanks={tanks} startDate={reportStart} endDate={reportEnd} />
               )}
               {activeTab === 'calculator' && (
                 <CalculatorReport report={report} startDate={reportStart} endDate={reportEnd} />
@@ -1211,6 +1215,143 @@ function CalculatorReport({ report, startDate, endDate }) {
           })()}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ─── Product Received sub-report ───
+
+const PRODUCT_PRODUCT_FUEL_ORDER = ['PMS', 'AGO', 'DPK']
+
+function ProductReceived({ receipts, tanks, startDate, endDate }) {
+  const tankFuel = useMemo(() => {
+    const map = {}
+    for (const t of (tanks || [])) map[t.id] = t.fuel_type
+    return map
+  }, [tanks])
+
+  const fuelTypes = useMemo(() => {
+    const present = new Set((tanks || []).map(t => t.fuel_type))
+    return PRODUCT_FUEL_ORDER.filter(ft => present.has(ft))
+  }, [tanks])
+
+  const deliveries = useMemo(() => {
+    const rangeReceipts = (receipts || [])
+      .filter(r => (r.entryDate || '') >= startDate && (r.entryDate || '') <= endDate)
+      .sort((a, b) => (a.entryDate || '').localeCompare(b.entryDate || ''))
+
+    // Group into deliveries (one per truck, not per tank)
+    const deliveryMap = {}
+    for (const r of rangeReceipts) {
+      const parts = [r.waybillNumber, r.truckNumber, r.driverName, r.depotName, r.loadedDate].map(s => s || '')
+      const key = parts.some(Boolean) ? `${r.entryDate}|${parts.join('|')}` : r.id
+      if (!deliveryMap[key]) deliveryMap[key] = { first: r, records: [] }
+      deliveryMap[key].records.push(r)
+    }
+
+    const rows = Object.values(deliveryMap).map(({ first, records }) => {
+      const expected = Number(first.firstCompartment || 0) + Number(first.secondCompartment || 0) + Number(first.thirdCompartment || 0)
+      const byFuel = {}
+      for (const r of records) {
+        const ft = tankFuel[r.tankId]
+        if (!ft) continue
+        if (!byFuel[ft]) byFuel[ft] = { expected: 0, actual: 0 }
+        byFuel[ft].actual += Number(r.actualVolume || 0)
+      }
+      const fts = Object.keys(byFuel)
+      if (fts.length === 1) {
+        byFuel[fts[0]].expected = expected
+      } else if (fts.length > 1) {
+        const totalActual = fts.reduce((s, ft) => s + byFuel[ft].actual, 0)
+        for (const ft of fts) {
+          byFuel[ft].expected = totalActual > 0 ? Math.round(expected * byFuel[ft].actual / totalActual) : 0
+        }
+      }
+      return { entryDate: first.entryDate, loadedDate: first.loadedDate || '', byFuel }
+    })
+
+    rows.sort((a, b) => (a.entryDate || '').localeCompare(b.entryDate || ''))
+
+    // Totals
+    const totals = {}
+    for (const ft of PRODUCT_FUEL_ORDER) totals[ft] = { expected: 0, actual: 0 }
+    for (const row of rows) {
+      for (const ft of PRODUCT_FUEL_ORDER) {
+        totals[ft].expected += row.byFuel[ft]?.expected || 0
+        totals[ft].actual += row.byFuel[ft]?.actual || 0
+      }
+    }
+
+    return { rows, totals }
+  }, [receipts, tankFuel, startDate, endDate])
+
+  const hdr = 'bg-blue-600 text-white'
+  const subHdr = 'bg-blue-50 text-blue-600'
+  const bdr = 'border border-blue-200'
+  const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
+  const cellR = `${cell} text-right`
+
+  return (
+    <div className="min-w-[700px] pb-4">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr>
+            <th colSpan={2 + fuelTypes.length * 2} className={`${hdr} px-2 py-1.5 text-center font-bold`}>
+              PRODUCT RECEIVED FOR THE MONTH
+            </th>
+          </tr>
+          <tr className={subHdr}>
+            <th className={`${cell} font-bold`}>Loading Date</th>
+            <th className={`${cell} font-bold`}>Receipt Date</th>
+            {fuelTypes.map(ft => (
+              <th key={ft} colSpan={2} className={`${cell} text-center font-bold`}>{ft}</th>
+            ))}
+          </tr>
+          <tr className={subHdr}>
+            <th className={cell}></th>
+            <th className={cell}></th>
+            {fuelTypes.map(ft => (
+              <Fragment key={ft}>
+                <th className={`${cellR} font-bold text-xs`}>Expected</th>
+                <th className={`${cellR} font-bold text-xs`}>Actual</th>
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {deliveries.rows.length === 0 ? (
+            <tr>
+              <td colSpan={2 + fuelTypes.length * 2} className={`${cell} text-center text-gray-400 py-8`}>
+                No product receipts found in this period.
+              </td>
+            </tr>
+          ) : (
+            deliveries.rows.map((row, i) => (
+              <tr key={i} className="hover:bg-blue-50/40">
+                <td className={`${cellR}`}>{row.loadedDate ? fmtDate(row.loadedDate) : '—'}</td>
+                <td className={`${cellR}`}>{row.entryDate ? fmtDate(row.entryDate) : '—'}</td>
+                {fuelTypes.map(ft => (
+                  <Fragment key={ft}>
+                    <td className={cellR}>{row.byFuel[ft]?.expected ? fmt(row.byFuel[ft].expected) : ''}</td>
+                    <td className={cellR}>{row.byFuel[ft]?.actual ? fmt(row.byFuel[ft].actual) : ''}</td>
+                  </Fragment>
+                ))}
+              </tr>
+            ))
+          )}
+          {deliveries.rows.length > 0 && (
+            <tr className={`${subHdr} font-bold`}>
+              <td className={cell} colSpan={2}>Total</td>
+              {fuelTypes.map(ft => (
+                <Fragment key={ft}>
+                  <td className={cellR}>{fmt(deliveries.totals[ft].expected)}</td>
+                  <td className={cellR}>{fmt(deliveries.totals[ft].actual)}</td>
+                </Fragment>
+              ))}
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   )
 }
