@@ -50,12 +50,12 @@ export default function ChatPage() {
   // Initial fetch + auto-poll every 15s for new messages
   useEffect(() => {
     if (!stationId) return
-    fetchMessages()
+    fetchMessages(true)
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') fetchMessages()
+      if (document.visibilityState === 'visible') fetchMessages(false)
     }, 15_000)
     const onVisible = () => {
-      if (document.visibilityState === 'visible') fetchMessages()
+      if (document.visibilityState === 'visible') fetchMessages(false)
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => {
@@ -84,8 +84,12 @@ export default function ChatPage() {
     }
   }
 
-  const fetchMessages = async () => {
-    setRefreshing(true)
+  const pollingRef = useRef(false)
+
+  const fetchMessages = async (showSpinner = true) => {
+    if (pollingRef.current) return
+    pollingRef.current = true
+    if (showSpinner) setRefreshing(true)
     try {
       const res = await fetch(`/api/chat?org_id=${stationId}`, { cache: 'no-store' })
       if (res.ok) {
@@ -95,9 +99,10 @@ export default function ChatPage() {
         }
       }
     } catch {
-      // Silently fail
+      // Silently fail — offline or network error
     }
-    setRefreshing(false)
+    if (showSpinner) setRefreshing(false)
+    pollingRef.current = false
   }
 
   const handleSend = async () => {
