@@ -1221,7 +1221,7 @@ function CalculatorReport({ report, startDate, endDate }) {
 
 // ─── Product Received sub-report ───
 
-const PRODUCT_PRODUCT_FUEL_ORDER = ['PMS', 'AGO', 'DPK']
+const PRODUCT_FUEL_ORDER = ['PMS', 'AGO', 'DPK']
 
 function ProductReceived({ receipts, tanks, startDate, endDate }) {
   const tankFuel = useMemo(() => {

@@ -47,10 +47,21 @@ export default function ChatPage() {
     return () => clearTimeout(t)
   }, [])
 
-  // Initial fetch of message history
+  // Initial fetch + auto-poll every 15s for new messages
   useEffect(() => {
     if (!stationId) return
     fetchMessages()
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchMessages()
+    }, 15_000)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchMessages()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stationId])
 
@@ -76,7 +87,7 @@ export default function ChatPage() {
   const fetchMessages = async () => {
     setRefreshing(true)
     try {
-      const res = await fetch(`/api/chat?org_id=${stationId}`)
+      const res = await fetch(`/api/chat?org_id=${stationId}`, { cache: 'no-store' })
       if (res.ok) {
         const { messages: serverMessages } = await res.json()
         if (serverMessages?.length) {
