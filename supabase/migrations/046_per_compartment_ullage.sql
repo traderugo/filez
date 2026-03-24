@@ -2,7 +2,7 @@
 -- Old single-value columns (chart_ullage, chart_liquid_height, etc.) are kept
 -- for backward compatibility. New columns store per-compartment values.
 
-ALTER TABLE product_receipts
+ALTER TABLE product_receipt_entries
   ADD COLUMN IF NOT EXISTS chart_ullage_1 numeric DEFAULT 0,
   ADD COLUMN IF NOT EXISTS chart_ullage_2 numeric DEFAULT 0,
   ADD COLUMN IF NOT EXISTS chart_ullage_3 numeric DEFAULT 0,
@@ -23,7 +23,7 @@ ALTER TABLE product_receipts
   ADD COLUMN IF NOT EXISTS station_liquid_height_3 numeric DEFAULT 0;
 
 -- Backfill: copy old single values into compartment 1
-UPDATE product_receipts SET
+UPDATE product_receipt_entries SET
   chart_ullage_1 = COALESCE(chart_ullage, 0),
   chart_liquid_height_1 = COALESCE(chart_liquid_height, 0),
   depot_ullage_1 = COALESCE(depot_ullage, 0),
