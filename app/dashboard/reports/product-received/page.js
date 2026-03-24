@@ -4,8 +4,9 @@ import { Suspense, useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, Calculator } from 'lucide-react'
+import { Loader2, Calculator, Download } from 'lucide-react'
 import { db } from '@/lib/db'
+import { exportProductReceiptExcel } from '@/lib/exportProductReceiptExcel'
 import DateInput from '@/components/DateInput'
 import { fmtDate } from '@/lib/formatDate'
 
@@ -61,6 +62,18 @@ function groupIntoDeliveries(records, tanksMap) {
       waybillNumber: first.waybillNumber || '',
       shortage: qtyLoaded - qtySupplied,
       depot: first.depotName || '',
+      // Fields needed for Excel export
+      arrivalTime: first.arrivalTime || '',
+      exitTime: first.exitTime || '',
+      chartUllage: first.chartUllage,
+      chartLiquidHeight: first.chartLiquidHeight,
+      stationUllage: first.stationUllage,
+      stationLiquidHeight: first.stationLiquidHeight,
+      depotUllage: first.depotUllage,
+      depotLiquidHeight: first.depotLiquidHeight,
+      firstCompartment: first.firstCompartment,
+      secondCompartment: first.secondCompartment,
+      thirdCompartment: first.thirdCompartment,
     }
   })
 }
@@ -79,6 +92,8 @@ function ProductReceivedReportContent() {
   const [generated, setGenerated] = useState(true)
   const [reportStart, setReportStart] = useState(monthStartStr)
   const [reportEnd, setReportEnd] = useState(todayStr)
+
+  const [exportingIdx, setExportingIdx] = useState(null)
 
   // Config
   const [tanks, setTanks] = useState([])
@@ -133,6 +148,40 @@ function ProductReceivedReportContent() {
 
     return { rows: grouped, totalLoaded, totalSupplied, totalShortage }
   }, [generated, reportStart, reportEnd, loading, orgId, liveReceipts, tanksMap])
+
+  const handleExport = async (row, idx) => {
+    if (exportingIdx !== null) return
+    setExportingIdx(idx)
+    try {
+      await exportProductReceiptExcel({
+        product: row.product,
+        truckNumber: row.truckNumber,
+        driverName: row.driverName,
+        depotName: row.depot,
+        ticketNumber: row.ticketNumber,
+        waybillNumber: row.waybillNumber,
+        loadedDate: row.loadingDate,
+        entryDate: row.dischargeDate,
+        arrivalTime: row.arrivalTime,
+        exitTime: row.exitTime,
+        chartUllage: row.chartUllage,
+        chartLiquidHeight: row.chartLiquidHeight,
+        stationUllage: row.stationUllage,
+        stationLiquidHeight: row.stationLiquidHeight,
+        depotUllage: row.depotUllage,
+        depotLiquidHeight: row.depotLiquidHeight,
+        firstCompartment: row.firstCompartment,
+        secondCompartment: row.secondCompartment,
+        thirdCompartment: row.thirdCompartment,
+        qtyReceived: row.qtySupplied,
+      })
+    } catch (err) {
+      console.error('Excel export failed:', err)
+      alert('Export failed: ' + (err?.message || String(err)))
+    } finally {
+      setExportingIdx(null)
+    }
+  }
 
   const handleGenerate = () => {
     if (!startDate || !endDate) return
@@ -225,13 +274,24 @@ function ProductReceivedReportContent() {
                     <td className={`${cellR} ${shortageColor}`}>{fmt(row.shortage)}</td>
                     <td className={cell}>{row.depot || '—'}</td>
                     <td className={`${cell} text-center`}>
-                      <Link
-                        href={`/dashboard/reports/dip-calculator?org_id=${orgId}`}
-                        className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
-                        title="Dip Calculator"
-                      >
-                        <Calculator className="w-3.5 h-3.5" />
-                      </Link>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleExport(row, i)}
+                          disabled={exportingIdx !== null}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50 rounded"
+                          title="Export Excel"
+                        >
+                          {exportingIdx === i ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
+                          Export
+                        </button>
+                        <Link
+                          href={`/dashboard/reports/dip-calculator?org_id=${orgId}`}
+                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                          title="Dip Calculator"
+                        >
+                          <Calculator className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 )
