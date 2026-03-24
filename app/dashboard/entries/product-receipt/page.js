@@ -18,7 +18,7 @@ function blankEntry(tanks) {
     stationUllage: '', stationLiquidHeight: '',
     firstCompartment: '', secondCompartment: '', thirdCompartment: '',
     tankVolumes: Object.fromEntries(tanks.map(t => [t.id, ''])),
-    depotName: '', notes: '',
+    depotName: '', arrivalTime: '', exitTime: '', notes: '',
   }
 }
 
@@ -64,6 +64,8 @@ function groupRecordsIntoEntries(records, tanks) {
       thirdCompartment: first.thirdCompartment ?? '',
       tankVolumes,
       depotName: first.depotName || '',
+      arrivalTime: first.arrivalTime || '',
+      exitTime: first.exitTime || '',
       notes: first.notes || '',
     }
   })
@@ -218,6 +220,8 @@ export default function ProductReceiptFormPage() {
             actualVolume: Number(volumeStr) || 0,
             depotName: entry.depotName,
             tankId,
+            arrivalTime: entry.arrivalTime || '',
+            exitTime: entry.exitTime || '',
             notes: entry.notes,
             createdAt: now,
             updatedAt: now,
@@ -332,10 +336,33 @@ export default function ProductReceiptFormPage() {
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Truck Number</label>
               <input type="text" value={current.truckNumber} onChange={(e) => updateEntry(activeTab, 'truckNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
-            <div className="bg-gray-50 px-2 py-1">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart / Depot / Station</span>
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Arrival Time</label>
+                <input type="time" value={current.arrivalTime} onChange={(e) => updateEntry(activeTab, 'arrivalTime', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Exit Time</label>
+                <input type="time" value={current.exitTime} onChange={(e) => updateEntry(activeTab, 'exitTime', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-gray-300">
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Station</span>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Ullage</label>
+                <input type="number" value={current.stationUllage} onChange={(e) => updateEntry(activeTab, 'stationUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Liq. Height</label>
+                <input type="number" value={current.stationLiquidHeight} onChange={(e) => updateEntry(activeTab, 'stationLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+            </div>
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart</span>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Ullage</label>
                 <input type="number" value={current.chartUllage} onChange={(e) => updateEntry(activeTab, 'chartUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
@@ -344,23 +371,18 @@ export default function ProductReceiptFormPage() {
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Liq. Height</label>
                 <input type="number" value={current.chartLiquidHeight} onChange={(e) => updateEntry(activeTab, 'chartLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
+            </div>
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Depot</span>
+            </div>
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Ullage</label>
                 <input type="number" value={current.depotUllage} onChange={(e) => updateEntry(activeTab, 'depotUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
-            </div>
-            <div className="grid grid-cols-3 divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Liq. Height</label>
                 <input type="number" value={current.depotLiquidHeight} onChange={(e) => updateEntry(activeTab, 'depotLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Ullage</label>
-                <input type="number" value={current.stationUllage} onChange={(e) => updateEntry(activeTab, 'stationUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Liq. Height</label>
-                <input type="number" value={current.stationLiquidHeight} onChange={(e) => updateEntry(activeTab, 'stationLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
             </div>
             <div className="bg-gray-50 px-2 py-1">

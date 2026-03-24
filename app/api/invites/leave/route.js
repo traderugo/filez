@@ -33,7 +33,7 @@ export async function POST(request) {
         .eq('id', user.id)
     }
 
-    logActivity(supabase, { orgId: org_id, userId: user.id, userName: user.name || user.email, content: 'left the station', actionType: 'left_station' }).catch(() => {})
+    await logActivity(supabase, { orgId: org_id, userId: user.id, userName: user.name || user.email, content: 'left the station', actionType: 'left_station' })
     return NextResponse.json({ ok: true })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

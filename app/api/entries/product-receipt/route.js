@@ -71,6 +71,8 @@ export async function POST(request) {
         actual_volume: Number(body.actual_volume) || 0,
         depot_name: body.depot_name?.trim() || null,
         tank_id: body.tank_id || null,
+        arrival_time: body.arrival_time?.trim() || null,
+        exit_time: body.exit_time?.trim() || null,
         notes: body.notes?.trim() || null,
         created_by: user.id,
       })
@@ -81,7 +83,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 })
     }
 
-    logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'added a product receipt entry', actionType: 'created_entry' }).catch(() => {})
+    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'added a product receipt entry', actionType: 'created_entry' })
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
@@ -101,7 +103,7 @@ export async function PATCH(request) {
     const updates = { updated_at: new Date().toISOString() }
     const fields = [
       'entry_date', 'loaded_date', 'driver_name', 'waybill_number', 'ticket_number',
-      'truck_number', 'depot_name', 'notes',
+      'truck_number', 'depot_name', 'arrival_time', 'exit_time', 'notes',
     ]
     const numericFields = [
       'chart_ullage', 'chart_liquid_height', 'depot_ullage', 'depot_liquid_height',
@@ -126,7 +128,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 })
     }
 
-    logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'updated a product receipt entry', actionType: 'updated_entry' }).catch(() => {})
+    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'updated a product receipt entry', actionType: 'updated_entry' })
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
