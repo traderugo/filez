@@ -37,9 +37,9 @@ function groupIntoDeliveries(records, tanksMap) {
   }
 
   return Object.values(groups).map(({ records: recs, first }) => {
-    const qtyLoaded = (Number(first.firstCompartment) || 0) +
-      (Number(first.secondCompartment) || 0) +
-      (Number(first.thirdCompartment) || 0)
+    const qtyLoaded = (Number(first.highVol1) || Number(first.firstCompartment) || 0) +
+      (Number(first.highVol2) || Number(first.secondCompartment) || 0) +
+      (Number(first.highVol3) || Number(first.thirdCompartment) || 0)
     const qtySupplied = recs.reduce((sum, r) => sum + (Number(r.actualVolume) || 0), 0)
 
     // Collect fuel types from tanks
@@ -65,9 +65,12 @@ function groupIntoDeliveries(records, tanksMap) {
       // Fields needed for Excel export
       arrivalTime: first.arrivalTime || '',
       exitTime: first.exitTime || '',
-      chartUllage1: first.chartUllage1 ?? first.chartUllage ?? 0,
-      chartUllage2: first.chartUllage2 ?? 0,
-      chartUllage3: first.chartUllage3 ?? 0,
+      chartHighUllage1: first.chartHighUllage1 ?? first.chartUllage1 ?? first.chartUllage ?? 0,
+      chartHighUllage2: first.chartHighUllage2 ?? first.chartUllage2 ?? 0,
+      chartHighUllage3: first.chartHighUllage3 ?? first.chartUllage3 ?? 0,
+      chartLowUllage1: first.chartLowUllage1 ?? 0,
+      chartLowUllage2: first.chartLowUllage2 ?? 0,
+      chartLowUllage3: first.chartLowUllage3 ?? 0,
       chartLiquidHeight1: first.chartLiquidHeight1 ?? first.chartLiquidHeight ?? 0,
       chartLiquidHeight2: first.chartLiquidHeight2 ?? 0,
       chartLiquidHeight3: first.chartLiquidHeight3 ?? 0,
@@ -83,9 +86,12 @@ function groupIntoDeliveries(records, tanksMap) {
       depotLiquidHeight1: first.depotLiquidHeight1 ?? first.depotLiquidHeight ?? 0,
       depotLiquidHeight2: first.depotLiquidHeight2 ?? 0,
       depotLiquidHeight3: first.depotLiquidHeight3 ?? 0,
-      firstCompartment: first.firstCompartment,
-      secondCompartment: first.secondCompartment,
-      thirdCompartment: first.thirdCompartment,
+      highVol1: first.highVol1 ?? first.firstCompartment ?? 0,
+      highVol2: first.highVol2 ?? first.secondCompartment ?? 0,
+      highVol3: first.highVol3 ?? first.thirdCompartment ?? 0,
+      lowVol1: first.lowVol1 ?? 0,
+      lowVol2: first.lowVol2 ?? 0,
+      lowVol3: first.lowVol3 ?? 0,
     }
   })
 }
@@ -176,15 +182,15 @@ function ProductReceivedReportContent() {
         entryDate: row.dischargeDate,
         arrivalTime: row.arrivalTime,
         exitTime: row.exitTime,
-        chartUllage: [row.chartUllage1, row.chartUllage2, row.chartUllage3],
+        chartHighUllage: [row.chartHighUllage1, row.chartHighUllage2, row.chartHighUllage3],
+        chartLowUllage: [row.chartLowUllage1, row.chartLowUllage2, row.chartLowUllage3],
         chartLiquidHeight: [row.chartLiquidHeight1, row.chartLiquidHeight2, row.chartLiquidHeight3],
         stationUllage: [row.stationUllage1, row.stationUllage2, row.stationUllage3],
         stationLiquidHeight: [row.stationLiquidHeight1, row.stationLiquidHeight2, row.stationLiquidHeight3],
         depotUllage: [row.depotUllage1, row.depotUllage2, row.depotUllage3],
         depotLiquidHeight: [row.depotLiquidHeight1, row.depotLiquidHeight2, row.depotLiquidHeight3],
-        firstCompartment: row.firstCompartment,
-        secondCompartment: row.secondCompartment,
-        thirdCompartment: row.thirdCompartment,
+        highVol: [row.highVol1, row.highVol2, row.highVol3],
+        lowVol: [row.lowVol1, row.lowVol2, row.lowVol3],
         qtyReceived: row.qtySupplied,
       })
     } catch (err) {

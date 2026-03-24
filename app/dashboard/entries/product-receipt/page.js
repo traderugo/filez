@@ -14,13 +14,15 @@ function blankEntry(tanks) {
     _key: crypto.randomUUID(),
     ids: [],
     loadedDate: '', driverName: '', waybillNumber: '', ticketNumber: '', truckNumber: '',
-    chartUllage1: '', chartUllage2: '', chartUllage3: '',
+    chartHighUllage1: '', chartHighUllage2: '', chartHighUllage3: '',
+    chartLowUllage1: '', chartLowUllage2: '', chartLowUllage3: '',
     chartLiquidHeight1: '', chartLiquidHeight2: '', chartLiquidHeight3: '',
     depotUllage1: '', depotUllage2: '', depotUllage3: '',
     depotLiquidHeight1: '', depotLiquidHeight2: '', depotLiquidHeight3: '',
     stationUllage1: '', stationUllage2: '', stationUllage3: '',
     stationLiquidHeight1: '', stationLiquidHeight2: '', stationLiquidHeight3: '',
-    firstCompartment: '', secondCompartment: '', thirdCompartment: '',
+    highVol1: '', highVol2: '', highVol3: '',
+    lowVol1: '', lowVol2: '', lowVol3: '',
     tankVolumes: Object.fromEntries(tanks.map(t => [t.id, ''])),
     depotName: '', arrivalTime: '', exitTime: '', notes: '',
   }
@@ -57,9 +59,12 @@ function groupRecordsIntoEntries(records, tanks) {
       waybillNumber: first.waybillNumber || '',
       ticketNumber: first.ticketNumber || '',
       truckNumber: first.truckNumber || '',
-      chartUllage1: first.chartUllage1 ?? first.chartUllage ?? '',
-      chartUllage2: first.chartUllage2 ?? '',
-      chartUllage3: first.chartUllage3 ?? '',
+      chartHighUllage1: first.chartHighUllage1 ?? first.chartUllage1 ?? first.chartUllage ?? '',
+      chartHighUllage2: first.chartHighUllage2 ?? first.chartUllage2 ?? '',
+      chartHighUllage3: first.chartHighUllage3 ?? first.chartUllage3 ?? '',
+      chartLowUllage1: first.chartLowUllage1 ?? '',
+      chartLowUllage2: first.chartLowUllage2 ?? '',
+      chartLowUllage3: first.chartLowUllage3 ?? '',
       chartLiquidHeight1: first.chartLiquidHeight1 ?? first.chartLiquidHeight ?? '',
       chartLiquidHeight2: first.chartLiquidHeight2 ?? '',
       chartLiquidHeight3: first.chartLiquidHeight3 ?? '',
@@ -75,9 +80,12 @@ function groupRecordsIntoEntries(records, tanks) {
       stationLiquidHeight1: first.stationLiquidHeight1 ?? first.stationLiquidHeight ?? '',
       stationLiquidHeight2: first.stationLiquidHeight2 ?? '',
       stationLiquidHeight3: first.stationLiquidHeight3 ?? '',
-      firstCompartment: first.firstCompartment ?? '',
-      secondCompartment: first.secondCompartment ?? '',
-      thirdCompartment: first.thirdCompartment ?? '',
+      highVol1: first.highVol1 ?? first.firstCompartment ?? '',
+      highVol2: first.highVol2 ?? first.secondCompartment ?? '',
+      highVol3: first.highVol3 ?? first.thirdCompartment ?? '',
+      lowVol1: first.lowVol1 ?? '',
+      lowVol2: first.lowVol2 ?? '',
+      lowVol3: first.lowVol3 ?? '',
       tankVolumes,
       depotName: first.depotName || '',
       arrivalTime: first.arrivalTime || '',
@@ -224,9 +232,12 @@ export default function ProductReceiptFormPage() {
             waybillNumber: entry.waybillNumber,
             ticketNumber: entry.ticketNumber,
             truckNumber: entry.truckNumber,
-            chartUllage1: Number(entry.chartUllage1) || 0,
-            chartUllage2: Number(entry.chartUllage2) || 0,
-            chartUllage3: Number(entry.chartUllage3) || 0,
+            chartHighUllage1: Number(entry.chartHighUllage1) || 0,
+            chartHighUllage2: Number(entry.chartHighUllage2) || 0,
+            chartHighUllage3: Number(entry.chartHighUllage3) || 0,
+            chartLowUllage1: Number(entry.chartLowUllage1) || 0,
+            chartLowUllage2: Number(entry.chartLowUllage2) || 0,
+            chartLowUllage3: Number(entry.chartLowUllage3) || 0,
             chartLiquidHeight1: Number(entry.chartLiquidHeight1) || 0,
             chartLiquidHeight2: Number(entry.chartLiquidHeight2) || 0,
             chartLiquidHeight3: Number(entry.chartLiquidHeight3) || 0,
@@ -242,9 +253,12 @@ export default function ProductReceiptFormPage() {
             stationLiquidHeight1: Number(entry.stationLiquidHeight1) || 0,
             stationLiquidHeight2: Number(entry.stationLiquidHeight2) || 0,
             stationLiquidHeight3: Number(entry.stationLiquidHeight3) || 0,
-            firstCompartment: Number(entry.firstCompartment) || 0,
-            secondCompartment: Number(entry.secondCompartment) || 0,
-            thirdCompartment: Number(entry.thirdCompartment) || 0,
+            highVol1: Number(entry.highVol1) || 0,
+            highVol2: Number(entry.highVol2) || 0,
+            highVol3: Number(entry.highVol3) || 0,
+            lowVol1: Number(entry.lowVol1) || 0,
+            lowVol2: Number(entry.lowVol2) || 0,
+            lowVol3: Number(entry.lowVol3) || 0,
             actualVolume: Number(volumeStr) || 0,
             depotName: entry.depotName,
             tankId,
@@ -397,13 +411,24 @@ export default function ProductReceiptFormPage() {
               ))}
             </div>
             <div className="bg-gray-50 px-2 py-1">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart Ullage</span>
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart Highest Ullage</span>
             </div>
             <div className="grid grid-cols-3 divide-x divide-gray-300">
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`chartUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                  <input type="number" value={current[`chartHighUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartHighUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart Lowest Ullage</span>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`chartLowUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartLowUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                 </div>
               ))}
             </div>
@@ -441,21 +466,26 @@ export default function ProductReceiptFormPage() {
               ))}
             </div>
             <div className="bg-gray-50 px-2 py-1">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Highest Volume</span>
             </div>
             <div className="grid grid-cols-3 divide-x divide-gray-300">
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">1st Compartment</label>
-                <input type="number" value={current.firstCompartment} onChange={(e) => updateEntry(activeTab, 'firstCompartment', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">2nd Compartment</label>
-                <input type="number" value={current.secondCompartment} onChange={(e) => updateEntry(activeTab, 'secondCompartment', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">3rd Compartment</label>
-                <input type="number" value={current.thirdCompartment} onChange={(e) => updateEntry(activeTab, 'thirdCompartment', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`highVol${n}`]} onChange={(e) => updateEntry(activeTab, `highVol${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Lowest Volume</span>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`lowVol${n}`]} onChange={(e) => updateEntry(activeTab, `lowVol${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
             </div>
             <div className="bg-gray-50 px-2 py-1">
               <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Volume Received Per Tank</span>
