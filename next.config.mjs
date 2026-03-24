@@ -8,7 +8,7 @@ const withPWA = withPWAInit({
   runtimeCaching: [
     {
       // Never cache API routes — always hit the server
-      urlPattern: /\/api\/.*/,
+      urlPattern: /\/api\/.*/i,
       handler: 'NetworkOnly',
     },
     {
