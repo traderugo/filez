@@ -14,8 +14,12 @@ function blankEntry(tanks) {
     _key: crypto.randomUUID(),
     ids: [],
     loadedDate: '', driverName: '', waybillNumber: '', ticketNumber: '', truckNumber: '',
-    chartUllage: '', chartLiquidHeight: '', depotUllage: '', depotLiquidHeight: '',
-    stationUllage: '', stationLiquidHeight: '',
+    chartUllage1: '', chartUllage2: '', chartUllage3: '',
+    chartLiquidHeight1: '', chartLiquidHeight2: '', chartLiquidHeight3: '',
+    depotUllage1: '', depotUllage2: '', depotUllage3: '',
+    depotLiquidHeight1: '', depotLiquidHeight2: '', depotLiquidHeight3: '',
+    stationUllage1: '', stationUllage2: '', stationUllage3: '',
+    stationLiquidHeight1: '', stationLiquidHeight2: '', stationLiquidHeight3: '',
     firstCompartment: '', secondCompartment: '', thirdCompartment: '',
     tankVolumes: Object.fromEntries(tanks.map(t => [t.id, ''])),
     depotName: '', arrivalTime: '', exitTime: '', notes: '',
@@ -53,12 +57,24 @@ function groupRecordsIntoEntries(records, tanks) {
       waybillNumber: first.waybillNumber || '',
       ticketNumber: first.ticketNumber || '',
       truckNumber: first.truckNumber || '',
-      chartUllage: first.chartUllage ?? '',
-      chartLiquidHeight: first.chartLiquidHeight ?? '',
-      depotUllage: first.depotUllage ?? '',
-      depotLiquidHeight: first.depotLiquidHeight ?? '',
-      stationUllage: first.stationUllage ?? '',
-      stationLiquidHeight: first.stationLiquidHeight ?? '',
+      chartUllage1: first.chartUllage1 ?? first.chartUllage ?? '',
+      chartUllage2: first.chartUllage2 ?? '',
+      chartUllage3: first.chartUllage3 ?? '',
+      chartLiquidHeight1: first.chartLiquidHeight1 ?? first.chartLiquidHeight ?? '',
+      chartLiquidHeight2: first.chartLiquidHeight2 ?? '',
+      chartLiquidHeight3: first.chartLiquidHeight3 ?? '',
+      depotUllage1: first.depotUllage1 ?? first.depotUllage ?? '',
+      depotUllage2: first.depotUllage2 ?? '',
+      depotUllage3: first.depotUllage3 ?? '',
+      depotLiquidHeight1: first.depotLiquidHeight1 ?? first.depotLiquidHeight ?? '',
+      depotLiquidHeight2: first.depotLiquidHeight2 ?? '',
+      depotLiquidHeight3: first.depotLiquidHeight3 ?? '',
+      stationUllage1: first.stationUllage1 ?? first.stationUllage ?? '',
+      stationUllage2: first.stationUllage2 ?? '',
+      stationUllage3: first.stationUllage3 ?? '',
+      stationLiquidHeight1: first.stationLiquidHeight1 ?? first.stationLiquidHeight ?? '',
+      stationLiquidHeight2: first.stationLiquidHeight2 ?? '',
+      stationLiquidHeight3: first.stationLiquidHeight3 ?? '',
       firstCompartment: first.firstCompartment ?? '',
       secondCompartment: first.secondCompartment ?? '',
       thirdCompartment: first.thirdCompartment ?? '',
@@ -208,12 +224,24 @@ export default function ProductReceiptFormPage() {
             waybillNumber: entry.waybillNumber,
             ticketNumber: entry.ticketNumber,
             truckNumber: entry.truckNumber,
-            chartUllage: Number(entry.chartUllage) || 0,
-            chartLiquidHeight: Number(entry.chartLiquidHeight) || 0,
-            depotUllage: Number(entry.depotUllage) || 0,
-            depotLiquidHeight: Number(entry.depotLiquidHeight) || 0,
-            stationUllage: Number(entry.stationUllage) || 0,
-            stationLiquidHeight: Number(entry.stationLiquidHeight) || 0,
+            chartUllage1: Number(entry.chartUllage1) || 0,
+            chartUllage2: Number(entry.chartUllage2) || 0,
+            chartUllage3: Number(entry.chartUllage3) || 0,
+            chartLiquidHeight1: Number(entry.chartLiquidHeight1) || 0,
+            chartLiquidHeight2: Number(entry.chartLiquidHeight2) || 0,
+            chartLiquidHeight3: Number(entry.chartLiquidHeight3) || 0,
+            depotUllage1: Number(entry.depotUllage1) || 0,
+            depotUllage2: Number(entry.depotUllage2) || 0,
+            depotUllage3: Number(entry.depotUllage3) || 0,
+            depotLiquidHeight1: Number(entry.depotLiquidHeight1) || 0,
+            depotLiquidHeight2: Number(entry.depotLiquidHeight2) || 0,
+            depotLiquidHeight3: Number(entry.depotLiquidHeight3) || 0,
+            stationUllage1: Number(entry.stationUllage1) || 0,
+            stationUllage2: Number(entry.stationUllage2) || 0,
+            stationUllage3: Number(entry.stationUllage3) || 0,
+            stationLiquidHeight1: Number(entry.stationLiquidHeight1) || 0,
+            stationLiquidHeight2: Number(entry.stationLiquidHeight2) || 0,
+            stationLiquidHeight3: Number(entry.stationLiquidHeight3) || 0,
             firstCompartment: Number(entry.firstCompartment) || 0,
             secondCompartment: Number(entry.secondCompartment) || 0,
             thirdCompartment: Number(entry.thirdCompartment) || 0,
@@ -347,43 +375,70 @@ export default function ProductReceiptFormPage() {
               </div>
             </div>
             <div className="bg-gray-50 px-2 py-1">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Station</span>
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Station Ullage</span>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-gray-300">
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Ullage</label>
-                <input type="number" value={current.stationUllage} onChange={(e) => updateEntry(activeTab, 'stationUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Station Liq. Height</label>
-                <input type="number" value={current.stationLiquidHeight} onChange={(e) => updateEntry(activeTab, 'stationLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`stationUllage${n}`]} onChange={(e) => updateEntry(activeTab, `stationUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
             </div>
             <div className="bg-gray-50 px-2 py-1">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart</span>
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Station Liq. Height</span>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-gray-300">
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Ullage</label>
-                <input type="number" value={current.chartUllage} onChange={(e) => updateEntry(activeTab, 'chartUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Chart Liq. Height</label>
-                <input type="number" value={current.chartLiquidHeight} onChange={(e) => updateEntry(activeTab, 'chartLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`stationLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `stationLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
             </div>
             <div className="bg-gray-50 px-2 py-1">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Depot</span>
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart Ullage</span>
             </div>
-            <div className="grid grid-cols-2 divide-x divide-gray-300">
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Ullage</label>
-                <input type="number" value={current.depotUllage} onChange={(e) => updateEntry(activeTab, 'depotUllage', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Depot Liq. Height</label>
-                <input type="number" value={current.depotLiquidHeight} onChange={(e) => updateEntry(activeTab, 'depotLiquidHeight', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-              </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`chartUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Chart Liq. Height</span>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`chartLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `chartLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Depot Ullage</span>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`depotUllage${n}`]} onChange={(e) => updateEntry(activeTab, `depotUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
+            </div>
+            <div className="bg-gray-50 px-2 py-1">
+              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Depot Liq. Height</span>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-300">
+              {[1, 2, 3].map(n => (
+                <div key={n}>
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
+                  <input type="number" value={current[`depotLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `depotLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                </div>
+              ))}
             </div>
             <div className="bg-gray-50 px-2 py-1">
               <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Compartments</span>
