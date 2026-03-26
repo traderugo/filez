@@ -23,15 +23,33 @@ function fmt(n) {
 
 const EMPTY_ROW = { chartUllage: '', chartLH: '', depotUllage: '', depotLH: '', stationUllage: '', stationLH: '', highVol: '', lowVol: '', highUllage: '', lowUllage: '' }
 
+function rowFromParams(searchParams, idx) {
+  const n = idx + 1
+  const g = (key) => searchParams.get(`${key}${n}`) || ''
+  return {
+    chartUllage: g('cU'), chartLH: g('cL'),
+    depotUllage: g('dU'), depotLH: g('dL'),
+    stationUllage: g('sU'), stationLH: g('sL'),
+    highVol: g('hV'), lowVol: g('lV'),
+    highUllage: g('hU'), lowUllage: g('lU'),
+  }
+}
+
+function hasPrefilledParams(searchParams) {
+  return searchParams.has('cU1') || searchParams.has('hV1')
+}
+
 function DipCalculatorContent() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
+  const prefilled = hasPrefilledParams(searchParams)
 
-  const [rows, setRows] = useState([
-    { ...EMPTY_ROW },
-    { ...EMPTY_ROW },
-    { ...EMPTY_ROW },
-  ])
+  const [rows, setRows] = useState(() => {
+    if (prefilled) {
+      return [0, 1, 2].map(i => rowFromParams(searchParams, i))
+    }
+    return [{ ...EMPTY_ROW }, { ...EMPTY_ROW }, { ...EMPTY_ROW }]
+  })
 
   const updateRow = (idx, field, value) => {
     setRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r))
