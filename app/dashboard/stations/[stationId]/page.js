@@ -37,10 +37,12 @@ const REPORT_PAGE_OPTIONS = [
     { key: 'report-audit-stock-summary', label: 'Stock Position' },
     { key: 'report-audit-consumption', label: 'Consumption & Pour Back' },
     { key: 'report-audit-calculator', label: 'Calculator' },
+    { key: 'report-audit-product-received', label: 'Product Received' },
   ]},
   { key: 'report-account-ledger', label: 'Account Ledger' },
   { key: 'report-product-received', label: 'Product Received' },
   { key: 'report-lube', label: 'Lube Report' },
+  { key: 'imprest', label: 'Imprest' },
 ]
 
 const ALL_PAGE_KEYS = [

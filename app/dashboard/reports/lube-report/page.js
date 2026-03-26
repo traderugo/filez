@@ -6,6 +6,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2 } from 'lucide-react'
 import { db } from '@/lib/db'
 import DateInput from '@/components/DateInput'
+import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
 
 function fmt(n) {
@@ -251,6 +252,8 @@ function LubeReportContent() {
   const cellR = `${cell} text-right`
 
   return (
+    <AccessGate orgId={orgId} pageKey="report-lube">
+      {({ isOwner }) => (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Header + date range */}
       <div className="flex items-center justify-between py-3 shrink-0">
@@ -298,6 +301,8 @@ function LubeReportContent() {
         ))}
       </div>
     </div>
+      )}
+    </AccessGate>
   )
 }
 

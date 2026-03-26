@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { buildDailyReport } from '@/lib/buildDailyReport'
 import { fmtDate } from '@/lib/formatDate'
 import DateInput from '@/components/DateInput'
+import AccessGate from '@/components/AccessGate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -163,6 +164,8 @@ function SummaryContent() {
   const cellR = `${cell} text-right`
 
   return (
+    <AccessGate orgId={orgId} pageKey="report-summary">
+      {({ isOwner }) => (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-2 sm:px-6">
       {/* Header */}
       <div className="flex items-center justify-end py-3 shrink-0">
@@ -382,6 +385,8 @@ function SummaryContent() {
         </div>
       )}
     </div>
+      )}
+    </AccessGate>
   )
 }
 

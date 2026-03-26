@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { buildDailyReport } from '@/lib/buildDailyReport'
 import { exportDailyReportExcel } from '@/lib/exportDailyReportExcel'
 import DateInput from '@/components/DateInput'
+import AccessGate from '@/components/AccessGate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -219,6 +220,8 @@ function DailySalesReportContent() {
   const currentDayHasDuplicates = duplicateDates.includes(viewDate)
 
   return (
+    <AccessGate orgId={orgId} pageKey="report-daily-sales">
+      {({ isOwner }) => (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Duplicate entry warning */}
       {currentDayHasDuplicates && (
@@ -248,6 +251,7 @@ function DailySalesReportContent() {
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
           </button>
+          {isOwner && (
           <button
             onClick={handleExport}
             disabled={exporting || !report}
@@ -257,6 +261,7 @@ function DailySalesReportContent() {
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {exporting ? 'Exporting...' : 'Export'}
           </button>
+          )}
         </div>
       </div>
 
@@ -477,6 +482,8 @@ function DailySalesReportContent() {
         </>
       )}
     </div>
+      )}
+    </AccessGate>
   )
 }
 

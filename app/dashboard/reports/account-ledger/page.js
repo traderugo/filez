@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { DEFAULT_PHONE } from '@/lib/defaultAccounts'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
+import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
 
 function fmt(n) {
@@ -254,6 +255,8 @@ function AccountLedgerContent() {
   if (!orgId) return <div className="p-6 text-gray-500">No station selected.</div>
 
   return (
+    <AccessGate orgId={orgId} pageKey="report-account-ledger">
+      {({ isOwner }) => (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-5xl mx-auto px-4 sm:px-6">
       <div className="shrink-0 pt-4 flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold">Account Ledger</h1>
@@ -455,6 +458,8 @@ function AccountLedgerContent() {
         )}
       </div>
     </div>
+      )}
+    </AccessGate>
   )
 }
 

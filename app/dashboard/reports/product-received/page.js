@@ -8,6 +8,7 @@ import { Loader2, Calculator, Download } from 'lucide-react'
 import { db } from '@/lib/db'
 import { exportProductReceiptExcel } from '@/lib/exportProductReceiptExcel'
 import DateInput from '@/components/DateInput'
+import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
 
 function fmt(n) {
@@ -218,6 +219,8 @@ function ProductReceivedReportContent() {
   const cellR = `${cell} text-right`
 
   return (
+    <AccessGate orgId={orgId} pageKey="report-product-received">
+      {({ isOwner }) => (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Header + date range */}
       <div className="flex items-center justify-between py-3 shrink-0">
@@ -293,6 +296,7 @@ function ProductReceivedReportContent() {
                     <td className={cell}>{row.depot || '—'}</td>
                     <td className={`${cell} text-center`}>
                       <div className="flex items-center justify-center gap-2">
+                        {isOwner && (
                         <button
                           onClick={() => handleExport(row, i)}
                           disabled={exportingIdx !== null}
@@ -302,6 +306,7 @@ function ProductReceivedReportContent() {
                           {exportingIdx === i ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
                           Export
                         </button>
+                        )}
                         <Link
                           href={`/dashboard/reports/dip-calculator?org_id=${orgId}&cU1=${row.chartHighUllage1}&cU2=${row.chartHighUllage2}&cU3=${row.chartHighUllage3}&cL1=${row.chartLiquidHeight1}&cL2=${row.chartLiquidHeight2}&cL3=${row.chartLiquidHeight3}&dU1=${row.depotUllage1}&dU2=${row.depotUllage2}&dU3=${row.depotUllage3}&dL1=${row.depotLiquidHeight1}&dL2=${row.depotLiquidHeight2}&dL3=${row.depotLiquidHeight3}&sU1=${row.stationUllage1}&sU2=${row.stationUllage2}&sU3=${row.stationUllage3}&sL1=${row.stationLiquidHeight1}&sL2=${row.stationLiquidHeight2}&sL3=${row.stationLiquidHeight3}&hV1=${row.highVol1}&hV2=${row.highVol2}&hV3=${row.highVol3}&lV1=${row.lowVol1}&lV2=${row.lowVol2}&lV3=${row.lowVol3}&hU1=${row.chartHighUllage1}&hU2=${row.chartHighUllage2}&hU3=${row.chartHighUllage3}&lU1=${row.chartLowUllage1}&lU2=${row.chartLowUllage2}&lU3=${row.chartLowUllage3}`}
                           className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
@@ -332,6 +337,8 @@ function ProductReceivedReportContent() {
         )}
       </div>
     </div>
+      )}
+    </AccessGate>
   )
 }
 

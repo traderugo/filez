@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useMemo, useRef, useCallback } from 'rea
 import { useSearchParams } from 'next/navigation'
 import { Loader2, Plus, Trash2, Pencil, Download, FileImage, X, Camera, Search } from 'lucide-react'
 import DateInput from '@/components/DateInput'
+import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
 
 function fmt(n) {
@@ -297,6 +298,8 @@ function ImprestContent() {
   }
 
   return (
+    <AccessGate orgId={orgId} pageKey="imprest">
+      {({ isOwner }) => (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
       <h1 className="text-xl font-bold text-gray-900 mb-4">Imprest / Petty Cash</h1>
 
@@ -358,12 +361,16 @@ function ImprestContent() {
               <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
                 <Plus className="w-4 h-4" /> Add Entry
               </button>
+              {isOwner && (
               <button onClick={handleExcelExport} disabled={exporting || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-40">
                 <Download className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Excel'}
               </button>
+              )}
+              {isOwner && (
               <button onClick={handlePdfExport} disabled={exportingPdf || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-40">
                 <FileImage className="w-4 h-4" /> {exportingPdf ? 'Exporting...' : 'Receipts PDF'}
               </button>
+              )}
             </div>
           )}
 
@@ -508,5 +515,7 @@ function ImprestContent() {
         </>
       )}
     </div>
+      )}
+    </AccessGate>
   )
 }
