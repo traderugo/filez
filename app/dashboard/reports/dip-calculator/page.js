@@ -2,9 +2,8 @@
 
 import { Suspense, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, RotateCcw, Download } from 'lucide-react'
+import { Loader2, RotateCcw } from 'lucide-react'
 import Link from 'next/link'
-import { exportDipCalcExcel } from '@/lib/exportDipCalcExcel'
 
 export default function DipCalculatorPage() {
   return (
@@ -117,40 +116,19 @@ function DipCalculatorContent() {
     ? 'w-full px-1.5 py-1 text-xs text-right bg-gray-50 cursor-default'
     : 'w-full px-1.5 py-1 text-xs text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400'
 
-  const [exporting, setExporting] = useState(false)
-
-  const handleExport = async () => {
-    setExporting(true)
-    try {
-      await exportDipCalcExcel({ rows })
-    } catch { /* */ }
-    setExporting(false)
-  }
-
   const hasAnyInput = rows.some(r => Object.values(r).some(v => v !== ''))
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1000px] mx-auto px-4 sm:px-6">
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[900px] mx-auto px-4 sm:px-6">
       <div className="shrink-0 py-4 flex items-center gap-2">
         <h1 className="text-lg font-bold text-gray-900 mr-auto">Dip Calculator</h1>
-        {hasAnyInput && (
-          <>
-            <button
-              onClick={handleExport}
-              disabled={exporting}
-              className="flex items-center gap-1 px-3 py-2 text-sm bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-            >
-              {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Excel
-            </button>
-            {!prefilled && (
-              <button
-                onClick={handleReset}
-                className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
-              >
-                <RotateCcw className="w-3.5 h-3.5" /> Reset
-              </button>
-            )}
-          </>
+        {hasAnyInput && !prefilled && (
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Reset
+          </button>
         )}
         <Link
           href={`/dashboard/reports/product-received?org_id=${orgId}`}
@@ -162,7 +140,7 @@ function DipCalculatorContent() {
 
       <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-gray-200">
         {/* ─── Input: Readings ─── */}
-        <table className="w-full border-collapse min-w-[700px]">
+        <table className="w-full border-collapse min-w-0">
           <thead>
             <tr>
               <th className={`${cell} ${hdr}`}></th>
@@ -196,7 +174,7 @@ function DipCalculatorContent() {
         </table>
 
         {/* ─── Input: Calibration ─── */}
-        <table className="w-full border-collapse min-w-[700px] mt-4">
+        <table className="w-full border-collapse min-w-0 mt-4">
           <thead>
             <tr>
               <th className={`${cell} ${hdr}`}></th>
@@ -224,7 +202,7 @@ function DipCalculatorContent() {
         </table>
 
         {/* ─── Results: Ullage-based ─── */}
-        <table className="w-full border-collapse min-w-[700px] mt-4">
+        <table className="w-full border-collapse min-w-0 mt-4">
           <thead>
             <tr>
               <th className={`${cell} ${hdr}`}></th>
@@ -267,7 +245,7 @@ function DipCalculatorContent() {
         </table>
 
         {/* ─── Results: Liquid Height-based ─── */}
-        <table className="w-full border-collapse min-w-[700px] mt-4">
+        <table className="w-full border-collapse min-w-0 mt-4">
           <thead>
             <tr>
               <th className={`${cell} ${hdr}`}></th>
