@@ -52,6 +52,7 @@ function DipCalculatorContent() {
   })
 
   const updateRow = (idx, field, value) => {
+    if (prefilled) return
     setRows(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r))
   }
 
@@ -112,7 +113,9 @@ function DipCalculatorContent() {
   const bdr = 'border border-blue-200'
   const cell = `${bdr} px-2 py-1 text-xs whitespace-nowrap`
   const cellR = `${cell} text-right`
-  const inputCls = 'w-full px-1.5 py-1 text-xs text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400'
+  const inputCls = prefilled
+    ? 'w-full px-1.5 py-1 text-xs text-right bg-gray-50 cursor-default'
+    : 'w-full px-1.5 py-1 text-xs text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400'
 
   const [exporting, setExporting] = useState(false)
 
@@ -139,12 +142,14 @@ function DipCalculatorContent() {
             >
               {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Excel
             </button>
-            <button
-              onClick={handleReset}
-              className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
-            >
-              <RotateCcw className="w-3.5 h-3.5" /> Reset
-            </button>
+            {!prefilled && (
+              <button
+                onClick={handleReset}
+                className="flex items-center gap-1 px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Reset
+              </button>
+            )}
           </>
         )}
         <Link
