@@ -5,6 +5,9 @@ const withPWA = withPWAInit({
   disable: process.env.NODE_ENV === 'development',
   register: true,
   skipWaiting: true,
+  fallbacks: {
+    document: '/~offline',
+  },
   runtimeCaching: [
     {
       // Never cache API routes — always hit the server
@@ -25,8 +28,8 @@ const withPWA = withPWAInit({
       },
     },
     {
-      // Other assets (images, fonts, etc.)
-      urlPattern: /^https?.*/,
+      // Static assets only (images, fonts, etc.) — exclude page navigations
+      urlPattern: ({ request }) => request.destination !== 'document' && request.destination !== '',
       handler: 'NetworkFirst',
       options: {
         cacheName: 'offlineCache',
