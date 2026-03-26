@@ -1250,7 +1250,7 @@ function ProductReceived({ receipts, tanks, startDate, endDate }) {
     }
 
     const rows = Object.values(deliveryMap).map(({ first, records }) => {
-      const expected = Number(first.firstCompartment || 0) + Number(first.secondCompartment || 0) + Number(first.thirdCompartment || 0)
+      const expected = Number(first.highVol1 ?? first.firstCompartment ?? 0) + Number(first.highVol2 ?? first.secondCompartment ?? 0) + Number(first.highVol3 ?? first.thirdCompartment ?? 0)
       const byFuel = {}
       for (const r of records) {
         const ft = tankFuel[r.tankId]
