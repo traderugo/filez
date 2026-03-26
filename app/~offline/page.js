@@ -1,6 +1,32 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+
 export default function OfflinePage() {
+  const router = useRouter()
+  const [isOffline, setIsOffline] = useState(true)
+
+  useEffect(() => {
+    // If we're actually online, go back immediately
+    if (navigator.onLine) {
+      router.back()
+      return
+    }
+
+    setIsOffline(true)
+
+    const handleOnline = () => {
+      setIsOffline(false)
+      router.back()
+    }
+
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [router])
+
+  if (!isOffline) return null
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
       <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -13,7 +39,7 @@ export default function OfflinePage() {
         Check your internet connection and try again. Your data is safe locally.
       </p>
       <button
-        onClick={() => typeof window !== 'undefined' && window.location.reload()}
+        onClick={() => window.location.reload()}
         className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700"
       >
         Retry
