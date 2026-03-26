@@ -38,6 +38,7 @@ export async function GET(request) {
         'report-audit-stock-summary', 'report-audit-consumption', 'report-audit-calculator',
         'report-audit-product-received',
         'report-account-ledger', 'report-product-received', 'report-lube',
+        'imprest',
       ]
     }
 

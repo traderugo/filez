@@ -8,6 +8,7 @@ const VALID_PAGES = [
   'report-audit-stock-summary', 'report-audit-consumption', 'report-audit-calculator',
   'report-audit-product-received',
   'report-lube',
+  'imprest',
 ]
 
 // PATCH — manager updates visible_pages for a staff invite

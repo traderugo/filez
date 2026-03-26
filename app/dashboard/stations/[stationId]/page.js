@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck
+  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck, Wallet
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -362,6 +362,7 @@ export default function StationPage() {
     { href: `/dashboard/reports/account-ledger?org_id=${stationId}`, icon: BookOpen, label: 'Account Ledger', desc: 'Credit accounts and balances', pageKey: 'report-account-ledger' },
     { href: `/dashboard/reports/product-received?org_id=${stationId}`, icon: Truck, label: 'Product Received', desc: 'Deliveries, waybills, shortages', pageKey: 'report-product-received' },
     { href: `/dashboard/reports/lube-report?org_id=${stationId}`, icon: Droplets, label: 'Lube Report', desc: 'Lube sales, stock, and lodgements', pageKey: 'report-lube' },
+    { href: `/dashboard/reports/imprest?org_id=${stationId}`, icon: Wallet, label: 'Imprest', desc: 'Petty cash entries and reports', pageKey: 'imprest' },
   ]
 
   return (
