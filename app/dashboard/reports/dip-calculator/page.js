@@ -112,9 +112,10 @@ function DipCalculatorContent() {
   const bdr = 'border border-blue-200'
   const cell = `${bdr} px-2 py-1 text-xs whitespace-nowrap`
   const cellR = `${cell} text-right`
-  const inputCls = prefilled
-    ? 'w-full px-1.5 py-1 text-xs text-right bg-gray-50 cursor-default'
-    : 'w-full px-1.5 py-1 text-xs text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400'
+  const inputCls = 'w-full px-1.5 py-1 text-xs text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-400'
+  const valCell = (v) => prefilled
+    ? <span className="block px-1.5 py-1 text-xs text-right">{v || ''}</span>
+    : null
 
   const hasAnyInput = rows.some(r => Object.values(r).some(v => v !== ''))
 
@@ -162,12 +163,12 @@ function DipCalculatorContent() {
             {rows.map((r, i) => (
               <tr key={i}>
                 <td className={`${cell} text-center font-medium bg-gray-50`}>{i + 1}</td>
-                <td className={bdr}><input type="number" value={r.chartUllage} onChange={e => updateRow(i, 'chartUllage', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.chartLH} onChange={e => updateRow(i, 'chartLH', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.depotUllage} onChange={e => updateRow(i, 'depotUllage', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.depotLH} onChange={e => updateRow(i, 'depotLH', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.stationUllage} onChange={e => updateRow(i, 'stationUllage', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.stationLH} onChange={e => updateRow(i, 'stationLH', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
+                <td className={bdr}>{prefilled ? valCell(r.chartUllage) : <input type="number" value={r.chartUllage} onChange={e => updateRow(i, 'chartUllage', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.chartLH) : <input type="number" value={r.chartLH} onChange={e => updateRow(i, 'chartLH', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.depotUllage) : <input type="number" value={r.depotUllage} onChange={e => updateRow(i, 'depotUllage', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.depotLH) : <input type="number" value={r.depotLH} onChange={e => updateRow(i, 'depotLH', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.stationUllage) : <input type="number" value={r.stationUllage} onChange={e => updateRow(i, 'stationUllage', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.stationLH) : <input type="number" value={r.stationLH} onChange={e => updateRow(i, 'stationLH', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
               </tr>
             ))}
           </tbody>
@@ -190,10 +191,10 @@ function DipCalculatorContent() {
             {rows.map((r, i) => (
               <tr key={i}>
                 <td className={`${cell} text-center font-medium bg-gray-50 w-10`}>{i + 1}</td>
-                <td className={bdr}><input type="number" value={r.highVol} onChange={e => updateRow(i, 'highVol', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.lowVol} onChange={e => updateRow(i, 'lowVol', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.highUllage} onChange={e => updateRow(i, 'highUllage', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
-                <td className={bdr}><input type="number" value={r.lowUllage} onChange={e => updateRow(i, 'lowUllage', e.target.value)} className={inputCls} placeholder="0" step="any" /></td>
+                <td className={bdr}>{prefilled ? valCell(r.highVol) : <input type="number" value={r.highVol} onChange={e => updateRow(i, 'highVol', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.lowVol) : <input type="number" value={r.lowVol} onChange={e => updateRow(i, 'lowVol', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.highUllage) : <input type="number" value={r.highUllage} onChange={e => updateRow(i, 'highUllage', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
+                <td className={bdr}>{prefilled ? valCell(r.lowUllage) : <input type="number" value={r.lowUllage} onChange={e => updateRow(i, 'lowUllage', e.target.value)} className={inputCls} placeholder="0" step="any" />}</td>
                 <td className={`${cellR} bg-gray-50 font-medium`}>{fmt(calc[i].ullageMF)}</td>
                 <td className={`${cellR} bg-gray-50 font-medium`}>{fmt(calc[i].lhMF)}</td>
               </tr>
