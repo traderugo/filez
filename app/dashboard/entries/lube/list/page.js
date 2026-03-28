@@ -7,6 +7,7 @@ import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { fmtDate } from '@/lib/formatDate'
+import { useSubscription } from '@/lib/hooks/useSubscription'
 
 export default function LubeListPage() {
   const searchParams = useSearchParams()
@@ -14,35 +15,36 @@ export default function LubeListPage() {
   const qs = `org_id=${orgId}`
   const [tab, setTab] = useState('sales')
   const [ready, setReady] = useState(false)
+  const { subscribed, loading: subLoading } = useSubscription(orgId, 'lube-management')
 
   useEffect(() => {
     setReady(true)
   }, [orgId])
 
-  const hasConfig = useLiveQuery(
-    () => ready && orgId ? db.lubeProducts.where('orgId').equals(orgId).count() : 0,
-    [orgId, ready], 0
-  )
-
   if (!ready) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>
-
-  if (hasConfig === 0) return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-      <div className="text-center py-16">
-        <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
-        <p className="text-sm text-gray-500 mb-4">Subscribe to the Lube Management service to access this feature.</p>
-        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
-      </div>
-    </div>
-  )
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+      {!subLoading && !subscribed && (
+        <div className="bg-amber-50 border border-amber-200 px-4 py-3 mb-4 flex items-center gap-3">
+          <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-amber-800 font-medium">Subscribe to add entries</p>
+            <p className="text-xs text-amber-600">You can view existing data, but creating new entries requires an active subscription.</p>
+          </div>
+          <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-blue-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-blue-700">Subscribe</Link>
+        </div>
+      )}
       <div className="flex items-center justify-end mb-6">
-        <Link href={`/dashboard/entries/lube?${qs}&type=${tab}`} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
-          <Plus className="w-4 h-4" /> New Entry
-        </Link>
+        {(subscribed || subLoading) ? (
+          <Link href={`/dashboard/entries/lube?${qs}&type=${tab}`} className="flex items-center gap-1 text-sm bg-blue-600 text-white px-4 py-2 font-medium hover:bg-blue-700">
+            <Plus className="w-4 h-4" /> New Entry
+          </Link>
+        ) : (
+          <span className="flex items-center gap-1 text-sm bg-gray-300 text-white px-4 py-2 font-medium cursor-not-allowed">
+            <Plus className="w-4 h-4" /> New Entry
+          </span>
+        )}
       </div>
 
       <div className="flex border-b border-gray-200 mb-6">
