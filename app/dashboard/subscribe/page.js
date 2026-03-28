@@ -19,7 +19,7 @@ function SubscribeContent() {
   const [selectedStation, setSelectedStation] = useState('')
   const [selectedItems, setSelectedItems] = useState({})
   const [loading, setLoading] = useState(true)
-  const [months, setMonths] = useState(1)
+  const [months, setMonths] = useState('1')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [subscription, setSubscription] = useState(null)
@@ -84,7 +84,8 @@ function SubscribeContent() {
 
   const selectedServices = services.filter((s) => selectedItems[s.id])
   const monthlyTotal = selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
-  const total = monthlyTotal * months
+  const monthsNum = Math.max(1, Math.min(24, parseInt(months) || 1))
+  const total = monthlyTotal * monthsNum
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -104,7 +105,7 @@ function SubscribeContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         org_id: selectedStation,
-        months,
+        months: monthsNum,
         total_amount: total,
         items: selectedServices.map((s) => ({
           service_id: s.id,
@@ -228,10 +229,11 @@ function SubscribeContent() {
                       min="1"
                       max="24"
                       value={months}
-                      onChange={(e) => setMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1)))}
+                      onChange={(e) => setMonths(e.target.value)}
+                      onBlur={() => setMonths(String(monthsNum))}
                       className="w-20 border border-gray-300 px-3 py-2 text-sm text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <span className="text-sm text-gray-600">month{months !== 1 ? 's' : ''}</span>
+                    <span className="text-sm text-gray-600">month{monthsNum !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
 
@@ -239,9 +241,9 @@ function SubscribeContent() {
                 <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
                   <div>
                     <span className="text-sm font-medium text-gray-700">Total</span>
-                    {months > 1 && (
+                    {monthsNum > 1 && (
                       <span className="text-xs text-gray-400 ml-2">
-                        ({monthlyTotal.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })} × {months} months)
+                        ({monthlyTotal.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })} × {monthsNum} months)
                       </span>
                     )}
                   </div>

@@ -372,8 +372,7 @@ export default function StationPage() {
 
       {/* Station header */}
       <div className="flex items-start justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <Fuel className="w-6 h-6 text-blue-600 flex-shrink-0" />
+        <div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{station.name}</h1>
             {station.location && <p className="text-sm text-gray-500">{station.location}</p>}
