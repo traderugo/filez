@@ -8,8 +8,6 @@ export async function GET(request) {
   try {
     const { user, error } = await authenticateUser(request)
     if (error) return error
-    const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
-    if (!subscribed) return subError
 
     const { from, to, page, limit, searchParams } = paginationParams(request)
     const supabase = getServiceClient()

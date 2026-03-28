@@ -2,7 +2,8 @@
 
 import { Suspense, useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Loader2, Plus, Trash2, Pencil, Download, FileImage, X, Camera, Search } from 'lucide-react'
+import { Loader2, Plus, Trash2, Pencil, Download, FileImage, X, Camera, Search, Lock } from 'lucide-react'
+import { useSubscription } from '@/lib/hooks/useSubscription'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
@@ -25,6 +26,8 @@ export default function ImprestPage() {
 function ImprestContent() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
+  const { subscribed: isSubscribed, loading: subLoading } = useSubscription(orgId, 'customer-payments')
+  const subBlocked = !subLoading && !isSubscribed
 
   const now = new Date()
   const [month, setMonth] = useState(now.getMonth() + 1)
@@ -303,6 +306,17 @@ function ImprestContent() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
       <h1 className="text-xl font-bold text-gray-900 mb-4">Imprest / Petty Cash</h1>
 
+      {subBlocked && (
+        <div className="bg-amber-50 border border-amber-200 px-4 py-3 mb-4 flex items-start gap-3">
+          <Lock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-amber-800 font-medium">Subscribe to add entries</p>
+            <p className="text-xs text-amber-600 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
+          </div>
+          <a href="/dashboard/subscribe" className="flex-shrink-0 bg-blue-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-blue-700">Subscribe</a>
+        </div>
+      )}
+
       {/* Month / Year selector */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
@@ -332,7 +346,7 @@ function ImprestContent() {
                 <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
               </div>
             </div>
-            <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount} className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40">
+            <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40">
               {savingPeriod ? 'Saving...' : period ? 'Update Period' : 'Create Period'}
             </button>
           </div>
@@ -454,7 +468,7 @@ function ImprestContent() {
               </div>
 
               <div className="flex items-center gap-2 mt-4">
-                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40">
+                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount || subBlocked} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40">
                   {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
                 </button>
                 <button onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50">Cancel</button>

@@ -26,13 +26,16 @@ export async function GET(request) {
       }
     }
 
-    // Build subscription query — filter by org_id if provided
+    // Build subscription query — filter by org_id if provided.
+    // Fetch all subscriptions for this user+org so we can pick the best one:
+    // approved > pending_approval > pending_payment > expired > rejected.
+    // This prevents an expired renewal attempt from hiding a still-active subscription.
+    const SUB_COLS = 'id, status, start_date, end_date, created_at, reference_code, payment_deadline, proof_url, plan_type, total_amount, org_id'
     let subQuery = supabase
       .from('subscriptions')
-      .select('id, status, start_date, end_date, created_at, reference_code, payment_deadline, proof_url, plan_type, total_amount, org_id')
+      .select(SUB_COLS)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(1)
 
     if (orgId) {
       subQuery = subQuery.eq('org_id', orgId)
@@ -53,9 +56,16 @@ export async function GET(request) {
         .order('name'),
     ])
 
+    // Pick the most relevant subscription by status priority
+    const STATUS_PRIORITY = { approved: 0, pending_approval: 1, pending_payment: 2, expired: 3, rejected: 4 }
+    const subs = subRes.data || []
+    const bestSub = subs.length > 0
+      ? subs.reduce((best, s) => (STATUS_PRIORITY[s.status] ?? 5) < (STATUS_PRIORITY[best.status] ?? 5) ? s : best)
+      : null
+
     return NextResponse.json({
       profile: user,
-      subscription: subRes.data?.[0] || null,
+      subscription: bestSub,
       services: svcRes.data || [],
       stations: stationsRes.data || [],
     })

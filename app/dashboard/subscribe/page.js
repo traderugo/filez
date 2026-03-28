@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, ShoppingCart, ArrowRight, Fuel } from 'lucide-react'
+import { Loader2, ShoppingCart, ArrowRight, Fuel, Calendar } from 'lucide-react'
 import SearchableSelect from '@/components/SearchableSelect'
 
 export default function SubscribePage() {
@@ -19,6 +19,7 @@ function SubscribeContent() {
   const [selectedStation, setSelectedStation] = useState('')
   const [selectedItems, setSelectedItems] = useState({})
   const [loading, setLoading] = useState(true)
+  const [months, setMonths] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [subscription, setSubscription] = useState(null)
@@ -82,7 +83,8 @@ function SubscribeContent() {
   }
 
   const selectedServices = services.filter((s) => selectedItems[s.id])
-  const total = selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
+  const monthlyTotal = selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
+  const total = monthlyTotal * months
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -102,6 +104,7 @@ function SubscribeContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         org_id: selectedStation,
+        months,
         total_amount: total,
         items: selectedServices.map((s) => ({
           service_id: s.id,
@@ -213,12 +216,40 @@ function SubscribeContent() {
             </div>
 
             {selectedServices.length > 0 && (
-              <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
-                <span className="text-sm font-medium text-gray-700">Total</span>
-                <span className="text-lg font-bold text-gray-900">
-                  {total.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
-                </span>
-              </div>
+              <>
+                {/* Duration */}
+                <div className="mt-6">
+                  <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" /> Duration
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={months}
+                      onChange={(e) => setMonths(Math.max(1, Math.min(24, parseInt(e.target.value) || 1)))}
+                      className="w-20 border border-gray-300 px-3 py-2 text-sm text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <span className="text-sm text-gray-600">month{months !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Total</span>
+                    {months > 1 && (
+                      <span className="text-xs text-gray-400 ml-2">
+                        ({monthlyTotal.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })} × {months} months)
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-lg font-bold text-gray-900">
+                    {total.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
+                  </span>
+                </div>
+              </>
             )}
           </div>
 

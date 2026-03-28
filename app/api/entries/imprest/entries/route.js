@@ -2,15 +2,13 @@ import { NextResponse } from 'next/server'
 import { authenticateUser, getServiceClient, paginationParams, requireService, logActivity } from '@/lib/entryHelpers'
 
 const TABLE = 'imprest_entries'
-const SERVICE_KEY = 'fuel-operations'
+const SERVICE_KEY = 'customer-payments'
 
 // GET — list entries for a period
 export async function GET(request) {
   try {
     const { user, error } = await authenticateUser(request)
     if (error) return error
-    const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
-    if (!subscribed) return subError
 
     const { from, to, page, limit, searchParams } = paginationParams(request)
     const supabase = getServiceClient()

@@ -2,15 +2,13 @@ import { NextResponse } from 'next/server'
 import { authenticateUser, getServiceClient, requireService, logActivity } from '@/lib/entryHelpers'
 
 const TABLE = 'imprest_periods'
-const SERVICE_KEY = 'fuel-operations'
+const SERVICE_KEY = 'customer-payments'
 
 // GET — list periods or single period by id
 export async function GET(request) {
   try {
     const { user, error } = await authenticateUser(request)
     if (error) return error
-    const { subscribed, error: subError } = await requireService(user, SERVICE_KEY)
-    if (!subscribed) return subError
 
     const { searchParams } = new URL(request.url)
     const supabase = getServiceClient()

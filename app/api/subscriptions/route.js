@@ -23,7 +23,8 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
     }
 
-    const { plan_type, total_amount, items, org_id } = await request.json()
+    const { plan_type, total_amount, items, org_id, months: rawMonths } = await request.json()
+    const months = Math.max(1, Math.min(24, parseInt(rawMonths) || 1))
 
     if (!org_id) {
       return NextResponse.json({ error: 'Please select a station' }, { status: 400 })
@@ -79,6 +80,7 @@ export async function POST(request) {
         org_id,
         status: 'pending_payment',
         plan_type: plan_type || 'recurring',
+        months,
         total_amount,
         reference_code: referenceCode,
         payment_deadline: deadline.toISOString(),

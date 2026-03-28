@@ -382,6 +382,31 @@ export default function StationPage() {
         </div>
       </div>
 
+      {/* Expired subscription notice (non-dismissable) */}
+      {isOwner && subscription?.status === 'expired' && subscription?.end_date && (() => {
+        const daysSinceExpiry = differenceInDays(new Date(), new Date(subscription.end_date))
+        const graceRemaining = 7 - daysSinceExpiry
+        return (
+          <div className="bg-red-50 border border-red-200 px-4 py-3 mb-6 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              {graceRemaining > 0 ? (
+                <>
+                  <p className="text-sm text-red-800 font-medium">Your subscription has expired</p>
+                  <p className="text-xs text-red-600 mt-0.5">{graceRemaining} day{graceRemaining !== 1 ? 's' : ''} of grace period remaining. Subscribe now to continue adding entries.</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-red-800 font-medium">Subscription &amp; grace period expired</p>
+                  <p className="text-xs text-red-600 mt-0.5">You can no longer add entries. Subscribe now to resume.</p>
+                </>
+              )}
+            </div>
+            <Link href={`/dashboard/subscribe?org_id=${stationId}`} className="flex-shrink-0 bg-red-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-red-700">Subscribe</Link>
+          </div>
+        )
+      })()}
+
       {/* Sync controls */}
       <div className="mb-8 flex items-center gap-3 flex-wrap">
         <button
@@ -510,8 +535,15 @@ export default function StationPage() {
         </Link>
       </section>
 
-      {/* Sign out */}
-      <section className="mb-8">
+      {/* Dashboard + Sign out */}
+      <section className="mb-8 flex items-center gap-2">
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <Fuel className="w-4 h-4" />
+          All Stations
+        </Link>
         <button
           onClick={handleSignOut}
           className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"

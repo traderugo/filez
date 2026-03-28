@@ -32,7 +32,7 @@ export async function GET(request) {
     const client = getAdminClient()
     let query = client
       .from('subscriptions')
-      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, total_amount, reference_code, payment_deadline, org_id, users(name, email, phone), organizations(name), subscription_items(id, service_name, price)')
+      .select('id, status, created_at, payment_reference, proof_url, notes, start_date, end_date, plan_type, months, total_amount, reference_code, payment_deadline, org_id, users(name, email, phone), organizations(name), subscription_items(id, service_name, price)')
       .order('created_at', { ascending: false })
 
     if (filter && filter !== 'all') {
@@ -55,23 +55,31 @@ export async function PATCH(request) {
     const { id, action, notes } = await request.json()
     if (!id || !action) return NextResponse.json({ error: 'id and action required' }, { status: 400 })
 
-    const today = new Date()
-    const endDate = new Date(today)
-    endDate.setMonth(endDate.getMonth() + 1)
-
-    const updates = action === 'approve'
-      ? {
-          status: 'approved',
-          start_date: today.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
-          notes: notes || null,
-        }
-      : {
-          status: 'rejected',
-          notes: notes || 'Rejected by admin',
-        }
-
     const client = getAdminClient()
+
+    let updates
+    if (action === 'approve') {
+      // Read months from the subscription to compute end_date
+      const { data: sub } = await client.from('subscriptions').select('months').eq('id', id).single()
+      const subMonths = sub?.months || 1
+
+      const today = new Date()
+      const endDate = new Date(today)
+      endDate.setMonth(endDate.getMonth() + subMonths)
+
+      updates = {
+        status: 'approved',
+        start_date: today.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        notes: notes || null,
+      }
+    } else {
+      updates = {
+        status: 'rejected',
+        notes: notes || 'Rejected by admin',
+      }
+    }
+
     const { error } = await client.from('subscriptions').update(updates).eq('id', id)
 
     if (error) return NextResponse.json({ error: 'Failed to update' }, { status: 500 })

@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, Lock, Plus, ChevronLeft, ChevronRight, User, X, Check } from 'lucide-react'
+import { Loader2, List, Trash2, AlertTriangle, Lock, Plus, ChevronLeft, ChevronRight, User, X, Check } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
 import SearchableSelect from '@/components/SearchableSelect'
+import { useSubscription } from '@/lib/hooks/useSubscription'
 
 function blankEntry(nozzles, tanks) {
   return {
@@ -74,6 +75,7 @@ export default function DailySalesFormPage() {
   const editId = searchParams.get('edit') || null
   const editDate = searchParams.get('edit_date') || null
   const qs = `org_id=${orgId}`
+  const { subscribed: isSubscribed, loading: subLoading } = useSubscription(orgId, 'fuel-operations')
 
   const [loading, setLoading] = useState(true)
   const [locked, setLocked] = useState(false)
@@ -361,10 +363,10 @@ export default function DailySalesFormPage() {
   if (locked) return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="text-center py-16">
-        <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
-        <p className="text-sm text-gray-500 mb-4">Subscribe to the Daily Sales Operations service to access this feature.</p>
-        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
+        <AlertTriangle className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Station Not Configured</h2>
+        <p className="text-sm text-gray-500 mb-4">Set up your station in Settings before creating entries.</p>
+        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Go to Settings</Link>
       </div>
     </div>
   )
@@ -541,9 +543,20 @@ export default function DailySalesFormPage() {
 
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
+        {!subLoading && !isSubscribed && (
+          <div className="bg-amber-50 border border-amber-200 px-4 py-3 mt-3 flex items-start gap-3">
+            <Lock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-amber-800 font-medium">Subscribe to add entries</p>
+              <p className="text-xs text-amber-600 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
+            </div>
+            <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-blue-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-blue-700">Subscribe</Link>
+          </div>
+        )}
+
         <div className="flex gap-2 mt-3">
           <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
-          <button type="submit" disabled={saving || saved} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+          <button type="submit" disabled={saving || saved || (!subLoading && !isSubscribed)} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {saved && <Check className="w-4 h-4" />}
             {saved ? 'Saved!' : isEditing ? 'Update' : 'Save All'}
