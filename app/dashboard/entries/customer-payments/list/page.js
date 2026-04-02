@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Plus, Pencil, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
+import { Plus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { fmtDate } from '@/lib/formatDate'
@@ -32,11 +32,6 @@ export default function CustomerPaymentsListPage() {
     [orgId, ready], {}
   )
 
-  const hasConfig = useLiveQuery(
-    () => ready && orgId ? db.customers.where('orgId').equals(orgId).count() : 0,
-    [orgId, ready], 0
-  )
-
   // Group entries by date
   const groupedEntries = useMemo(() => {
     const groups = {}
@@ -59,16 +54,6 @@ export default function CustomerPaymentsListPage() {
 
   if (!ready) return <div className="flex justify-center py-20"><div className="w-6 h-6 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" /></div>
 
-  if (hasConfig === 0) return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
-      <div className="text-center py-16">
-        <Lock className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Subscription Required</h2>
-        <p className="text-sm text-gray-500 mb-4">Subscribe to the Accounts service to access this feature.</p>
-        <Link href="/dashboard/subscribe" className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Subscribe Now</Link>
-      </div>
-    </div>
-  )
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
