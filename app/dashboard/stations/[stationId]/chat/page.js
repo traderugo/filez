@@ -15,6 +15,7 @@ export default function ChatPage() {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [fetchStatus, setFetchStatus] = useState('')
   const [refreshing, setRefreshing] = useState(false)
   const [showMentions, setShowMentions] = useState(false)
   const [mentionSuggestions, setMentionSuggestions] = useState([])
@@ -85,10 +86,15 @@ export default function ChatPage() {
         const { messages: serverMessages } = await res.json()
         if (serverMessages?.length) {
           await db.stationMessages.bulkPut(serverMessages.map(mapMessage))
+          setFetchStatus(`Synced ${serverMessages.length} messages`)
+        } else {
+          setFetchStatus('Server returned 0 messages')
         }
+      } else {
+        setFetchStatus(`Error ${res.status}`)
       }
-    } catch {
-      // Offline or network error — IndexedDB data still shown via useLiveQuery
+    } catch (err) {
+      setFetchStatus(`Offline: ${err.message}`)
     }
     if (showSpinner) setRefreshing(false)
     pollingRef.current = false
@@ -220,14 +226,17 @@ export default function ChatPage() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
         <h1 className="text-sm font-semibold text-gray-900">Station Chat</h1>
-        <button
-          onClick={fetchMessages}
-          disabled={refreshing}
-          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 disabled:opacity-40 transition-colors"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-3">
+          {fetchStatus && <span className="text-[10px] text-gray-400">{fetchStatus}</span>}
+          <button
+            onClick={fetchMessages}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 disabled:opacity-40 transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Messages area */}
