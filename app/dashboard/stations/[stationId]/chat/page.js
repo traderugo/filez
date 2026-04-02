@@ -47,21 +47,10 @@ export default function ChatPage() {
     return () => clearTimeout(t)
   }, [])
 
-  // Initial fetch + auto-poll every 15s for new messages
+  // Fetch messages on mount only — user clicks Refresh for updates
   useEffect(() => {
     if (!stationId) return
     fetchMessages(true)
-    const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') fetchMessages(false)
-    }, 15_000)
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') fetchMessages(false)
-    }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => {
-      clearInterval(interval)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stationId])
 
