@@ -227,7 +227,7 @@ export default function ChatPage() {
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
         <h1 className="text-sm font-semibold text-gray-900">Station Chat</h1>
         <div className="flex items-center gap-3">
-          {fetchStatus && <span className="text-[10px] text-gray-400">{fetchStatus}</span>}
+          {fetchStatus && <span className="text-[10px] text-gray-400">{fetchStatus} | showing {messages?.length ?? '?'}</span>}
           <button
             onClick={fetchMessages}
             disabled={refreshing}
