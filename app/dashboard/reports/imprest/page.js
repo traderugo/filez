@@ -471,53 +471,48 @@ function ImprestContent() {
             </div>
           )}
 
-          {/* Entries table */}
+          {/* Entries */}
           {period && (
             loadingEntries ? (
               <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
             ) : entries.length === 0 ? (
               <div className="text-center py-10 text-gray-400 text-sm">No entries yet for {MONTHS[month - 1]} {year}</div>
             ) : (
-              <div className="border border-gray-300">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-300 bg-gray-50 text-left text-xs text-gray-400 uppercase tracking-wide">
-                      <th className="py-2 px-2">S/N</th>
-                      <th className="py-2 px-2">Date</th>
-                      <th className="py-2 px-2">Beneficiary</th>
-                      <th className="py-2 px-2">Details</th>
-                      <th className="py-2 px-2 text-right">Amount</th>
-                      <th className="py-2 px-2">PCV</th>
-                      <th className="py-2 px-2 w-20"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {entries.map((e, i) => (
-                      <tr key={e.id} className="border-b border-gray-200 hover:bg-gray-50">
-                        <td className="py-2 px-2 text-gray-400">{i + 1}</td>
-                        <td className="py-2 px-2 whitespace-nowrap">{fmtDate(e.entry_date)}</td>
-                        <td className="py-2 px-2">{e.beneficiary}</td>
-                        <td className="py-2 px-2 text-gray-600 max-w-[200px] truncate">{e.transaction_details || '—'}</td>
-                        <td className="py-2 px-2 text-right font-medium">₦{fmt(e.amount)}</td>
-                        <td className="py-2 px-2 text-gray-500">{e.pcv_number || '—'}</td>
-                        <td className="py-2 px-2 flex items-center gap-1">
-                          {e.receipt_image_url && (
-                            <a href={e.receipt_image_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600"><FileImage className="w-4 h-4" /></a>
-                          )}
-                          <button onClick={() => startEdit(e)} className="text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
-                          <button onClick={() => handleDelete(e.id)} className="text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 border-gray-300 font-bold bg-gray-50">
-                      <td colSpan={4} className="py-2 text-right px-2">Total</td>
-                      <td className="py-2 text-right px-2">₦{fmt(totalSpent)}</td>
-                      <td colSpan={2}></td>
-                    </tr>
-                  </tfoot>
-                </table>
+              <div className="space-y-3">
+                {entries.map((e, i) => (
+                  <div key={e.id} className="border border-gray-300 divide-y divide-gray-300">
+                    <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50">
+                      <span className="text-xs font-medium text-gray-500">#{i + 1} · {fmtDate(e.entry_date)}</span>
+                      <div className="flex items-center gap-2">
+                        {e.receipt_image_url && (
+                          <a href={e.receipt_image_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600"><FileImage className="w-4 h-4" /></a>
+                        )}
+                        <button onClick={() => startEdit(e)} className="text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => handleDelete(e.id)} className="text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2.5">
+                      <p className="text-sm font-medium text-gray-900">{e.beneficiary}</p>
+                      {e.transaction_details && <p className="text-sm text-gray-500 mt-0.5">{e.transaction_details}</p>}
+                    </div>
+                    <div className="grid grid-cols-2 divide-x divide-gray-300">
+                      <div className="px-3 py-2">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">Amount</p>
+                        <p className="text-base font-bold text-gray-900 mt-0.5">₦{fmt(e.amount)}</p>
+                      </div>
+                      <div className="px-3 py-2">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide">PCV</p>
+                        <p className="text-sm text-gray-600 mt-0.5">{e.pcv_number || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Total */}
+                <div className="border border-gray-300 bg-gray-50 px-3 py-2.5 flex items-center justify-between">
+                  <span className="text-sm font-bold text-gray-700">Total</span>
+                  <span className="text-base font-bold text-gray-900">₦{fmt(totalSpent)}</span>
+                </div>
               </div>
             )
           )}
