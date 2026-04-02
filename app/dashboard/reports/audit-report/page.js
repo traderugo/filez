@@ -565,6 +565,7 @@ function CashReconciliation({ data, startDate, endDate, hdr, subHdr, cell, cellR
   const formatDate = fmtDate
 
   const overshortColor = data.overshort < 0 ? 'text-red-600' : data.overshort > 0 ? 'text-green-600' : ''
+  // Note: negative = station owes (debt), positive = station overpaid
 
   return (
     <div className="mt-6">
@@ -1199,7 +1200,7 @@ function CalculatorReport({ report, startDate, endDate }) {
             const actualPosTransfer = (cr.totalPOS || 0) + (cr.totalTransfer || 0)
             const actualExpectedSales = cr.expectedSalesTotal || 0
             const actualBalance = cr.overshort || 0
-            const estBalance = actualExpectedSales - otherEstimates.bankDeposit - actualPosTransfer
+            const estBalance = -(actualExpectedSales - otherEstimates.bankDeposit - actualPosTransfer)
 
             const rows = [
               { label: 'Bank Deposit', actual: actualBankDeposit, estimate: otherEstimates.bankDeposit, editable: true, field: 'bankDeposit' },
