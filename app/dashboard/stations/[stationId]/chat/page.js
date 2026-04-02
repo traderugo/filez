@@ -86,9 +86,12 @@ export default function ChatPage() {
         if (serverMessages?.length) {
           await db.stationMessages.bulkPut(serverMessages.map(mapMessage))
         }
+      } else {
+        const body = await res.text().catch(() => '')
+        setError(`Refresh failed (${res.status}): ${body}`)
       }
-    } catch {
-      // Silently fail — offline or network error
+    } catch (err) {
+      setError(`Refresh error: ${err.message}`)
     }
     if (showSpinner) setRefreshing(false)
     pollingRef.current = false
