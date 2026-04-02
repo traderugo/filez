@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { authenticateUser, getServiceClient, paginationParams, requireService, logActivity } from '@/lib/entryHelpers'
 
 const TABLE = 'imprest_entries'
-const SERVICE_KEY = 'customer-payments'
+const SERVICE_KEY = 'fuel-operations'
 
 // GET — list entries for a period
 export async function GET(request) {

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { authenticateUser, getServiceClient, requireService, logActivity } from '@/lib/entryHelpers'
 
 const TABLE = 'imprest_entries'
-const SERVICE_KEY = 'customer-payments'
+const SERVICE_KEY = 'fuel-operations'
 
 // PATCH — update an entry
 export async function PATCH(request, { params }) {
