@@ -26,7 +26,7 @@ export default function ImprestPage() {
 function ImprestContent() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
-  const { subscribed: isSubscribed, loading: subLoading } = useSubscription(orgId, 'customer-payments')
+  const { subscribed: isSubscribed, loading: subLoading } = useSubscription(orgId, 'fuel-operations')
   const subBlocked = !subLoading && !isSubscribed
 
   const now = new Date()
@@ -72,7 +72,7 @@ function ImprestContent() {
   // Load customers once
   useEffect(() => {
     if (!orgId) return
-    fetch(`/api/entries/customers`)
+    fetch(`/api/entries/customers?org_id=${orgId}`)
       .then(r => r.json())
       .then(d => setCustomers(d.customers || []))
       .catch(() => {})
@@ -83,7 +83,7 @@ function ImprestContent() {
     if (!orgId) { setLoadingPeriod(false); return }
     setLoadingPeriod(true)
     try {
-      const res = await fetch(`/api/entries/imprest?month=${month}&year=${year}`)
+      const res = await fetch(`/api/entries/imprest?org_id=${orgId}&month=${month}&year=${year}`)
       const data = await res.json()
       if (data.period) {
         setPeriod(data.period)
@@ -109,7 +109,7 @@ function ImprestContent() {
     if (!period?.id) { setEntries([]); return }
     setLoadingEntries(true)
     try {
-      const res = await fetch(`/api/entries/imprest/entries?period_id=${period.id}&limit=100`)
+      const res = await fetch(`/api/entries/imprest/entries?org_id=${orgId}&period_id=${period.id}&limit=100`)
       const data = await res.json()
       setEntries(data.entries || [])
     } catch {
@@ -143,7 +143,7 @@ function ImprestContent() {
     if (!imprestAmount) return
     setSavingPeriod(true)
     try {
-      const res = await fetch('/api/entries/imprest', {
+      const res = await fetch(`/api/entries/imprest?org_id=${orgId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ month, year, imprest_amount: imprestAmount, custodian_name: custodianName, form_number: formNumber }),
@@ -211,7 +211,7 @@ function ImprestContent() {
     try {
       if (editingId) {
         // Update
-        const res = await fetch(`/api/entries/imprest/entries/${editingId}`, {
+        const res = await fetch(`/api/entries/imprest/entries/${editingId}?org_id=${orgId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -227,7 +227,7 @@ function ImprestContent() {
         if (res.ok) { resetForm(); await loadEntries() }
       } else {
         // Create
-        const res = await fetch('/api/entries/imprest/entries', {
+        const res = await fetch(`/api/entries/imprest/entries?org_id=${orgId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -251,7 +251,7 @@ function ImprestContent() {
   const handleDelete = async (id) => {
     if (!confirm('Delete this entry?')) return
     try {
-      await fetch(`/api/entries/imprest/entries/${id}`, { method: 'DELETE' })
+      await fetch(`/api/entries/imprest/entries/${id}?org_id=${orgId}`, { method: 'DELETE' })
       await loadEntries()
     } catch {}
   }
