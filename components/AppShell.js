@@ -21,6 +21,25 @@ export default function AppShell({ children }) {
       setUser(data.user)
     }
     load()
+
+    // Force-update stale service workers and clear old API caches
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (!reg) return
+        reg.update()
+        const activate = (sw) => sw.postMessage({ type: 'SKIP_WAITING' })
+        if (reg.waiting) activate(reg.waiting)
+        reg.addEventListener('updatefound', () => {
+          const newSw = reg.installing
+          if (!newSw) return
+          newSw.addEventListener('statechange', () => {
+            if (newSw.state === 'installed' && reg.waiting) activate(reg.waiting)
+          })
+        })
+      })
+      // Clear stale API caches from old service workers
+      caches.delete('apis').catch(() => {})
+    }
   }, [])
 
   const handleSignOut = async () => {

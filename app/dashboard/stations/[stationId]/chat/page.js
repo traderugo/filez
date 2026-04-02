@@ -83,18 +83,12 @@ export default function ChatPage() {
       const res = await fetch(`/api/chat?org_id=${stationId}`, { cache: 'no-store' })
       if (res.ok) {
         const { messages: serverMessages } = await res.json()
-        console.log('[chat] fetched', serverMessages?.length, 'messages from server for org', stationId)
         if (serverMessages?.length) {
-          const mapped = serverMessages.map(mapMessage)
-          console.log('[chat] first msg:', JSON.stringify(mapped[0]))
-          await db.stationMessages.bulkPut(mapped)
+          await db.stationMessages.bulkPut(serverMessages.map(mapMessage))
         }
-      } else {
-        const body = await res.text().catch(() => '')
-        setError(`Refresh failed (${res.status}): ${body}`)
       }
-    } catch (err) {
-      setError(`Refresh error: ${err.message}`)
+    } catch {
+      // Offline or network error — IndexedDB data still shown via useLiveQuery
     }
     if (showSpinner) setRefreshing(false)
     pollingRef.current = false
