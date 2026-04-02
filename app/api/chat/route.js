@@ -45,7 +45,7 @@ export async function GET(request) {
       .from('station_messages')
       .select('*')
       .eq('org_id', orgId)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
       .limit(300)
 
     if (since) query = query.gt('created_at', since)
@@ -53,7 +53,8 @@ export async function GET(request) {
     const { data, error: dbError } = await query
     if (dbError) return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
 
-    return NextResponse.json({ messages: data || [] })
+    // Reverse so messages display oldest-first
+    return NextResponse.json({ messages: (data || []).reverse() })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }

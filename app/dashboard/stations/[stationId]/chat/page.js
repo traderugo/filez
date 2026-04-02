@@ -15,7 +15,7 @@ export default function ChatPage() {
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
-  const [fetchStatus, setFetchStatus] = useState('')
+  const [fetchStatus, setFetchStatus] = useState(null)
   const [refreshing, setRefreshing] = useState(false)
   const [showMentions, setShowMentions] = useState(false)
   const [mentionSuggestions, setMentionSuggestions] = useState([])
@@ -86,15 +86,10 @@ export default function ChatPage() {
         const { messages: serverMessages } = await res.json()
         if (serverMessages?.length) {
           await db.stationMessages.bulkPut(serverMessages.map(mapMessage))
-          setFetchStatus(`Synced ${serverMessages.length} messages`)
-        } else {
-          setFetchStatus('Server returned 0 messages')
         }
-      } else {
-        setFetchStatus(`Error ${res.status}`)
       }
-    } catch (err) {
-      setFetchStatus(`Offline: ${err.message}`)
+    } catch {
+      // Offline — IndexedDB data still shown via useLiveQuery
     }
     if (showSpinner) setRefreshing(false)
     pollingRef.current = false
@@ -227,7 +222,6 @@ export default function ChatPage() {
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
         <h1 className="text-sm font-semibold text-gray-900">Station Chat</h1>
         <div className="flex items-center gap-3">
-          {fetchStatus && <span className="text-[10px] text-gray-400">{fetchStatus} | showing {messages?.length ?? '?'}</span>}
           <button
             onClick={fetchMessages}
             disabled={refreshing}
