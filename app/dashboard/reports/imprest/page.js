@@ -303,8 +303,27 @@ function ImprestContent() {
   return (
     <AccessGate orgId={orgId} pageKey="imprest">
       {({ isOwner }) => (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-      <h1 className="text-xl font-bold text-gray-900 mb-4">Imprest / Petty Cash</h1>
+    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold text-gray-900">Imprest / Petty Cash</h1>
+        {period && (
+          <div className="flex items-center gap-2">
+            <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+              <Plus className="w-4 h-4" /> Add Entry
+            </button>
+            {isOwner && (
+            <button onClick={handleExcelExport} disabled={exporting || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-40">
+              <Download className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Excel'}
+            </button>
+            )}
+            {isOwner && (
+            <button onClick={handlePdfExport} disabled={exportingPdf || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-40">
+              <FileImage className="w-4 h-4" /> {exportingPdf ? 'Exporting...' : 'Receipts PDF'}
+            </button>
+            )}
+          </div>
+        )}
+      </div>
 
       {subBlocked && (
         <div className="bg-amber-50 border border-amber-200 px-4 py-3 mb-4 flex items-start gap-3">
@@ -319,10 +338,10 @@ function ImprestContent() {
 
       {/* Month / Year selector */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border border-gray-300 px-3 py-2 text-sm">
           {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
         </select>
-        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} min={2020} max={2099} className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-24" />
+        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} min={2020} max={2099} className="border border-gray-300 px-3 py-2 text-sm w-24" />
       </div>
 
       {loadingPeriod ? (
@@ -330,83 +349,66 @@ function ImprestContent() {
       ) : (
         <>
           {/* Period setup */}
-          <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3">Period Settings</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="border border-gray-300 divide-y divide-gray-300 mb-6">
+            <div className="px-3 py-1.5 bg-gray-50">
+              <span className="text-xs font-medium text-gray-500">Period Settings</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
               <div>
-                <label className="text-xs text-gray-500">Imprest Amount (₦)</label>
-                <input type="number" value={imprestAmount} onChange={e => setImprestAmount(e.target.value)} placeholder="e.g. 130000" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Imprest Amount (₦)</label>
+                <input type="number" value={imprestAmount} onChange={e => setImprestAmount(e.target.value)} placeholder="e.g. 130000" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Custodian Name</label>
-                <input type="text" value={custodianName} onChange={e => setCustodianName(e.target.value)} placeholder="Petty cash custodian" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Custodian Name</label>
+                <input type="text" value={custodianName} onChange={e => setCustodianName(e.target.value)} placeholder="Petty cash custodian" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
               <div>
-                <label className="text-xs text-gray-500">Form Number</label>
-                <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Form Number</label>
+                <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
             </div>
-            <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40">
-              {savingPeriod ? 'Saving...' : period ? 'Update Period' : 'Create Period'}
-            </button>
+            <div className="px-3 py-2.5">
+              <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
+                {savingPeriod ? 'Saving...' : period ? 'Update Period' : 'Create Period'}
+              </button>
+            </div>
           </div>
 
-          {/* Summary cards */}
+          {/* Summary */}
           {period && (
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-gray-50 border rounded-xl p-3 text-center">
-                <p className="text-xs text-gray-500">Imprest</p>
-                <p className="text-lg font-bold text-gray-900">₦{fmt(imprestAmt)}</p>
+            <div className="border border-gray-300 divide-y divide-gray-300 mb-6">
+              <div className="grid grid-cols-3 divide-x divide-gray-300">
+                <div className="px-3 py-3 text-center">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Imprest</p>
+                  <p className="text-lg font-bold text-gray-900 mt-1">₦{fmt(imprestAmt)}</p>
+                </div>
+                <div className="px-3 py-3 text-center">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Total Spent</p>
+                  <p className="text-lg font-bold text-orange-700 mt-1">₦{fmt(totalSpent)}</p>
+                </div>
+                <div className="px-3 py-3 text-center">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide">Balance</p>
+                  <p className={`text-lg font-bold mt-1 ${balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>₦{fmt(balance)}</p>
+                </div>
               </div>
-              <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 text-center">
-                <p className="text-xs text-gray-500">Total Spent</p>
-                <p className="text-lg font-bold text-orange-700">₦{fmt(totalSpent)}</p>
-              </div>
-              <div className={`border rounded-xl p-3 text-center ${balance >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-                <p className="text-xs text-gray-500">Balance</p>
-                <p className={`text-lg font-bold ${balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>₦{fmt(balance)}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Actions */}
-          {period && (
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
-                <Plus className="w-4 h-4" /> Add Entry
-              </button>
-              {isOwner && (
-              <button onClick={handleExcelExport} disabled={exporting || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-40">
-                <Download className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Excel'}
-              </button>
-              )}
-              {isOwner && (
-              <button onClick={handlePdfExport} disabled={exportingPdf || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 disabled:opacity-40">
-                <FileImage className="w-4 h-4" /> {exportingPdf ? 'Exporting...' : 'Receipts PDF'}
-              </button>
-              )}
             </div>
           )}
 
           {/* Entry form */}
           {showForm && period && (
-            <div className="bg-white border border-blue-200 rounded-xl p-4 mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-700">{editingId ? 'Edit Entry' : 'New Entry'}</h3>
+            <div className="border border-gray-300 divide-y divide-gray-300 mb-6">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50">
+                <span className="text-xs font-medium text-gray-500">{editingId ? 'Edit Entry' : 'New Entry'}</span>
                 <button onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
                 <div>
-                  <label className="text-xs text-gray-500">Date</label>
-                  <DateInput value={formDate} onChange={setFormDate} className="mt-1 border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
+                  <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
                 </div>
-
-                {/* Beneficiary with fuzzy search */}
                 <div className="relative" ref={suggestionsRef}>
-                  <label className="text-xs text-gray-500">Beneficiary</label>
-                  <div className="mt-1 flex items-center border border-gray-300 rounded-lg px-3 py-2">
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Beneficiary</label>
+                  <div className="flex items-center px-3 py-2.5">
                     <Search className="w-3.5 h-3.5 text-gray-400 mr-2 flex-shrink-0" />
                     <input
                       type="text"
@@ -414,11 +416,11 @@ function ImprestContent() {
                       onChange={e => { setBeneficiaryQuery(e.target.value); setFormBeneficiary(e.target.value); setShowSuggestions(true) }}
                       onFocus={() => setShowSuggestions(true)}
                       placeholder="Search accounts..."
-                      className="w-full text-sm focus:outline-none"
+                      className="w-full text-base bg-transparent focus:outline-none"
                     />
                   </div>
                   {showSuggestions && filteredCustomers.length > 0 && (
-                    <div className="absolute z-50 mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                    <div className="absolute z-50 mt-0 left-0 right-0 bg-white border border-gray-200 shadow-lg max-h-48 overflow-y-auto">
                       {filteredCustomers.map(c => (
                         <button key={c.id} type="button" onClick={() => { setFormBeneficiary(c.name); setBeneficiaryQuery(c.name); setShowSuggestions(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100 last:border-0">
                           {c.name}
@@ -427,36 +429,30 @@ function ImprestContent() {
                     </div>
                   )}
                 </div>
-
-                {/* Transaction details */}
-                <div className="sm:col-span-2">
-                  <label className="text-xs text-gray-500">Transaction Details</label>
-                  <input type="text" value={formDetails} onChange={e => setFormDetails(e.target.value)} placeholder="What was the expense for?" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                </div>
-
-                {/* Amount */}
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Transaction Details</label>
+                <input type="text" value={formDetails} onChange={e => setFormDetails(e.target.value)} placeholder="What was the expense for?" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-gray-300">
                 <div>
-                  <label className="text-xs text-gray-500">Amount (₦)</label>
-                  <input type="number" value={formAmount} onChange={e => setFormAmount(e.target.value)} placeholder="0" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount (₦)</label>
+                  <input type="number" value={formAmount} onChange={e => setFormAmount(e.target.value)} placeholder="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                 </div>
-
-                {/* Account code */}
                 <div>
-                  <label className="text-xs text-gray-500">Account Code</label>
-                  <input type="text" value={formAccountCode} onChange={e => setFormAccountCode(e.target.value)} placeholder="Optional" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Account Code</label>
+                  <input type="text" value={formAccountCode} onChange={e => setFormAccountCode(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                 </div>
-
-                {/* PCV Number */}
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-gray-300">
                 <div>
-                  <label className="text-xs text-gray-500">PCV Number</label>
-                  <input type="text" value={formPcv} onChange={e => setFormPcv(e.target.value)} placeholder="Optional" className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">PCV Number</label>
+                  <input type="text" value={formPcv} onChange={e => setFormPcv(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                 </div>
-
-                {/* Receipt image */}
                 <div>
-                  <label className="text-xs text-gray-500">Receipt Image</label>
-                  <div className="mt-1 flex items-center gap-2">
-                    <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-40">
+                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receipt Image</label>
+                  <div className="flex items-center gap-2 px-3 py-2.5">
+                    <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-40">
                       <Camera className="w-4 h-4" /> {uploading ? 'Uploading...' : 'Upload'}
                     </button>
                     {formImageUrl && (
@@ -466,12 +462,11 @@ function ImprestContent() {
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 mt-4">
-                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount || subBlocked} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40">
+              <div className="px-3 py-2.5 flex items-center gap-2">
+                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount || subBlocked} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
                   {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
                 </button>
-                <button onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50">Cancel</button>
+                <button onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm font-medium hover:bg-gray-50">Cancel</button>
               </div>
             </div>
           )}
@@ -483,29 +478,29 @@ function ImprestContent() {
             ) : entries.length === 0 ? (
               <div className="text-center py-10 text-gray-400 text-sm">No entries yet for {MONTHS[month - 1]} {year}</div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="border border-gray-300">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 text-left text-xs text-gray-500 uppercase">
-                      <th className="py-2 pr-2">S/N</th>
-                      <th className="py-2 pr-2">Date</th>
-                      <th className="py-2 pr-2">Beneficiary</th>
-                      <th className="py-2 pr-2">Details</th>
-                      <th className="py-2 pr-2 text-right">Amount</th>
-                      <th className="py-2 pr-2">PCV</th>
-                      <th className="py-2 w-20"></th>
+                    <tr className="border-b border-gray-300 bg-gray-50 text-left text-xs text-gray-400 uppercase tracking-wide">
+                      <th className="py-2 px-2">S/N</th>
+                      <th className="py-2 px-2">Date</th>
+                      <th className="py-2 px-2">Beneficiary</th>
+                      <th className="py-2 px-2">Details</th>
+                      <th className="py-2 px-2 text-right">Amount</th>
+                      <th className="py-2 px-2">PCV</th>
+                      <th className="py-2 px-2 w-20"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {entries.map((e, i) => (
-                      <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-2 pr-2 text-gray-400">{i + 1}</td>
-                        <td className="py-2 pr-2 whitespace-nowrap">{fmtDate(e.entry_date)}</td>
-                        <td className="py-2 pr-2">{e.beneficiary}</td>
-                        <td className="py-2 pr-2 text-gray-600 max-w-[200px] truncate">{e.transaction_details || '—'}</td>
-                        <td className="py-2 pr-2 text-right font-medium">₦{fmt(e.amount)}</td>
-                        <td className="py-2 pr-2 text-gray-500">{e.pcv_number || '—'}</td>
-                        <td className="py-2 flex items-center gap-1">
+                      <tr key={e.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        <td className="py-2 px-2 text-gray-400">{i + 1}</td>
+                        <td className="py-2 px-2 whitespace-nowrap">{fmtDate(e.entry_date)}</td>
+                        <td className="py-2 px-2">{e.beneficiary}</td>
+                        <td className="py-2 px-2 text-gray-600 max-w-[200px] truncate">{e.transaction_details || '—'}</td>
+                        <td className="py-2 px-2 text-right font-medium">₦{fmt(e.amount)}</td>
+                        <td className="py-2 px-2 text-gray-500">{e.pcv_number || '—'}</td>
+                        <td className="py-2 px-2 flex items-center gap-1">
                           {e.receipt_image_url && (
                             <a href={e.receipt_image_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600"><FileImage className="w-4 h-4" /></a>
                           )}
@@ -516,9 +511,9 @@ function ImprestContent() {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-gray-300 font-bold">
-                      <td colSpan={4} className="py-2 text-right pr-2">Total</td>
-                      <td className="py-2 text-right pr-2">₦{fmt(totalSpent)}</td>
+                    <tr className="border-t-2 border-gray-300 font-bold bg-gray-50">
+                      <td colSpan={4} className="py-2 text-right px-2">Total</td>
+                      <td className="py-2 text-right px-2">₦{fmt(totalSpent)}</td>
                       <td colSpan={2}></td>
                     </tr>
                   </tfoot>
