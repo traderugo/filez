@@ -503,29 +503,23 @@ function ImprestContent() {
               <div className="space-y-3">
                 {entries.map((e, i) => (
                   <div key={e.id} className="border border-gray-300 divide-y divide-gray-300">
-                    <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50">
-                      <span className="text-xs font-medium text-gray-500">#{i + 1} · {fmtDate(e.entry_date)}</span>
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
+                      <span className="text-sm font-medium text-gray-500">#{i + 1} · {fmtDate(e.entry_date)}</span>
+                      <div className="flex items-center gap-1">
                         {e.receipt_image_url && (
-                          <a href={e.receipt_image_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-blue-600"><FileImage className="w-4 h-4" /></a>
+                          <a href={e.receipt_image_url} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-600"><FileImage className="w-5 h-5" /></a>
                         )}
-                        <button onClick={() => startEdit(e)} className="text-gray-400 hover:text-blue-600"><Pencil className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(e.id)} className="text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => startEdit(e)} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-5 h-5" /></button>
+                        <button onClick={() => handleDelete(e.id)} className="p-2 text-gray-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
                       </div>
                     </div>
                     <div className="px-3 py-2.5">
                       <p className="text-sm font-medium text-gray-900">{e.beneficiary}</p>
                       {e.transaction_details && <p className="text-sm text-gray-500 mt-0.5">{e.transaction_details}</p>}
                     </div>
-                    <div className="grid grid-cols-2 divide-x divide-gray-300">
-                      <div className="px-3 py-2">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">Amount</p>
-                        <p className="text-base font-bold text-gray-900 mt-0.5">₦{fmt(e.amount)}</p>
-                      </div>
-                      <div className="px-3 py-2">
-                        <p className="text-xs text-gray-400 uppercase tracking-wide">PCV</p>
-                        <p className="text-sm text-gray-600 mt-0.5">{e.pcv_number || '—'}</p>
-                      </div>
+                    <div className="px-3 py-2">
+                      <p className="text-xs text-gray-400 uppercase tracking-wide">Amount</p>
+                      <p className="text-base font-bold text-gray-900 mt-0.5">₦{fmt(e.amount)}</p>
                     </div>
                   </div>
                 ))}
