@@ -296,9 +296,7 @@ function ImprestContent() {
     setExportingPdf(true)
     try {
       const { exportImprestReceiptsPdf } = await import('@/lib/exportImprestReceiptsPdf')
-      await exportImprestReceiptsPdf({
-        entries: withImages, month, year, custodianName: period?.custodian_name || '',
-      })
+      await exportImprestReceiptsPdf({ entries: withImages, month, year })
     } catch (err) {
       console.error('PDF export failed:', err)
       alert('PDF export failed')
