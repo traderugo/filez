@@ -65,17 +65,26 @@ function ImprestContent() {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const suggestionsRef = useRef(null)
 
+  // Station name (for export)
+  const [stationName, setStationName] = useState('')
+
   // Export state
   const [exporting, setExporting] = useState(false)
   const [exportingPdf, setExportingPdf] = useState(false)
 
-  // Load customers once
+  // Load customers once + station name
   useEffect(() => {
     if (!orgId) return
     fetch(`/api/entries/customers?org_id=${orgId}`)
       .then(r => r.json())
       .then(d => setCustomers(d.customers || []))
       .catch(() => {})
+    fetch('/api/organizations').then(r => r.ok ? r.json() : null).then(data => {
+      if (!data) return
+      const all = [...(data.stations || []), ...(data.memberStations || [])]
+      const match = all.find(s => s.id === orgId)
+      if (match) setStationName(match.name || '')
+    }).catch(() => {})
   }, [orgId])
 
   // Load period when month/year changes
@@ -270,6 +279,7 @@ function ImprestContent() {
       await exportImprestExcel({
         month, year, imprestAmount: imprestAmt, custodianName: period?.custodian_name || '',
         formNumber: period?.form_number || '', entries, totalSpent, balance,
+        stationName,
       })
     } catch (err) {
       console.error('Excel export failed:', err)
