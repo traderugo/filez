@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
 
-const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'pdf']
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'pdf']
 const ALLOWED_MIMES = {
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
   png: 'image/png',
+  webp: 'image/webp',
   pdf: 'application/pdf',
 }
 

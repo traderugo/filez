@@ -199,8 +199,10 @@ function ImprestContent() {
     if (!file) return
     setUploading(true)
     try {
+      const { optimizeImage } = await import('@/lib/optimizeImage')
+      const optimized = await optimizeImage(file)
       const fd = new FormData()
-      fd.append('file', file)
+      fd.append('file', optimized)
       const res = await fetch('/api/entries/imprest/upload', { method: 'POST', body: fd })
       const data = await res.json()
       if (data.url) setFormImageUrl(data.url)
