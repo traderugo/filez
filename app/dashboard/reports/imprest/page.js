@@ -39,6 +39,8 @@ function ImprestContent() {
   const [imprestAmount, setImprestAmount] = useState('')
   const [custodianName, setCustodianName] = useState('')
   const [formNumber, setFormNumber] = useState('')
+  const [preparedBy, setPreparedBy] = useState('')
+  const [paidBy, setPaidBy] = useState('')
   const [savingPeriod, setSavingPeriod] = useState(false)
 
   // Entries state
@@ -281,7 +283,7 @@ function ImprestContent() {
       await exportImprestExcel({
         month, year, imprestAmount: imprestAmt, custodianName: period?.custodian_name || '',
         formNumber: period?.form_number || '', entries, totalSpent, balance,
-        stationName,
+        stationName, preparedBy, paidBy,
       })
     } catch (err) {
       console.error('Excel export failed:', err)
@@ -363,7 +365,7 @@ function ImprestContent() {
             <div className="px-3 py-1.5 bg-gray-50">
               <span className="text-xs font-medium text-gray-500">Period Settings</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Imprest Amount (₦)</label>
                 <input type="number" value={imprestAmount} onChange={e => setImprestAmount(e.target.value)} placeholder="e.g. 130000" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
@@ -372,10 +374,20 @@ function ImprestContent() {
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Custodian Name</label>
                 <input type="text" value={custodianName} onChange={e => setCustodianName(e.target.value)} placeholder="Petty cash custodian" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Form Number</label>
                 <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
+              <div>
+                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Prepared By</label>
+                <input type="text" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Name of preparer" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Paid By (Approver)</label>
+              <input type="text" value={paidBy} onChange={e => setPaidBy(e.target.value)} placeholder="Manager / approver name" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
             </div>
             <div className="px-3 py-2.5">
               <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
