@@ -38,13 +38,13 @@ export async function POST(request) {
     const safeName = `imprest-receipts/${user.id}/${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabase.storage
-      .from('subscription-proofs')
+      .from('imprest-receipts')
       .upload(safeName, file)
 
     if (uploadError) return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
 
     const { data: { publicUrl } } = supabase.storage
-      .from('subscription-proofs')
+      .from('imprest-receipts')
       .getPublicUrl(safeName)
 
     return NextResponse.json({ url: publicUrl })
