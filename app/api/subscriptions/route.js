@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server'
+import { randomInt } from 'crypto'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
+
+// Generate a verification suffix (1–99) using cryptographic randomness
+// This is added to the base price so the transfer amount is unique per subscription
+function generateVerificationSuffix() {
+  return randomInt(1, 100)
+}
 
 function generateReferenceCode(userId) {
   const now = new Date()
@@ -70,6 +77,8 @@ export async function POST(request) {
     }
 
     const referenceCode = generateReferenceCode(user.id)
+    const verificationSuffix = generateVerificationSuffix()
+    const amountWithSuffix = total_amount + verificationSuffix
     const deadline = new Date()
     deadline.setHours(deadline.getHours() + 48)
 
@@ -81,7 +90,8 @@ export async function POST(request) {
         status: 'pending_payment',
         plan_type: plan_type || 'recurring',
         months,
-        total_amount,
+        total_amount: amountWithSuffix,
+        verification_suffix: verificationSuffix,
         reference_code: referenceCode,
         payment_deadline: deadline.toISOString(),
       })

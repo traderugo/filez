@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Building2, Upload, Loader2, CheckCircle, Clock, Copy, Check, XCircle, ArrowLeft, Trash2 } from 'lucide-react'
+import { Building2, Upload, Loader2, CheckCircle, Clock, Copy, Check, XCircle, ArrowLeft, Trash2, RefreshCw } from 'lucide-react'
 
 function formatCountdown(ms) {
   if (ms <= 0) return 'Expired'
@@ -26,6 +26,45 @@ export default function PaymentPage() {
   const [countdown, setCountdown] = useState(null)
   const [copied, setCopied] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [verifyCooldown, setVerifyCooldown] = useState(0)
+  const [verifyResult, setVerifyResult] = useState(null)
+
+  // Verify button cooldown (10s) — same as WaCart
+  useEffect(() => {
+    if (verifyCooldown <= 0) return
+    const timer = setTimeout(() => setVerifyCooldown(verifyCooldown - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [verifyCooldown])
+
+  // Verify bank payment — same pattern as WaCart
+  const handleVerifyPayment = async () => {
+    setVerifying(true)
+    setVerifyResult(null)
+    try {
+      const res = await fetch(`/api/subscriptions/${id}/verify-bank`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const data = await res.json()
+
+      if (data.verified) {
+        setVerifyResult({ type: 'success', message: data.message })
+        setSub(prev => ({ ...prev, status: 'approved' }))
+        setDone(true)
+      } else {
+        setVerifyResult({
+          type: 'info',
+          message: data.message || data.error || 'No matching payment found yet.',
+        })
+      }
+    } catch {
+      setVerifyResult({ type: 'error', message: 'Verification failed. Please try again.' })
+    } finally {
+      setVerifying(false)
+      setVerifyCooldown(10)
+    }
+  }
 
   // Load subscription data — first fetch the subscription directly to get org_id
   useEffect(() => {
@@ -258,13 +297,53 @@ export default function PaymentPage() {
               </span>
             </div>
           )}
+          {sub?.verification_suffix && (
+            <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200">
+              <p className="text-sm text-yellow-800">
+                Transfer exactly <strong>{Number(sub.total_amount).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}</strong> (includes ₦{sub.verification_suffix} verification code). This unique amount lets us instantly verify your payment.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Upload proof form */}
+      {/* Step 1: Verify Payment */}
+      <div className="border border-gray-200 p-4 mb-6">
+        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <span className="w-5 h-5 bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">1</span>
+          Verify Payment
+        </h2>
+        <p className="text-xs text-gray-500 mb-3">
+          After transferring the exact amount above, click the button below. We&apos;ll automatically check our bank for your payment.
+        </p>
+        <button
+          onClick={handleVerifyPayment}
+          disabled={verifying || verifyCooldown > 0}
+          className="w-full bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {verifying ? (
+            <><Loader2 className="w-4 h-4 animate-spin" />Checking...</>
+          ) : verifyCooldown > 0 ? (
+            <>Try again in {verifyCooldown}s</>
+          ) : (
+            <><CheckCircle className="w-4 h-4" />I&apos;ve Paid — Verify Now</>
+          )}
+        </button>
+        {verifyResult && (
+          <div className={`mt-3 p-3 text-sm ${
+            verifyResult.type === 'success' ? 'bg-green-50 text-green-700' :
+            verifyResult.type === 'error' ? 'bg-red-50 text-red-700' :
+            'bg-blue-50 text-blue-700'
+          }`}>
+            {verifyResult.message}
+          </div>
+        )}
+      </div>
+
+      {/* Step 2: Upload proof form (fallback) */}
       <div className="border border-gray-200 p-4 mb-6">
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
-          <Upload className="w-4 h-4" /> Upload Proof
+          <Upload className="w-4 h-4" /> Or Upload Proof
         </h2>
 
         <form onSubmit={handleUpload} className="space-y-4">
