@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Building2, Upload, Loader2, CheckCircle, Copy, Check, ArrowLeft, Trash2 } from 'lucide-react'
+import { Building2, Upload, Loader2, CheckCircle, ArrowLeft, Trash2 } from 'lucide-react'
 
 export default function PaymentPage() {
   const { id } = useParams()
@@ -15,7 +15,6 @@ export default function PaymentPage() {
   const [uploading, setUploading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [verifyCooldown, setVerifyCooldown] = useState(0)
@@ -102,13 +101,6 @@ export default function PaymentPage() {
     }
     load()
   }, [id, router])
-
-  const copyRef = useCallback(() => {
-    if (!sub?.reference_code) return
-    navigator.clipboard.writeText(sub.reference_code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [sub?.reference_code])
 
   const handleUpload = async (e) => {
     e.preventDefault()
@@ -204,19 +196,6 @@ export default function PaymentPage() {
       <p className="text-sm text-gray-500 mb-6">
         Transfer the amount below, then upload your proof of payment.
       </p>
-
-      {/* Reference code */}
-      {sub?.reference_code && (
-        <div className="bg-orange-50 border border-orange-200 px-4 py-3 mb-6">
-          <p className="text-xs text-orange-600 font-medium mb-1">Use this as your transfer narration</p>
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold font-mono text-orange-800">{sub.reference_code}</span>
-            <button onClick={copyRef} className="p-1 text-orange-600 hover:text-orange-700">
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Bank details */}
       <div className="border border-gray-200 p-4 mb-6">
