@@ -34,21 +34,12 @@ export async function GET(request) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error && data?.user) {
-      const svc = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY
-      )
-
-      // If the user's email is confirmed in auth.users, mark email_verified in public.users
-      if (data.user.email_confirmed_at) {
-        await svc
-          .from('users')
-          .update({ email_verified: true })
-          .eq('id', data.user.id)
-      }
-
       // Redirect admins to /admin
       if (next === '/dashboard') {
+        const svc = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL,
+          process.env.SUPABASE_SERVICE_ROLE_KEY
+        )
         const { data: profile } = await svc
           .from('users')
           .select('role')

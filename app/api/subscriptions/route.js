@@ -78,10 +78,7 @@ export async function POST(request) {
 
     const referenceCode = generateReferenceCode(user.id)
     const verificationSuffix = generateVerificationSuffix()
-    const amountWithSuffix = total_amount + verificationSuffix
-    const deadline = new Date()
-    deadline.setHours(deadline.getHours() + 48)
-
+    const amountWithSuffix = total_amount - verificationSuffix
     const { data, error } = await supabase
       .from('subscriptions')
       .insert({
@@ -93,7 +90,6 @@ export async function POST(request) {
         total_amount: amountWithSuffix,
         verification_suffix: verificationSuffix,
         reference_code: referenceCode,
-        payment_deadline: deadline.toISOString(),
       })
       .select()
       .single()

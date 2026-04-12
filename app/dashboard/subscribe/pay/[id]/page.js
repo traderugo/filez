@@ -2,15 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Building2, Upload, Loader2, CheckCircle, Clock, Copy, Check, XCircle, ArrowLeft, Trash2, RefreshCw } from 'lucide-react'
-
-function formatCountdown(ms) {
-  if (ms <= 0) return 'Expired'
-  const hours = Math.floor(ms / (1000 * 60 * 60))
-  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
-  const seconds = Math.floor((ms % (1000 * 60)) / 1000)
-  return `${hours}h ${minutes}m ${seconds}s`
-}
+import { Building2, Upload, Loader2, CheckCircle, Copy, Check, ArrowLeft, Trash2 } from 'lucide-react'
 
 export default function PaymentPage() {
   const { id } = useParams()
@@ -23,7 +15,6 @@ export default function PaymentPage() {
   const [uploading, setUploading] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
-  const [countdown, setCountdown] = useState(null)
   const [copied, setCopied] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [verifying, setVerifying] = useState(false)
@@ -111,19 +102,6 @@ export default function PaymentPage() {
     }
     load()
   }, [id, router])
-
-  // Countdown timer
-  useEffect(() => {
-    if (!sub?.payment_deadline) return
-
-    const tick = () => {
-      const remaining = new Date(sub.payment_deadline).getTime() - Date.now()
-      setCountdown(remaining)
-    }
-    tick()
-    const interval = setInterval(tick, 1000)
-    return () => clearInterval(interval)
-  }, [sub?.payment_deadline])
 
   const copyRef = useCallback(() => {
     if (!sub?.reference_code) return
@@ -213,26 +191,6 @@ export default function PaymentPage() {
     )
   }
 
-  const isExpired = countdown !== null && countdown <= 0
-
-  if (isExpired) {
-    return (
-      <div className="max-w-sm px-4 sm:px-8 py-20 text-center">
-        <XCircle className="w-10 h-10 text-red-500 mx-auto mb-4" />
-        <h1 className="text-xl font-bold text-gray-900 mb-2">Payment deadline passed</h1>
-        <p className="text-sm text-gray-500 mb-6">
-          The 48-hour payment window has expired. Please create a new subscription.
-        </p>
-        <button
-          onClick={() => router.push('/dashboard/subscribe')}
-          className="bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700"
-        >
-          Subscribe again
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div className="max-w-lg px-4 sm:px-8 py-8">
       <button
@@ -246,17 +204,6 @@ export default function PaymentPage() {
       <p className="text-sm text-gray-500 mb-6">
         Transfer the amount below, then upload your proof of payment.
       </p>
-
-      {/* Countdown */}
-      {countdown !== null && (
-        <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-200 px-4 py-3 mb-6">
-          <Clock className="w-4 h-4 text-yellow-600 flex-shrink-0" />
-          <div className="text-sm">
-            <span className="text-yellow-800 font-medium">Payment deadline: </span>
-            <span className="text-yellow-700 font-mono">{formatCountdown(countdown)}</span>
-          </div>
-        </div>
-      )}
 
       {/* Reference code */}
       {sub?.reference_code && (
@@ -300,7 +247,7 @@ export default function PaymentPage() {
           {sub?.verification_suffix && (
             <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200">
               <p className="text-sm text-yellow-800">
-                Transfer exactly <strong>{Number(sub.total_amount).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}</strong> (includes ₦{sub.verification_suffix} verification code). This unique amount lets us instantly verify your payment.
+                Transfer exactly <strong>{Number(sub.total_amount).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}</strong> (₦{sub.verification_suffix} has been deducted as a verification code). This unique amount lets us instantly verify your payment.
               </p>
             </div>
           )}

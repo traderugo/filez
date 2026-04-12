@@ -22,7 +22,7 @@ export async function POST(request, { params }) {
     // Fetch subscription
     const { data: subscription, error: subError } = await supabase
       .from('subscriptions')
-      .select('id, user_id, status, total_amount, verification_suffix, months, created_at, payment_deadline')
+      .select('id, user_id, status, total_amount, verification_suffix, months, created_at')
       .eq('id', id)
       .single()
 
@@ -43,18 +43,6 @@ export async function POST(request, { params }) {
           : subscription.status === 'pending_approval'
             ? 'Payment proof uploaded, awaiting approval.'
             : `Subscription status: ${subscription.status}`,
-      })
-    }
-
-    // Check if deadline passed
-    if (subscription.payment_deadline && new Date(subscription.payment_deadline) < new Date()) {
-      await supabase
-        .from('subscriptions')
-        .update({ status: 'expired' })
-        .eq('id', id)
-      return NextResponse.json({
-        verified: false,
-        message: 'Payment deadline has passed. Please create a new subscription.',
       })
     }
 

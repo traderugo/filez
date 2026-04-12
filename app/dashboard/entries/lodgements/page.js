@@ -11,7 +11,7 @@ import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
 
 function blankEntry() {
-  return { _key: crypto.randomUUID(), id: null, amount: '', bankId: '', lodgementType: 'deposit', salesDate: '', notes: '' }
+  return { _key: crypto.randomUUID(), id: null, amount: '', bankId: '', lodgementType: 'deposit', salesDate: new Date().toISOString().split('T')[0], notes: '' }
 }
 
 export default function LodgementsFormPage() {
@@ -269,7 +269,7 @@ export default function LodgementsFormPage() {
                 <SearchableSelect
                   value={entry.bankId}
                   onChange={(val) => updateEntry(idx, 'bankId', val)}
-                  options={banks.map((b) => ({ value: b.id, label: b.bank_name, sub: b.lodgement_type }))}
+                  options={banks.map((b) => ({ value: b.id, label: b.bank_name, sub: b.lodgement_type === 'pos' ? (b.terminal_id || 'POS') : b.lodgement_type === 'transfer' ? 'transfer' : b.lodgement_type })).sort((a, b) => a.label.localeCompare(b.label))}
                   placeholder="Select account"
                 />
               </div>

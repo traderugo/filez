@@ -23,12 +23,14 @@ export async function GET(request) {
     .lt('end_date', today)
     .select('id')
 
-  // 2. Expire pending_payment subscriptions past payment_deadline
+  // 2. Expire pending_payment subscriptions older than 7 days
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   const { data: expiredPending } = await supabaseAdmin
     .from('subscriptions')
     .update({ status: 'expired' })
     .eq('status', 'pending_payment')
-    .lt('payment_deadline', now)
+    .lt('created_at', sevenDaysAgo.toISOString())
     .select('id')
 
   return NextResponse.json({

@@ -38,22 +38,17 @@ export async function middleware(request) {
     return NextResponse.redirect(loginUrl)
   }
 
-  const { data: profile } = await supabase
-    .from('users')
-    .select('role, email_verified')
-    .eq('id', user.id)
-    .single()
-
   // --- ADMIN: role check ---
   if (isAdmin) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
     if (!profile || profile.role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-  }
-
-  // --- DASHBOARD: block unverified users (admins always pass) ---
-  if (isDashboard && profile?.role !== 'admin' && !profile?.email_verified) {
-    return NextResponse.redirect(new URL('/auth/pending', request.url))
   }
 
   return response
