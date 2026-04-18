@@ -252,7 +252,7 @@ export default function PaymentPage() {
           ) : verifyCooldown > 0 ? (
             <>Try again in {verifyCooldown}s</>
           ) : (
-            <><CheckCircle className="w-4 h-4" />I&apos;ve Paid — Verify Now</>
+            <><CheckCircle className="w-4 h-4" />I&apos;ve Paid, Verify Now</>
           )}
         </button>
         {verifyResult && (
@@ -271,6 +271,11 @@ export default function PaymentPage() {
         <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
           <Upload className="w-4 h-4" /> Or Upload Proof
         </h2>
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200">
+          <p className="text-sm text-blue-800">
+            This is an alternative to automatic verification above. Upload a screenshot or receipt of your payment and an admin will manually review and approve it. This is not instant and may take some time.
+          </p>
+        </div>
 
         <form onSubmit={handleUpload} className="space-y-4">
           <div>
