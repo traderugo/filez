@@ -205,15 +205,15 @@ export default function PaymentPage() {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Bank</span>
-            <span className="text-gray-900 font-medium">First Bank of Nigeria</span>
+            <span className="text-gray-900 font-medium">Moniepoint MFB</span>
           </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Account Number</span>
-            <span className="text-gray-900 font-medium font-mono">0123456789</span>
+            <span className="text-gray-900 font-medium font-mono">6573945943</span>
           </div>
           <div className="flex justify-between py-2 border-b border-gray-100">
             <span className="text-gray-500">Account Name</span>
-            <span className="text-gray-900 font-medium">StationMGR</span>
+            <span className="text-gray-900 font-medium">Premeval Digital Services</span>
           </div>
           {sub?.total_amount != null && (
             <div className="flex justify-between py-2">
