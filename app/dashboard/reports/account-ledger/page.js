@@ -3,7 +3,7 @@
 import { Suspense, useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, Plus, ChevronLeft, ChevronRight, X, Pencil, Trash2, Check } from 'lucide-react'
+import { Loader2, Plus, ChevronLeft, ChevronRight, X, Pencil, Trash2 } from 'lucide-react'
 import { db } from '@/lib/db'
 import { DEFAULT_PHONE } from '@/lib/defaultAccounts'
 import DateInput from '@/components/DateInput'
@@ -47,24 +47,14 @@ function AccountLedgerContent() {
   const [selectedAccounts, setSelectedAccounts] = useState([])
   const [page, setPage] = useState(0)
 
-  // New account form
-  const [showNewForm, setShowNewForm] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newPhone, setNewPhone] = useState('')
-  const [newBalance, setNewBalance] = useState('')
-  const [savingNew, setSavingNew] = useState(false)
-  const [newError, setNewError] = useState('')
-
-  // Edit account
-  const [editingId, setEditingId] = useState(null)
-  const [editName, setEditName] = useState('')
-  const [editPhone, setEditPhone] = useState('')
-  const [editBalance, setEditBalance] = useState('')
-  const [savingEdit, setSavingEdit] = useState(false)
-
-  // Delete / toggle
-  const [deletingId, setDeletingId] = useState(null)
-  const [togglingId, setTogglingId] = useState(null)
+  // Account form (shared for create and edit)
+  const [formMode, setFormMode] = useState(null) // null | 'create' | 'edit'
+  const [formId, setFormId] = useState(null)
+  const [formName, setFormName] = useState('')
+  const [formPhone, setFormPhone] = useState('')
+  const [formBalance, setFormBalance] = useState('')
+  const [formSaving, setFormSaving] = useState(false)
+  const [formError, setFormError] = useState('')
 
   // Live data from IndexedDB
   const customers = useLiveQuery(
@@ -242,92 +232,89 @@ function AccountLedgerContent() {
     setPage(0)
   }, [])
 
-  const handleCreateAccount = async () => {
-    const name = newName.trim()
-    if (!name) { setNewError('Account name is required'); return }
-    if (creditCustomers.some(c => c.name?.toLowerCase() === name.toLowerCase())) {
-      setNewError('An account with this name already exists'); return
-    }
+  const openCreate = () => {
+    setFormMode('create')
+    setFormId(null)
+    setFormName('')
+    setFormPhone('')
+    setFormBalance('')
+    setFormError('')
+  }
 
-    setSavingNew(true)
-    setNewError('')
+  const openEdit = (cust) => {
+    setFormMode('edit')
+    setFormId(cust.id)
+    setFormName(cust.name || '')
+    setFormPhone(cust.phone || '')
+    setFormBalance(String(cust.opening_balance ?? 0))
+    setFormError('')
+  }
+
+  const closeForm = () => { setFormMode(null); setFormError('') }
+
+  const handleSaveForm = async () => {
+    const name = formName.trim()
+    if (!name) { setFormError('Account name is required'); return }
+
+    setFormSaving(true)
+    setFormError('')
     try {
-      const newCustomer = {
-        id: crypto.randomUUID(),
-        orgId,
-        name,
-        phone: newPhone.trim() || null,
-        opening_balance: Number(newBalance) || 0,
-        opening_date: todayStr,
-        sort_order: customers.length,
-        station_value_tracked: false,
-      }
-
-      await db.customers.add(newCustomer)
-
-      fetch(`/api/entries/customers?org_id=${orgId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newCustomer),
-      }).then(async res => {
-        if (res.ok) {
-          const { customer } = await res.json()
-          await db.customers.update(newCustomer.id, { id: customer.id, ...customer, orgId })
+      if (formMode === 'create') {
+        if (creditCustomers.some(c => c.name?.toLowerCase() === name.toLowerCase())) {
+          setFormError('An account with this name already exists'); setFormSaving(false); return
         }
-      }).catch(() => {})
-
-      setNewName('')
-      setNewPhone('')
-      setNewBalance('')
-      setShowNewForm(false)
-      setSelectedAccounts([newCustomer.id])
+        const newCustomer = {
+          id: crypto.randomUUID(), orgId, name,
+          phone: formPhone.trim() || null,
+          opening_balance: Number(formBalance) || 0,
+          opening_date: todayStr,
+          sort_order: customers.length,
+          station_value_tracked: false,
+        }
+        await db.customers.add(newCustomer)
+        fetch(`/api/entries/customers?org_id=${orgId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCustomer),
+        }).then(async res => {
+          if (res.ok) {
+            const { customer } = await res.json()
+            await db.customers.update(newCustomer.id, { id: customer.id, ...customer, orgId })
+          }
+        }).catch(() => {})
+        setSelectedAccounts([newCustomer.id])
+      } else {
+        const updates = { name, phone: formPhone.trim() || null, opening_balance: Number(formBalance) || 0 }
+        await db.customers.update(formId, updates)
+        fetch(`/api/entries/customers?org_id=${orgId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: formId, ...updates }),
+        }).catch(() => {})
+      }
+      closeForm()
     } catch {
-      setNewError('Failed to create account')
+      setFormError('Failed to save account')
     }
-    setSavingNew(false)
-  }
-
-  const startEdit = (acct) => {
-    setEditingId(acct.id)
-    setEditName(acct.name || '')
-    setEditPhone(acct.phone || '')
-    setEditBalance(String(acct.openingBalance || 0))
-  }
-
-  const handleSaveEdit = async (acctId) => {
-    const name = editName.trim()
-    if (!name) return
-    setSavingEdit(true)
-    const updates = { name, phone: editPhone.trim() || null, opening_balance: Number(editBalance) || 0 }
-    await db.customers.update(acctId, updates)
-    fetch(`/api/entries/customers?org_id=${orgId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: acctId, ...updates }),
-    }).catch(() => {})
-    setEditingId(null)
-    setSavingEdit(false)
+    setFormSaving(false)
   }
 
   const handleDelete = async (acctId) => {
     if (!confirm('Delete this account? Transaction history will be preserved but unlinked.')) return
-    setDeletingId(acctId)
     await db.customers.delete(acctId)
     setSelectedAccounts(prev => prev.filter(id => id !== acctId))
+    if (formId === acctId) closeForm()
     fetch(`/api/entries/customers?org_id=${orgId}&id=${acctId}`, { method: 'DELETE' }).catch(() => {})
-    setDeletingId(null)
   }
 
-  const handleToggleTracked = async (acct) => {
-    const newVal = !acct.station_value_tracked
-    setTogglingId(acct.id)
-    await db.customers.update(acct.id, { station_value_tracked: newVal })
+  const handleToggleTracked = async (acctId, current) => {
+    const newVal = !current
+    await db.customers.update(acctId, { station_value_tracked: newVal })
     fetch(`/api/entries/customers?org_id=${orgId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: acct.id, station_value_tracked: newVal }),
+      body: JSON.stringify({ id: acctId, station_value_tracked: newVal }),
     }).catch(() => {})
-    setTogglingId(null)
   }
 
   const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
@@ -342,9 +329,9 @@ function AccountLedgerContent() {
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-5xl mx-auto px-4 sm:px-6">
       <div className="shrink-0 pt-4 flex items-center justify-between mb-4">
         <h1 className="text-lg font-bold">Account Ledger</h1>
-        {!showNewForm && (
+        {!formMode && (
           <button
-            onClick={() => setShowNewForm(true)}
+            onClick={openCreate}
             className="flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700"
           >
             <Plus className="w-4 h-4" /> New Account
@@ -352,17 +339,17 @@ function AccountLedgerContent() {
         )}
       </div>
 
-      {/* New account form */}
-      {showNewForm && (
+      {/* Account form (create or edit) */}
+      {formMode && (
         <div className="border border-gray-300 p-4 mb-4 bg-gray-50">
-          <h3 className="text-sm font-semibold mb-3">Create Account</h3>
+          <h3 className="text-sm font-semibold mb-3">{formMode === 'edit' ? 'Edit Account' : 'Create Account'}</h3>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="flex-1 min-w-[140px]">
               <label className="block text-xs text-gray-500 mb-1">Name</label>
               <input
                 type="text"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
                 placeholder="Account name"
                 maxLength={200}
                 className="w-full px-2.5 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -372,8 +359,8 @@ function AccountLedgerContent() {
               <label className="block text-xs text-gray-500 mb-1">Phone</label>
               <input
                 type="tel"
-                value={newPhone}
-                onChange={(e) => setNewPhone(e.target.value)}
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
                 placeholder="Optional"
                 maxLength={20}
                 className="w-full px-2.5 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -383,8 +370,8 @@ function AccountLedgerContent() {
               <label className="block text-xs text-gray-500 mb-1">Opening Bal</label>
               <input
                 type="number"
-                value={newBalance}
-                onChange={(e) => setNewBalance(e.target.value)}
+                value={formBalance}
+                onChange={(e) => setFormBalance(e.target.value)}
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -392,21 +379,21 @@ function AccountLedgerContent() {
               />
             </div>
             <button
-              onClick={handleCreateAccount}
-              disabled={savingNew}
+              onClick={handleSaveForm}
+              disabled={formSaving}
               className="flex items-center gap-1 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
             >
-              {savingNew && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              {formSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Save
             </button>
             <button
-              onClick={() => { setShowNewForm(false); setNewError('') }}
+              onClick={closeForm}
               className="px-4 py-2 border border-gray-300 text-sm text-gray-600 hover:bg-gray-100"
             >
               Cancel
             </button>
           </div>
-          {newError && <p className="text-sm text-red-600 mt-2">{newError}</p>}
+          {formError && <p className="text-sm text-red-600 mt-2">{formError}</p>}
         </div>
       )}
 
@@ -447,7 +434,7 @@ function AccountLedgerContent() {
 
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-gray-200">
-        {creditCustomers.length === 0 && !showNewForm && (
+        {creditCustomers.length === 0 && !formMode && (
           <p className="text-gray-500 text-sm p-4">No credit customers configured.</p>
         )}
 
@@ -473,8 +460,7 @@ function AccountLedgerContent() {
                   <th className={cell + ' text-right'}>Sales</th>
                   <th className={cell + ' text-right'}>Payment</th>
                   <th className={cell + ' text-right'}>Closing Bal</th>
-                  <th className={cell + ' text-center w-24'}></th>
-                  <th className={cell + ' text-center w-16'}></th>
+                  <th className={cell + ' text-center w-20'}></th>
                 </tr>
               </thead>
               <tbody>
@@ -484,7 +470,6 @@ function AccountLedgerContent() {
                   <td className={cellR}>{fmt(totals.totalDebit)}</td>
                   <td className={cellR}>{fmt(totals.totalCredit)}</td>
                   <td className={cellR}>{fmtBal(totals.closingBalance)}</td>
-                  <td className={cell}></td>
                   <td className={cell}></td>
                 </tr>
               </tbody>
@@ -499,36 +484,11 @@ function AccountLedgerContent() {
                   <th className={cell + ' text-right'}>Sales</th>
                   <th className={cell + ' text-right'}>Payment</th>
                   <th className={cell + ' text-right'}>Closing Bal</th>
-                  <th className={cell + ' text-center w-24'}>Track</th>
-                  <th className={cell + ' text-center w-16'}></th>
+                  <th className={cell + ' text-center w-20'}></th>
                 </tr>
               </thead>
               <tbody>
                 {pagedData.map(acct => (
-                  editingId === acct.id ? (
-                    <tr key={acct.id} className="bg-yellow-50">
-                      <td className={cell}>
-                        <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-1.5 py-0.5 border border-gray-300 text-sm" />
-                      </td>
-                      <td className={cellR}>
-                        <input type="number" value={editBalance} onChange={e => setEditBalance(e.target.value)} className="w-20 px-1.5 py-0.5 border border-gray-300 text-sm text-right" />
-                      </td>
-                      <td className={cellR}></td>
-                      <td className={cellR}></td>
-                      <td className={cellR}></td>
-                      <td className={cell + ' text-center'}></td>
-                      <td className={cell + ' text-center'}>
-                        <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => handleSaveEdit(acct.id)} disabled={savingEdit} className="text-green-600 hover:text-green-700 p-0.5">
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600 p-0.5">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
                     <tr
                       key={acct.id}
                       onClick={() => handleAccountChange(acct.id)}
@@ -540,26 +500,23 @@ function AccountLedgerContent() {
                       <td className={cellR}>{acct.totalCredit ? fmt(acct.totalCredit) : ''}</td>
                       <td className={cellR + ' font-medium'}>{fmtBal(acct.closingBalance)}</td>
                       <td className={cell + ' text-center'} onClick={e => e.stopPropagation()}>
-                        <button
-                          onClick={() => handleToggleTracked(acct)}
-                          disabled={togglingId === acct.id}
-                          className={`w-8 h-4 rounded-full relative transition-colors ${acct.station_value_tracked ? 'bg-green-500' : 'bg-gray-300'}`}
-                        >
-                          <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${acct.station_value_tracked ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                        </button>
-                      </td>
-                      <td className={cell + ' text-center'} onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-1">
-                          <button onClick={() => startEdit(acct)} className="text-gray-400 hover:text-blue-600 p-0.5">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <input
+                            type="checkbox"
+                            checked={acct.station_value_tracked}
+                            onChange={() => handleToggleTracked(acct.id, acct.station_value_tracked)}
+                            title="Track in Station Value"
+                            className="w-3.5 h-3.5 accent-green-600 cursor-pointer"
+                          />
+                          <button onClick={() => openEdit(creditCustomers.find(c => c.id === acct.id))} className="text-gray-400 hover:text-blue-600 p-0.5">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleDelete(acct.id)} disabled={deletingId === acct.id} className="text-gray-400 hover:text-red-600 p-0.5">
+                          <button onClick={() => handleDelete(acct.id)} className="text-gray-400 hover:text-red-600 p-0.5">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
                     </tr>
-                  )
                 ))}
               </tbody>
             </table>
