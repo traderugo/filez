@@ -3,7 +3,7 @@
 import { Suspense, useState, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Loader2, Plus, ChevronLeft, ChevronRight, X, Pencil, Trash2, Check } from 'lucide-react'
 import { db } from '@/lib/db'
 import { DEFAULT_PHONE } from '@/lib/defaultAccounts'
 import DateInput from '@/components/DateInput'
@@ -54,6 +54,17 @@ function AccountLedgerContent() {
   const [newBalance, setNewBalance] = useState('')
   const [savingNew, setSavingNew] = useState(false)
   const [newError, setNewError] = useState('')
+
+  // Edit account
+  const [editingId, setEditingId] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editPhone, setEditPhone] = useState('')
+  const [editBalance, setEditBalance] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+
+  // Delete / toggle
+  const [deletingId, setDeletingId] = useState(null)
+  const [togglingId, setTogglingId] = useState(null)
 
   // Live data from IndexedDB
   const customers = useLiveQuery(
@@ -123,11 +134,13 @@ function AccountLedgerContent() {
       return {
         id: cust.id,
         name: cust.name || 'Unnamed',
+        phone: cust.phone || '',
         openingBalance,
         closingBalance,
         totalDebit,
         totalCredit,
         rows,
+        station_value_tracked: Boolean(cust.station_value_tracked),
       }
     })
   }, [creditCustomers, allPayments, startDate, endDate])
@@ -185,6 +198,35 @@ function AccountLedgerContent() {
     }), { openingBalance: 0, totalDebit: 0, totalCredit: 0, closingBalance: 0 })
   }, [allLedgerData])
 
+  // Station value: aggregate only tracked accounts
+  const stationValueData = useMemo(() => {
+    const tracked = allLedgerData.filter(d => d.station_value_tracked)
+    if (!tracked.length) return null
+
+    const combinedOpening = tracked.reduce((s, d) => s + d.openingBalance, 0)
+    const allRows = tracked.flatMap(d =>
+      d.rows.map(r => ({ ...r, account: d.name }))
+    ).sort((x, y) => (x.date || '').localeCompare(y.date || '') || (x.id || '').localeCompare(y.id || ''))
+
+    let balance = combinedOpening
+    const rows = allRows.map(r => {
+      balance += r.debit - r.credit
+      return { ...r, balance }
+    })
+
+    const totalDebit = rows.reduce((s, r) => s + r.debit, 0)
+    const totalCredit = rows.reduce((s, r) => s + r.credit, 0)
+
+    return {
+      accountCount: tracked.length,
+      openingBalance: combinedOpening,
+      closingBalance: combinedOpening + totalDebit - totalCredit,
+      totalDebit,
+      totalCredit,
+      rows,
+    }
+  }, [allLedgerData])
+
   // Toggle account selection (max 10)
   const handleAccountChange = useCallback((val) => {
     if (val === '__all__') {
@@ -200,7 +242,6 @@ function AccountLedgerContent() {
     setPage(0)
   }, [])
 
-  // Create new account
   const handleCreateAccount = async () => {
     const name = newName.trim()
     if (!name) { setNewError('Account name is required'); return }
@@ -211,41 +252,82 @@ function AccountLedgerContent() {
     setSavingNew(true)
     setNewError('')
     try {
-      const newId = crypto.randomUUID()
       const newCustomer = {
-        id: newId,
+        id: crypto.randomUUID(),
         orgId,
         name,
         phone: newPhone.trim() || null,
         opening_balance: Number(newBalance) || 0,
         opening_date: todayStr,
         sort_order: customers.length,
+        station_value_tracked: false,
       }
 
-      // Write to IndexedDB first (offline-first)
       await db.customers.add(newCustomer)
 
-      // Sync to server with all existing customers + new one
-      const allCustomers = customers
-        .filter(c => c.phone !== DEFAULT_PHONE)
-        .map(c => ({ name: c.name, phone: c.phone, opening_balance: c.opening_balance, opening_date: c.opening_date }))
-      allCustomers.push({ name, phone: newCustomer.phone, opening_balance: newCustomer.opening_balance, opening_date: newCustomer.opening_date })
-
-      fetch('/api/onboarding', {
+      fetch(`/api/entries/customers?org_id=${orgId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ org_id: orgId, customers: allCustomers }),
-      }).catch(() => { /* offline — will sync later */ })
+        body: JSON.stringify(newCustomer),
+      }).then(async res => {
+        if (res.ok) {
+          const { customer } = await res.json()
+          await db.customers.update(newCustomer.id, { id: customer.id, ...customer, orgId })
+        }
+      }).catch(() => {})
 
       setNewName('')
       setNewPhone('')
       setNewBalance('')
       setShowNewForm(false)
-      setSelectedAccounts([newId])
+      setSelectedAccounts([newCustomer.id])
     } catch {
       setNewError('Failed to create account')
     }
     setSavingNew(false)
+  }
+
+  const startEdit = (acct) => {
+    setEditingId(acct.id)
+    setEditName(acct.name || '')
+    setEditPhone(acct.phone || '')
+    setEditBalance(String(acct.openingBalance || 0))
+  }
+
+  const handleSaveEdit = async (acctId) => {
+    const name = editName.trim()
+    if (!name) return
+    setSavingEdit(true)
+    const updates = { name, phone: editPhone.trim() || null, opening_balance: Number(editBalance) || 0 }
+    await db.customers.update(acctId, updates)
+    fetch(`/api/entries/customers?org_id=${orgId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: acctId, ...updates }),
+    }).catch(() => {})
+    setEditingId(null)
+    setSavingEdit(false)
+  }
+
+  const handleDelete = async (acctId) => {
+    if (!confirm('Delete this account? Transaction history will be preserved but unlinked.')) return
+    setDeletingId(acctId)
+    await db.customers.delete(acctId)
+    setSelectedAccounts(prev => prev.filter(id => id !== acctId))
+    fetch(`/api/entries/customers?org_id=${orgId}&id=${acctId}`, { method: 'DELETE' }).catch(() => {})
+    setDeletingId(null)
+  }
+
+  const handleToggleTracked = async (acct) => {
+    const newVal = !acct.station_value_tracked
+    setTogglingId(acct.id)
+    await db.customers.update(acct.id, { station_value_tracked: newVal })
+    fetch(`/api/entries/customers?org_id=${orgId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: acct.id, station_value_tracked: newVal }),
+    }).catch(() => {})
+    setTogglingId(null)
   }
 
   const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
@@ -391,6 +473,8 @@ function AccountLedgerContent() {
                   <th className={cell + ' text-right'}>Sales</th>
                   <th className={cell + ' text-right'}>Payment</th>
                   <th className={cell + ' text-right'}>Closing Bal</th>
+                  <th className={cell + ' text-center w-24'}></th>
+                  <th className={cell + ' text-center w-16'}></th>
                 </tr>
               </thead>
               <tbody>
@@ -400,6 +484,8 @@ function AccountLedgerContent() {
                   <td className={cellR}>{fmt(totals.totalDebit)}</td>
                   <td className={cellR}>{fmt(totals.totalCredit)}</td>
                   <td className={cellR}>{fmtBal(totals.closingBalance)}</td>
+                  <td className={cell}></td>
+                  <td className={cell}></td>
                 </tr>
               </tbody>
             </table>
@@ -413,21 +499,67 @@ function AccountLedgerContent() {
                   <th className={cell + ' text-right'}>Sales</th>
                   <th className={cell + ' text-right'}>Payment</th>
                   <th className={cell + ' text-right'}>Closing Bal</th>
+                  <th className={cell + ' text-center w-24'}>Track</th>
+                  <th className={cell + ' text-center w-16'}></th>
                 </tr>
               </thead>
               <tbody>
                 {pagedData.map(acct => (
-                  <tr
-                    key={acct.id}
-                    onClick={() => handleAccountChange(acct.id)}
-                    className="cursor-pointer hover:bg-blue-50"
-                  >
-                    <td className={cell + ' text-blue-600 font-medium'}>{acct.name}</td>
-                    <td className={cellR}>{fmtBal(acct.openingBalance)}</td>
-                    <td className={cellR}>{acct.totalDebit ? fmt(acct.totalDebit) : ''}</td>
-                    <td className={cellR}>{acct.totalCredit ? fmt(acct.totalCredit) : ''}</td>
-                    <td className={cellR + ' font-medium'}>{fmtBal(acct.closingBalance)}</td>
-                  </tr>
+                  editingId === acct.id ? (
+                    <tr key={acct.id} className="bg-yellow-50">
+                      <td className={cell}>
+                        <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-1.5 py-0.5 border border-gray-300 text-sm" />
+                      </td>
+                      <td className={cellR}>
+                        <input type="number" value={editBalance} onChange={e => setEditBalance(e.target.value)} className="w-20 px-1.5 py-0.5 border border-gray-300 text-sm text-right" />
+                      </td>
+                      <td className={cellR}></td>
+                      <td className={cellR}></td>
+                      <td className={cellR}></td>
+                      <td className={cell + ' text-center'}></td>
+                      <td className={cell + ' text-center'}>
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => handleSaveEdit(acct.id)} disabled={savingEdit} className="text-green-600 hover:text-green-700 p-0.5">
+                            <Check className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600 p-0.5">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr
+                      key={acct.id}
+                      onClick={() => handleAccountChange(acct.id)}
+                      className="cursor-pointer hover:bg-blue-50"
+                    >
+                      <td className={cell + ' text-blue-600 font-medium'}>{acct.name}</td>
+                      <td className={cellR}>{fmtBal(acct.openingBalance)}</td>
+                      <td className={cellR}>{acct.totalDebit ? fmt(acct.totalDebit) : ''}</td>
+                      <td className={cellR}>{acct.totalCredit ? fmt(acct.totalCredit) : ''}</td>
+                      <td className={cellR + ' font-medium'}>{fmtBal(acct.closingBalance)}</td>
+                      <td className={cell + ' text-center'} onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => handleToggleTracked(acct)}
+                          disabled={togglingId === acct.id}
+                          className={`w-8 h-4 rounded-full relative transition-colors ${acct.station_value_tracked ? 'bg-green-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${acct.station_value_tracked ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                        </button>
+                      </td>
+                      <td className={cell + ' text-center'} onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => startEdit(acct)} className="text-gray-400 hover:text-blue-600 p-0.5">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => handleDelete(acct.id)} disabled={deletingId === acct.id} className="text-gray-400 hover:text-red-600 p-0.5">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
                 ))}
               </tbody>
             </table>
@@ -455,6 +587,11 @@ function AccountLedgerContent() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Station Value section */}
+        {selectedAccounts.length === 0 && stationValueData && (
+          <StationValueSection data={stationValueData} startDate={startDate} endDate={endDate} />
         )}
       </div>
     </div>
@@ -582,6 +719,102 @@ function MergedJournalTable({ data, startDate, endDate }) {
 
           {page === totalPages - 1 && (
             <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
+              <td className={cell}></td>
+              <td className={cell}>Closing Balance</td>
+              <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
+              <td className={cellR}>{data.totalCredit ? fmt(data.totalCredit) : ''}</td>
+              <td className={cellR}>{fmtBal(data.closingBalance)}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <button
+            onClick={() => setPage(p => p - 1)}
+            disabled={page === 0}
+            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4" /> Prev
+          </button>
+          <span className="text-sm text-gray-600">
+            Page {page + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={page >= totalPages - 1}
+            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            Next <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StationValueSection({ data, startDate, endDate }) {
+  const [page, setPage] = useState(0)
+  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
+  const cellR = cell + ' text-right'
+  const hdr = 'bg-green-700 text-white font-bold text-sm'
+
+  const totalPages = Math.ceil(data.rows.length / PAGE_SIZE)
+  const pagedRows = data.rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+  return (
+    <div className="mt-8 p-2 border-t-2 border-green-600">
+      <h2 className="text-sm font-bold mb-1">Station Value</h2>
+      <p className="text-xs text-gray-500 mb-3">
+        Tracking {data.accountCount} account{data.accountCount !== 1 ? 's' : ''}. Outstanding: {fmtBal(data.closingBalance)}
+      </p>
+
+      <table className="w-full border-collapse border border-gray-200">
+        <thead>
+          <tr className={hdr}>
+            <th className={cell + ' text-left w-24'}>Date</th>
+            <th className={cell + ' text-left'}>Account</th>
+            <th className={cell + ' text-left'}>Particulars</th>
+            <th className={cell + ' text-right w-28'}>Credit Given</th>
+            <th className={cell + ' text-right w-28'}>Collected</th>
+            <th className={cell + ' text-right w-32'}>Outstanding</th>
+          </tr>
+        </thead>
+        <tbody>
+          {page === 0 && (
+            <tr className="bg-gray-50 font-semibold">
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
+              <td className={cell}></td>
+              <td className={cell}>Opening Balance</td>
+              <td className={cellR}></td>
+              <td className={cellR}></td>
+              <td className={cellR}>{fmtBal(data.openingBalance)}</td>
+            </tr>
+          )}
+
+          {pagedRows.map((row, i) => (
+            <tr key={`${row.id}-${i}`}>
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
+              <td className={cell + ' text-xs text-gray-500'}>{row.account}</td>
+              <td className={cell}>{row.particulars}</td>
+              <td className={cellR}>{row.debit ? fmt(row.debit) : ''}</td>
+              <td className={cellR}>{row.credit ? fmt(row.credit) : ''}</td>
+              <td className={cellR + ' font-medium'}>{fmtBal(row.balance)}</td>
+            </tr>
+          ))}
+
+          {data.rows.length === 0 && (
+            <tr>
+              <td colSpan={6} className={cell + ' text-center text-gray-400 italic'}>
+                No transactions in this period
+              </td>
+            </tr>
+          )}
+
+          {(totalPages <= 1 || page === totalPages - 1) && (
+            <tr className="bg-green-50 font-bold border-t-2 border-green-300">
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Closing Balance</td>

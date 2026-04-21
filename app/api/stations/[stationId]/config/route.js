@@ -46,7 +46,7 @@ export async function GET(request, { params }) {
         .order('sort_order'),
       supabase
         .from('station_customers')
-        .select('id, name, phone, opening_balance, opening_date')
+        .select('id, name, phone, opening_balance, opening_date, station_value_tracked')
         .eq('org_id', stationId)
         .order('sort_order'),
     ])
