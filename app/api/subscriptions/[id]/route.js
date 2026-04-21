@@ -2,6 +2,33 @@ import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
 
+export async function GET(request, { params }) {
+  try {
+    const user = await getAuthUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+    const supabase = getAdminClient()
+
+    const { data: sub, error } = await supabase
+      .from('subscriptions')
+      .select('id, status, start_date, end_date, created_at, reference_code, payment_deadline, proof_url, plan_type, total_amount, org_id, verification_suffix')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (error || !sub) {
+      return NextResponse.json({ error: 'Subscription not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ subscription: sub })
+  } catch {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
 // PATCH — upload proof (moves pending_payment → pending_approval)
 export async function PATCH(request, { params }) {
   try {

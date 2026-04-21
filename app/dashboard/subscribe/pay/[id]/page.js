@@ -56,38 +56,14 @@ export default function PaymentPage() {
     }
   }
 
-  // Load subscription data — first fetch the subscription directly to get org_id
   useEffect(() => {
     const load = async () => {
-      // Try fetching without org_id first to find the subscription
-      // Then use its org_id for proper filtering
-      let res = await fetch('/api/dashboard/data')
+      const res = await fetch(`/api/subscriptions/${id}`)
       if (!res.ok) {
-        setLoading(false)
-        return
-      }
-      let data = await res.json()
-      let subscription = data.subscription
-
-      // If subscription doesn't match, try finding it across all stations
-      if (!subscription || subscription.id !== id) {
-        // Check all user's stations for this subscription
-        const stations = data.stations || []
-        for (const st of stations) {
-          const stRes = await fetch(`/api/dashboard/data?org_id=${st.id}`)
-          if (!stRes.ok) continue
-          const stData = await stRes.json()
-          if (stData.subscription?.id === id) {
-            subscription = stData.subscription
-            break
-          }
-        }
-      }
-
-      if (!subscription || subscription.id !== id) {
         router.replace('/dashboard/subscribe')
         return
       }
+      const { subscription } = await res.json()
 
       if (subscription.status === 'pending_approval') {
         setDone(true)
