@@ -259,7 +259,7 @@ function SubscribeContent() {
 
           <button
             type="submit"
-            disabled={submitting || selectedServices.length === 0 || !selectedStation || hasApproved || hasPendingApproval}
+            disabled={submitting || selectedServices.length === 0 || !selectedStation}
             className="w-full bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {submitting ? (
