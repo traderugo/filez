@@ -125,9 +125,14 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Only pending payment subscriptions can be cancelled' }, { status: 400 })
     }
 
-    // Delete subscription items first, then the subscription
-    await supabase.from('subscription_items').delete().eq('subscription_id', id)
-    await supabase.from('subscriptions').delete().eq('id', id)
+    const { error: delError } = await supabase
+      .from('subscriptions')
+      .delete()
+      .eq('id', id)
+
+    if (delError) {
+      return NextResponse.json({ error: 'Failed to cancel subscription' }, { status: 500 })
+    }
 
     return NextResponse.json({ ok: true })
   } catch {

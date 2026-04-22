@@ -123,12 +123,17 @@ export default function PaymentPage() {
   const handleCancel = async () => {
     if (!confirm('Cancel this subscription? You can create a new one after.')) return
     setCancelling(true)
-    const res = await fetch(`/api/subscriptions/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      router.replace('/dashboard/subscribe')
-    } else {
-      const data = await res.json()
-      setError(data.error || 'Failed to cancel')
+    try {
+      const res = await fetch(`/api/subscriptions/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.replace('/dashboard/subscribe')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error || 'Failed to cancel')
+        setCancelling(false)
+      }
+    } catch {
+      setError('Network error. Please try again.')
       setCancelling(false)
     }
   }
