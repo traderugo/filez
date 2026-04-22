@@ -43,9 +43,10 @@ export default function PaymentPage() {
         setSub(prev => ({ ...prev, status: 'approved' }))
         setDone(true)
       } else {
+        const debugInfo = data.debug ? ` [Debug: ${data.debug}]` : ''
         setVerifyResult({
           type: 'info',
-          message: data.message || data.error || 'No matching payment found yet.',
+          message: (data.message || data.error || 'No matching payment found yet.') + debugInfo,
         })
       }
     } catch {
