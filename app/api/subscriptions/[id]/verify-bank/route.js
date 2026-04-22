@@ -55,7 +55,6 @@ export async function POST(request, { params }) {
       return NextResponse.json({
         verified: false,
         message: 'Could not check bank alerts right now. Please upload payment proof instead.',
-        debug: gmailError.message,
       })
     }
 
