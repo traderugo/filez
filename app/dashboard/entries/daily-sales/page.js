@@ -23,6 +23,7 @@ function blankEntry(nozzles, tanks) {
       consumption: '',
       pour_back: '',
       consumption_customer_id: '',
+      pour_back_customer_id: '',
     })),
     tankReadings: tanks.map(t => ({
       tank_id: t.id,
@@ -52,6 +53,7 @@ function entryFromRecord(entry, nozzles, tanks) {
         consumption: match ? String(match.consumption || '') : '',
         pour_back: match ? String(match.pour_back || '') : '',
         consumption_customer_id: match?.consumption_customer_id || '',
+        pour_back_customer_id: match?.pour_back_customer_id || '',
       }
     }),
     tankReadings: tanks.map(t => {
@@ -93,7 +95,7 @@ export default function DailySalesFormPage() {
   // Previous day's last closing meter per pump_id — used when the user leaves a nozzle blank
   const [prevClosing, setPrevClosing] = useState({})
   const [allDates, setAllDates] = useState([])
-  const [consModal, setConsModal] = useState(null) // { entryIdx, nozzleIdx }
+  const [consModal, setConsModal] = useState(null) // { entryIdx, nozzleIdx, type: 'consumption' | 'pour_back' }
 
   useEffect(() => {
     let cancelled = false
@@ -315,6 +317,7 @@ export default function DailySalesFormPage() {
           consumption: Number(r.consumption) || 0,
           pour_back: Number(r.pour_back) || 0,
           consumption_customer_id: r.consumption_customer_id || '',
+          pour_back_customer_id: r.pour_back_customer_id || '',
         }))
         const tankData = entry.tankReadings.map(r => ({
           tank_id: r.tank_id,
@@ -461,9 +464,13 @@ export default function DailySalesFormPage() {
                   <span className="text-xs text-gray-400 ml-2">— leave blank to use prev. day closing</span>
                 </div>
                 {current.nozzleReadings.map((r, idx) => {
-                  const hasValue = Number(r.consumption) > 0 || Number(r.pour_back) > 0
-                  const custName = hasValue && r.consumption_customer_id
+                  const consHasValue = Number(r.consumption) > 0
+                  const pbHasValue = Number(r.pour_back) > 0
+                  const consCustName = consHasValue && r.consumption_customer_id
                     ? customers.find(c => c.id === r.consumption_customer_id)?.name
+                    : null
+                  const pbCustName = pbHasValue && r.pour_back_customer_id
+                    ? customers.find(c => c.id === r.pour_back_customer_id)?.name
                     : null
                   return (
                     <div key={r.pump_id}>
@@ -484,8 +491,8 @@ export default function DailySalesFormPage() {
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
                           <div className="flex items-center">
                             <input type="number" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                            {hasValue && (
-                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${custName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={custName || 'Attach account'}>
+                            {consHasValue && (
+                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'consumption' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${consCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={consCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
                               </button>
                             )}
@@ -493,12 +500,20 @@ export default function DailySalesFormPage() {
                         </div>
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P.B.</label>
-                          <input type="number" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                          <div className="flex items-center">
+                            <input type="number" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            {pbHasValue && (
+                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'pour_back' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${pbCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={pbCustName || 'Attach account'}>
+                                <User className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      {custName && hasValue && (
-                        <div className="px-2 pb-0.5 -mt-0.5">
-                          <span className="text-xs text-blue-600">{custName}</span>
+                      {(consCustName || pbCustName) && (
+                        <div className="px-2 pb-0.5 -mt-0.5 space-x-2">
+                          {consCustName && <span className="text-xs text-blue-600">Cons: {consCustName}</span>}
+                          {pbCustName && <span className="text-xs text-blue-600">P.B.: {pbCustName}</span>}
                         </div>
                       )}
                     </div>
@@ -573,13 +588,16 @@ export default function DailySalesFormPage() {
       {consModal && (() => {
         const r = entries[consModal.entryIdx]?.nozzleReadings[consModal.nozzleIdx]
         if (!r) return null
-        const custName = r.consumption_customer_id ? customers.find(c => c.id === r.consumption_customer_id)?.name : null
+        const field = consModal.type === 'pour_back' ? 'pour_back_customer_id' : 'consumption_customer_id'
+        const heading = consModal.type === 'pour_back' ? 'Pour Back Account' : 'Consumption Account'
+        const currentValue = r[field]
+        const custName = currentValue ? customers.find(c => c.id === currentValue)?.name : null
         return (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setConsModal(null)}>
             <div className="bg-white w-full sm:max-w-sm sm:rounded-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">Consumption Account</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">{heading}</h3>
                   <p className="text-xs text-gray-500">{r.label}: {Number(r.consumption) || 0}L cons, {Number(r.pour_back) || 0}L P.B.</p>
                 </div>
                 <button type="button" onClick={() => setConsModal(null)} className="text-gray-400 hover:text-gray-600">
@@ -588,9 +606,9 @@ export default function DailySalesFormPage() {
               </div>
               <div className="p-4">
                 <SearchableSelect
-                  value={r.consumption_customer_id}
+                  value={currentValue}
                   onChange={(val) => {
-                    updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, 'consumption_customer_id', val)
+                    updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, field, val)
                     setConsModal(null)
                   }}
                   options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed', sub: c.phone || '' }))}
@@ -598,7 +616,7 @@ export default function DailySalesFormPage() {
                   className="text-sm"
                 />
                 {custName && (
-                  <button type="button" onClick={() => { updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, 'consumption_customer_id', ''); setConsModal(null) }} className="mt-2 text-xs text-red-500 hover:text-red-700">
+                  <button type="button" onClick={() => { updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, field, ''); setConsModal(null) }} className="mt-2 text-xs text-red-500 hover:text-red-700">
                     Remove account
                   </button>
                 )}
