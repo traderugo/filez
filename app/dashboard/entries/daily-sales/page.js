@@ -461,13 +461,12 @@ export default function DailySalesFormPage() {
                   <span className="text-xs text-gray-400 ml-2">— leave blank to use prev. day closing</span>
                 </div>
                 {current.nozzleReadings.map((r, idx) => {
-                  const hasValue = Number(r.consumption) > 0 || Number(r.pour_back) > 0
-                  const custName = hasValue && r.consumption_customer_id
+                  const custName = Number(r.consumption) > 0 && r.consumption_customer_id
                     ? customers.find(c => c.id === r.consumption_customer_id)?.name
                     : null
                   return (
                     <div key={r.pump_id}>
-                      <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-gray-300">
+                      <div className="grid grid-cols-[2fr_1fr] divide-x divide-gray-300">
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{r.label}</label>
                           <input
@@ -484,19 +483,15 @@ export default function DailySalesFormPage() {
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
                           <div className="flex items-center">
                             <input type="number" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                            {hasValue && (
+                            {Number(r.consumption) > 0 && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${custName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={custName || 'Attach account'}>
                                 <User className="w-4 h-4" />
                               </button>
                             )}
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P.B.</label>
-                          <input type="number" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
-                        </div>
                       </div>
-                      {custName && hasValue && (
+                      {custName && Number(r.consumption) > 0 && (
                         <div className="px-2 pb-0.5 -mt-0.5">
                           <span className="text-xs text-blue-600">{custName}</span>
                         </div>
@@ -580,7 +575,7 @@ export default function DailySalesFormPage() {
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">Consumption Account</h3>
-                  <p className="text-xs text-gray-500">{r.label}: {Number(r.consumption) || 0}L cons, {Number(r.pour_back) || 0}L P.B.</p>
+                  <p className="text-xs text-gray-500">{r.label} — {r.consumption} litres</p>
                 </div>
                 <button type="button" onClick={() => setConsModal(null)} className="text-gray-400 hover:text-gray-600">
                   <X className="w-5 h-5" />
