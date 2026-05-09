@@ -364,61 +364,29 @@ function DailySalesReportContent() {
                 </tbody>
               </table>
 
-              {/* Consumption & Pour Back entries (split into two tables) */}
-              {(() => {
-                const consEntries = currentDayReport.consumption.entries.filter(e => !e.isPourBack)
-                const pbEntries = currentDayReport.consumption.entries.filter(e => e.isPourBack)
-                return (
-                  <>
-                    {consEntries.length > 0 && (
-                      <table className="w-full border-collapse text-sm mb-2">
-                        <thead>
-                          <tr className={subHdr}>
-                            <th className={`${cell} text-left font-bold`} colSpan={3}>Consumption</th>
-                          </tr>
-                          <tr className={subHdr}>
-                            <th className={`${cell} text-left font-bold`}>Account</th>
-                            <th className={`${cell} text-left font-bold`}>Fuel</th>
-                            <th className={`${cellR} font-bold`}>Qty</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {consEntries.map((c, i) => (
-                            <tr key={i}>
-                              <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
-                              <td className={cell}>{c.fuelType || ''}</td>
-                              <td className={cellR}>{fmt(c.quantity)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                    {pbEntries.length > 0 && (
-                      <table className="w-full border-collapse text-sm mb-2">
-                        <thead>
-                          <tr className={subHdr}>
-                            <th className={`${cell} text-left font-bold`} colSpan={3}>Pour Back</th>
-                          </tr>
-                          <tr className={subHdr}>
-                            <th className={`${cell} text-left font-bold`}>Account</th>
-                            <th className={`${cell} text-left font-bold`}>Fuel</th>
-                            <th className={`${cellR} font-bold`}>Qty</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pbEntries.map((c, i) => (
-                            <tr key={i}>
-                              <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
-                              <td className={cell}>{c.fuelType || ''}</td>
-                              <td className={cellR}>{fmt(c.quantity)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </>
-                )
-              })()}
+              {/* Consumption & Pour Back entries */}
+              {currentDayReport.consumption.entries.length > 0 && (
+                <table className="w-full border-collapse text-sm mb-2">
+                  <thead>
+                    <tr className={subHdr}>
+                      <th className={`${cell} text-left font-bold`}>Account</th>
+                      <th className={`${cell} text-left font-bold`}>Fuel</th>
+                      <th className={`${cellR} font-bold`}>Qty</th>
+                      <th className={`${cell} text-center font-bold`}>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentDayReport.consumption.entries.map((c, i) => (
+                      <tr key={i}>
+                        <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
+                        <td className={cell}>{c.fuelType || ''}</td>
+                        <td className={cellR}>{fmt(c.quantity)}</td>
+                        <td className={`${cell} text-center text-xs`}>{c.isPourBack ? 'Pour Back' : 'Consumption'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
 
               {/* Summary */}
               <table className="w-full border-collapse text-sm">

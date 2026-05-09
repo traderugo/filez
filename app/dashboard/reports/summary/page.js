@@ -269,61 +269,29 @@ function SummaryContent() {
             </div>
           ))}
 
-          {/* 2. Consumption tables (split: cons + pour back) */}
-          {(() => {
-            const consEntries = dayReport.consumption.entries.filter(e => !e.isPourBack)
-            const pbEntries = dayReport.consumption.entries.filter(e => e.isPourBack)
-            return (
-              <>
-                {consEntries.length > 0 && (
-                  <table className="w-full border-collapse text-sm mb-4">
-                    <thead>
-                      <tr className={subHdr}>
-                        <th className={`${cell} text-left font-bold`} colSpan={3}>Consumption</th>
-                      </tr>
-                      <tr className={subHdr}>
-                        <th className={`${cell} text-left font-bold`}>Account</th>
-                        <th className={`${cell} text-left font-bold`}>Fuel</th>
-                        <th className={`${cellR} font-bold`}>Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {consEntries.map((c, i) => (
-                        <tr key={i}>
-                          <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
-                          <td className={cell}>{c.fuelType || ''}</td>
-                          <td className={cellR}>{fmt(c.quantity)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-                {pbEntries.length > 0 && (
-                  <table className="w-full border-collapse text-sm mb-4">
-                    <thead>
-                      <tr className={subHdr}>
-                        <th className={`${cell} text-left font-bold`} colSpan={3}>Pour Back</th>
-                      </tr>
-                      <tr className={subHdr}>
-                        <th className={`${cell} text-left font-bold`}>Account</th>
-                        <th className={`${cell} text-left font-bold`}>Fuel</th>
-                        <th className={`${cellR} font-bold`}>Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pbEntries.map((c, i) => (
-                        <tr key={i}>
-                          <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
-                          <td className={cell}>{c.fuelType || ''}</td>
-                          <td className={cellR}>{fmt(c.quantity)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </>
-            )
-          })()}
+          {/* 2. Consumption table */}
+          {dayReport.consumption.entries.length > 0 && (
+            <table className="w-full border-collapse text-sm mb-4">
+              <thead>
+                <tr className={subHdr}>
+                  <th className={`${cell} text-left font-bold`}>Account</th>
+                  <th className={`${cell} text-left font-bold`}>Fuel</th>
+                  <th className={`${cellR} font-bold`}>Qty</th>
+                  <th className={`${cell} text-center font-bold`}>Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dayReport.consumption.entries.map((c, i) => (
+                  <tr key={i}>
+                    <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
+                    <td className={cell}>{c.fuelType || ''}</td>
+                    <td className={cellR}>{fmt(c.quantity)}</td>
+                    <td className={`${cell} text-center`}>{c.isPourBack ? 'Pour Back' : 'Consumption'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
 
           {/* 3. Lodgements */}
           <table className="w-full border-collapse text-sm mb-4">
