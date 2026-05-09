@@ -7,11 +7,15 @@ export async function GET(request) {
     if (error) return error
 
     const supabase = getServiceClient()
-    const { data } = await supabase
+    const { data, error: dbError } = await supabase
       .from('station_customers')
       .select('id, name, phone, opening_balance, opening_date, sort_order, station_value_tracked')
       .eq('org_id', user.org_id)
       .order('sort_order')
+
+    if (dbError) {
+      return NextResponse.json({ error: `Customers query failed: ${dbError.message}` }, { status: 500 })
+    }
 
     return NextResponse.json({ customers: data || [] })
   } catch {
