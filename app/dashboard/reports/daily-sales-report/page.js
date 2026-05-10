@@ -339,7 +339,7 @@ function DailySalesReportContent() {
                 const consEntries = currentDayReport.consumption.entries.filter(e => !e.isPourBack)
                 const pbEntries = currentDayReport.consumption.entries.filter(e => e.isPourBack)
                 return (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                  <div className="grid grid-cols-3 gap-2 mb-4">
                     {/* Lodgements */}
                     <div className="min-w-0">
                       <table className="w-full border-collapse text-sm">
