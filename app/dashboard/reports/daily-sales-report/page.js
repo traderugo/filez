@@ -352,20 +352,20 @@ function DailySalesReportContent() {
                   <div className="grid grid-cols-3 gap-2 mb-4">
                     {/* Lodgements */}
                     <div className="min-w-0">
-                      <table className="w-full border-collapse text-sm">
+                      <table className="w-full table-fixed border-collapse text-sm">
                         <thead>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`} colSpan={2}>Lodgements</th>
                           </tr>
                           <tr className={subHdr}>
-                            <th className={`${cell} text-left font-bold whitespace-nowrap`}>Account</th>
-                            <th className={`${cellR} font-bold whitespace-nowrap`}>Amount</th>
+                            <th className={`${cell} text-left font-bold`}>Account</th>
+                            <th className={`${cellR} font-bold w-16`}>Amount</th>
                           </tr>
                         </thead>
                         <tbody>
                           {currentDayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
                             <tr key={row.bankId}>
-                              <td className={`${cell} whitespace-nowrap`}>
+                              <td className={`${cell} break-words`}>
                                 <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
                                 <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
                               </td>
@@ -387,15 +387,15 @@ function DailySalesReportContent() {
 
                     {/* Consumption */}
                     <div className="min-w-0">
-                      <table className="w-full border-collapse text-sm">
+                      <table className="w-full table-fixed border-collapse text-sm">
                         <thead>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`} colSpan={3}>Consumption</th>
                           </tr>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`}>Account</th>
-                            <th className={`${cell} text-left font-bold`}>Fuel</th>
-                            <th className={`${cellR} font-bold`}>Qty</th>
+                            <th className={`${cell} text-left font-bold w-10`}>Fuel</th>
+                            <th className={`${cellR} font-bold w-12`}>Qty</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -403,7 +403,7 @@ function DailySalesReportContent() {
                             <tr><td colSpan={3} className={`${cell} text-gray-400`}>No consumption</td></tr>
                           ) : consEntries.map((c, i) => (
                             <tr key={i}>
-                              <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
+                              <td className={`${cell} break-words`}>{customerMap[c.customerId] || 'Unknown'}</td>
                               <td className={cell}>{c.fuelType || ''}</td>
                               <td className={cellR}>{fmt(c.quantity)}</td>
                             </tr>
@@ -414,15 +414,15 @@ function DailySalesReportContent() {
 
                     {/* Pour Back */}
                     <div className="min-w-0">
-                      <table className="w-full border-collapse text-sm">
+                      <table className="w-full table-fixed border-collapse text-sm">
                         <thead>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`} colSpan={3}>Pour Back</th>
                           </tr>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`}>Account</th>
-                            <th className={`${cell} text-left font-bold`}>Fuel</th>
-                            <th className={`${cellR} font-bold`}>Qty</th>
+                            <th className={`${cell} text-left font-bold w-10`}>Fuel</th>
+                            <th className={`${cellR} font-bold w-12`}>Qty</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -430,7 +430,7 @@ function DailySalesReportContent() {
                             <tr><td colSpan={3} className={`${cell} text-gray-400`}>No pour back</td></tr>
                           ) : pbEntries.map((c, i) => (
                             <tr key={i}>
-                              <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
+                              <td className={`${cell} break-words`}>{customerMap[c.customerId] || 'Unknown'}</td>
                               <td className={cell}>{c.fuelType || ''}</td>
                               <td className={cellR}>{fmt(c.quantity)}</td>
                             </tr>
