@@ -70,6 +70,15 @@ function LubeSalesList({ orgId, qs, ready }) {
     [orgId, ready], []
   )
 
+  const pendingIds = useLiveQuery(
+    () => ready
+      ? db.syncQueue.where('table').equals('lubeSales').toArray().then(items =>
+          new Set(items.filter(i => i.operation !== 'DELETE').map(i => i.payload?.id).filter(Boolean))
+        )
+      : new Set(),
+    [ready], new Set()
+  )
+
   const productsMap = useLiveQuery(
     () => ready && orgId
       ? db.lubeProducts.where('orgId').equals(orgId).toArray().then(arr => Object.fromEntries(arr.map(p => [p.id, p.product_name])))
@@ -96,8 +105,10 @@ function LubeSalesList({ orgId, qs, ready }) {
   return (
     <>
       <div className="divide-y divide-gray-100">
-        {pageGroups.map((group) => (
-          <div key={group.date} className="py-3 flex items-center gap-3">
+        {pageGroups.map((group) => {
+          const hasUnsynced = group.entries.some(e => pendingIds.has(e.id))
+          return (
+          <div key={group.date} className={`py-3 px-2 flex items-center gap-3 ${hasUnsynced ? 'bg-green-50' : ''}`}>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
                 {group.date !== 'no-date' ? fmtDate(group.date) : 'No date'}
@@ -116,7 +127,8 @@ function LubeSalesList({ orgId, qs, ready }) {
               <Pencil className="w-3.5 h-3.5" /> Edit
             </Link>
           </div>
-        ))}
+          )
+        })}
       </div>
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
@@ -136,6 +148,15 @@ function LubeStockList({ orgId, qs, ready }) {
   const allEntries = useLiveQuery(
     () => ready && orgId ? db.lubeStock.where('orgId').equals(orgId).reverse().sortBy('entryDate') : [],
     [orgId, ready], []
+  )
+
+  const pendingIds = useLiveQuery(
+    () => ready
+      ? db.syncQueue.where('table').equals('lubeStock').toArray().then(items =>
+          new Set(items.filter(i => i.operation !== 'DELETE').map(i => i.payload?.id).filter(Boolean))
+        )
+      : new Set(),
+    [ready], new Set()
   )
 
   const productsMap = useLiveQuery(
@@ -164,8 +185,10 @@ function LubeStockList({ orgId, qs, ready }) {
   return (
     <>
       <div className="divide-y divide-gray-100">
-        {pageGroups.map((group) => (
-          <div key={group.date} className="py-3 flex items-center gap-3">
+        {pageGroups.map((group) => {
+          const hasUnsynced = group.entries.some(e => pendingIds.has(e.id))
+          return (
+          <div key={group.date} className={`py-3 px-2 flex items-center gap-3 ${hasUnsynced ? 'bg-green-50' : ''}`}>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">
                 {group.date !== 'no-date' ? fmtDate(group.date) : 'No date'}
@@ -184,7 +207,8 @@ function LubeStockList({ orgId, qs, ready }) {
               <Pencil className="w-3.5 h-3.5" /> Edit
             </Link>
           </div>
-        ))}
+          )
+        })}
       </div>
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">

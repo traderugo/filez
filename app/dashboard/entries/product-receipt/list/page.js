@@ -27,6 +27,15 @@ export default function ProductReceiptListPage() {
     [orgId, ready], []
   )
 
+  const pendingIds = useLiveQuery(
+    () => ready
+      ? db.syncQueue.where('table').equals('productReceipts').toArray().then(items =>
+          new Set(items.filter(i => i.operation !== 'DELETE').map(i => i.payload?.id).filter(Boolean))
+        )
+      : new Set(),
+    [ready], new Set()
+  )
+
   const tanksMap = useLiveQuery(
     () => ready && orgId
       ? db.tanks.where('orgId').equals(orgId).toArray().then(arr => Object.fromEntries(arr.map(t => [t.id, `Tank ${t.tank_number} (${t.fuel_type})`])))
@@ -79,8 +88,10 @@ export default function ProductReceiptListPage() {
       ) : (
         <>
           <div className="divide-y divide-gray-100">
-            {pageGroups.map((group) => (
-              <div key={group.date} className="py-3 flex items-center gap-3">
+            {pageGroups.map((group) => {
+              const hasUnsynced = group.entries.some(e => pendingIds.has(e.id))
+              return (
+              <div key={group.date} className={`py-3 px-2 flex items-center gap-3 ${hasUnsynced ? 'bg-green-50' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
                     {group.date !== 'no-date' ? fmtDate(group.date) : 'No date'}
@@ -100,7 +111,8 @@ export default function ProductReceiptListPage() {
                   <Pencil className="w-3.5 h-3.5" /> Edit
                 </Link>
               </div>
-            ))}
+              )
+            })}
           </div>
 
           {totalPages > 1 && (

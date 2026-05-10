@@ -25,6 +25,15 @@ export default function CustomerPaymentsListPage() {
     [orgId, ready], []
   )
 
+  const pendingIds = useLiveQuery(
+    () => ready
+      ? db.syncQueue.where('table').equals('customerPayments').toArray().then(items =>
+          new Set(items.filter(i => i.operation !== 'DELETE').map(i => i.payload?.id).filter(Boolean))
+        )
+      : new Set(),
+    [ready], new Set()
+  )
+
   const customersMap = useLiveQuery(
     () => ready && orgId
       ? db.customers.where('orgId').equals(orgId).toArray().then(arr => Object.fromEntries(arr.map(c => [c.id, c.name])))
@@ -68,8 +77,10 @@ export default function CustomerPaymentsListPage() {
       ) : (
         <>
           <div className="divide-y divide-gray-100">
-            {pageGroups.map((group) => (
-              <div key={group.date} className="py-3 flex items-center gap-3">
+            {pageGroups.map((group) => {
+              const hasUnsynced = group.entries.some(e => pendingIds.has(e.id))
+              return (
+              <div key={group.date} className={`py-3 px-2 flex items-center gap-3 ${hasUnsynced ? 'bg-green-50' : ''}`}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900">
                     {group.date !== 'no-date' ? fmtDate(group.date) : 'No date'}
@@ -88,7 +99,8 @@ export default function CustomerPaymentsListPage() {
                   <Pencil className="w-3.5 h-3.5" /> Edit
                 </Link>
               </div>
-            ))}
+              )
+            })}
           </div>
 
           {totalPages > 1 && (
