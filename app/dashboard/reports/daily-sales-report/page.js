@@ -334,44 +334,50 @@ function DailySalesReportContent() {
                 </table>
               </div>
 
-              {/* Lodgements table */}
-              <table className="w-full border-collapse text-sm mb-4">
-                <thead>
-                  <tr className={subHdr}>
-                    <th className={`${cell} text-left font-bold whitespace-nowrap`}>Account</th>
-                    <th className={`${cellR} font-bold whitespace-nowrap`}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentDayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
-                    <tr key={row.bankId}>
-                      <td className={`${cell} whitespace-nowrap`}>
-                        <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
-                        <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
-                      </td>
-                      <td className={cellR}>{fmt(row.deposited)}</td>
-                    </tr>
-                  ))}
-                  {currentDayReport.lodgement.totalAll === 0 && (
-                    <tr><td colSpan={2} className={`${cell} text-gray-400`}>No lodgements</td></tr>
-                  )}
-                  {currentDayReport.lodgement.totalAll > 0 && (
-                    <tr className={`${subHdr} font-bold`}>
-                      <td className={cell}>Total Lodged</td>
-                      <td className={cellR}>{fmt(currentDayReport.lodgement.totalAll)}</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-
-              {/* Consumption & Pour Back entries (split into two tables) */}
+              {/* Lodgements | Consumption | Pour Back — three-column row */}
               {(() => {
                 const consEntries = currentDayReport.consumption.entries.filter(e => !e.isPourBack)
                 const pbEntries = currentDayReport.consumption.entries.filter(e => e.isPourBack)
                 return (
-                  <>
-                    {consEntries.length > 0 && (
-                      <table className="w-full border-collapse text-sm mb-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                    {/* Lodgements */}
+                    <div className="min-w-0">
+                      <table className="w-full border-collapse text-sm">
+                        <thead>
+                          <tr className={subHdr}>
+                            <th className={`${cell} text-left font-bold`} colSpan={2}>Lodgements</th>
+                          </tr>
+                          <tr className={subHdr}>
+                            <th className={`${cell} text-left font-bold whitespace-nowrap`}>Account</th>
+                            <th className={`${cellR} font-bold whitespace-nowrap`}>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentDayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
+                            <tr key={row.bankId}>
+                              <td className={`${cell} whitespace-nowrap`}>
+                                <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
+                                <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
+                              </td>
+                              <td className={cellR}>{fmt(row.deposited)}</td>
+                            </tr>
+                          ))}
+                          {currentDayReport.lodgement.totalAll === 0 && (
+                            <tr><td colSpan={2} className={`${cell} text-gray-400`}>No lodgements</td></tr>
+                          )}
+                          {currentDayReport.lodgement.totalAll > 0 && (
+                            <tr className={`${subHdr} font-bold`}>
+                              <td className={cell}>Total Lodged</td>
+                              <td className={cellR}>{fmt(currentDayReport.lodgement.totalAll)}</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Consumption */}
+                    <div className="min-w-0">
+                      <table className="w-full border-collapse text-sm">
                         <thead>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`} colSpan={3}>Consumption</th>
@@ -383,7 +389,9 @@ function DailySalesReportContent() {
                           </tr>
                         </thead>
                         <tbody>
-                          {consEntries.map((c, i) => (
+                          {consEntries.length === 0 ? (
+                            <tr><td colSpan={3} className={`${cell} text-gray-400`}>No consumption</td></tr>
+                          ) : consEntries.map((c, i) => (
                             <tr key={i}>
                               <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
                               <td className={cell}>{c.fuelType || ''}</td>
@@ -392,9 +400,11 @@ function DailySalesReportContent() {
                           ))}
                         </tbody>
                       </table>
-                    )}
-                    {pbEntries.length > 0 && (
-                      <table className="w-full border-collapse text-sm mb-2">
+                    </div>
+
+                    {/* Pour Back */}
+                    <div className="min-w-0">
+                      <table className="w-full border-collapse text-sm">
                         <thead>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`} colSpan={3}>Pour Back</th>
@@ -406,7 +416,9 @@ function DailySalesReportContent() {
                           </tr>
                         </thead>
                         <tbody>
-                          {pbEntries.map((c, i) => (
+                          {pbEntries.length === 0 ? (
+                            <tr><td colSpan={3} className={`${cell} text-gray-400`}>No pour back</td></tr>
+                          ) : pbEntries.map((c, i) => (
                             <tr key={i}>
                               <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
                               <td className={cell}>{c.fuelType || ''}</td>
@@ -415,8 +427,8 @@ function DailySalesReportContent() {
                           ))}
                         </tbody>
                       </table>
-                    )}
-                  </>
+                    </div>
+                  </div>
                 )
               })()}
 
