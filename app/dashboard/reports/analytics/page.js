@@ -267,7 +267,6 @@ function AnalyticsBody({ report, startDate, endDate }) {
 
   const naira = (v) => v == null ? '' : '₦' + fmt(v)
   const liters = (v) => v == null ? '' : fmt(v) + ' L'
-  const pct = (v) => v == null || isNaN(v) ? '' : Number(v).toFixed(2) + '%'
 
   // Sales & Volume table data
   const salesColumns = [
@@ -305,7 +304,49 @@ function AnalyticsBody({ report, startDate, endDate }) {
 
   return (
     <div className="pb-10">
-      {/* SECTION 1 — Sales & Volume */}
+      {/* SECTION 1 — Cash Reconciliation */}
+      <Section
+        title="Cash Reconciliation"
+        blurb="How money lodged compares to expected sales. Lodgements are not split by fuel, so totals only. Negative = shortage, positive = overage."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          <KpiTile
+            label="Net Cash OV/SH"
+            value={(summary.netOvsh >= 0 ? '₦' : '-₦') + fmt(Math.abs(summary.netOvsh))}
+            accent={ovshAccent}
+            sub={summary.netOvsh < 0 ? 'shortage' : summary.netOvsh > 0 ? 'overage' : 'reconciled'}
+          />
+          <KpiTile
+            label="Pending Lodgement"
+            value={'₦' + fmt(Math.max(0, summary.pendingLodgement))}
+            accent={pendingAccent}
+            sub={summary.pendingLodgement > 0 ? 'sales not yet deposited' : 'all deposited'}
+          />
+        </div>
+
+        <ChartCard
+          title="Cumulative cash overage / shortage"
+          subtitle="Running total of (lodged − expected sales) day by day. Crossing zero means earlier shortages have been recovered."
+        >
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={ovshSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+              <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
+              <YAxis tickFormatter={fmtCompact} fontSize={11} />
+              <Tooltip
+                labelFormatter={(d) => fmtDate(d)}
+                formatter={(value, name) => [naira(value), name === 'cumulative' ? 'Cumulative' : 'Daily']}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 4" />
+              <Line type="monotone" dataKey="cumulative" stroke="#0f172a" strokeWidth={2} dot={false} isAnimationActive={false} name="Cumulative" />
+              <Line type="monotone" dataKey="daily" stroke="#94a3b8" strokeWidth={1} dot={false} isAnimationActive={false} name="Daily" />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </Section>
+
+      {/* SECTION 2 — Sales & Volume */}
       <Section
         title="Sales & Volume"
         blurb="Revenue and dispensed volume across the period, broken down by fuel."
@@ -361,10 +402,10 @@ function AnalyticsBody({ report, startDate, endDate }) {
         </div>
       </Section>
 
-      {/* SECTION 2 — Stock & Variance */}
+      {/* SECTION 3 — Stock & Variance */}
       <Section
         title="Stock & Variance"
-        blurb="Closing stock per fuel and how each day's actual closing compared to expected. The ±1.25% band is the acceptable tolerance."
+        blurb="Closing stock per fuel and how many liters each day was over or short vs expected."
       >
         <FuelStatTable
           fuelTypes={fuelTypes}
@@ -412,21 +453,19 @@ function AnalyticsBody({ report, startDate, endDate }) {
         </ChartCard>
 
         <ChartCard
-          title="Daily variance %"
-          subtitle="Closing stock vs expected, as % of dispensed. Positive = overage, negative = shortage. Red lines mark the ±1.25% tolerance."
+          title="Daily liters over / short"
+          subtitle="Liters more (positive) or fewer (negative) in the tank than expected each day. Negative = stock loss."
         >
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={varianceSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
               <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
-              <YAxis tickFormatter={(v) => v + '%'} fontSize={11} />
+              <YAxis tickFormatter={fmtCompact} fontSize={11} />
               <Tooltip
                 labelFormatter={(d) => fmtDate(d)}
-                formatter={(value, name) => [pct(value), name]}
+                formatter={(value, name) => [liters(value), name]}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <ReferenceLine y={1.25} stroke="#ef4444" strokeDasharray="4 4" label={{ value: '+1.25%', fill: '#ef4444', fontSize: 10, position: 'right' }} />
-              <ReferenceLine y={-1.25} stroke="#ef4444" strokeDasharray="4 4" label={{ value: '-1.25%', fill: '#ef4444', fontSize: 10, position: 'right' }} />
               <ReferenceLine y={0} stroke="#9ca3af" />
               {fuelTypes.map(ft => (
                 <Line
@@ -444,47 +483,6 @@ function AnalyticsBody({ report, startDate, endDate }) {
         </ChartCard>
       </Section>
 
-      {/* SECTION 3 — Cash Reconciliation */}
-      <Section
-        title="Cash Reconciliation"
-        blurb="How money lodged compares to expected sales. Lodgements are not split by fuel, so totals only. Negative = shortage, positive = overage."
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-          <KpiTile
-            label="Net Cash OV/SH"
-            value={(summary.netOvsh >= 0 ? '₦' : '-₦') + fmt(Math.abs(summary.netOvsh))}
-            accent={ovshAccent}
-            sub={summary.netOvsh < 0 ? 'shortage' : summary.netOvsh > 0 ? 'overage' : 'reconciled'}
-          />
-          <KpiTile
-            label="Pending Lodgement"
-            value={'₦' + fmt(Math.max(0, summary.pendingLodgement))}
-            accent={pendingAccent}
-            sub={summary.pendingLodgement > 0 ? 'sales not yet deposited' : 'all deposited'}
-          />
-        </div>
-
-        <ChartCard
-          title="Cumulative cash overage / shortage"
-          subtitle="Running total of (lodged − expected sales) day by day. Crossing zero means earlier shortages have been recovered."
-        >
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={ovshSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-              <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
-              <YAxis tickFormatter={fmtCompact} fontSize={11} />
-              <Tooltip
-                labelFormatter={(d) => fmtDate(d)}
-                formatter={(value, name) => [naira(value), name === 'cumulative' ? 'Cumulative' : 'Daily']}
-              />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 4" />
-              <Line type="monotone" dataKey="cumulative" stroke="#0f172a" strokeWidth={2} dot={false} isAnimationActive={false} name="Cumulative" />
-              <Line type="monotone" dataKey="daily" stroke="#94a3b8" strokeWidth={1} dot={false} isAnimationActive={false} name="Daily" />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </Section>
     </div>
   )
 }
