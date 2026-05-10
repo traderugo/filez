@@ -344,101 +344,89 @@ function DailySalesReportContent() {
                 </table>
               </div>
 
-              {/* Lodgements | Consumption | Pour Back — three-column row */}
+              {/* Lodgements table */}
+              <table className="w-full border-collapse text-sm mb-4">
+                <thead>
+                  <tr className={subHdr}>
+                    <th className={`${cell} text-left font-bold whitespace-nowrap`}>Account</th>
+                    <th className={`${cellR} font-bold whitespace-nowrap`}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentDayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
+                    <tr key={row.bankId}>
+                      <td className={`${cell} whitespace-nowrap`}>
+                        <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
+                        <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
+                      </td>
+                      <td className={cellR}>{fmt(row.deposited)}</td>
+                    </tr>
+                  ))}
+                  {currentDayReport.lodgement.totalAll === 0 && (
+                    <tr><td colSpan={2} className={`${cell} text-gray-400`}>No lodgements</td></tr>
+                  )}
+                  {currentDayReport.lodgement.totalAll > 0 && (
+                    <tr className={`${subHdr} font-bold`}>
+                      <td className={cell}>Total Lodged</td>
+                      <td className={cellR}>{fmt(currentDayReport.lodgement.totalAll)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* Consumption & Pour Back entries (split into two tables) */}
               {(() => {
                 const consEntries = currentDayReport.consumption.entries.filter(e => !e.isPourBack)
                 const pbEntries = currentDayReport.consumption.entries.filter(e => e.isPourBack)
                 return (
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    {/* Lodgements */}
-                    <div className="min-w-0">
-                      <table className="w-full table-fixed border-collapse text-sm">
-                        <thead>
-                          <tr className={subHdr}>
-                            <th className={`${cell} text-left font-bold`} colSpan={2}>Lodgements</th>
-                          </tr>
-                          <tr className={subHdr}>
-                            <th className={`${cell} text-left font-bold`}>Account</th>
-                            <th className={`${cellR} font-bold w-16`}>Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {currentDayReport.lodgement.bankRows.filter(r => r.deposited > 0).map(row => (
-                            <tr key={row.bankId}>
-                              <td className={`${cell} break-words`}>
-                                <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
-                                <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
-                              </td>
-                              <td className={cellR}>{fmt(row.deposited)}</td>
-                            </tr>
-                          ))}
-                          {currentDayReport.lodgement.totalAll === 0 && (
-                            <tr><td colSpan={2} className={`${cell} text-gray-400`}>No lodgements</td></tr>
-                          )}
-                          {currentDayReport.lodgement.totalAll > 0 && (
-                            <tr className={`${subHdr} font-bold`}>
-                              <td className={cell}>Total Lodged</td>
-                              <td className={cellR}>{fmt(currentDayReport.lodgement.totalAll)}</td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* Consumption */}
-                    <div className="min-w-0">
-                      <table className="w-full table-fixed border-collapse text-sm">
+                  <>
+                    {consEntries.length > 0 && (
+                      <table className="w-full border-collapse text-sm mb-2">
                         <thead>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`} colSpan={3}>Consumption</th>
                           </tr>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`}>Account</th>
-                            <th className={`${cell} text-left font-bold w-10`}>Fuel</th>
-                            <th className={`${cellR} font-bold w-12`}>Qty</th>
+                            <th className={`${cell} text-left font-bold`}>Fuel</th>
+                            <th className={`${cellR} font-bold`}>Qty</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {consEntries.length === 0 ? (
-                            <tr><td colSpan={3} className={`${cell} text-gray-400`}>No consumption</td></tr>
-                          ) : consEntries.map((c, i) => (
+                          {consEntries.map((c, i) => (
                             <tr key={i}>
-                              <td className={`${cell} break-words`}>{customerMap[c.customerId] || 'Unknown'}</td>
+                              <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
                               <td className={cell}>{c.fuelType || ''}</td>
                               <td className={cellR}>{fmt(c.quantity)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                    </div>
-
-                    {/* Pour Back */}
-                    <div className="min-w-0">
-                      <table className="w-full table-fixed border-collapse text-sm">
+                    )}
+                    {pbEntries.length > 0 && (
+                      <table className="w-full border-collapse text-sm mb-2">
                         <thead>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`} colSpan={3}>Pour Back</th>
                           </tr>
                           <tr className={subHdr}>
                             <th className={`${cell} text-left font-bold`}>Account</th>
-                            <th className={`${cell} text-left font-bold w-10`}>Fuel</th>
-                            <th className={`${cellR} font-bold w-12`}>Qty</th>
+                            <th className={`${cell} text-left font-bold`}>Fuel</th>
+                            <th className={`${cellR} font-bold`}>Qty</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {pbEntries.length === 0 ? (
-                            <tr><td colSpan={3} className={`${cell} text-gray-400`}>No pour back</td></tr>
-                          ) : pbEntries.map((c, i) => (
+                          {pbEntries.map((c, i) => (
                             <tr key={i}>
-                              <td className={`${cell} break-words`}>{customerMap[c.customerId] || 'Unknown'}</td>
+                              <td className={cell}>{customerMap[c.customerId] || 'Unknown'}</td>
                               <td className={cell}>{c.fuelType || ''}</td>
                               <td className={cellR}>{fmt(c.quantity)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                    </div>
-                  </div>
+                    )}
+                  </>
                 )
               })()}
 
