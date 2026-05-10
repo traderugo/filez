@@ -8,8 +8,7 @@ import { db } from '@/lib/db'
 import { buildSalesOverviewReport } from '@/lib/buildSalesOverviewReport'
 import { fmtDate } from '@/lib/formatDate'
 import DateInput from '@/components/DateInput'
-// TODO: re-enable gating
-// import AccessGate from '@/components/AccessGate'
+import AccessGate from '@/components/AccessGate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -130,8 +129,7 @@ function SalesOverviewContent() {
   }
 
   return (
-    // TODO: re-enable gating
-    // <AccessGate orgId={orgId} pageKey="report-sales-overview">
+    <AccessGate orgId={orgId} pageKey="report-sales-overview">
       <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-end py-3 shrink-0">
           <div className="flex items-center gap-2">
@@ -168,7 +166,7 @@ function SalesOverviewContent() {
           </div>
         )}
       </div>
-    // </AccessGate>
+    </AccessGate>
   )
 }
 
