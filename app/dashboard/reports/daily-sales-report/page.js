@@ -4,7 +4,7 @@ import { Suspense, useState, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Download } from 'lucide-react'
+import { Loader2, ChevronLeft, ChevronRight, ChevronDown, Download, Pencil, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildDailyReport } from '@/lib/buildDailyReport'
 import { exportDailyReportExcel } from '@/lib/exportDailyReportExcel'
@@ -58,6 +58,7 @@ function DailySalesReportContent() {
   const [stationName, setStationName] = useState('')
   const [exporting, setExporting] = useState(false)
   const [tabOffset, setTabOffset] = useState(0)
+  const [showEditModal, setShowEditModal] = useState(false)
   const TAB_COUNT = 31
 
   // Initial sync + config load (one-time)
@@ -251,6 +252,15 @@ function DailySalesReportContent() {
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
           </button>
+          <button
+            onClick={() => setShowEditModal(true)}
+            disabled={!report || !currentDayReport}
+            className="px-3 py-2 border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 disabled:opacity-50 flex items-center gap-1.5"
+            title="Edit entries for this day"
+          >
+            <Pencil className="w-4 h-4" />
+            <span className="hidden sm:inline">Edit</span>
+          </button>
           {isOwner && (
           <button
             onClick={handleExport}
@@ -259,7 +269,7 @@ function DailySalesReportContent() {
             title="Export to Excel"
           >
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-            {exporting ? 'Exporting...' : 'Export'}
+            <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
           </button>
           )}
         </div>
@@ -524,6 +534,52 @@ function DailySalesReportContent() {
             </button>
           </div>
         </>
+      )}
+
+      {/* Edit modal */}
+      {showEditModal && currentDayReport && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            className="bg-white w-full max-w-sm shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <h3 className="text-sm font-bold text-gray-900">
+                Edit entries for {(() => { const d = new Date(viewDate + 'T00:00:00'); return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}` })()}
+              </h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600 p-1 -m-1"
+                aria-label="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-3 flex flex-col gap-2">
+              <Link
+                href={`/dashboard/entries/daily-sales?${qs}&edit_date=${viewDate}`}
+                className="flex items-center gap-2 px-3 py-3 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-sm font-medium text-gray-900"
+              >
+                <Pencil className="w-4 h-4 text-blue-600" /> Daily Sales
+              </Link>
+              <Link
+                href={`/dashboard/entries/lodgements?${qs}&edit_date=${viewDate}`}
+                className="flex items-center gap-2 px-3 py-3 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-sm font-medium text-gray-900"
+              >
+                <Pencil className="w-4 h-4 text-blue-600" /> Lodgements
+              </Link>
+              <Link
+                href={`/dashboard/entries/product-receipt?${qs}&edit_date=${viewDate}`}
+                className="flex items-center gap-2 px-3 py-3 border border-gray-200 hover:bg-blue-50 hover:border-blue-300 text-sm font-medium text-gray-900"
+              >
+                <Pencil className="w-4 h-4 text-blue-600" /> Product Receipt
+              </Link>
+            </div>
+          </div>
+        </div>
       )}
     </div>
       )}
