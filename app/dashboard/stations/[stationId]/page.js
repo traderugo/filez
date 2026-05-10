@@ -347,7 +347,9 @@ export default function StationPage() {
     )
   }
 
-  const canAccess = (pageKey) => isOwner || visiblePages.includes(pageKey)
+  // TODO: remove TEMP_OPEN once gating is re-enabled for these reports
+  const TEMP_OPEN = new Set(['report-sales-overview', 'report-inventory-log', 'report-analytics'])
+  const canAccess = (pageKey) => isOwner || TEMP_OPEN.has(pageKey) || visiblePages.includes(pageKey)
 
   const entryLinks = [
     { href: `/dashboard/entries/daily-sales/list?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, pricing', pageKey: 'daily-sales' },

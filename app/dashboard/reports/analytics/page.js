@@ -12,7 +12,8 @@ import { db } from '@/lib/db'
 import { buildAnalyticsReport } from '@/lib/buildAnalyticsReport'
 import { fmtDate } from '@/lib/formatDate'
 import DateInput from '@/components/DateInput'
-import AccessGate from '@/components/AccessGate'
+// TODO: re-enable gating
+// import AccessGate from '@/components/AccessGate'
 
 const FUEL_COLORS = { PMS: '#2563eb', AGO: '#16a34a', DPK: '#f59e0b' }
 
@@ -159,7 +160,8 @@ function AnalyticsContent() {
   }
 
   return (
-    <AccessGate orgId={orgId} pageKey="report-analytics">
+    // TODO: re-enable gating
+    // <AccessGate orgId={orgId} pageKey="report-analytics">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-end py-3">
           <div className="flex items-center gap-2">
@@ -192,7 +194,7 @@ function AnalyticsContent() {
           </div>
         )}
       </div>
-    </AccessGate>
+    // </AccessGate>
   )
 }
 
