@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Send, Loader2, Trash2, RefreshCw } from 'lucide-react'
+import { Send, Loader2, Trash2, RefreshCw, ChevronRight, ChevronDown } from 'lucide-react'
 import { db } from '@/lib/db'
 import { fmtDate } from '@/lib/formatDate'
 
@@ -77,6 +77,49 @@ export default function ChatPage() {
     }
     return result
   }, [messages])
+
+  // Group runs of 3+ consecutive activity rows on the same calendar day into a
+  // single collapsible block. Shorter runs render normally.
+  const [expandedBlocks, setExpandedBlocks] = useState(() => new Set())
+  const toggleBlock = (id) => {
+    setExpandedBlocks(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const renderItems = useMemo(() => {
+    if (!displayedMessages.length) return []
+    const items = []
+    let i = 0
+    while (i < displayedMessages.length) {
+      const m = displayedMessages[i]
+      if (m.type !== 'activity') {
+        items.push({ kind: 'msg', msg: m })
+        i++
+        continue
+      }
+      const dayKey = m.createdAt ? new Date(m.createdAt).toDateString() : ''
+      let j = i + 1
+      while (
+        j < displayedMessages.length &&
+        displayedMessages[j].type === 'activity' &&
+        (displayedMessages[j].createdAt ? new Date(displayedMessages[j].createdAt).toDateString() : '') === dayKey
+      ) {
+        j++
+      }
+      const run = displayedMessages.slice(i, j)
+      if (run.length >= 3) {
+        items.push({ kind: 'activityBlock', id: `block-${run[0].id}`, activities: run })
+      } else {
+        for (const r of run) items.push({ kind: 'msg', msg: r })
+      }
+      i = j
+    }
+    return items
+  }, [displayedMessages])
 
   // Derive unique member names from existing messages
   const members = useMemo(() => {
@@ -287,7 +330,41 @@ export default function ChatPage() {
           </div>
         )}
 
-        {displayedMessages.map(msg => {
+        {renderItems.map(item => {
+          if (item.kind === 'activityBlock') {
+            const isExpanded = expandedBlocks.has(item.id)
+            const firstMsg = item.activities[0]
+            const blockDate = firstMsg.createdAt ? fmtDate(firstMsg.createdAt) : null
+            const showDateSep = blockDate && blockDate !== lastDate
+            if (showDateSep) lastDate = blockDate
+            return (
+              <div key={item.id}>
+                {showDateSep && (
+                  <div className="flex justify-center my-3">
+                    <span className="bg-blue-50 text-blue-500 text-xs px-3 py-0.5">{blockDate}</span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggleBlock(item.id)}
+                  className="w-full flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 my-1 bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
+                  {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                  <span>{item.activities.length} activity logs</span>
+                  <span className="text-gray-400">— click to {isExpanded ? 'collapse' : 'expand'}</span>
+                </button>
+                {isExpanded && item.activities.map(msg => (
+                  <div key={msg.id} className="my-1">
+                    <p className="text-sm text-gray-500 px-3 py-1">
+                      {fmtTime(msg.createdAt)} · <span className="font-medium text-gray-600">{msg.userName}</span> {msg.content}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )
+          }
+
+          const msg = item.msg
           const isMe = msg.userId === user?.id
           const msgDate = msg.createdAt ? fmtDate(msg.createdAt) : null
           const showDateSep = msgDate && msgDate !== lastDate
