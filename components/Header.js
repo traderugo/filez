@@ -30,6 +30,7 @@ const PAGE_TITLES = {
   '/dashboard/reports/daily-sales-report': 'Daily Sales Report',
   '/dashboard/reports/sales-overview': 'Sales Overview',
   '/dashboard/reports/inventory-log': 'Inventory Log',
+  '/dashboard/reports/analytics': 'Analytics',
   '/dashboard/reports/audit-report': 'Audit Report',
   '/dashboard/reports/account-ledger': 'Account Ledger',
   '/dashboard/reports/product-received': 'Product Received',

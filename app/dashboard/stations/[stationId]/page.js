@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes
+  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -362,6 +362,7 @@ export default function StationPage() {
     { href: `/dashboard/reports/daily-sales-report?org_id=${stationId}`, icon: BarChart3, label: 'Daily Sales Report', desc: 'Nozzle sales, POS, and cash', pageKey: 'report-daily-sales' },
     { href: `/dashboard/reports/sales-overview?org_id=${stationId}`, icon: TrendingUp, label: 'Sales Overview', desc: 'Daily volume, price, and amount per fuel', pageKey: 'report-sales-overview' },
     { href: `/dashboard/reports/inventory-log?org_id=${stationId}`, icon: Boxes, label: 'Inventory Log', desc: 'Daily stock, supply, OV/SH, and variance', pageKey: 'report-inventory-log' },
+    { href: `/dashboard/reports/analytics?org_id=${stationId}`, icon: LineChart, label: 'Analytics', desc: 'KPIs, stock, variance, and revenue trends', pageKey: 'report-analytics' },
     { href: `/dashboard/reports/audit-report?org_id=${stationId}`, icon: ClipboardList, label: 'Audit Report', desc: 'Station audit trail', pageKey: 'report-audit' },
     { href: `/dashboard/reports/account-ledger?org_id=${stationId}`, icon: BookOpen, label: 'Account Ledger', desc: 'Credit accounts and balances', pageKey: 'report-account-ledger' },
     { href: `/dashboard/reports/product-received?org_id=${stationId}`, icon: Truck, label: 'Product Received', desc: 'Deliveries, waybills, shortages', pageKey: 'report-product-received' },
