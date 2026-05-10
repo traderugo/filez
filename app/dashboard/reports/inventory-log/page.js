@@ -55,7 +55,6 @@ function InventoryLogContent() {
   const [generating, setGenerating] = useState(false)
   const [reportStart, setReportStart] = useState(monthStartStr)
   const [reportEnd, setReportEnd] = useState(todayStr)
-  const [activeFuel, setActiveFuel] = useState('PMS')
 
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
@@ -104,13 +103,6 @@ function InventoryLogContent() {
       endDate: reportEnd,
     })
   }, [generated, reportStart, reportEnd, loading, orgId, nozzles, tanks, liveSales, liveReceipts])
-
-  // Snap activeFuel to first available fuel type when report becomes available
-  useEffect(() => {
-    if (report?.fuelTypes?.length && !report.fuelTypes.includes(activeFuel)) {
-      setActiveFuel(report.fuelTypes[0])
-    }
-  }, [report, activeFuel])
 
   const handleGenerate = () => {
     const s = startDateRef.current
@@ -171,26 +163,8 @@ function InventoryLogContent() {
         {report ? (
           <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-gray-200">
             <div className="px-4 sm:px-8 py-4">
-              {report.fuelTypes.length > 1 && (
-                <div className="flex gap-1 mb-4">
-                  {report.fuelTypes.map(ft => (
-                    <button
-                      key={ft}
-                      onClick={() => setActiveFuel(ft)}
-                      className={`px-4 py-1.5 text-sm font-medium border ${
-                        activeFuel === ft
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-blue-900 border-blue-200 hover:bg-blue-50'
-                      }`}
-                    >
-                      {ft}
-                    </button>
-                  ))}
-                </div>
-              )}
               <InventoryTable
                 report={report}
-                activeFuel={activeFuel}
                 startDate={reportStart}
                 endDate={reportEnd}
               />
@@ -210,10 +184,8 @@ function InventoryLogContent() {
   )
 }
 
-function InventoryTable({ report, activeFuel, startDate, endDate }) {
-  const { rows, totals, tanksByFuel } = report
-  const ftTanks = tanksByFuel[activeFuel] || []
-  const t = totals[activeFuel] || {}
+function InventoryTable({ report, startDate, endDate }) {
+  const { fuelTypes, rows, totals, tanksByFuel, openingByFuel, fuelHasRouting } = report
 
   const hdr = 'bg-blue-600 text-white'
   const subHdr = 'bg-blue-50 text-blue-600'
@@ -221,87 +193,246 @@ function InventoryTable({ report, activeFuel, startDate, endDate }) {
   const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
-  const showTotalCol = ftTanks.length > 1
-  const closingCols = ftTanks.length + (showTotalCol ? 1 : 0)
-  const totalCols = 1 + closingCols + 7
+  // Per-fuel column shape
+  const tankCountFor = (ft) => (tanksByFuel[ft] || []).length
+  const showClosingTotalFor = (ft) => tankCountFor(ft) > 1
+  const closingColsFor = (ft) => tankCountFor(ft) + (showClosingTotalFor(ft) ? 1 : 0)
+  const showPerTankOvshFor = (ft) => tankCountFor(ft) > 1 && !!fuelHasRouting[ft]
+  const ovshColsFor = (ft) => (showPerTankOvshFor(ft) ? tankCountFor(ft) : 0) + 1
+
+  const closingCols = fuelTypes.reduce((s, ft) => s + closingColsFor(ft), 0)
+  const ovshCols = fuelTypes.reduce((s, ft) => s + ovshColsFor(ft), 0)
+  const fuelCols = fuelTypes.length
+  // 2 fixed (Sheet, Date) + closing + tank ov/sh + 6 single-col-per-fuel groups
+  const totalCols = 2 + closingCols + ovshCols + 6 * fuelCols
 
   const ovshColor = (v) => {
     if (v == null || v === 0) return ''
     return v < 0 ? 'text-red-600' : 'text-green-600'
   }
 
+  const dayOf = (date) => Number(String(date).slice(8, 10))
+
+  // Pre-compute per-tank tank-ov/sh sums for fuels that show per-tank columns
+  const perTankOvshSum = {}
+  for (const ft of fuelTypes) {
+    if (!showPerTankOvshFor(ft)) continue
+    perTankOvshSum[ft] = {}
+    for (const tk of tanksByFuel[ft]) {
+      perTankOvshSum[ft][tk.id] = rows.reduce((s, r) => {
+        const tk2 = (r.fuels[ft]?.tanks || []).find(x => x.tankId === tk.id)
+        return s + (tk2?.tankOvsh || 0)
+      }, 0)
+    }
+  }
+
   return (
-    <div className="min-w-[1000px] pb-4">
+    <div className="min-w-[1200px] pb-4">
       <h2 className="text-base font-bold text-gray-900 mb-2">
-        Inventory Log — {activeFuel} — {fmtDate(startDate)} to {fmtDate(endDate)}
+        Inventory Log — {fmtDate(startDate)} to {fmtDate(endDate)}
       </h2>
 
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
             <th colSpan={totalCols} className={`${hdr} px-2 py-1.5 text-center font-bold`}>
-              INVENTORY — {activeFuel}
+              INVENTORY
             </th>
           </tr>
           <tr className={subHdr}>
+            <th rowSpan={2} className={`${cell} font-bold`}>Sheet</th>
             <th rowSpan={2} className={`${cell} font-bold`}>Date</th>
             <th colSpan={closingCols} className={`${cell} text-center font-bold`}>Closing Stock</th>
-            <th rowSpan={2} className={`${cellR} font-bold`}>Tank OV/SH</th>
-            <th rowSpan={2} className={`${cellR} font-bold`}>Actual OV/SH</th>
-            <th rowSpan={2} className={`${cellR} font-bold`}>Variance</th>
-            <th rowSpan={2} className={`${cellR} font-bold`}>UGT Dispensed</th>
-            <th rowSpan={2} className={`${cellR} font-bold`}>Expected Supply</th>
-            <th rowSpan={2} className={`${cellR} font-bold`}>Actual Supply</th>
-            <th rowSpan={2} className={`${cellR} font-bold`}>Driver Shortage</th>
+            <th colSpan={ovshCols} className={`${cell} text-center font-bold`}>Tank OV/SH</th>
+            <th colSpan={fuelCols} className={`${cell} text-center font-bold`}>Actual OV/SH</th>
+            <th colSpan={fuelCols} className={`${cell} text-center font-bold`}>Variance</th>
+            <th colSpan={fuelCols} className={`${cell} text-center font-bold`}>UGT Dispensed</th>
+            <th colSpan={fuelCols} className={`${cell} text-center font-bold`}>Expected Supply</th>
+            <th colSpan={fuelCols} className={`${cell} text-center font-bold`}>Actual Supply</th>
+            <th colSpan={fuelCols} className={`${cell} text-center font-bold`}>Driver Shortage</th>
           </tr>
           <tr className={subHdr}>
-            {ftTanks.map(t => (
-              <th key={t.id} className={`${cellR} font-bold text-xs`}>{activeFuel} {t.tank_number}</th>
+            {/* Closing Stock sub-headers */}
+            {fuelTypes.map(ft => (
+              <Fragment key={`c-${ft}`}>
+                {(tanksByFuel[ft] || []).map(tk => (
+                  <th key={`c-${ft}-${tk.id}`} className={`${cellR} font-bold text-xs`}>{ft} {tk.tank_number}</th>
+                ))}
+                {showClosingTotalFor(ft) && (
+                  <th key={`c-${ft}-total`} className={`${cellR} font-bold text-xs`}>{ft} Total</th>
+                )}
+              </Fragment>
             ))}
-            {showTotalCol && (
-              <th className={`${cellR} font-bold text-xs`}>Total</th>
-            )}
+            {/* Tank OV/SH sub-headers */}
+            {fuelTypes.map(ft => (
+              <Fragment key={`o-${ft}`}>
+                {showPerTankOvshFor(ft) && (tanksByFuel[ft] || []).map(tk => (
+                  <th key={`o-${ft}-${tk.id}`} className={`${cellR} font-bold text-xs`}>{ft} {tk.tank_number}</th>
+                ))}
+                <th key={`o-${ft}-total`} className={`${cellR} font-bold text-xs`}>
+                  {showPerTankOvshFor(ft) ? `${ft} Total` : ft}
+                </th>
+              </Fragment>
+            ))}
+            {/* Single-col-per-fuel groups */}
+            {fuelTypes.map(ft => <th key={`ao-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>)}
+            {fuelTypes.map(ft => <th key={`vr-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>)}
+            {fuelTypes.map(ft => <th key={`ud-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>)}
+            {fuelTypes.map(ft => <th key={`es-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>)}
+            {fuelTypes.map(ft => <th key={`as-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>)}
+            {fuelTypes.map(ft => <th key={`ds-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>)}
           </tr>
         </thead>
         <tbody>
-          {rows.map(row => {
-            const f = row.fuels[activeFuel] || {}
-            const tankByIdMap = {}
-            for (const tk of (f.tanks || [])) tankByIdMap[tk.tankId] = tk
-            return (
-              <tr key={row.date} className={row.hasEntry ? '' : 'text-gray-400'}>
-                <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
-                {ftTanks.map(tk => (
-                  <td key={tk.id} className={cellR}>{fmt(tankByIdMap[tk.id]?.closingStock)}</td>
-                ))}
-                {showTotalCol && (
-                  <td className={cellR}>{fmt(f.totalClosing)}</td>
-                )}
-                <td className={`${cellR} ${ovshColor(f.tankOvsh)}`}>{fmtSigned(f.tankOvsh)}</td>
-                <td className={`${cellR} ${ovshColor(f.actualOvsh)}`}>{fmtSigned(f.actualOvsh)}</td>
-                <td className={`${cellR} ${ovshColor(f.variance)}`}>{fmtSigned(f.variance)}</td>
-                <td className={cellR}>{fmt(f.ugtDispensed)}</td>
-                <td className={cellR}>{fmt(f.expectedSupply)}</td>
-                <td className={cellR}>{fmt(f.actualSupply)}</td>
-                <td className={`${cellR} ${ovshColor(f.driverShortage)}`}>{fmtSigned(f.driverShortage)}</td>
-              </tr>
-            )
-          })}
+          {/* Opening row — per-tank opening at period start (Excel R4) */}
           <tr className={`${subHdr} font-bold`}>
-            <td className={cell}>Total</td>
-            {ftTanks.map(tk => (
-              <td key={tk.id} className={cellR}></td>
+            <td className={cell}></td>
+            <td className={cell}>Opening</td>
+            {fuelTypes.map(ft => {
+              const opening = openingByFuel[ft] || { tanks: [], totalOpening: 0 }
+              const openingByTankId = {}
+              for (const tk of opening.tanks) openingByTankId[tk.tankId] = tk
+              return (
+                <Fragment key={`open-c-${ft}`}>
+                  {(tanksByFuel[ft] || []).map(tk => (
+                    <td key={`open-c-${ft}-${tk.id}`} className={cellR}>{fmt(openingByTankId[tk.id]?.opening)}</td>
+                  ))}
+                  {showClosingTotalFor(ft) && (
+                    <td key={`open-c-${ft}-total`} className={cellR}>{fmt(opening.totalOpening)}</td>
+                  )}
+                </Fragment>
+              )
+            })}
+            {/* Tank OV/SH cells — blank in opening row */}
+            {fuelTypes.map(ft => (
+              <Fragment key={`open-o-${ft}`}>
+                {showPerTankOvshFor(ft) && (tanksByFuel[ft] || []).map(tk => (
+                  <td key={`open-o-${ft}-${tk.id}`} className={cellR}></td>
+                ))}
+                <td key={`open-o-${ft}-total`} className={cellR}></td>
+              </Fragment>
             ))}
-            {showTotalCol && (
-              <td className={cellR}>{fmt(t.totalClosing)}</td>
-            )}
-            <td className={`${cellR} ${ovshColor(t.tankOvsh)}`}>{fmtSigned(t.tankOvsh)}</td>
-            <td className={`${cellR} ${ovshColor(t.actualOvsh)}`}>{fmtSigned(t.actualOvsh)}</td>
-            <td className={`${cellR} ${ovshColor(t.variance)}`}>{fmtSigned(t.variance)}</td>
-            <td className={cellR}>{fmt(t.ugtDispensed)}</td>
-            <td className={cellR}>{fmt(t.expectedSupply)}</td>
-            <td className={cellR}>{fmt(t.actualSupply)}</td>
-            <td className={`${cellR} ${ovshColor(t.driverShortage)}`}>{fmtSigned(t.driverShortage)}</td>
+            {/* Remaining 6 metric groups — blank */}
+            {Array.from({ length: 6 * fuelCols }).map((_, i) => (
+              <td key={`open-blank-${i}`} className={cellR}></td>
+            ))}
+          </tr>
+
+          {rows.map(row => (
+            <tr key={row.date} className={row.hasEntry ? '' : 'text-gray-400'}>
+              <td className={cellR}>{dayOf(row.date)}</td>
+              <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
+              {/* Closing Stock */}
+              {fuelTypes.map(ft => {
+                const f = row.fuels[ft] || {}
+                const tankByIdMap = {}
+                for (const tk of (f.tanks || [])) tankByIdMap[tk.tankId] = tk
+                return (
+                  <Fragment key={`c-${ft}`}>
+                    {(tanksByFuel[ft] || []).map(tk => (
+                      <td key={`c-${ft}-${tk.id}`} className={cellR}>{fmt(tankByIdMap[tk.id]?.closingStock)}</td>
+                    ))}
+                    {showClosingTotalFor(ft) && (
+                      <td key={`c-${ft}-total`} className={cellR}>{fmt(f.totalClosing)}</td>
+                    )}
+                  </Fragment>
+                )
+              })}
+              {/* Tank OV/SH */}
+              {fuelTypes.map(ft => {
+                const f = row.fuels[ft] || {}
+                const tankByIdMap = {}
+                for (const tk of (f.tanks || [])) tankByIdMap[tk.tankId] = tk
+                return (
+                  <Fragment key={`o-${ft}`}>
+                    {showPerTankOvshFor(ft) && (tanksByFuel[ft] || []).map(tk => {
+                      const tk2 = tankByIdMap[tk.id]
+                      return (
+                        <td key={`o-${ft}-${tk.id}`} className={`${cellR} ${ovshColor(tk2?.tankOvsh)}`}>{fmtSigned(tk2?.tankOvsh)}</td>
+                      )
+                    })}
+                    <td key={`o-${ft}-total`} className={`${cellR} ${ovshColor(f.tankOvsh)}`}>{fmtSigned(f.tankOvsh)}</td>
+                  </Fragment>
+                )
+              })}
+              {/* Actual OV/SH */}
+              {fuelTypes.map(ft => {
+                const f = row.fuels[ft] || {}
+                return <td key={`ao-${ft}`} className={`${cellR} ${ovshColor(f.actualOvsh)}`}>{fmtSigned(f.actualOvsh)}</td>
+              })}
+              {/* Variance */}
+              {fuelTypes.map(ft => {
+                const f = row.fuels[ft] || {}
+                return <td key={`vr-${ft}`} className={`${cellR} ${ovshColor(f.variance)}`}>{fmtSigned(f.variance)}</td>
+              })}
+              {/* UGT Dispensed */}
+              {fuelTypes.map(ft => (
+                <td key={`ud-${ft}`} className={cellR}>{fmt(row.fuels[ft]?.ugtDispensed)}</td>
+              ))}
+              {/* Expected Supply */}
+              {fuelTypes.map(ft => (
+                <td key={`es-${ft}`} className={cellR}>{fmt(row.fuels[ft]?.expectedSupply)}</td>
+              ))}
+              {/* Actual Supply */}
+              {fuelTypes.map(ft => (
+                <td key={`as-${ft}`} className={cellR}>{fmt(row.fuels[ft]?.actualSupply)}</td>
+              ))}
+              {/* Driver Shortage */}
+              {fuelTypes.map(ft => {
+                const f = row.fuels[ft] || {}
+                return <td key={`ds-${ft}`} className={`${cellR} ${ovshColor(f.driverShortage)}`}>{fmtSigned(f.driverShortage)}</td>
+              })}
+            </tr>
+          ))}
+
+          {/* Totals row */}
+          <tr className={`${subHdr} font-bold`}>
+            <td className={cell}></td>
+            <td className={cell}>Total</td>
+            {/* Closing Stock — blank (snapshot, not summable) */}
+            {fuelTypes.map(ft => (
+              <Fragment key={`tc-${ft}`}>
+                {(tanksByFuel[ft] || []).map(tk => (
+                  <td key={`tc-${ft}-${tk.id}`} className={cellR}></td>
+                ))}
+                {showClosingTotalFor(ft) && (
+                  <td key={`tc-${ft}-total`} className={cellR}></td>
+                )}
+              </Fragment>
+            ))}
+            {/* Tank OV/SH — sums */}
+            {fuelTypes.map(ft => {
+              const t = totals[ft] || {}
+              return (
+                <Fragment key={`to-${ft}`}>
+                  {showPerTankOvshFor(ft) && (tanksByFuel[ft] || []).map(tk => {
+                    const v = perTankOvshSum[ft]?.[tk.id]
+                    return (
+                      <td key={`to-${ft}-${tk.id}`} className={`${cellR} ${ovshColor(v)}`}>{fmtSigned(v)}</td>
+                    )
+                  })}
+                  <td key={`to-${ft}-total`} className={`${cellR} ${ovshColor(t.tankOvsh)}`}>{fmtSigned(t.tankOvsh)}</td>
+                </Fragment>
+              )
+            })}
+            {fuelTypes.map(ft => (
+              <td key={`tao-${ft}`} className={`${cellR} ${ovshColor(totals[ft]?.actualOvsh)}`}>{fmtSigned(totals[ft]?.actualOvsh)}</td>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`tvr-${ft}`} className={`${cellR} ${ovshColor(totals[ft]?.variance)}`}>{fmtSigned(totals[ft]?.variance)}</td>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`tud-${ft}`} className={cellR}>{fmt(totals[ft]?.ugtDispensed)}</td>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`tes-${ft}`} className={cellR}>{fmt(totals[ft]?.expectedSupply)}</td>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`tas-${ft}`} className={cellR}>{fmt(totals[ft]?.actualSupply)}</td>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`tds-${ft}`} className={`${cellR} ${ovshColor(totals[ft]?.driverShortage)}`}>{fmtSigned(totals[ft]?.driverShortage)}</td>
+            ))}
           </tr>
         </tbody>
       </table>

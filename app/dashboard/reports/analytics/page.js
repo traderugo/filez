@@ -208,195 +208,293 @@ function KpiTile({ label, value, sub, accent }) {
   )
 }
 
+function FuelStatTable({ fuelTypes, columns, totalRow, fuelRows }) {
+  const showPerFuel = fuelTypes.length > 1
+  const rowKeys = showPerFuel ? ['TOTAL', ...fuelTypes] : ['TOTAL']
+  return (
+    <div className="border border-gray-200 bg-white overflow-x-auto mb-4">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wide">
+            <th className="px-3 py-2 text-left font-medium w-20"></th>
+            {columns.map(c => (
+              <th key={c.key} className="px-3 py-2 text-right font-medium whitespace-nowrap">{c.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rowKeys.map((rk, i) => {
+            const isTotal = rk === 'TOTAL'
+            const data = isTotal ? totalRow : fuelRows[rk] || {}
+            return (
+              <tr key={rk} className={isTotal ? 'border-b-2 border-gray-200' : i > 1 ? 'border-t border-gray-100' : ''}>
+                <td className={`px-3 py-2 ${isTotal ? 'font-bold text-gray-900' : 'font-semibold'}`} style={!isTotal ? { color: FUEL_COLORS[rk] } : {}}>
+                  {rk}
+                </td>
+                {columns.map(c => (
+                  <td key={c.key} className={`px-3 py-2 text-right whitespace-nowrap ${isTotal ? 'font-bold text-gray-900' : 'text-gray-700'} ${c.accent ? c.accent(data[c.key]) : ''}`}>
+                    {c.format(data[c.key])}
+                  </td>
+                ))}
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function Section({ title, blurb, children }) {
+  return (
+    <section className="mb-8">
+      <div className="mb-3 border-l-4 border-blue-600 pl-3">
+        <h2 className="text-base font-bold text-gray-900">{title}</h2>
+        <p className="text-xs text-gray-500 mt-0.5">{blurb}</p>
+      </div>
+      {children}
+    </section>
+  )
+}
+
 function AnalyticsBody({ report, startDate, endDate }) {
   const { fuelTypes, summary, fuelMix, stockSeries, varianceSeries, revenueSeries, ovshSeries } = report
-
-  const stockSubtitle = fuelTypes.map(ft => `${ft}: ${fmt(summary.currentStockByFuel[ft] || 0)}L`).join(' · ')
 
   const fuelMixData = fuelTypes.map(ft => ({ name: ft, value: fuelMix[ft] || 0 }))
 
   const ovshAccent = summary.netOvsh < 0 ? 'text-red-600' : summary.netOvsh > 0 ? 'text-green-600' : ''
   const pendingAccent = summary.pendingLodgement > 0 ? 'text-amber-600' : ''
 
-  const tooltipFmt = (value) => '₦' + fmt(value)
-  const literFmt = (value) => fmt(value) + 'L'
+  const naira = (v) => v == null ? '' : '₦' + fmt(v)
+  const liters = (v) => v == null ? '' : fmt(v) + ' L'
+  const pct = (v) => v == null || isNaN(v) ? '' : Number(v).toFixed(2) + '%'
+
+  // Sales & Volume table data
+  const salesColumns = [
+    { key: 'sales', label: 'Sales (₦)', format: naira },
+    { key: 'volume', label: 'Volume (L)', format: liters },
+    { key: 'avgSales', label: 'Avg / day (₦)', format: naira },
+    { key: 'avgVolume', label: 'Avg / day (L)', format: liters },
+  ]
+  const salesTotalRow = {
+    sales: summary.totalSales,
+    volume: summary.totalVolume,
+    avgSales: summary.avgDailyRevenue,
+    avgVolume: summary.avgDailyVolume,
+  }
+  const salesFuelRows = {}
+  for (const ft of fuelTypes) {
+    salesFuelRows[ft] = {
+      sales: summary.totalSalesByFuel?.[ft] || 0,
+      volume: summary.totalVolumeByFuel?.[ft] || 0,
+      avgSales: summary.avgDailyRevenueByFuel?.[ft] || 0,
+      avgVolume: summary.avgDailyVolumeByFuel?.[ft] || 0,
+    }
+  }
+
+  // Current stock table data
+  const stockColumns = [
+    { key: 'stock', label: 'Current Stock (L)', format: liters },
+  ]
+  const totalCurrentStock = Object.values(summary.currentStockByFuel || {}).reduce((s, v) => s + v, 0)
+  const stockTotalRow = { stock: totalCurrentStock }
+  const stockFuelRows = {}
+  for (const ft of fuelTypes) {
+    stockFuelRows[ft] = { stock: summary.currentStockByFuel?.[ft] || 0 }
+  }
 
   return (
     <div className="pb-10">
-      {/* KPI tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-6">
-        <KpiTile
-          label="Total Sales"
-          value={'₦' + fmt(summary.totalSales)}
-          sub={`${summary.dayCount} day${summary.dayCount === 1 ? '' : 's'}`}
+      {/* SECTION 1 — Sales & Volume */}
+      <Section
+        title="Sales & Volume"
+        blurb="Revenue and dispensed volume across the period, broken down by fuel."
+      >
+        <FuelStatTable
+          fuelTypes={fuelTypes}
+          columns={salesColumns}
+          totalRow={salesTotalRow}
+          fuelRows={salesFuelRows}
         />
-        <KpiTile
-          label="Total Volume"
-          value={fmt(summary.totalVolume) + ' L'}
-          sub={`avg ${fmt(summary.avgDailyVolume)} L/day`}
-        />
-        <KpiTile
-          label="Net Cash OV/SH"
-          value={(summary.netOvsh >= 0 ? '₦' : '-₦') + fmt(Math.abs(summary.netOvsh))}
-          accent={ovshAccent}
-          sub={summary.netOvsh < 0 ? 'shortage' : summary.netOvsh > 0 ? 'overage' : 'reconciled'}
-        />
-        <KpiTile
-          label="Avg Daily Sales"
-          value={'₦' + fmt(summary.avgDailyRevenue)}
-        />
-        <KpiTile
-          label="Current Stock"
-          value={fmt(Object.values(summary.currentStockByFuel).reduce((s, v) => s + v, 0)) + ' L'}
-          sub={stockSubtitle}
-        />
-        <KpiTile
-          label="Pending Lodgement"
-          value={'₦' + fmt(Math.max(0, summary.pendingLodgement))}
-          accent={pendingAccent}
-          sub={summary.pendingLodgement > 0 ? 'sales not yet deposited' : 'all deposited'}
-        />
-      </div>
 
-      {/* Stock level over time */}
-      <ChartCard title="Stock level over time" subtitle="Closing stock per fuel · dots mark days with deliveries">
-        <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart data={stockSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-            <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
-            <YAxis tickFormatter={fmtCompact} fontSize={11} />
-            <Tooltip
-              labelFormatter={(d) => fmtDate(d)}
-              formatter={(value, name) => name.endsWith('_delivery') ? null : [literFmt(value), name]}
-            />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            {fuelTypes.map(ft => (
-              <Line
-                key={ft}
-                type="monotone"
-                dataKey={ft}
-                name={ft}
-                stroke={FUEL_COLORS[ft]}
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
-            ))}
-            {fuelTypes.map(ft => (
-              <Scatter
-                key={`${ft}_dlv`}
-                dataKey={`${ft}_delivery`}
-                name={`${ft} delivery`}
-                fill={FUEL_COLORS[ft]}
-                shape="circle"
-                isAnimationActive={false}
-                legendType="none"
-              />
-            ))}
-          </ComposedChart>
-        </ResponsiveContainer>
-      </ChartCard>
+        <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-4">
+          <ChartCard title="Daily revenue" subtitle="Bar height = total sales for the day. Colors stack each fuel's contribution.">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={revenueSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+                <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
+                <YAxis tickFormatter={fmtCompact} fontSize={11} />
+                <Tooltip
+                  labelFormatter={(d) => fmtDate(d)}
+                  formatter={(value, name) => [naira(value), name]}
+                />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                {fuelTypes.map(ft => (
+                  <Bar key={ft} dataKey={ft} stackId="a" fill={FUEL_COLORS[ft]} isAnimationActive={false} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
 
-      {/* Variance vs ±1.25% tolerance */}
-      <ChartCard title="Variance vs ±1.25% tolerance" subtitle="Per fuel · positive = within tolerance, negative = beyond">
-        <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={varianceSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-            <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
-            <YAxis tickFormatter={fmtCompact} fontSize={11} />
-            <Tooltip
-              labelFormatter={(d) => fmtDate(d)}
-              formatter={(value, name) => [fmt(value) + ' L', name]}
-            />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <ReferenceLine y={0} stroke="#ef4444" strokeDasharray="4 4" />
-            {fuelTypes.map(ft => (
-              <Line
-                key={ft}
-                type="monotone"
-                dataKey={ft}
-                stroke={FUEL_COLORS[ft]}
-                strokeWidth={2}
-                dot={{ r: 2 }}
-                isAnimationActive={false}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartCard>
+          <ChartCard title="Fuel mix" subtitle="Share of total revenue contributed by each fuel.">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Tooltip formatter={(value, name) => [naira(value), name]} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Pie
+                  data={fuelMixData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={90}
+                  isAnimationActive={false}
+                >
+                  {fuelMixData.map((entry) => (
+                    <Cell key={entry.name} fill={FUEL_COLORS[entry.name]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+      </Section>
 
-      {/* Revenue + fuel mix side-by-side on wide screens */}
-      <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 mb-6">
-        <ChartCard title="Daily revenue" subtitle="Stacked by fuel">
-          <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={revenueSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+      {/* SECTION 2 — Stock & Variance */}
+      <Section
+        title="Stock & Variance"
+        blurb="Closing stock per fuel and how each day's actual closing compared to expected. The ±1.25% band is the acceptable tolerance."
+      >
+        <FuelStatTable
+          fuelTypes={fuelTypes}
+          columns={stockColumns}
+          totalRow={stockTotalRow}
+          fuelRows={stockFuelRows}
+        />
+
+        <ChartCard title="Stock level over time" subtitle="Closing stock per fuel each day. Dots mark days with new deliveries.">
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart data={stockSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
               <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
               <YAxis tickFormatter={fmtCompact} fontSize={11} />
               <Tooltip
                 labelFormatter={(d) => fmtDate(d)}
-                formatter={(value, name) => [tooltipFmt(value), name]}
+                formatter={(value, name) => name.endsWith('_delivery') ? null : [liters(value), name]}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               {fuelTypes.map(ft => (
-                <Bar key={ft} dataKey={ft} stackId="a" fill={FUEL_COLORS[ft]} isAnimationActive={false} />
+                <Line
+                  key={ft}
+                  type="monotone"
+                  dataKey={ft}
+                  name={ft}
+                  stroke={FUEL_COLORS[ft]}
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
               ))}
-            </BarChart>
+              {fuelTypes.map(ft => (
+                <Scatter
+                  key={`${ft}_dlv`}
+                  dataKey={`${ft}_delivery`}
+                  name={`${ft} delivery`}
+                  fill={FUEL_COLORS[ft]}
+                  shape="circle"
+                  isAnimationActive={false}
+                  legendType="none"
+                />
+              ))}
+            </ComposedChart>
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Fuel mix" subtitle="Share of revenue">
-          <ResponsiveContainer width="100%" height={260}>
-            <PieChart>
-              <Tooltip formatter={(value, name) => [tooltipFmt(value), name]} />
+        <ChartCard
+          title="Daily variance %"
+          subtitle="Closing stock vs expected, as % of dispensed. Positive = overage, negative = shortage. Red lines mark the ±1.25% tolerance."
+        >
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={varianceSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+              <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
+              <YAxis tickFormatter={(v) => v + '%'} fontSize={11} />
+              <Tooltip
+                labelFormatter={(d) => fmtDate(d)}
+                formatter={(value, name) => [pct(value), name]}
+              />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Pie
-                data={fuelMixData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                innerRadius={50}
-                outerRadius={90}
-                isAnimationActive={false}
-              >
-                {fuelMixData.map((entry) => (
-                  <Cell key={entry.name} fill={FUEL_COLORS[entry.name]} />
-                ))}
-              </Pie>
-            </PieChart>
+              <ReferenceLine y={1.25} stroke="#ef4444" strokeDasharray="4 4" label={{ value: '+1.25%', fill: '#ef4444', fontSize: 10, position: 'right' }} />
+              <ReferenceLine y={-1.25} stroke="#ef4444" strokeDasharray="4 4" label={{ value: '-1.25%', fill: '#ef4444', fontSize: 10, position: 'right' }} />
+              <ReferenceLine y={0} stroke="#9ca3af" />
+              {fuelTypes.map(ft => (
+                <Line
+                  key={ft}
+                  type="monotone"
+                  dataKey={ft}
+                  stroke={FUEL_COLORS[ft]}
+                  strokeWidth={2}
+                  dot={{ r: 2 }}
+                  isAnimationActive={false}
+                />
+              ))}
+            </LineChart>
           </ResponsiveContainer>
         </ChartCard>
-      </div>
+      </Section>
 
-      {/* Cumulative cash OV/SH */}
-      <ChartCard title="Cumulative cash overage / shortage" subtitle="Running total of (lodged − expected) per day">
-        <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={ovshSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
-            <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
-            <YAxis tickFormatter={fmtCompact} fontSize={11} />
-            <Tooltip
-              labelFormatter={(d) => fmtDate(d)}
-              formatter={(value, name) => [tooltipFmt(value), name === 'cumulative' ? 'Cumulative' : 'Daily']}
-            />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 4" />
-            <Line type="monotone" dataKey="cumulative" stroke="#0f172a" strokeWidth={2} dot={false} isAnimationActive={false} name="Cumulative" />
-            <Line type="monotone" dataKey="daily" stroke="#94a3b8" strokeWidth={1} dot={false} isAnimationActive={false} name="Daily" />
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartCard>
+      {/* SECTION 3 — Cash Reconciliation */}
+      <Section
+        title="Cash Reconciliation"
+        blurb="How money lodged compares to expected sales. Lodgements are not split by fuel, so totals only. Negative = shortage, positive = overage."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          <KpiTile
+            label="Net Cash OV/SH"
+            value={(summary.netOvsh >= 0 ? '₦' : '-₦') + fmt(Math.abs(summary.netOvsh))}
+            accent={ovshAccent}
+            sub={summary.netOvsh < 0 ? 'shortage' : summary.netOvsh > 0 ? 'overage' : 'reconciled'}
+          />
+          <KpiTile
+            label="Pending Lodgement"
+            value={'₦' + fmt(Math.max(0, summary.pendingLodgement))}
+            accent={pendingAccent}
+            sub={summary.pendingLodgement > 0 ? 'sales not yet deposited' : 'all deposited'}
+          />
+        </div>
+
+        <ChartCard
+          title="Cumulative cash overage / shortage"
+          subtitle="Running total of (lodged − expected sales) day by day. Crossing zero means earlier shortages have been recovered."
+        >
+          <ResponsiveContainer width="100%" height={240}>
+            <LineChart data={ovshSeries} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#eef2f7" />
+              <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} />
+              <YAxis tickFormatter={fmtCompact} fontSize={11} />
+              <Tooltip
+                labelFormatter={(d) => fmtDate(d)}
+                formatter={(value, name) => [naira(value), name === 'cumulative' ? 'Cumulative' : 'Daily']}
+              />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 4" />
+              <Line type="monotone" dataKey="cumulative" stroke="#0f172a" strokeWidth={2} dot={false} isAnimationActive={false} name="Cumulative" />
+              <Line type="monotone" dataKey="daily" stroke="#94a3b8" strokeWidth={1} dot={false} isAnimationActive={false} name="Daily" />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </Section>
     </div>
   )
 }
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="border border-gray-200 bg-white p-3 mb-6">
+    <div className="border border-gray-200 bg-white p-3 mb-4">
       <div className="mb-2">
         <h3 className="text-sm font-bold text-gray-900">{title}</h3>
-        {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
+        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>

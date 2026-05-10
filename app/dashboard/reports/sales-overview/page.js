@@ -182,8 +182,13 @@ function SalesTable({ report, startDate, endDate }) {
   const cellR = `${cell} text-right`
 
   const showPmsAvg = fuelTypes.includes('PMS')
-  const colsPerFuel = (ft) => (ft === 'PMS' && showPmsAvg ? 5 : 4)
-  const totalCols = 1 + fuelTypes.reduce((s, ft) => s + colsPerFuel(ft), 0)
+  const volumeCols = fuelTypes.length + (showPmsAvg ? 1 : 0)
+  const priceCols = fuelTypes.length
+  const dispCols = fuelTypes.length
+  const amtCols = fuelTypes.length
+  const totalCols = 2 + volumeCols + priceCols + dispCols + amtCols
+
+  const dayOf = (date) => Number(String(date).slice(8, 10))
 
   return (
     <div className="min-w-[900px] pb-4">
@@ -199,63 +204,80 @@ function SalesTable({ report, startDate, endDate }) {
             </th>
           </tr>
           <tr className={subHdr}>
+            <th rowSpan={2} className={`${cell} font-bold`}>Sheet</th>
             <th rowSpan={2} className={`${cell} font-bold`}>Date</th>
-            {fuelTypes.map(ft => (
-              <th key={ft} colSpan={colsPerFuel(ft)} className={`${cell} text-center font-bold`}>
-                {ft}
-              </th>
-            ))}
+            <th colSpan={volumeCols} className={`${cell} text-center font-bold`}>Sales (Volume)</th>
+            <th colSpan={priceCols} className={`${cell} text-center font-bold`}>Price</th>
+            <th colSpan={dispCols} className={`${cell} text-center font-bold`}>Dispensed</th>
+            <th colSpan={amtCols} className={`${cell} text-center font-bold`}>Sales (Amount)</th>
           </tr>
           <tr className={subHdr}>
             {fuelTypes.map(ft => (
-              <Fragment key={ft}>
-                <th className={`${cellR} font-bold text-xs`}>Sales (Vol)</th>
+              <Fragment key={`v-${ft}`}>
+                <th className={`${cellR} font-bold text-xs`}>{ft}</th>
                 {ft === 'PMS' && showPmsAvg && (
-                  <th className={`${cellR} font-bold text-xs`}>Avg Vol</th>
+                  <th className={`${cellR} font-bold text-xs`}>Avg</th>
                 )}
-                <th className={`${cellR} font-bold text-xs`}>Price</th>
-                <th className={`${cellR} font-bold text-xs`}>Dispensed</th>
-                <th className={`${cellR} font-bold text-xs`}>Sales (₦)</th>
               </Fragment>
+            ))}
+            {fuelTypes.map(ft => (
+              <th key={`p-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>
+            ))}
+            {fuelTypes.map(ft => (
+              <th key={`d-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>
+            ))}
+            {fuelTypes.map(ft => (
+              <th key={`a-${ft}`} className={`${cellR} font-bold text-xs`}>{ft}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {rows.map(row => (
             <tr key={row.date} className={row.hasEntry ? '' : 'text-gray-400'}>
+              <td className={cellR}>{dayOf(row.date)}</td>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
               {fuelTypes.map(ft => {
                 const f = row.fuels[ft] || {}
                 return (
-                  <Fragment key={ft}>
+                  <Fragment key={`v-${ft}`}>
                     <td className={cellR}>{fmt(f.volume)}</td>
                     {ft === 'PMS' && showPmsAvg && (
                       <td className={cellR}>{fmtDec(row.pmsAvg)}</td>
                     )}
-                    <td className={cellR}>{fmt(f.price)}</td>
-                    <td className={cellR}>{fmt(f.dispensed)}</td>
-                    <td className={cellR}>{fmt(f.amount)}</td>
                   </Fragment>
                 )
               })}
+              {fuelTypes.map(ft => (
+                <td key={`p-${ft}`} className={cellR}>{fmt(row.fuels[ft]?.price)}</td>
+              ))}
+              {fuelTypes.map(ft => (
+                <td key={`d-${ft}`} className={cellR}>{fmt(row.fuels[ft]?.dispensed)}</td>
+              ))}
+              {fuelTypes.map(ft => (
+                <td key={`a-${ft}`} className={cellR}>{fmt(row.fuels[ft]?.amount)}</td>
+              ))}
             </tr>
           ))}
           <tr className={`${subHdr} font-bold`}>
+            <td className={cell}></td>
             <td className={cell}>Total</td>
-            {fuelTypes.map(ft => {
-              const t = totals[ft] || {}
-              return (
-                <Fragment key={ft}>
-                  <td className={cellR}>{fmt(t.volume)}</td>
-                  {ft === 'PMS' && showPmsAvg && (
-                    <td className={cellR}></td>
-                  )}
+            {fuelTypes.map(ft => (
+              <Fragment key={`tv-${ft}`}>
+                <td className={cellR}>{fmt(totals[ft]?.volume)}</td>
+                {ft === 'PMS' && showPmsAvg && (
                   <td className={cellR}></td>
-                  <td className={cellR}>{fmt(t.dispensed)}</td>
-                  <td className={cellR}>{fmt(t.amount)}</td>
-                </Fragment>
-              )
-            })}
+                )}
+              </Fragment>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`tp-${ft}`} className={cellR}></td>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`td-${ft}`} className={cellR}>{fmt(totals[ft]?.dispensed)}</td>
+            ))}
+            {fuelTypes.map(ft => (
+              <td key={`ta-${ft}`} className={cellR}>{fmt(totals[ft]?.amount)}</td>
+            ))}
           </tr>
         </tbody>
       </table>
