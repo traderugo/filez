@@ -32,6 +32,52 @@ export default function ChatPage() {
     []
   )
 
+  // Collapse consecutive activity messages by the same user with the same content
+  // into a single summarized row, e.g. 5x "added a lodgement entry" → "entered 5 lodgement entries"
+  const displayedMessages = useMemo(() => {
+    if (!messages?.length) return []
+    const result = []
+    let i = 0
+    while (i < messages.length) {
+      const m = messages[i]
+      if (m.type !== 'activity') {
+        result.push(m)
+        i++
+        continue
+      }
+      let j = i + 1
+      while (
+        j < messages.length &&
+        messages[j].type === 'activity' &&
+        messages[j].userId === m.userId &&
+        messages[j].content === m.content
+      ) {
+        j++
+      }
+      const count = j - i
+      if (count === 1) {
+        result.push(m)
+      } else {
+        const match = (m.content || '').match(/^(added|updated) a (.+) entry$/)
+        let content = m.content
+        if (match) {
+          const verb = match[1] === 'added' ? 'entered' : 'updated'
+          content = `${verb} ${count} ${match[2]} entries`
+        } else {
+          content = `${m.content} (×${count})`
+        }
+        result.push({
+          ...m,
+          id: `${m.id}-batch-${count}`,
+          content,
+          createdAt: messages[j - 1].createdAt,
+        })
+      }
+      i = j
+    }
+    return result
+  }, [messages])
+
   // Derive unique member names from existing messages
   const members = useMemo(() => {
     if (!messages?.length) return []
@@ -235,13 +281,13 @@ export default function ChatPage() {
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white">
-        {messages?.length === 0 && (
+        {displayedMessages.length === 0 && (
           <div className="flex justify-center items-center h-full">
             <p className="text-sm text-gray-400">No messages yet.</p>
           </div>
         )}
 
-        {messages?.map(msg => {
+        {displayedMessages.map(msg => {
           const isMe = msg.userId === user?.id
           const msgDate = msg.createdAt ? fmtDate(msg.createdAt) : null
           const showDateSep = msgDate && msgDate !== lastDate
