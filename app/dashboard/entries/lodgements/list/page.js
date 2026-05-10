@@ -35,13 +35,6 @@ export default function LodgementsListPage() {
     [ready], new Set()
   )
 
-  const banksMap = useLiveQuery(
-    () => ready && orgId
-      ? db.banks.where('orgId').equals(orgId).toArray().then(arr => Object.fromEntries(arr.map(b => [b.id, b.bank_name])))
-      : {},
-    [orgId, ready], {}
-  )
-
   // Group entries by date
   const groupedEntries = useMemo(() => {
     const groups = {}
@@ -87,13 +80,17 @@ export default function LodgementsListPage() {
                     <span className="ml-2 text-sm font-semibold text-gray-700">&#8358;{group.totalAmount.toLocaleString()}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {group.entries.map((e, i) => (
-                      <span key={e.id}>
-                        {i > 0 && ' · '}
-                        {banksMap[e.bankId] || 'Unknown'} &#8358;{Number(e.amount).toLocaleString()}
-                        <span className="ml-1 text-gray-400">({typeLabel[e.lodgementType] || e.lodgementType})</span>
-                      </span>
-                    ))}
+                    {(() => {
+                      const counts = {}
+                      for (const e of group.entries) {
+                        const t = e.lodgementType || 'unknown'
+                        counts[t] = (counts[t] || 0) + 1
+                      }
+                      return Object.entries(counts)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([t, c]) => `${c} ${typeLabel[t] || t}`)
+                        .join(' · ')
+                    })()}
                   </p>
                 </div>
                 <Link href={`/dashboard/entries/lodgements?${qs}&edit_date=${group.date}`} className="flex items-center gap-1 text-xs font-medium text-blue-600 border border-blue-200 px-3 py-1.5 rounded hover:bg-blue-50">
