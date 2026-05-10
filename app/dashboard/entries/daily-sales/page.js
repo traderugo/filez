@@ -450,15 +450,15 @@ export default function DailySalesFormPage() {
             <div className="grid grid-cols-3 divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">PMS</label>
-                <input type="number" data-skip-enter value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">AGO</label>
-                <input type="number" data-skip-enter value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">DPK</label>
-                <input type="number" data-skip-enter value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
             </div>
 
@@ -483,7 +483,7 @@ export default function DailySalesFormPage() {
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{r.label}</label>
                           <input
-                            type="number"
+                            type="text" inputMode="decimal" enterKeyHint="next"
                             value={r.closing_meter}
                             onChange={(e) => updateNozzleReading(activeTab, idx, 'closing_meter', e.target.value)}
                             step="0.01"
@@ -495,7 +495,7 @@ export default function DailySalesFormPage() {
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
                           <div className="flex items-center">
-                            <input type="number" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                             {consHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'consumption' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${consCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={consCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
@@ -506,7 +506,7 @@ export default function DailySalesFormPage() {
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P.B.</label>
                           <div className="flex items-center">
-                            <input type="number" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                             {pbHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'pour_back' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${pbCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={pbCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
@@ -546,7 +546,7 @@ export default function DailySalesFormPage() {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Litres</label>
-                      <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" placeholder={prevTankClosing[r.tank_id] != null ? String(prevTankClosing[r.tank_id]) : ''} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                      <input type="text" inputMode="decimal" enterKeyHint="next" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" placeholder={prevTankClosing[r.tank_id] != null ? String(prevTankClosing[r.tank_id]) : ''} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                   </div>
                 ))}
