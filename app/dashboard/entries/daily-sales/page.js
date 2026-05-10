@@ -94,6 +94,7 @@ export default function DailySalesFormPage() {
   const [originalIds, setOriginalIds] = useState([])
   // Previous day's last closing meter per pump_id — used when the user leaves a nozzle blank
   const [prevClosing, setPrevClosing] = useState({})
+  const [prevTankClosing, setPrevTankClosing] = useState({})
   const [allDates, setAllDates] = useState([])
   const [consModal, setConsModal] = useState(null) // { entryIdx, nozzleIdx, type: 'consumption' | 'pour_back' }
 
@@ -180,7 +181,7 @@ export default function DailySalesFormPage() {
         .filter(e => (e.entryDate || e.entry_date) < formDate)
         .sort((a, b) => (b.entryDate || b.entry_date || '').localeCompare(a.entryDate || a.entry_date || ''))
 
-      if (!prevEntries.length) { setPrevClosing({}); return }
+      if (!prevEntries.length) { setPrevClosing({}); setPrevTankClosing({}); return }
 
       // Get entries from the most recent previous date
       const lastDate = prevEntries[0].entryDate || prevEntries[0].entry_date
@@ -198,6 +199,14 @@ export default function DailySalesFormPage() {
         }
       }
       setPrevClosing(map)
+
+      const tankMap = {}
+      for (const r of (lastEntry?.tankReadings || lastEntry?.tank_readings || [])) {
+        if (r.tank_id != null && r.closing_stock != null) {
+          tankMap[r.tank_id] = r.closing_stock
+        }
+      }
+      setPrevTankClosing(tankMap)
     }
     load()
   }, [orgId, formDate])
@@ -268,12 +277,6 @@ export default function DailySalesFormPage() {
       if (!entry.prices.PMS && !entry.prices.AGO && !entry.prices.DPK) {
         setError(`Entry ${i + 1}: At least one fuel price is required`); setActiveTab(i); submittingRef.current = false; return
       }
-      if (entry.closeOfBusiness) {
-        const missingTank = entry.tankReadings.find(r => r.closing_stock === '' || r.closing_stock === undefined)
-        if (missingTank) {
-          setError(`Entry ${i + 1}: Closing stock is required for ${missingTank.label}`); setActiveTab(i); submittingRef.current = false; return
-        }
-      }
     }
 
     const cobEntries = entries.filter(e => e.closeOfBusiness)
@@ -322,7 +325,9 @@ export default function DailySalesFormPage() {
         const tankData = entry.tankReadings.map(r => ({
           tank_id: r.tank_id,
           tank_label: r.label,
-          closing_stock: Number(r.closing_stock) || 0,
+          closing_stock: r.closing_stock !== '' && r.closing_stock !== undefined
+            ? Number(r.closing_stock)
+            : Number(prevTankClosing[r.tank_id] ?? 0),
         }))
 
         const record = {
@@ -541,7 +546,7 @@ export default function DailySalesFormPage() {
                     </div>
                     <div>
                       <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Litres</label>
-                      <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                      <input type="number" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" placeholder={prevTankClosing[r.tank_id] != null ? String(prevTankClosing[r.tank_id]) : ''} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                     </div>
                   </div>
                 ))}
