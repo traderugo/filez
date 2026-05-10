@@ -28,6 +28,8 @@ const PAGE_TITLES = {
   // Reports
   '/dashboard/reports/summary': 'Summary',
   '/dashboard/reports/daily-sales-report': 'Daily Sales Report',
+  '/dashboard/reports/sales-overview': 'Sales Overview',
+  '/dashboard/reports/inventory-log': 'Inventory Log',
   '/dashboard/reports/audit-report': 'Audit Report',
   '/dashboard/reports/account-ledger': 'Account Ledger',
   '/dashboard/reports/product-received': 'Product Received',

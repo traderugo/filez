@@ -3,7 +3,7 @@ import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
 
 const VALID_PAGES = [
   'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments',
-  'report-summary', 'report-daily-sales', 'report-audit', 'report-account-ledger', 'report-product-received',
+  'report-summary', 'report-daily-sales', 'report-sales-overview', 'report-inventory-log', 'report-audit', 'report-account-ledger', 'report-product-received',
   'report-audit-sales-cash', 'report-audit-lodgement-sheet', 'report-audit-stock-position',
   'report-audit-stock-summary', 'report-audit-consumption', 'report-audit-calculator',
   'report-audit-product-received',
