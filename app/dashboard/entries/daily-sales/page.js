@@ -445,15 +445,15 @@ export default function DailySalesFormPage() {
             <div className="grid grid-cols-3 divide-x divide-gray-300">
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">PMS</label>
-                <input type="number" value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <input type="number" data-skip-enter value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">AGO</label>
-                <input type="number" value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <input type="number" data-skip-enter value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">DPK</label>
-                <input type="number" value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <input type="number" data-skip-enter value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
               </div>
             </div>
 
@@ -556,7 +556,7 @@ export default function DailySalesFormPage() {
 
             <div>
               <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-              <textarea value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+              <textarea data-skip-enter value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
             </div>
           </div>
         )}
