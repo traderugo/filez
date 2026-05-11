@@ -329,7 +329,7 @@ function SalesOperationGrid({ sheet, stationName }) {
         <td className={`${cellC} font-bold`}>{fmt(f.actualSalesP2)}</td>
         <td className={`${cellC} font-bold`}>{fmt(f.rttP2)}</td>
         <td className={`${cellC} font-bold`}>{fmt(f.consP2)}</td>
-        <td className={`${cellC} font-bold`}>{fmt(f.totalActualLtrs)}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(f.totalActualLtrs)}</td>
         <td className={`${cellC} font-bold ${yellow}`}>{fmt(f.amount)}</td>
       </tr>
     )
@@ -345,8 +345,8 @@ function SalesOperationGrid({ sheet, stationName }) {
         <td className={`${cellC} font-bold`}>{fmt(s.opening)}</td>
         <td className={`${cellC} font-bold`}>{fmt(s.waybill)}</td>
         <td className={`${cellC} font-bold`}>{fmt(s.actualReceived)}</td>
-        <td className={`${cellC} font-bold`}>{fmt(truckShortage)}</td>
-        <td className={`${cellC} font-bold`}>{fmt(s.totalDispensed)}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(truckShortage)}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(s.totalDispensed)}</td>
         <td className={`${cellC} font-bold`}>{fmt(s.closing)}</td>
         {/* H:K covered by R10's rowSpan=4 colSpan=4 merged cell */}
       </tr>
@@ -364,9 +364,9 @@ function SalesOperationGrid({ sheet, stationName }) {
     return (
       <tr key={`recon-${ft}`}>
         <td className={fuelCell}>{ft}</td>
-        <td className={`${cellC} font-bold`}>{fmt(Math.round(expectedOverage))}</td>
-        <td className={`${cellC} font-bold`}>{fmt(Math.round(actualOverage))}</td>
-        <td className={`${cellC} font-bold`}>{fmt(Math.round(variance))}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(Math.round(expectedOverage))}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(Math.round(actualOverage))}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(Math.round(variance))}</td>
         <td className={cellL} colSpan={7}>{msg}</td>
       </tr>
     )
@@ -566,11 +566,11 @@ function SalesOperationGrid({ sheet, stationName }) {
         <tr>
           <td className={labelCell}>Amount (₦)</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalExpectedSales)}</td>
-          <td className={`${cellC} font-bold`}>{fmt(cash.prevDayCash)}</td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.prevDayCash)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalBankDeposit)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalPOS)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.expectedCashAtHand)}</td>
-          <td className={`${cellC} font-bold`}>{fmt(cash.actualCashAtHand)}</td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.actualCashAtHand)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.variance)}</td>
           <td className={cellL} colSpan={3}>{cash.reason || ''}</td>
         </tr>
