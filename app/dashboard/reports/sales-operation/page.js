@@ -7,8 +7,8 @@ import { Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildSalesOperationReport } from '@/lib/buildSalesOperationReport'
 import { exportSalesOperationExcel } from '@/lib/exportSalesOperationExcel'
+import { usePageAccess } from '@/lib/hooks/usePageAccess'
 import DateInput from '@/components/DateInput'
-import AccessGate from '@/components/AccessGate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -26,6 +26,7 @@ export default function SalesOperationPage() {
 function SalesOperationContent() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
+  const { isOwner } = usePageAccess(orgId, 'report-sales-operation')
 
   const [loading, setLoading] = useState(true)
   const today = new Date()
@@ -190,8 +191,6 @@ function SalesOperationContent() {
   const cellR = `${cell} text-right`
 
   return (
-    <AccessGate orgId={orgId} pageKey="report-sales-operation">
-      {({ isOwner }) => (
         <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="flex items-center justify-end py-3 shrink-0">
@@ -307,8 +306,6 @@ function SalesOperationContent() {
             </>
           )}
         </div>
-      )}
-    </AccessGate>
   )
 }
 
