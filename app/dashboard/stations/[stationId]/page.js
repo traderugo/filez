@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart
+  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -30,6 +30,7 @@ const ENTRY_PAGE_OPTIONS = [
 const REPORT_PAGE_OPTIONS = [
   { key: 'report-summary', label: 'Summary' },
   { key: 'report-daily-sales', label: 'Daily Sales Report' },
+  { key: 'report-sales-operation', label: 'Sales Operation' },
   { key: 'report-audit', label: 'Audit Report', children: [
     { key: 'report-audit-sales-cash', label: 'Sales/Cash Position' },
     { key: 'report-audit-lodgement-sheet', label: 'Lodgement Sheet' },
@@ -360,6 +361,7 @@ export default function StationPage() {
   const reportLinks = [
     { href: `/dashboard/reports/summary?org_id=${stationId}`, icon: FileText, label: 'Summary', desc: 'Overview summary report', pageKey: 'report-summary' },
     { href: `/dashboard/reports/daily-sales-report?org_id=${stationId}`, icon: BarChart3, label: 'Daily Sales Report', desc: 'Nozzle sales, POS, and cash', pageKey: 'report-daily-sales' },
+    { href: `/dashboard/reports/sales-operation?org_id=${stationId}`, icon: Activity, label: 'Sales Operation', desc: 'Daily sales, stock, recon — per shift', pageKey: 'report-sales-operation' },
     { href: `/dashboard/reports/sales-overview?org_id=${stationId}`, icon: TrendingUp, label: 'Sales Overview', desc: 'Daily volume, price, and amount per fuel', pageKey: 'report-sales-overview' },
     { href: `/dashboard/reports/inventory-log?org_id=${stationId}`, icon: Boxes, label: 'Inventory Log', desc: 'Daily stock, supply, OV/SH, and variance', pageKey: 'report-inventory-log' },
     { href: `/dashboard/reports/analytics?org_id=${stationId}`, icon: LineChart, label: 'Analytics', desc: 'KPIs, stock, variance, and revenue trends', pageKey: 'report-analytics' },

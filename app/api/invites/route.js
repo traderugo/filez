@@ -33,7 +33,7 @@ export async function GET(request) {
         .single()
       visiblePages = membership?.visible_pages ?? [
         'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments',
-        'report-summary', 'report-daily-sales', 'report-audit',
+        'report-summary', 'report-daily-sales', 'report-sales-operation', 'report-audit',
         'report-audit-sales-cash', 'report-audit-lodgement-sheet', 'report-audit-stock-position',
         'report-audit-stock-summary', 'report-audit-consumption', 'report-audit-calculator',
         'report-audit-product-received',
