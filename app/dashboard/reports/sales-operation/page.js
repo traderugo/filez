@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import { buildSalesOperationReport } from '@/lib/buildSalesOperationReport'
 import { exportSalesOperationExcel } from '@/lib/exportSalesOperationExcel'
 import DateInput from '@/components/DateInput'
+import AccessGate from '@/components/AccessGate'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -189,6 +190,8 @@ function SalesOperationContent() {
   const cellR = `${cell} text-right`
 
   return (
+    <AccessGate orgId={orgId} pageKey="report-sales-operation">
+      {({ isOwner }) => (
         <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
           {/* Header */}
           <div className="flex items-center justify-end py-3 shrink-0">
@@ -212,15 +215,17 @@ function SalesOperationContent() {
                 {generating && <Loader2 className="w-4 h-4 animate-spin" />}
                 {generating ? 'Generating...' : 'Generate'}
               </button>
-              <button
-                onClick={handleExport}
-                disabled={exporting || !report}
-                className="px-3 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1.5"
-                title="Export to Excel"
-              >
-                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
-              </button>
+              {isOwner && (
+                <button
+                  onClick={handleExport}
+                  disabled={exporting || !report}
+                  className="px-3 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1.5"
+                  title="Export to Excel"
+                >
+                  {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -302,6 +307,8 @@ function SalesOperationContent() {
             </>
           )}
         </div>
+      )}
+    </AccessGate>
   )
 }
 
