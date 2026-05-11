@@ -7,7 +7,6 @@ import { Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildSalesOperationReport } from '@/lib/buildSalesOperationReport'
 import { exportSalesOperationExcel } from '@/lib/exportSalesOperationExcel'
-import { usePageAccess } from '@/lib/hooks/usePageAccess'
 import DateInput from '@/components/DateInput'
 
 function fmt(n) {
@@ -26,7 +25,6 @@ export default function SalesOperationPage() {
 function SalesOperationContent() {
   const searchParams = useSearchParams()
   const orgId = searchParams.get('org_id') || ''
-  const { isOwner } = usePageAccess(orgId, 'report-sales-operation')
 
   const [loading, setLoading] = useState(true)
   const today = new Date()
@@ -214,17 +212,15 @@ function SalesOperationContent() {
                 {generating && <Loader2 className="w-4 h-4 animate-spin" />}
                 {generating ? 'Generating...' : 'Generate'}
               </button>
-              {isOwner && (
-                <button
-                  onClick={handleExport}
-                  disabled={exporting || !report}
-                  className="px-3 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1.5"
-                  title="Export to Excel"
-                >
-                  {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
-                </button>
-              )}
+              <button
+                onClick={handleExport}
+                disabled={exporting || !report}
+                className="px-3 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1.5"
+                title="Export to Excel"
+              >
+                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                <span className="hidden sm:inline">{exporting ? 'Exporting...' : 'Export'}</span>
+              </button>
             </div>
           </div>
 
