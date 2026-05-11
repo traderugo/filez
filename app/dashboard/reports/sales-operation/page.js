@@ -388,8 +388,8 @@ function SalesOperationGrid({ sheet, stationName }) {
       <tr key={`budget-${ft}`}>
         <td className={fuelCell}>{ft}</td>
         <td className={`${cellC} font-bold`}>{fmt(budget)}</td>
-        <td className={`${cellC} font-bold`}>{(achievement * 100).toFixed(1)}%</td>
-        <td className={`${cellC} font-bold`}>{fmt(variance)}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{(achievement * 100).toFixed(1)}%</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(variance)}</td>
         <td className={cellC} colSpan={7}>{comment}</td>
       </tr>
     )
@@ -570,11 +570,11 @@ function SalesOperationGrid({ sheet, stationName }) {
         <tr>
           <td className={fuelLeft}>Amount (₦)</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalExpectedSales)}</td>
-          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.prevDayCash)}</td>
+          <td className={`${cellC} font-bold`}>{fmt(cash.prevDayCash)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalBankDeposit)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalPOS)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.expectedCashAtHand)}</td>
-          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.actualCashAtHand)}</td>
+          <td className={`${cellC} font-bold`}>{fmt(cash.actualCashAtHand)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.variance)}</td>
           <td className={cellL} colSpan={3}>{cash.reason || ''}</td>
         </tr>
@@ -588,7 +588,7 @@ function SalesOperationGrid({ sheet, stationName }) {
           <td className={`${cellC} ${colHdr}`}>Budget (Ltrs)</td>
           <td className={`${cellC} ${colHdr}`}>Achievement</td>
           <td className={`${cellC} ${colHdr}`}>Variance (Ltrs)</td>
-          <td className={`${cellC} ${colHdr}`} colSpan={7}>Comments on Sales Achievement</td>
+          <td className={`${cellC} ${colHdr}`} colSpan={7}>Comments on Sales Achievement (Issues that Increased or Reduced Sales on this Date)</td>
         </tr>
 
         {/* R28–R30: budget rows */}
@@ -600,8 +600,8 @@ function SalesOperationGrid({ sheet, stationName }) {
         <tr>
           <td className={fuelCell}>LUBES</td>
           <td className={`${cellC} font-bold`}>0</td>
-          <td className={`${cellC} font-bold`}>0</td>
-          <td className={`${cellC} font-bold`}>0</td>
+          <td className={`${cellC} font-bold ${yellow}`}>0</td>
+          <td className={`${cellC} font-bold ${yellow}`}>0</td>
           <td className={cellC} colSpan={7}></td>
         </tr>
 
@@ -646,7 +646,7 @@ function SalesOperationGrid({ sheet, stationName }) {
           <td className={`${cell} ${colHdr}`}></td>
         </tr>
 
-        {/* R39+: lube product rows (A:B merged) */}
+        {/* R39+: lube product rows (A:B merged; Sales/Amount/Variance yellow) */}
         {lubeItems.map((l, i) => (
           <tr key={`lube-${i}`}>
             <td className={cellL} colSpan={2}>{l.productName}</td>
@@ -654,26 +654,26 @@ function SalesOperationGrid({ sheet, stationName }) {
             <td className={`${cellC} font-bold`}>{fmt(l.unitPrice)}</td>
             <td className={`${cellC} font-bold`}>{fmt(l.openingStock)}</td>
             <td className={`${cellC} font-bold`}>{fmt(l.productSupply)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(l.sales)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(l.sales)}</td>
             <td className={`${cellC} font-bold`}>{fmt(l.closingStock)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(l.amount)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(l.variance)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(l.amount)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(l.variance)}</td>
             <td className={cell}></td>
           </tr>
         ))}
 
         {lubeItems.length > 0 && (
           <tr>
-            <td className={`${cellL} ${fuelLbl} font-bold`} colSpan={2}>TOTAL</td>
-            <td className={cell}></td>
-            <td className={cell}></td>
-            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.opening)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.supply)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.sales)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.closing)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.amount)}</td>
-            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.variance)}</td>
-            <td className={cell}></td>
+            <td className={`${cellL} ${yellow} font-bold`} colSpan={2}>TOTAL</td>
+            <td className={`${cell} ${yellow}`}></td>
+            <td className={`${cell} ${yellow}`}></td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeTotals.opening)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeTotals.supply)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeTotals.sales)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeTotals.closing)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeTotals.amount)}</td>
+            <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeTotals.variance)}</td>
+            <td className={`${cell} ${yellow}`}></td>
           </tr>
         )}
       </tbody>
