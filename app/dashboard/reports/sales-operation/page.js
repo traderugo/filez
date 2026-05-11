@@ -360,7 +360,9 @@ function SalesOperationGrid({ sheet, stationName }) {
     const expectedOverage = ((s.opening || 0) + (s.waybill || 0) - (s.closing || 0)) * 0.01
     const actualOverage = (s.totalDispensed || 0) - ((s.opening || 0) + (s.waybill || 0) - (s.closing || 0)) - ((f.rttP1 || 0) + (f.rttP2 || 0))
     const variance = actualOverage - expectedOverage
-    const msg = variance > 0 ? 'Liquid height variance' : ''
+    const msg = variance > 0
+      ? 'Liquid height variation on the Positive side'
+      : 'Liquid height variation on the Negative side'
     return (
       <tr key={`recon-${ft}`}>
         <td className={fuelCell}>{ft}</td>
