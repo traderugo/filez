@@ -295,14 +295,18 @@ function SalesOperationGrid({ sheet, stationName }) {
   const lubeItems = sheet.lube || []
   const lubeAmount = lubeItems.reduce((s, l) => s + (l.amount || 0), 0)
 
+  // Palette matched to the August 2023 reference (inspected from .xlsx)
   const cell = 'border border-black px-2 py-1 align-middle'
   const cellL = `${cell} text-left`
   const cellC = `${cell} text-center`
   const cellR = `${cell} text-right`
-  const hdr = 'bg-[#DDEBF7] text-[#1F4E78] font-bold'
-  const section = 'bg-[#BDD7EE] text-[#1F4E78] font-bold text-center'
-  const yellow = 'bg-[#FFFF00]'
-  const labelCell = `${cellL} ${hdr}`
+  const label = 'bg-[#B4C6E7] font-bold'      // label cells (Station, Date, Amount, Bank)
+  const colHdr = 'bg-[#F4B083] font-bold'      // orange column headers
+  const section = 'bg-[#BDD6EE] font-bold'     // section title rows
+  const fuelLbl = 'bg-[#C5E0B3]'               // green PMS/AGO/DPK labels
+  const yellow = 'bg-[#FFFF00]'                // total/output formula cells
+  const labelCell = `${cellL} ${label}`
+  const fuelCell = `${cellC} ${fuelLbl}`
 
   const BUDGET = { PMS: 14400, AGO: 480, DPK: 240 }
   const COMP = {
@@ -316,17 +320,17 @@ function SalesOperationGrid({ sheet, stationName }) {
     const f = fuelByType[ft] || {}
     return (
       <tr key={`fuel-${ft}`}>
-        <td className={labelCell}>{ft}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.price1)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.actualSalesP1)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.rttP1)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.consP1)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.price2)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.actualSalesP2)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.rttP2)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(f.consP2)}</td>
-        <td className={cellR}>{fmt(f.totalActualLtrs)}</td>
-        <td className={cellR}>{fmt(f.amount)}</td>
+        <td className={fuelCell}>{ft}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.price1)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.actualSalesP1)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.rttP1)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.consP1)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.price2)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.actualSalesP2)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.rttP2)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.consP2)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(f.totalActualLtrs)}</td>
+        <td className={`${cellC} font-bold ${yellow}`}>{fmt(f.amount)}</td>
       </tr>
     )
   }
@@ -337,17 +341,14 @@ function SalesOperationGrid({ sheet, stationName }) {
     const truckShortage = (s.actualReceived || 0) - (s.waybill || 0)
     return (
       <tr key={`stock-${ft}`}>
-        <td className={labelCell}>{ft}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(s.opening)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(s.waybill)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(s.actualReceived)}</td>
-        <td className={cellR}>{fmt(truckShortage)}</td>
-        <td className={cellR}>{fmt(s.totalDispensed)}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(s.closing)}</td>
-        <td className={cell}></td>
-        <td className={cell}></td>
-        <td className={cell}></td>
-        <td className={cell}></td>
+        <td className={fuelCell}>{ft}</td>
+        <td className={`${cellC} font-bold`}>{fmt(s.opening)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(s.waybill)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(s.actualReceived)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(truckShortage)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(s.totalDispensed)}</td>
+        <td className={`${cellC} font-bold`}>{fmt(s.closing)}</td>
+        {/* H:K covered by R10's rowSpan=4 colSpan=4 merged cell */}
       </tr>
     )
   }
@@ -362,10 +363,10 @@ function SalesOperationGrid({ sheet, stationName }) {
     const msg = variance > 0 ? 'Liquid height variance' : ''
     return (
       <tr key={`recon-${ft}`}>
-        <td className={labelCell}>{ft}</td>
-        <td className={cellR}>{fmt(Math.round(expectedOverage))}</td>
-        <td className={cellR}>{fmt(Math.round(actualOverage))}</td>
-        <td className={cellR}>{fmt(Math.round(variance))}</td>
+        <td className={fuelCell}>{ft}</td>
+        <td className={`${cellC} font-bold`}>{fmt(Math.round(expectedOverage))}</td>
+        <td className={`${cellC} font-bold`}>{fmt(Math.round(actualOverage))}</td>
+        <td className={`${cellC} font-bold`}>{fmt(Math.round(variance))}</td>
         <td className={cellL} colSpan={7}>{msg}</td>
       </tr>
     )
@@ -381,10 +382,10 @@ function SalesOperationGrid({ sheet, stationName }) {
     const comment = variance < 0 ? 'Low Demand' : 'High Demand'
     return (
       <tr key={`budget-${ft}`}>
-        <td className={labelCell}>{ft}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(budget)}</td>
-        <td className={cellR}>{(achievement * 100).toFixed(1)}%</td>
-        <td className={cellR}>{fmt(variance)}</td>
+        <td className={fuelCell}>{ft}</td>
+        <td className={`${cellC} font-bold`}>{fmt(budget)}</td>
+        <td className={`${cellC} font-bold`}>{(achievement * 100).toFixed(1)}%</td>
+        <td className={`${cellC} font-bold`}>{fmt(variance)}</td>
         <td className={cellC} colSpan={7}>{comment}</td>
       </tr>
     )
@@ -395,16 +396,16 @@ function SalesOperationGrid({ sheet, stationName }) {
     const c = COMP[ft]
     return (
       <tr key={`comp-${ft}`}>
-        <td className={labelCell}>{ft}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(c.rainoil)}</td>
-        <td className={`${cellC} ${yellow}`}>{c.c1}</td>
-        <td className={`${cellR} ${yellow}`}>{typeof c.p1 === 'number' ? fmt(c.p1) : c.p1}</td>
-        <td className={`${cellC} ${yellow}`}>{c.c2}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(c.p2)}</td>
-        <td className={`${cellC} ${yellow}`}>{c.c3}</td>
-        <td className={`${cellR} ${yellow}`}>{fmt(c.p3)}</td>
-        <td className={`${cellC} ${yellow}`}>{c.c4}</td>
-        <td className={`${cellR} ${yellow}`}>{typeof c.p4 === 'number' ? fmt(c.p4) : c.p4}</td>
+        <td className={fuelCell}>{ft}</td>
+        <td className={`${cellC} font-bold`}>{fmt(c.rainoil)}</td>
+        <td className={cellC}>{c.c1}</td>
+        <td className={`${cellC} font-bold`}>{typeof c.p1 === 'number' ? fmt(c.p1) : c.p1}</td>
+        <td className={cellC}>{c.c2}</td>
+        <td className={`${cellC} font-bold`}>{fmt(c.p2)}</td>
+        <td className={cellC}>{c.c3}</td>
+        <td className={`${cellC} font-bold`}>{fmt(c.p3)}</td>
+        <td className={cellC}>{c.c4}</td>
+        <td className={`${cellC} font-bold`}>{typeof c.p4 === 'number' ? fmt(c.p4) : c.p4}</td>
         <td className={cell}></td>
       </tr>
     )
@@ -436,22 +437,21 @@ function SalesOperationGrid({ sheet, stationName }) {
         <col style={{ width: 100 }} />
       </colgroup>
       <tbody>
-        {/* R1: Station */}
+        {/* R1: Station (A1:A2 vertical merge via rowSpan) */}
         <tr>
-          <td className={`${cell} ${yellow}`}></td>
+          <td className={`${cell} ${label}`} rowSpan={2}></td>
           <td className={labelCell}>Station</td>
           <td className={`${cellC} font-bold`} colSpan={9}>{stationName || ''}</td>
         </tr>
 
         {/* R2: Date + Times */}
         <tr>
-          <td className={cell}></td>
           <td className={labelCell}>Date</td>
-          <td className={`${cellC} ${yellow}`} colSpan={3}>{sheet.date}</td>
+          <td className={cellL} colSpan={3}>{sheet.date}</td>
           <td className={labelCell}>Opening Time</td>
-          <td className={`${cellC} ${yellow}`} colSpan={2}>6;00am</td>
+          <td className={cellL} colSpan={2}>6;00am</td>
           <td className={labelCell}>Closing Time</td>
-          <td className={`${cellC} ${yellow}`} colSpan={2}>9;00pm</td>
+          <td className={cellL} colSpan={2}>9;00pm</td>
         </tr>
 
         {/* R3: blank */}
@@ -459,17 +459,17 @@ function SalesOperationGrid({ sheet, stationName }) {
 
         {/* R4: Fuel headers */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cellC} ${hdr}`}>Price 1</td>
-          <td className={`${cellC} ${hdr}`}>Actual Sales @P1</td>
-          <td className={`${cellC} ${hdr}`}>RTT @P1</td>
-          <td className={`${cellC} ${hdr}`}>Cons. @P1</td>
-          <td className={`${cellC} ${hdr}`}>Price 2</td>
-          <td className={`${cellC} ${hdr}`}>Actual Sales @P2</td>
-          <td className={`${cellC} ${hdr}`}>RTT @P2</td>
-          <td className={`${cellC} ${hdr}`}>Cons. @P2</td>
-          <td className={`${cellC} ${hdr}`}>Total Actual Sales (Ltrs)</td>
-          <td className={`${cellC} ${hdr}`}>Amount (N)</td>
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cellC} ${colHdr}`}>Price 1</td>
+          <td className={`${cellC} ${colHdr}`}>Actual Sales @P1</td>
+          <td className={`${cellC} ${colHdr}`}>RTT @P1</td>
+          <td className={`${cellC} ${colHdr}`}>Cons. @P1</td>
+          <td className={`${cellC} ${colHdr}`}>Price 2</td>
+          <td className={`${cellC} ${colHdr}`}>Actual Sales @P2</td>
+          <td className={`${cellC} ${colHdr}`}>RTT @P2</td>
+          <td className={`${cellC} ${colHdr}`}>Cons. @P2</td>
+          <td className={`${cellC} ${colHdr}`}>Total Actual Sales (Ltrs)</td>
+          <td className={`${cellC} ${colHdr}`}>Amount (N)</td>
         </tr>
 
         {/* R5–R7: PMS/AGO/DPK */}
@@ -477,29 +477,26 @@ function SalesOperationGrid({ sheet, stationName }) {
         {fuelRow('AGO')}
         {fuelRow('DPK')}
 
-        {/* R8: LUBES */}
+        {/* R8: LUBES (B:J merged) */}
         <tr>
-          <td className={labelCell}>LUBES</td>
-          {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(c => <td key={c} className={`${cell} ${yellow}`}></td>)}
-          <td className={cellR}>{fmt(lubeAmount)}</td>
+          <td className={fuelCell}>LUBES</td>
+          <td className={cell} colSpan={9}></td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeAmount)}</td>
         </tr>
 
         {/* R9: STOCK INVENTORY title */}
-        <tr><td colSpan={11} className={`${cell} ${section}`}>STOCK INVENTORY (LITRES)</td></tr>
+        <tr><td colSpan={11} className={`${cellL} ${section}`}>STOCK INVENTORY (LITRES)</td></tr>
 
-        {/* R10: stock headers */}
+        {/* R10: stock headers (H:K merged with R11-R13 via rowSpan/colSpan) */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cellC} ${hdr}`}>Opening stock</td>
-          <td className={`${cellC} ${hdr}`}>Waybill Qty Supplied</td>
-          <td className={`${cellC} ${hdr}`}>Actual Qty Received</td>
-          <td className={`${cellC} ${hdr}`}>Truck Shortage</td>
-          <td className={`${cellC} ${hdr}`}>Total Dispensed</td>
-          <td className={`${cellC} ${hdr}`}>Closing stock</td>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cell} ${hdr}`}></td>
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cellC} ${colHdr}`}>Opening stock</td>
+          <td className={`${cellC} ${colHdr}`}>Waybill Qty Supplied</td>
+          <td className={`${cellC} ${colHdr}`}>Actual Qty Received</td>
+          <td className={`${cellC} ${colHdr}`}>Truck Shortage</td>
+          <td className={`${cellC} ${colHdr}`}>Total Dispensed</td>
+          <td className={`${cellC} ${colHdr}`}>Closing stock</td>
+          <td className={cell} rowSpan={4} colSpan={4}></td>
         </tr>
 
         {/* R11–R13 */}
@@ -508,15 +505,15 @@ function SalesOperationGrid({ sheet, stationName }) {
         {stockRow('DPK')}
 
         {/* R14: STOCK RECONCILIATION title */}
-        <tr><td colSpan={11} className={`${cell} ${section}`}>STOCK RECONCILIATION (Litres)</td></tr>
+        <tr><td colSpan={11} className={`${cellL} ${section}`}>STOCK RECONCILIATION (Litres)</td></tr>
 
-        {/* R15: recon headers */}
+        {/* R15: recon headers (E:K merged) */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cellC} ${hdr}`}>Expected Overage</td>
-          <td className={`${cellC} ${hdr}`}>Actual Overage</td>
-          <td className={`${cellC} ${hdr}`}>Variance</td>
-          {[5, 6, 7, 8, 9, 10, 11].map(c => <td key={c} className={`${cell} ${hdr}`}></td>)}
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cellC} ${colHdr}`}>Expected Overage</td>
+          <td className={`${cellC} ${colHdr}`}>Actual Overage</td>
+          <td className={`${cellC} ${colHdr}`}>Variance</td>
+          <td className={`${cell} ${colHdr}`} colSpan={7}></td>
         </tr>
 
         {/* R16–R18 */}
@@ -529,53 +526,53 @@ function SalesOperationGrid({ sheet, stationName }) {
 
         {/* R20: deposit + POS headers */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
+          <td className={`${cell} ${colHdr}`}></td>
           {['Deposit 1', 'Deposit 2', 'Deposit 3', 'Deposit 4', 'Bank POS 1', 'Bank POS 2', 'Bank POS 3', 'Bank POS 4', 'Bank POS 5', 'Bank POS 6'].map(h => (
-            <td key={h} className={`${cellC} ${hdr}`}>{h}</td>
+            <td key={h} className={`${cellC} ${colHdr}`}>{h}</td>
           ))}
         </tr>
 
         {/* R21: amounts */}
         <tr>
           <td className={labelCell}>Amount (₦)</td>
-          {[0, 1, 2, 3].map(i => <td key={`d${i}`} className={`${cellR} ${yellow}`}>{fmt(deposits[i]?.amount)}</td>)}
-          {[0, 1, 2, 3, 4, 5].map(i => <td key={`p${i}`} className={`${cellR} ${yellow}`}>{fmt(pos[i]?.amount)}</td>)}
+          {[0, 1, 2, 3].map(i => <td key={`d${i}`} className={`${cellC} font-bold`}>{fmt(deposits[i]?.amount)}</td>)}
+          {[0, 1, 2, 3, 4, 5].map(i => <td key={`p${i}`} className={`${cellC} font-bold`}>{fmt(pos[i]?.amount)}</td>)}
         </tr>
 
         {/* R22: bank names */}
         <tr>
           <td className={labelCell}>Bank</td>
-          {[0, 1, 2, 3].map(i => <td key={`db${i}`} className={`${cellC} ${yellow}`}>{deposits[i]?.bankName || ''}</td>)}
-          {[0, 1, 2, 3, 4, 5].map(i => <td key={`pb${i}`} className={`${cellC} ${yellow}`}>{pos[i]?.bankName || ''}</td>)}
+          {[0, 1, 2, 3].map(i => <td key={`db${i}`} className={cellC}>{deposits[i]?.bankName || ''}</td>)}
+          {[0, 1, 2, 3, 4, 5].map(i => <td key={`pb${i}`} className={cellC}>{pos[i]?.bankName || ''}</td>)}
         </tr>
 
         {/* R23: CASH RECON title */}
-        <tr><td colSpan={11} className={`${cell} ${section}`}>CASH RECONCILIATION (₦)</td></tr>
+        <tr><td colSpan={11} className={`${cellL} ${section}`}>CASH RECONCILIATION (₦)</td></tr>
 
         {/* R24: cash recon headers */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cellC} ${hdr}`}>Total Expected Sales</td>
-          <td className={`${cellC} ${hdr}`}>Previous Day Cash @ Hand</td>
-          <td className={`${cellC} ${hdr}`}>Total Bank Deposit</td>
-          <td className={`${cellC} ${hdr}`}>Total POS</td>
-          <td className={`${cellC} ${hdr}`}>Expected Cash @ Hand</td>
-          <td className={`${cellC} ${hdr}`}>Actual Cash @ Hand</td>
-          <td className={`${cellC} ${hdr}`}>Variance in Cash</td>
-          <td className={`${cellC} ${hdr}`} colSpan={3}>Reason for Cash Variance</td>
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cellC} ${colHdr}`}>Total Expected Sales</td>
+          <td className={`${cellC} ${colHdr}`}>Previous Day Cash @ Hand</td>
+          <td className={`${cellC} ${colHdr}`}>Total Bank Deposit</td>
+          <td className={`${cellC} ${colHdr}`}>Total POS</td>
+          <td className={`${cellC} ${colHdr}`}>Expected Cash @ Hand</td>
+          <td className={`${cellC} ${colHdr}`}>Actual Cash @ Hand</td>
+          <td className={`${cellC} ${colHdr}`}>Variance in Cash</td>
+          <td className={`${cellC} ${colHdr}`} colSpan={3}>Reason for Cash Variance</td>
         </tr>
 
         {/* R25: cash values */}
         <tr>
           <td className={labelCell}>Amount (₦)</td>
-          <td className={cellR}>{fmt(cash.totalExpectedSales)}</td>
-          <td className={`${cellR} ${yellow}`}>{fmt(cash.prevDayCash)}</td>
-          <td className={cellR}>{fmt(cash.totalBankDeposit)}</td>
-          <td className={cellR}>{fmt(cash.totalPOS)}</td>
-          <td className={cellR}>{fmt(cash.expectedCashAtHand)}</td>
-          <td className={`${cellR} ${yellow}`}>{fmt(cash.actualCashAtHand)}</td>
-          <td className={cellR}>{fmt(cash.variance)}</td>
-          <td className={`${cellL} ${yellow}`} colSpan={3}>{cash.reason || ''}</td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalExpectedSales)}</td>
+          <td className={`${cellC} font-bold`}>{fmt(cash.prevDayCash)}</td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalBankDeposit)}</td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalPOS)}</td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.expectedCashAtHand)}</td>
+          <td className={`${cellC} font-bold`}>{fmt(cash.actualCashAtHand)}</td>
+          <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.variance)}</td>
+          <td className={cellL} colSpan={3}>{cash.reason || ''}</td>
         </tr>
 
         {/* R26: blank */}
@@ -583,11 +580,11 @@ function SalesOperationGrid({ sheet, stationName }) {
 
         {/* R27: budget headers */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cellC} ${hdr}`}>Budget (Ltrs)</td>
-          <td className={`${cellC} ${hdr}`}>Achievement</td>
-          <td className={`${cellC} ${hdr}`}>Variance (Ltrs)</td>
-          <td className={`${cellC} ${hdr}`} colSpan={7}>Comments on Sales Achievement</td>
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cellC} ${colHdr}`}>Budget (Ltrs)</td>
+          <td className={`${cellC} ${colHdr}`}>Achievement</td>
+          <td className={`${cellC} ${colHdr}`}>Variance (Ltrs)</td>
+          <td className={`${cellC} ${colHdr}`} colSpan={7}>Comments on Sales Achievement</td>
         </tr>
 
         {/* R28–R30: budget rows */}
@@ -597,10 +594,10 @@ function SalesOperationGrid({ sheet, stationName }) {
 
         {/* R31: LUBES budget (placeholder zeros) */}
         <tr>
-          <td className={labelCell}>LUBES</td>
-          <td className={`${cellR} ${yellow}`}>0</td>
-          <td className={`${cellR} ${yellow}`}>0</td>
-          <td className={`${cellR} ${yellow}`}>0</td>
+          <td className={fuelCell}>LUBES</td>
+          <td className={`${cellC} font-bold`}>0</td>
+          <td className={`${cellC} font-bold`}>0</td>
+          <td className={`${cellC} font-bold`}>0</td>
           <td className={cellC} colSpan={7}></td>
         </tr>
 
@@ -609,17 +606,17 @@ function SalesOperationGrid({ sheet, stationName }) {
 
         {/* R33: competitor headers */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cellC} ${hdr}`}>Rainoil</td>
-          <td className={`${cellC} ${hdr}`}>Competitor 1</td>
-          <td className={`${cellC} ${hdr}`}>Price 1</td>
-          <td className={`${cellC} ${hdr}`}>Competitor 2</td>
-          <td className={`${cellC} ${hdr}`}>Price 2</td>
-          <td className={`${cellC} ${hdr}`}>Competitor 3</td>
-          <td className={`${cellC} ${hdr}`}>Price 3</td>
-          <td className={`${cellC} ${hdr}`}>Competitor 4</td>
-          <td className={`${cellC} ${hdr}`}>Price 4</td>
-          <td className={`${cell} ${hdr}`}></td>
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cellC} ${colHdr}`}>Rainoil</td>
+          <td className={`${cellC} ${colHdr}`}>Competitor 1</td>
+          <td className={`${cellC} ${colHdr}`}>Price 1</td>
+          <td className={`${cellC} ${colHdr}`}>Competitor 2</td>
+          <td className={`${cellC} ${colHdr}`}>Price 2</td>
+          <td className={`${cellC} ${colHdr}`}>Competitor 3</td>
+          <td className={`${cellC} ${colHdr}`}>Price 3</td>
+          <td className={`${cellC} ${colHdr}`}>Competitor 4</td>
+          <td className={`${cellC} ${colHdr}`}>Price 4</td>
+          <td className={`${cell} ${colHdr}`}></td>
         </tr>
 
         {/* R34–R36: competitor rows */}
@@ -628,53 +625,51 @@ function SalesOperationGrid({ sheet, stationName }) {
         {compRow('DPK')}
 
         {/* R37: LUBE BREAKDOWN title */}
-        <tr><td colSpan={11} className={`${cell} ${section}`}>LUBE SALES BREAKDOWN</td></tr>
+        <tr><td colSpan={11} className={`${cellL} ${section}`}>LUBE SALES BREAKDOWN</td></tr>
 
         {/* R38: lube headers */}
         <tr>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cell} ${hdr}`}></td>
-          <td className={`${cellC} ${hdr}`}>Litre</td>
-          <td className={`${cellC} ${hdr}`}>Unit Price</td>
-          <td className={`${cellC} ${hdr}`}>Opening Stock Units</td>
-          <td className={`${cellC} ${hdr}`}>Product Supply Units</td>
-          <td className={`${cellC} ${hdr}`}>Sales Units</td>
-          <td className={`${cellC} ${hdr}`}>Closing Stock Units</td>
-          <td className={`${cellC} ${hdr}`}>Amount (₦)</td>
-          <td className={`${cellC} ${hdr}`}>Variance Units</td>
-          <td className={`${cell} ${hdr}`}></td>
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cellC} ${colHdr}`}>Litre</td>
+          <td className={`${cellC} ${colHdr}`}>Unit Price</td>
+          <td className={`${cellC} ${colHdr}`}>Opening Stock Units</td>
+          <td className={`${cellC} ${colHdr}`}>Product Supply Units</td>
+          <td className={`${cellC} ${colHdr}`}>Sales Units</td>
+          <td className={`${cellC} ${colHdr}`}>Closing Stock Units</td>
+          <td className={`${cellC} ${colHdr}`}>Amount (₦)</td>
+          <td className={`${cellC} ${colHdr}`}>Variance Units</td>
+          <td className={`${cell} ${colHdr}`}></td>
         </tr>
 
-        {/* R39+: lube product rows */}
+        {/* R39+: lube product rows (A:B merged) */}
         {lubeItems.map((l, i) => (
           <tr key={`lube-${i}`}>
-            <td className={labelCell}>{l.productName}</td>
-            <td className={labelCell}>{l.productName}</td>
-            <td className={`${cellR} ${yellow}`}>{fmt(l.litre)}</td>
-            <td className={`${cellR} ${yellow}`}>{fmt(l.unitPrice)}</td>
-            <td className={`${cellR} ${yellow}`}>{fmt(l.openingStock)}</td>
-            <td className={`${cellR} ${yellow}`}>{fmt(l.productSupply)}</td>
-            <td className={cellR}>{fmt(l.sales)}</td>
-            <td className={`${cellR} ${yellow}`}>{fmt(l.closingStock)}</td>
-            <td className={cellR}>{fmt(l.amount)}</td>
-            <td className={cellR}>{fmt(l.variance)}</td>
+            <td className={cellL} colSpan={2}>{l.productName}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.litre)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.unitPrice)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.openingStock)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.productSupply)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.sales)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.closingStock)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.amount)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(l.variance)}</td>
             <td className={cell}></td>
           </tr>
         ))}
 
         {lubeItems.length > 0 && (
           <tr>
-            <td className={labelCell}>TOTAL</td>
-            <td className={labelCell}>TOTAL</td>
-            <td className={`${cell} ${hdr}`}></td>
-            <td className={`${cell} ${hdr}`}></td>
-            <td className={cellR}>{fmt(lubeTotals.opening)}</td>
-            <td className={cellR}>{fmt(lubeTotals.supply)}</td>
-            <td className={cellR}>{fmt(lubeTotals.sales)}</td>
-            <td className={cellR}>{fmt(lubeTotals.closing)}</td>
-            <td className={cellR}>{fmt(lubeTotals.amount)}</td>
-            <td className={cellR}>{fmt(lubeTotals.variance)}</td>
-            <td className={`${cell} ${hdr}`}></td>
+            <td className={`${cellL} ${fuelLbl} font-bold`} colSpan={2}>TOTAL</td>
+            <td className={cell}></td>
+            <td className={cell}></td>
+            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.opening)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.supply)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.sales)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.closing)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.amount)}</td>
+            <td className={`${cellC} font-bold`}>{fmt(lubeTotals.variance)}</td>
+            <td className={cell}></td>
           </tr>
         )}
       </tbody>
