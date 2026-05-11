@@ -300,13 +300,15 @@ function SalesOperationGrid({ sheet, stationName }) {
   const cellL = `${cell} text-left`
   const cellC = `${cell} text-center`
   const cellR = `${cell} text-right`
-  const label = 'bg-[#B4C6E7] font-bold'      // label cells (Station, Date, Amount, Bank)
+  const label = 'bg-[#B4C6E7] font-bold'      // label cells (Station, Date only)
   const colHdr = 'bg-[#F4B083] font-bold'      // orange column headers
-  const section = 'bg-[#BDD6EE] font-bold'     // section title rows
-  const fuelLbl = 'bg-[#C5E0B3]'               // green PMS/AGO/DPK labels
+  const section = 'bg-[#BDD6EE] font-bold'     // section title rows + blank separators
+  const fuelLbl = 'bg-[#C5E0B3]'               // green — entire col A from R4 to R38
   const yellow = 'bg-[#FFFF00]'                // total/output formula cells
+  const gray = 'bg-[#D8D8D8]'                  // merged blank blocks (B8:J8, H10:K13)
   const labelCell = `${cellL} ${label}`
   const fuelCell = `${cellC} ${fuelLbl}`
+  const fuelLeft = `${cellL} ${fuelLbl} font-bold`
 
   const BUDGET = { PMS: 14400, AGO: 480, DPK: 240 }
   const COMP = {
@@ -439,9 +441,9 @@ function SalesOperationGrid({ sheet, stationName }) {
         <col style={{ width: 100 }} />
       </colgroup>
       <tbody>
-        {/* R1: Station (A1:A2 vertical merge via rowSpan) */}
+        {/* R1: Station (A1:A2 vertical merge via rowSpan, #REF! to match reference) */}
         <tr>
-          <td className={`${cell} ${label}`} rowSpan={2}></td>
+          <td className={`${cellC} ${label}`} rowSpan={2}>#REF!</td>
           <td className={labelCell}>Station</td>
           <td className={`${cellC} font-bold`} colSpan={9}>{stationName || ''}</td>
         </tr>
@@ -456,12 +458,12 @@ function SalesOperationGrid({ sheet, stationName }) {
           <td className={cellL} colSpan={2}>9;00pm</td>
         </tr>
 
-        {/* R3: blank */}
-        <tr><td colSpan={11} className="h-3"></td></tr>
+        {/* R3: blank separator (section blue) */}
+        <tr><td colSpan={11} className={`${cell} ${section} h-3`}></td></tr>
 
-        {/* R4: Fuel headers */}
+        {/* R4: Fuel headers (col A green) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           <td className={`${cellC} ${colHdr}`}>Price 1</td>
           <td className={`${cellC} ${colHdr}`}>Actual Sales @P1</td>
           <td className={`${cellC} ${colHdr}`}>RTT @P1</td>
@@ -479,26 +481,26 @@ function SalesOperationGrid({ sheet, stationName }) {
         {fuelRow('AGO')}
         {fuelRow('DPK')}
 
-        {/* R8: LUBES (B:J merged) */}
+        {/* R8: LUBES (B:J merged with gray fill) */}
         <tr>
           <td className={fuelCell}>LUBES</td>
-          <td className={cell} colSpan={9}></td>
+          <td className={`${cell} ${gray}`} colSpan={9}></td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(lubeAmount)}</td>
         </tr>
 
         {/* R9: STOCK INVENTORY title */}
         <tr><td colSpan={11} className={`${cellL} ${section}`}>STOCK INVENTORY (LITRES)</td></tr>
 
-        {/* R10: stock headers (H:K merged with R11-R13 via rowSpan/colSpan) */}
+        {/* R10: stock headers (col A green; H:K merged with R11-R13 as gray block) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           <td className={`${cellC} ${colHdr}`}>Opening stock</td>
           <td className={`${cellC} ${colHdr}`}>Waybill Qty Supplied</td>
           <td className={`${cellC} ${colHdr}`}>Actual Qty Received</td>
           <td className={`${cellC} ${colHdr}`}>Truck Shortage</td>
           <td className={`${cellC} ${colHdr}`}>Total Dispensed</td>
           <td className={`${cellC} ${colHdr}`}>Closing stock</td>
-          <td className={cell} rowSpan={4} colSpan={4}></td>
+          <td className={`${cell} ${gray}`} rowSpan={4} colSpan={4}></td>
         </tr>
 
         {/* R11–R13 */}
@@ -509,13 +511,13 @@ function SalesOperationGrid({ sheet, stationName }) {
         {/* R14: STOCK RECONCILIATION title */}
         <tr><td colSpan={11} className={`${cellL} ${section}`}>STOCK RECONCILIATION (Litres)</td></tr>
 
-        {/* R15: recon headers (E:K merged) */}
+        {/* R15: recon headers (col A green; E:K merged white) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           <td className={`${cellC} ${colHdr}`}>Expected Overage</td>
           <td className={`${cellC} ${colHdr}`}>Actual Overage</td>
           <td className={`${cellC} ${colHdr}`}>Variance</td>
-          <td className={`${cell} ${colHdr}`} colSpan={7}></td>
+          <td className={cell} colSpan={7}></td>
         </tr>
 
         {/* R16–R18 */}
@@ -523,27 +525,27 @@ function SalesOperationGrid({ sheet, stationName }) {
         {reconRow('AGO')}
         {reconRow('DPK')}
 
-        {/* R19: blank */}
-        <tr><td colSpan={11} className="h-3"></td></tr>
+        {/* R19: blank (section blue) */}
+        <tr><td colSpan={11} className={`${cell} ${section} h-3`}></td></tr>
 
-        {/* R20: deposit + POS headers */}
+        {/* R20: deposit + POS headers (col A green) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           {['Deposit 1', 'Deposit 2', 'Deposit 3', 'Deposit 4', 'Bank POS 1', 'Bank POS 2', 'Bank POS 3', 'Bank POS 4', 'Bank POS 5', 'Bank POS 6'].map(h => (
             <td key={h} className={`${cellC} ${colHdr}`}>{h}</td>
           ))}
         </tr>
 
-        {/* R21: amounts */}
+        {/* R21: amounts (col A green) */}
         <tr>
-          <td className={labelCell}>Amount (₦)</td>
+          <td className={fuelLeft}>Amount (₦)</td>
           {[0, 1, 2, 3].map(i => <td key={`d${i}`} className={`${cellC} font-bold`}>{fmt(deposits[i]?.amount)}</td>)}
           {[0, 1, 2, 3, 4, 5].map(i => <td key={`p${i}`} className={`${cellC} font-bold`}>{fmt(pos[i]?.amount)}</td>)}
         </tr>
 
-        {/* R22: bank names */}
+        {/* R22: bank names (col A green) */}
         <tr>
-          <td className={labelCell}>Bank</td>
+          <td className={fuelLeft}>Bank</td>
           {[0, 1, 2, 3].map(i => <td key={`db${i}`} className={cellC}>{deposits[i]?.bankName || ''}</td>)}
           {[0, 1, 2, 3, 4, 5].map(i => <td key={`pb${i}`} className={cellC}>{pos[i]?.bankName || ''}</td>)}
         </tr>
@@ -551,9 +553,9 @@ function SalesOperationGrid({ sheet, stationName }) {
         {/* R23: CASH RECON title */}
         <tr><td colSpan={11} className={`${cellL} ${section}`}>CASH RECONCILIATION (₦)</td></tr>
 
-        {/* R24: cash recon headers */}
+        {/* R24: cash recon headers (col A green) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           <td className={`${cellC} ${colHdr}`}>Total Expected Sales</td>
           <td className={`${cellC} ${colHdr}`}>Previous Day Cash @ Hand</td>
           <td className={`${cellC} ${colHdr}`}>Total Bank Deposit</td>
@@ -564,9 +566,9 @@ function SalesOperationGrid({ sheet, stationName }) {
           <td className={`${cellC} ${colHdr}`} colSpan={3}>Reason for Cash Variance</td>
         </tr>
 
-        {/* R25: cash values */}
+        {/* R25: cash values (col A green) */}
         <tr>
-          <td className={labelCell}>Amount (₦)</td>
+          <td className={fuelLeft}>Amount (₦)</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalExpectedSales)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.prevDayCash)}</td>
           <td className={`${cellC} font-bold ${yellow}`}>{fmt(cash.totalBankDeposit)}</td>
@@ -577,12 +579,12 @@ function SalesOperationGrid({ sheet, stationName }) {
           <td className={cellL} colSpan={3}>{cash.reason || ''}</td>
         </tr>
 
-        {/* R26: blank */}
-        <tr><td colSpan={11} className="h-3"></td></tr>
+        {/* R26: blank (section blue) */}
+        <tr><td colSpan={11} className={`${cell} ${section} h-3`}></td></tr>
 
-        {/* R27: budget headers */}
+        {/* R27: budget headers (col A green) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           <td className={`${cellC} ${colHdr}`}>Budget (Ltrs)</td>
           <td className={`${cellC} ${colHdr}`}>Achievement</td>
           <td className={`${cellC} ${colHdr}`}>Variance (Ltrs)</td>
@@ -603,12 +605,12 @@ function SalesOperationGrid({ sheet, stationName }) {
           <td className={cellC} colSpan={7}></td>
         </tr>
 
-        {/* R32: blank */}
-        <tr><td colSpan={11} className="h-3"></td></tr>
+        {/* R32: blank (section blue) */}
+        <tr><td colSpan={11} className={`${cell} ${section} h-3`}></td></tr>
 
-        {/* R33: competitor headers */}
+        {/* R33: competitor headers (col A green) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           <td className={`${cellC} ${colHdr}`}>Rainoil</td>
           <td className={`${cellC} ${colHdr}`}>Competitor 1</td>
           <td className={`${cellC} ${colHdr}`}>Price 1</td>
@@ -629,9 +631,9 @@ function SalesOperationGrid({ sheet, stationName }) {
         {/* R37: LUBE BREAKDOWN title */}
         <tr><td colSpan={11} className={`${cellL} ${section}`}>LUBE SALES BREAKDOWN</td></tr>
 
-        {/* R38: lube headers */}
+        {/* R38: lube headers (col A green) */}
         <tr>
-          <td className={`${cell} ${colHdr}`}></td>
+          <td className={`${cell} ${fuelLbl}`}></td>
           <td className={`${cell} ${colHdr}`}></td>
           <td className={`${cellC} ${colHdr}`}>Litre</td>
           <td className={`${cellC} ${colHdr}`}>Unit Price</td>
