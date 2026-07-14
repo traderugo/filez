@@ -186,7 +186,7 @@ export default function LodgementsFormPage() {
           amount: Number(entry.amount) || 0,
           bankId: entry.bankId,
           lodgementType: entry.lodgementType,
-          salesDate: entry.salesDate || null,
+          salesDate: entry.salesDate || formDate,
           notes: entry.notes,
           updatedAt: now,
         }
