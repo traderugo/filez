@@ -9,6 +9,7 @@ import { dailySalesRepo } from '@/lib/repositories/dailySales'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
 import SearchableSelect from '@/components/SearchableSelect'
+import { useSavePush } from '@/components/SavePushProvider'
 import { useSubscription } from '@/lib/hooks/useSubscription'
 
 function blankEntry(nozzles, tanks) {
@@ -73,6 +74,7 @@ function entryFromRecord(entry, nozzles, tanks) {
 export default function DailySalesFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { promptPush } = useSavePush()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
   const editDate = searchParams.get('edit_date') || null
@@ -358,7 +360,7 @@ export default function DailySalesFormPage() {
 
       setSaving(false)
       setSaved(true)
-      router.push(`/dashboard/entries/daily-sales/list?${qs}`)
+      promptPush(() => router.push(`/dashboard/entries/daily-sales/list?${qs}`))
     } catch (err) {
       setError('Failed to save')
       setSaving(false)

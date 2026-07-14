@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { lodgementsRepo } from '@/lib/repositories/lodgements'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
+import { useSavePush } from '@/components/SavePushProvider'
 
 function blankEntry() {
   return { _key: crypto.randomUUID(), id: null, amount: '', bankId: '', lodgementType: 'deposit', salesDate: new Date().toISOString().split('T')[0], notes: '' }
@@ -17,6 +18,7 @@ function blankEntry() {
 export default function LodgementsFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { promptPush } = useSavePush()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
   const editDate = searchParams.get('edit_date') || null
@@ -202,7 +204,7 @@ export default function LodgementsFormPage() {
 
       setSaving(false)
       setSaved(true)
-      router.push(`/dashboard/entries/lodgements/list?${qs}`)
+      promptPush(() => router.push(`/dashboard/entries/lodgements/list?${qs}`))
     } catch (err) {
       setError('Failed to save')
       setSaving(false)

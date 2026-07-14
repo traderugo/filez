@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { productReceiptsRepo } from '@/lib/repositories/productReceipts'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
+import { useSavePush } from '@/components/SavePushProvider'
 
 function blankEntry(tanks) {
   return {
@@ -99,6 +100,7 @@ function groupRecordsIntoEntries(records, tanks) {
 export default function ProductReceiptFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { promptPush } = useSavePush()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
   const editDate = searchParams.get('edit_date') || null
@@ -276,7 +278,7 @@ export default function ProductReceiptFormPage() {
 
       setSaving(false)
       setSaved(true)
-      router.push(`/dashboard/entries/product-receipt/list?${qs}`)
+      promptPush(() => router.push(`/dashboard/entries/product-receipt/list?${qs}`))
     } catch (err) {
       setError('Failed to save')
       setSaving(false)

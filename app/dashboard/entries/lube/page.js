@@ -10,6 +10,7 @@ import { lubeSalesRepo } from '@/lib/repositories/lubeSales'
 import { lubeStockRepo } from '@/lib/repositories/lubeStock'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
+import { useSavePush } from '@/components/SavePushProvider'
 
 function blankSalesEntry() {
   return { _key: crypto.randomUUID(), id: null, productId: '', unitSold: '', unitReceived: '', price: '', notes: '' }
@@ -118,6 +119,7 @@ export default function LubeFormPage() {
 
 function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
   const router = useRouter()
+  const { promptPush } = useSavePush()
   const [loading, setLoading] = useState(!!(editId || editDate))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -261,7 +263,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
 
       setSaving(false)
       setSaved(true)
-      router.push(`/dashboard/entries/lube/list?${qs}`)
+      promptPush(() => router.push(`/dashboard/entries/lube/list?${qs}`))
     } catch (err) {
       setError('Failed to save')
       setSaving(false)
@@ -340,6 +342,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
 
 function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
   const router = useRouter()
+  const { promptPush } = useSavePush()
   const [loading, setLoading] = useState(!!(editId || editDate))
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -473,7 +476,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
 
       setSaving(false)
       setSaved(true)
-      router.push(`/dashboard/entries/lube/list?${qs}`)
+      promptPush(() => router.push(`/dashboard/entries/lube/list?${qs}`))
     } catch (err) {
       setError('Failed to save')
       setSaving(false)

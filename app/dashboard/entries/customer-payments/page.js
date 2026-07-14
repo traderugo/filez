@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { customerPaymentsRepo } from '@/lib/repositories/customerPayments'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
+import { useSavePush } from '@/components/SavePushProvider'
 
 function blankEntry() {
   return { _key: crypto.randomUUID(), id: null, customerId: '', amountPaid: '', salesAmount: '', notes: '' }
@@ -17,6 +18,7 @@ function blankEntry() {
 export default function CustomerPaymentsFormPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { promptPush } = useSavePush()
   const orgId = searchParams.get('org_id') || ''
   const editId = searchParams.get('edit') || null
   const editDate = searchParams.get('edit_date') || null
@@ -181,7 +183,7 @@ export default function CustomerPaymentsFormPage() {
 
       setSaving(false)
       setSaved(true)
-      router.push(`/dashboard/entries/customer-payments/list?${qs}`)
+      promptPush(() => router.push(`/dashboard/entries/customer-payments/list?${qs}`))
     } catch (err) {
       setError('Failed to save')
       setSaving(false)

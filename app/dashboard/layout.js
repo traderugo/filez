@@ -4,6 +4,7 @@ import { Suspense, useEffect } from 'react'
 import { useSearchParams, useParams } from 'next/navigation'
 import { useRemoteChanges } from '@/lib/hooks/useRemoteChanges'
 import { repairSync } from '@/lib/sync'
+import SavePushProvider from '@/components/SavePushProvider'
 
 function BackgroundSync() {
   const searchParams = useSearchParams()
@@ -24,7 +25,9 @@ export default function DashboardLayout({ children }) {
   return (
     <Suspense>
       <BackgroundSync />
-      {children}
+      <SavePushProvider>
+        {children}
+      </SavePushProvider>
     </Suspense>
   )
 }
