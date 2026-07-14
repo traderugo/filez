@@ -1,6 +1,7 @@
 import localFont from 'next/font/local'
 import './globals.css'
 import AppShell from '@/components/AppShell'
+import PWAUpdateToast from '@/components/PWAUpdateToast'
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -30,6 +31,7 @@ export default function RootLayout({ children }) {
         <AppShell>
           {children}
         </AppShell>
+        <PWAUpdateToast />
       </body>
     </html>
   )
