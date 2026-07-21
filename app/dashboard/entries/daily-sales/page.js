@@ -8,10 +8,10 @@ import { db } from '@/lib/db'
 import { dailySalesRepo } from '@/lib/repositories/dailySales'
 import DateInput from '@/components/DateInput'
 import Toggle from '@/components/Toggle'
-import SearchableSelect from '@/components/SearchableSelect'
 import { useSavePush } from '@/components/SavePushProvider'
 import { useSubscription } from '@/lib/hooks/useSubscription'
 import { fmtDate } from '@/lib/formatDate'
+import { isDefaultAccount } from '@/lib/defaultAccounts'
 
 function blankEntry(nozzles, tanks) {
   return {
@@ -106,6 +106,9 @@ export default function DailySalesFormPage() {
   const [prevTankClosing, setPrevTankClosing] = useState({})
   const [allDates, setAllDates] = useState([])
   const [consModal, setConsModal] = useState(null) // { entryIdx, nozzleIdx, type: 'consumption' | 'pour_back' }
+  // Fields already offered the sheet once. Without this, every blur re-opens it and the
+  // form becomes impossible to tab through after declining once.
+  const autoPrompted = useRef(new Set())
 
   useEffect(() => {
     let cancelled = false
@@ -240,6 +243,31 @@ export default function DailySalesFormPage() {
   }
 
   const isEditing = !!(editId || editDate || originalIds.length > 0)
+  // Only the station's default accounts (Police, Generator, Pour Back After Pump Repairs
+  // and so on). A credit customer is not what consumption or pour back is booked to, and
+  // listing every customer made the picker a search box for a list of about twenty.
+  const defaultAccounts = customers
+    .filter(isDefaultAccount)
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+
+  /**
+   * Offer the account sheet when a consumption or pour-back field is left with a value and
+   * no account attached — that pairing is always required, and it was easy to key a figure
+   * and walk away without it. Offered once per field so declining is respected; the person
+   * icon beside the field reopens it.
+   */
+  const maybePromptAccount = (entryIdx, nozzleIdx, type) => {
+    const reading = entries[entryIdx]?.nozzleReadings?.[nozzleIdx]
+    if (!reading) return
+    const value = type === 'pour_back' ? reading.pour_back : reading.consumption
+    if (!(Number(value) > 0)) return
+    const field = type === 'pour_back' ? 'pour_back_customer_id' : 'consumption_customer_id'
+    if (reading[field]) return
+    const key = `${entryIdx}:${nozzleIdx}:${type}`
+    if (autoPrompted.current.has(key)) return
+    autoPrompted.current.add(key)
+    setConsModal({ entryIdx, nozzleIdx, type })
+  }
 
   const updateEntry = (idx, field, value) => {
     setEntries(prev => prev.map((e, i) => i === idx ? { ...e, [field]: value } : e))
@@ -520,7 +548,7 @@ export default function DailySalesFormPage() {
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
                           <div className="flex items-center">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'consumption')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                             {consHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'consumption' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${consCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={consCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
@@ -531,7 +559,7 @@ export default function DailySalesFormPage() {
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P.B.</label>
                           <div className="flex items-center">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'pour_back')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                             {pbHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'pour_back' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${pbCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={pbCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
@@ -672,43 +700,63 @@ export default function DailySalesFormPage() {
         </div>
       )}
 
-      {/* Consumption account modal */}
+      {/* Consumption / pour-back account sheet.
+          A bottom sheet rather than a centred dialog: this is filled in one-handed on a
+          phone at the pump, so the choices belong within thumb reach. It lists the station's
+          default accounts only, one tap to pick — no search box for a list this short. */}
       {consModal && (() => {
         const r = entries[consModal.entryIdx]?.nozzleReadings[consModal.nozzleIdx]
         if (!r) return null
         const field = consModal.type === 'pour_back' ? 'pour_back_customer_id' : 'consumption_customer_id'
         const heading = consModal.type === 'pour_back' ? 'Pour Back Account' : 'Consumption Account'
         const currentValue = r[field]
-        const custName = currentValue ? customers.find(c => c.id === currentValue)?.name : null
+        const litres = consModal.type === 'pour_back' ? r.pour_back : r.consumption
+        const pick = (val) => {
+          updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, field, val)
+          setConsModal(null)
+        }
         return (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setConsModal(null)}>
-            <div className="bg-white w-full sm:max-w-sm sm:rounded-lg shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setConsModal(null)}>
+            <div className="bg-white w-full sm:max-w-md max-h-[80vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{heading}</h3>
-                  <p className="text-xs text-gray-500">{r.label}: {Number(r.consumption) || 0}L cons, {Number(r.pour_back) || 0}L P.B.</p>
+                  <p className="text-xs text-gray-500">{r.label} · {Number(litres) || 0}L</p>
                 </div>
-                <button type="button" onClick={() => setConsModal(null)} className="text-gray-400 hover:text-gray-600">
+                <button type="button" onClick={() => setConsModal(null)} className="text-gray-400 hover:text-gray-600 p-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="p-4">
-                <SearchableSelect
-                  value={currentValue}
-                  onChange={(val) => {
-                    updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, field, val)
-                    setConsModal(null)
-                  }}
-                  options={customers.map(c => ({ value: c.id, label: c.name || 'Unnamed', sub: c.phone || '' }))}
-                  placeholder="Select account..."
-                  className="text-sm"
-                />
-                {custName && (
-                  <button type="button" onClick={() => { updateNozzleReading(consModal.entryIdx, consModal.nozzleIdx, field, ''); setConsModal(null) }} className="mt-2 text-xs text-red-500 hover:text-red-700">
+
+              <div className="overflow-y-auto divide-y divide-gray-100">
+                {defaultAccounts.length === 0 ? (
+                  <p className="px-4 py-6 text-sm text-gray-500 text-center">
+                    No default accounts set up for this station yet.
+                  </p>
+                ) : defaultAccounts.map((c) => {
+                  const selected = c.id === currentValue
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => pick(c.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm ${selected ? 'bg-blue-50 text-blue-800 font-medium' : 'text-gray-800 hover:bg-gray-50'}`}
+                    >
+                      <span className="flex-1">{c.name || 'Unnamed'}</span>
+                      {selected && <Check className="w-4 h-4 flex-shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {currentValue && (
+                <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0"
+                     style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+                  <button type="button" onClick={() => pick('')} className="text-sm text-red-600 hover:text-red-700">
                     Remove account
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         )
