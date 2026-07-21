@@ -711,8 +711,8 @@ export default function DailySalesFormPage() {
         }
         return (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setConsModal(null)}>
-            <div className="bg-white w-full sm:max-w-md max-h-[80vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
+            <div className="bg-white w-full sm:max-w-md max-h-[55vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 flex-shrink-0">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{heading}</h3>
                   <p className="text-xs text-gray-500">{r.label} · {Number(litres) || 0}L</p>
@@ -734,7 +734,7 @@ export default function DailySalesFormPage() {
                       key={c.id}
                       type="button"
                       onClick={() => pick(c.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 text-left text-sm ${selected ? 'bg-blue-50 text-blue-800 font-medium' : 'text-gray-800 hover:bg-gray-50'}`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm ${selected ? 'bg-blue-50 text-blue-800 font-medium' : 'text-gray-800 hover:bg-gray-50'}`}
                     >
                       <span className="flex-1">{c.name || 'Unnamed'}</span>
                       {selected && <Check className="w-4 h-4 flex-shrink-0" />}
@@ -744,8 +744,8 @@ export default function DailySalesFormPage() {
               </div>
 
               {currentValue && (
-                <div className="px-4 py-3 border-t border-gray-200 flex-shrink-0"
-                     style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
+                <div className="px-4 py-2 border-t border-gray-200 flex-shrink-0"
+                     style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
                   <button type="button" onClick={() => pick('')} className="text-sm text-red-600 hover:text-red-700">
                     Remove account
                   </button>
