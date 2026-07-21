@@ -652,17 +652,11 @@ export default function DailySalesFormPage() {
             </h3>
           </div>
           <div className="px-4 py-3">
-            <p className="text-sm text-gray-700 mb-3">
-              Removes {originalIds.length} saved {originalIds.length === 1 ? 'entry' : 'entries'} for{' '}
-              <span className="font-semibold text-gray-900">{fmtDate(loadedDate)}</span> so the day can be entered again from scratch.
+            <p className="text-sm text-gray-700 mb-4">
+              Permanently deletes the {originalIds.length} {originalIds.length === 1 ? 'entry' : 'entries'} for{' '}
+              <span className="font-semibold text-gray-900">{fmtDate(loadedDate)}</span> so the day can be entered again from
+              scratch. This cannot be undone and every report covering the date will change. Lodgements, receipts and lube are untouched.
             </p>
-            <ul className="text-xs text-gray-600 space-y-1 mb-4 list-disc list-inside">
-              <li><span className="font-medium text-gray-800">This cannot be undone.</span> Once synced, the entries are gone from the server too.</li>
-              <li>Every report covering this date changes — daily sales, audit, analytics, inventory log and sales overview.</li>
-              <li>Later days are unaffected: readings chain from each day&apos;s own meters, not from this one.</li>
-              <li>Lodgements, product receipts and lube records for {fmtDate(loadedDate)} are <span className="font-medium text-gray-800">not</span> touched. Delete those from their own pages.</li>
-              <li>If you only want to correct a figure, close this and edit the entry instead.</li>
-            </ul>
             {deleteError && <p className="text-sm text-red-600 mb-3">{deleteError}</p>}
             <button
               type="button"
