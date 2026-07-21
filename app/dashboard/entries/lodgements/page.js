@@ -2,14 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Loader2, List, Trash2, AlertTriangle, Lock, Plus, ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { Loader2, List, Trash2, AlertTriangle, Lock, Plus, ChevronLeft, ChevronRight, Check, ChevronDown, X } from 'lucide-react'
 import Link from 'next/link'
 import { useSubscription } from '@/lib/hooks/useSubscription'
 import { db } from '@/lib/db'
 import { lodgementsRepo } from '@/lib/repositories/lodgements'
 import DateInput from '@/components/DateInput'
-import SearchableSelect from '@/components/SearchableSelect'
 import { useSavePush } from '@/components/SavePushProvider'
+
+/** What distinguishes two accounts at the same bank: the POS terminal, or the type. */
+function bankSub(b) {
+  if (!b) return ''
+  if (b.lodgement_type === 'pos') return b.terminal_id || 'POS'
+  return b.lodgement_type || ''
+}
 
 function blankEntry() {
   return { _key: crypto.randomUUID(), id: null, amount: '', bankId: '', lodgementType: 'deposit', salesDate: new Date().toISOString().split('T')[0], notes: '' }
@@ -34,6 +40,9 @@ export default function LodgementsFormPage() {
 
   const [formDate, setFormDate] = useState(new Date().toISOString().split('T')[0])
   const [entries, setEntries] = useState([blankEntry()])
+  // Which entry's account picker is open, as an index. Same bottom sheet as the daily-sales
+  // consumption picker: chosen one-handed on a phone, so the options belong in thumb reach.
+  const [bankSheet, setBankSheet] = useState(null)
   const [originalIds, setOriginalIds] = useState([])
   const [allDates, setAllDates] = useState([])
   const submittingRef = useRef(false)
@@ -268,12 +277,22 @@ export default function LodgementsFormPage() {
               </div>
               <div>
                 <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Bank Account</label>
-                <SearchableSelect
-                  value={entry.bankId}
-                  onChange={(val) => updateEntry(idx, 'bankId', val)}
-                  options={banks.map((b) => ({ value: b.id, label: b.bank_name, sub: b.lodgement_type === 'pos' ? (b.terminal_id || 'POS') : b.lodgement_type === 'transfer' ? 'transfer' : b.lodgement_type })).sort((a, b) => a.label.localeCompare(b.label))}
-                  placeholder="Select account"
-                />
+                {(() => {
+                  const chosen = banks.find((b) => b.id === entry.bankId)
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setBankSheet(idx)}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-base bg-transparent hover:bg-blue-50"
+                    >
+                      <span className={`flex-1 truncate ${chosen ? 'text-gray-900' : 'text-gray-400'}`}>
+                        {chosen ? chosen.bank_name : 'Select account'}
+                        {chosen && <span className="text-gray-400"> · {bankSub(chosen)}</span>}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    </button>
+                  )
+                })()}
               </div>
             </div>
             <div className="grid grid-cols-2 divide-x divide-gray-300">
@@ -319,6 +338,66 @@ export default function LodgementsFormPage() {
           </button>
         </div>
       </form>
+
+      {/* Account / terminal sheet — the same picker as the daily-sales consumption account.
+          A station has a handful of accounts and several POS terminals at the same bank, so
+          the terminal is shown beside each name; that is usually the only thing telling two
+          rows apart. */}
+      {bankSheet !== null && (() => {
+        const entry = entries[bankSheet]
+        if (!entry) return null
+        const ordered = [...banks].sort(
+          (a, b) => (a.bank_name || '').localeCompare(b.bank_name || '') ||
+            bankSub(a).localeCompare(bankSub(b))
+        )
+        const pick = (val) => { updateEntry(bankSheet, 'bankId', val); setBankSheet(null) }
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setBankSheet(null)}>
+            <div className="bg-white w-full sm:max-w-md max-h-[55vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 flex-shrink-0">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Bank Account</h3>
+                  <p className="text-xs text-gray-500">Entry {bankSheet + 1}</p>
+                </div>
+                <button type="button" onClick={() => setBankSheet(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto divide-y divide-gray-100">
+                {ordered.length === 0 ? (
+                  <p className="px-4 py-6 text-sm text-gray-500 text-center">No bank accounts set up for this station yet.</p>
+                ) : ordered.map((b) => {
+                  const selected = b.id === entry.bankId
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => pick(b.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm ${selected ? 'bg-blue-50 text-blue-800 font-medium' : 'text-gray-800 hover:bg-gray-50'}`}
+                    >
+                      <span className="flex-1 truncate">
+                        {b.bank_name}
+                        <span className={selected ? 'text-blue-600' : 'text-gray-400'}> · {bankSub(b)}</span>
+                      </span>
+                      {selected && <Check className="w-4 h-4 flex-shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {entry.bankId && (
+                <div className="px-4 py-2 border-t border-gray-200 flex-shrink-0"
+                     style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
+                  <button type="button" onClick={() => pick('')} className="text-sm text-red-600 hover:text-red-700">
+                    Clear selection
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
