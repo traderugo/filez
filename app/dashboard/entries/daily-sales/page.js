@@ -11,6 +11,7 @@ import Toggle from '@/components/Toggle'
 import SearchableSelect from '@/components/SearchableSelect'
 import { useSavePush } from '@/components/SavePushProvider'
 import { useSubscription } from '@/lib/hooks/useSubscription'
+import { fmtDate } from '@/lib/formatDate'
 
 function blankEntry(nozzles, tanks) {
   return {
@@ -94,6 +95,12 @@ export default function DailySalesFormPage() {
   const [entries, setEntries] = useState([])
   const [activeTab, setActiveTab] = useState(0)
   const [originalIds, setOriginalIds] = useState([])
+  // The date this form was LOADED from. Deletion targets this, never formDate, because the
+  // date field is editable and a half-typed change would otherwise clear the wrong day.
+  const [loadedDate, setLoadedDate] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deletingDay, setDeletingDay] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   // Previous day's last closing meter per pump_id — used when the user leaves a nozzle blank
   const [prevClosing, setPrevClosing] = useState({})
   const [prevTankClosing, setPrevTankClosing] = useState({})
@@ -132,6 +139,7 @@ export default function DailySalesFormPage() {
         if (entry && !cancelled) {
           const date = entry.entryDate || entry.entry_date || ''
           setFormDate(date)
+          setLoadedDate(date)
           setOriginalIds([entry.id])
           const built = [entryFromRecord(entry, noz, tnk)]
           setEntries(built)
@@ -143,6 +151,7 @@ export default function DailySalesFormPage() {
           .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0))
         if (dateEntries.length > 0 && !cancelled) {
           setFormDate(editDate)
+          setLoadedDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
           const built = dateEntries.map(e => entryFromRecord(e, noz, tnk))
           setEntries(built)
@@ -368,6 +377,20 @@ export default function DailySalesFormPage() {
     }
   }
 
+  const deleteWholeDay = async () => {
+    if (!loadedDate) return
+    setDeletingDay(true)
+    setDeleteError('')
+    try {
+      await dailySalesRepo.removeByDate(orgId, loadedDate)
+      router.push(`/dashboard/entries/daily-sales/list?${qs}`)
+    } catch (err) {
+      // Shown rather than swallowed: a half-cleared day is worth knowing about immediately.
+      setDeleteError(`Could not delete: ${err?.message || err}`)
+      setDeletingDay(false)
+    }
+  }
+
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
 
   if (locked) return (
@@ -590,6 +613,64 @@ export default function DailySalesFormPage() {
           </button>
         </div>
       </form>
+
+      {/* Danger zone — outside the <form> so the button can never submit it. Only offered
+          when a saved day is open: there is nothing to delete on a fresh entry. */}
+      {isEditing && loadedDate && (
+        <div className="mt-10 border border-red-200 bg-red-50/50">
+          <div className="px-4 py-3 border-b border-red-200">
+            <h3 className="text-sm font-semibold text-red-800 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" /> Delete this day
+            </h3>
+          </div>
+          <div className="px-4 py-3">
+            <p className="text-sm text-gray-700 mb-3">
+              Removes {originalIds.length} saved {originalIds.length === 1 ? 'entry' : 'entries'} for{' '}
+              <span className="font-semibold text-gray-900">{fmtDate(loadedDate)}</span> so the day can be entered again from scratch.
+            </p>
+            <ul className="text-xs text-gray-600 space-y-1 mb-4 list-disc list-inside">
+              <li><span className="font-medium text-gray-800">This cannot be undone.</span> Once synced, the entries are gone from the server too.</li>
+              <li>Every report covering this date changes — daily sales, audit, analytics, inventory log and sales overview.</li>
+              <li>Later days are unaffected: readings chain from each day&apos;s own meters, not from this one.</li>
+              <li>Lodgements, product receipts and lube records for {fmtDate(loadedDate)} are <span className="font-medium text-gray-800">not</span> touched. Delete those from their own pages.</li>
+              <li>If you only want to correct a figure, close this and edit the entry instead.</li>
+            </ul>
+            {deleteError && <p className="text-sm text-red-600 mb-3">{deleteError}</p>}
+            <button
+              type="button"
+              onClick={() => { setDeleteError(''); setConfirmDelete(true) }}
+              className="flex items-center gap-2 border border-red-300 text-red-700 px-4 py-2 text-sm font-medium hover:bg-red-100"
+            >
+              <Trash2 className="w-4 h-4" /> Delete all entries for this day
+            </button>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4" onClick={() => (deletingDay ? null : setConfirmDelete(false))}>
+          <div className="bg-white w-full sm:max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-gray-200">
+              <h3 className="text-sm font-semibold text-gray-900">Delete {fmtDate(loadedDate)}?</h3>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-gray-600 mb-4">
+                {originalIds.length} {originalIds.length === 1 ? 'entry' : 'entries'} will be permanently deleted. This cannot be undone.
+              </p>
+              {deleteError && <p className="text-sm text-red-600 mb-3">{deleteError}</p>}
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setConfirmDelete(false)} disabled={deletingDay} className="flex-1 border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                  Cancel
+                </button>
+                <button type="button" onClick={deleteWholeDay} disabled={deletingDay} className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white px-3 py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50">
+                  {deletingDay && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {deletingDay ? 'Deleting…' : 'Delete day'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Consumption account modal */}
       {consModal && (() => {
