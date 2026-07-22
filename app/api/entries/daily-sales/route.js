@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { authenticateUser, getServiceClient, paginationParams, requireService, logActivity } from '@/lib/entryHelpers'
+import { cobDuplicateMessage } from '@/lib/dailySalesGuards'
 
 const TABLE = 'daily_sales_entries'
 const SERVICE_KEY = 'fuel-operations'
@@ -69,6 +70,20 @@ export async function POST(request) {
 
     const supabase = getServiceClient()
 
+    // One close-of-business entry per station per day. The client checks only the local mirror,
+    // which can be stale; enforce it here against the authoritative DB (and via a unique index)
+    // so an out-of-date device cannot create a duplicate close-of-business row. Multiple
+    // non-close-of-business shift entries per day are allowed.
+    if (close_of_business) {
+      let cobQuery = supabase.from(TABLE).select('id')
+        .eq('org_id', user.org_id).eq('entry_date', entry_date)
+        .eq('close_of_business', true).is('deleted_at', null).limit(1)
+      if (id) cobQuery = cobQuery.neq('id', id)
+      const { data: otherCob } = await cobQuery
+      const dupMsg = cobDuplicateMessage(true, !!(otherCob && otherCob.length))
+      if (dupMsg) return NextResponse.json({ error: dupMsg }, { status: 409 })
+    }
+
     const { data, error: dbError } = await supabase
       .from(TABLE)
       .upsert({
@@ -87,6 +102,11 @@ export async function POST(request) {
       .single()
 
     if (dbError) {
+      // Unique-index race (a concurrent second close-of-business). Return 409 so the client
+      // drops it instead of retrying a doomed insert forever.
+      if (dbError.code === '23505') {
+        return NextResponse.json({ error: 'A close-of-business entry already exists for this date.' }, { status: 409 })
+      }
       return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 })
     }
 
@@ -129,6 +149,22 @@ export async function PATCH(request) {
     if (notes !== undefined) updates.notes = notes?.trim() || null
     if (close_of_business !== undefined) updates.close_of_business = !!close_of_business
 
+    // Marking an entry close-of-business must not create a second one for its date.
+    if (updates.close_of_business === true) {
+      let targetDate = updates.entry_date
+      if (!targetDate) {
+        const { data: cur } = await supabase.from(TABLE).select('entry_date').eq('id', id).eq('org_id', user.org_id).single()
+        targetDate = cur?.entry_date
+      }
+      if (targetDate) {
+        const { data: otherCob } = await supabase.from(TABLE).select('id')
+          .eq('org_id', user.org_id).eq('entry_date', targetDate)
+          .eq('close_of_business', true).is('deleted_at', null).neq('id', id).limit(1)
+        const dupMsg = cobDuplicateMessage(true, !!(otherCob && otherCob.length))
+        if (dupMsg) return NextResponse.json({ error: dupMsg }, { status: 409 })
+      }
+    }
+
     const { data, error: dbError } = await supabase
       .from(TABLE)
       .update(updates)
@@ -138,6 +174,9 @@ export async function PATCH(request) {
       .single()
 
     if (dbError) {
+      if (dbError.code === '23505') {
+        return NextResponse.json({ error: 'A close-of-business entry already exists for this date.' }, { status: 409 })
+      }
       return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 })
     }
 
