@@ -12,6 +12,7 @@ import { useSavePush } from '@/components/SavePushProvider'
 import { useSubscription } from '@/lib/hooks/useSubscription'
 import { fmtDate } from '@/lib/formatDate'
 import { isDefaultAccount } from '@/lib/defaultAccounts'
+import { orderedCreatedAt } from '@/lib/dailySalesOrder'
 
 function blankEntry(nozzles, tanks) {
   return {
@@ -338,7 +339,8 @@ export default function DailySalesFormPage() {
     setError('')
 
     try {
-      const now = new Date().toISOString()
+      const nowMs = Date.now()
+      const now = new Date(nowMs).toISOString()
       const currentIds = entries.filter(e => e.id).map(e => e.id)
 
       if (isEditing) {
@@ -348,7 +350,8 @@ export default function DailySalesFormPage() {
         }
       }
 
-      for (const entry of entries) {
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i]
         const readings = entry.nozzleReadings.map(r => ({
           pump_id: r.pump_id,
           nozzle_label: r.label,
@@ -389,7 +392,9 @@ export default function DailySalesFormPage() {
           const existing = await dailySalesRepo.getById(entry.id)
           await dailySalesRepo.update({ ...existing, ...record })
         } else {
-          record.createdAt = now
+          // Distinct, increasing createdAt by tab position so a multi-entry save keeps its
+          // order when the day is reopened (the loader sorts entries by createdAt).
+          record.createdAt = orderedCreatedAt(nowMs, i)
           await dailySalesRepo.create(record)
         }
 
@@ -547,8 +552,10 @@ export default function DailySalesFormPage() {
                         </div>
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
-                          <div className="flex items-center">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'consumption')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                          {/* px on the wrapper leaves a non-tappable gutter so leaving this
+                              field does not land focus on the pour-back input beside it. */}
+                          <div className="flex items-center px-1.5">
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'consumption')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                             {consHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'consumption' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${consCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={consCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
@@ -558,8 +565,8 @@ export default function DailySalesFormPage() {
                         </div>
                         <div>
                           <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P.B.</label>
-                          <div className="flex items-center">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'pour_back')} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                          <div className="flex items-center px-1.5">
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'pour_back')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
                             {pbHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'pour_back' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${pbCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={pbCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
