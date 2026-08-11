@@ -19,43 +19,16 @@ import { processQueue, clearQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
 import { supabase } from '@/lib/supabaseClient'
 import { OUTLINE } from '@/components/ui'
+import {
+  ENTRY_LINKS, REPORT_LINKS, ALL_PAGE_KEYS, canAccessPage,
+  ENTRY_PERMISSION_OPTIONS as ENTRY_PAGE_OPTIONS,
+  REPORT_PERMISSION_OPTIONS as REPORT_PAGE_OPTIONS,
+} from '@/lib/stationNav'
 
 // Literal white, because this pip sits ON a filled coloured button, where a surface token
 // would resolve to the page background and vanish. Same reason IconChip has an "onColor"
 // variant. rounded-full is intended — the square-corner rule exempts pills.
 const COUNT_PIP = 'bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center' // design-exception
-
-const ENTRY_PAGE_OPTIONS = [
-  { key: 'daily-sales', label: 'Daily Sales' },
-  { key: 'product-receipt', label: 'Product Receipt' },
-  { key: 'lodgements', label: 'Lodgements' },
-  { key: 'lube', label: 'Lube' },
-  { key: 'customer-payments', label: 'Accounts' },
-]
-
-const REPORT_PAGE_OPTIONS = [
-  { key: 'report-summary', label: 'Summary' },
-  { key: 'report-daily-sales', label: 'Daily Sales Report' },
-  { key: 'report-sales-operation', label: 'Sales Operation' },
-  { key: 'report-audit', label: 'Audit Report', children: [
-    { key: 'report-audit-sales-cash', label: 'Sales/Cash Position' },
-    { key: 'report-audit-lodgement-sheet', label: 'Lodgement Sheet' },
-    { key: 'report-audit-stock-position', label: 'Record of Stock Position' },
-    { key: 'report-audit-stock-summary', label: 'Stock Position' },
-    { key: 'report-audit-consumption', label: 'Consumption & Pour Back' },
-    { key: 'report-audit-calculator', label: 'Calculator' },
-    { key: 'report-audit-product-received', label: 'Product Received' },
-  ]},
-  { key: 'report-account-ledger', label: 'Account Ledger' },
-  { key: 'report-product-received', label: 'Product Received' },
-  { key: 'report-lube', label: 'Lube Report' },
-  { key: 'imprest', label: 'Imprest' },
-]
-
-const ALL_PAGE_KEYS = [
-  ...ENTRY_PAGE_OPTIONS.map(p => p.key),
-  ...REPORT_PAGE_OPTIONS.flatMap(p => p.children ? [p.key, ...p.children.map(c => c.key)] : [p.key]),
-]
 
 export default function StationPage() {
   const router = useRouter()
@@ -354,29 +327,10 @@ export default function StationPage() {
     )
   }
 
-  const canAccess = (pageKey) => isOwner || visiblePages.includes(pageKey)
+  const canAccess = (pageKey) => canAccessPage(pageKey, { isOwner, visiblePages })
 
-  const entryLinks = [
-    { href: `/dashboard/entries/daily-sales/list?org_id=${stationId}`, icon: FileSpreadsheet, label: 'Daily Sales', desc: 'Nozzle readings, stock, pricing', pageKey: 'daily-sales' },
-    { href: `/dashboard/entries/product-receipt/list?org_id=${stationId}`, icon: ClipboardList, label: 'Product Receipt', desc: 'Deliveries and waybills', pageKey: 'product-receipt' },
-    { href: `/dashboard/entries/lodgements/list?org_id=${stationId}`, icon: CreditCard, label: 'Lodgements', desc: 'Deposits and POS', pageKey: 'lodgements' },
-    { href: `/dashboard/entries/lube/list?org_id=${stationId}`, icon: Droplets, label: 'Lube', desc: 'Lube sales and stock', pageKey: 'lube' },
-    { href: `/dashboard/entries/customer-payments/list?org_id=${stationId}`, icon: Users, label: 'Accounts', desc: 'Credit sales and payments', pageKey: 'customer-payments' },
-  ]
-
-  const reportLinks = [
-    { href: `/dashboard/reports/summary?org_id=${stationId}`, icon: FileText, label: 'Summary', desc: 'Overview summary report', pageKey: 'report-summary' },
-    { href: `/dashboard/reports/daily-sales-report?org_id=${stationId}`, icon: BarChart3, label: 'Daily Sales Report', desc: 'Nozzle sales, POS, and cash', pageKey: 'report-daily-sales' },
-    { href: `/dashboard/reports/sales-operation?org_id=${stationId}`, icon: Activity, label: 'Sales Operation', desc: 'Daily sales, stock, recon — per shift', pageKey: 'report-sales-operation' },
-    { href: `/dashboard/reports/sales-overview?org_id=${stationId}`, icon: TrendingUp, label: 'Sales Overview', desc: 'Daily volume, price, and amount per fuel', pageKey: 'report-sales-overview' },
-    { href: `/dashboard/reports/inventory-log?org_id=${stationId}`, icon: Boxes, label: 'Inventory Log', desc: 'Daily stock, supply, OV/SH, and variance', pageKey: 'report-inventory-log' },
-    { href: `/dashboard/reports/analytics?org_id=${stationId}`, icon: LineChart, label: 'Analytics', desc: 'KPIs, stock, variance, and revenue trends', pageKey: 'report-analytics' },
-    { href: `/dashboard/reports/audit-report?org_id=${stationId}`, icon: ClipboardList, label: 'Audit Report', desc: 'Station audit trail', pageKey: 'report-audit' },
-    { href: `/dashboard/reports/account-ledger?org_id=${stationId}`, icon: BookOpen, label: 'Account Ledger', desc: 'Credit accounts and balances', pageKey: 'report-account-ledger' },
-    { href: `/dashboard/reports/product-received?org_id=${stationId}`, icon: Truck, label: 'Product Received', desc: 'Deliveries, waybills, shortages', pageKey: 'report-product-received' },
-    { href: `/dashboard/reports/lube-report?org_id=${stationId}`, icon: Droplets, label: 'Lube Report', desc: 'Lube sales, stock, and lodgements', pageKey: 'report-lube' },
-    { href: `/dashboard/reports/imprest?org_id=${stationId}`, icon: Wallet, label: 'Imprest', desc: 'Petty cash entries and reports', pageKey: 'imprest' },
-  ]
+  const entryLinks = ENTRY_LINKS(stationId)
+  const reportLinks = REPORT_LINKS(stationId)
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
