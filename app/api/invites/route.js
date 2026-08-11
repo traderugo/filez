@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess, canAdministerStation } from '@/lib/stationAccess'
+import { logStationAssist } from '@/lib/adminActivity'
 import { rateLimit } from '@/lib/rateLimit'
 
 // GET — user checks their pending invites
@@ -73,15 +75,10 @@ export async function POST(request) {
 
     const supabase = getAdminClient()
 
-    // Verify user owns this station
-    const { data: station } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('id', org_id)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
+    // Owner or platform admin. Deliberately NOT ordinary staff: letting a member invite
+    // more members would be a privilege escalation, and is not what admin-on-behalf is for.
+    const { ok, via } = await hasStationAccess(user, org_id)
+    if (!ok || !canAdministerStation(via)) {
       return NextResponse.json({ error: 'Station not found' }, { status: 404 })
     }
 
@@ -100,6 +97,12 @@ export async function POST(request) {
     if (error) {
       return NextResponse.json({ error: 'Failed to create invite' }, { status: 500 })
     }
+
+    await logStationAssist({
+      user, via, orgId: org_id, request,
+      actionType: 'invite_created',
+      content: `invited ${normalizedEmail} to a station on their behalf`,
+    })
 
     return NextResponse.json({ invite })
   } catch {
@@ -133,14 +136,8 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Invite not found' }, { status: 404 })
     }
 
-    const { data: station } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('id', invite.org_id)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
+    const { ok, via } = await hasStationAccess(user, invite.org_id)
+    if (!ok || !canAdministerStation(via)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -148,6 +145,12 @@ export async function DELETE(request) {
       .from('org_invites')
       .delete()
       .eq('id', id)
+
+    await logStationAssist({
+      user, via, orgId: invite.org_id, request,
+      actionType: 'invite_removed',
+      content: 'removed a staff invite from a station on their behalf',
+    })
 
     return NextResponse.json({ ok: true })
   } catch {

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { randomInt } from 'crypto'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess, canAdministerStation } from '@/lib/stationAccess'
+import { logStationAssist } from '@/lib/adminActivity'
 import { rateLimit } from '@/lib/rateLimit'
 
 // Generate a verification suffix (1–99) using cryptographic randomness
@@ -48,14 +50,11 @@ export async function POST(request) {
     const supabase = getAdminClient()
 
     // Verify user owns this station
-    const { data: station } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('id', org_id)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
+    // Owner or platform admin, not ordinary staff. It was owner-only, which meant an admin
+    // could not start a subscription for a station they were onboarding — the same gap
+    // store-portal hit and fixed on its own subscriptions route.
+    const { ok, via } = await hasStationAccess(user, org_id)
+    if (!ok || !canAdministerStation(via)) {
       return NextResponse.json({ error: 'Station not found or you are not the owner' }, { status: 404 })
     }
 
@@ -114,6 +113,12 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Failed to save subscription items', debug: itemsError.message }, { status: 500 })
       }
     }
+
+    await logStationAssist({
+      user, via, orgId: org_id, request,
+      actionType: 'subscription_started',
+      content: 'started a subscription for a station on their behalf',
+    })
 
     return NextResponse.json({ subscription: data })
   } catch (err) {

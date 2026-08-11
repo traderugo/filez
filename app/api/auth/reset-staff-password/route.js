@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess, canAdministerStation } from '@/lib/stationAccess'
+import { logStationAssist } from '@/lib/adminActivity'
 import { randomBytes } from 'crypto'
 import { rateLimit } from '@/lib/rateLimit'
 
@@ -35,14 +37,10 @@ export async function POST(request) {
     }
 
     // Verify the manager owns the station this staff belongs to
-    const { data: station } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('id', staff.org_id)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
+    // Owner or platform admin. Emphatically not ordinary staff: this sets another person's
+    // password, so a member reaching it could take over a colleague's account.
+    const { ok, via } = await hasStationAccess(user, staff.org_id)
+    if (!ok || !canAdministerStation(via)) {
       return NextResponse.json({ error: 'You can only reset passwords for your own staff' }, { status: 403 })
     }
 
@@ -56,6 +54,13 @@ export async function POST(request) {
     if (error) {
       return NextResponse.json({ error: 'Failed to reset password' }, { status: 500 })
     }
+
+    // The temp password is deliberately NOT put in the log: details is read back verbatim.
+    await logStationAssist({
+      user, via, orgId: staff.org_id, request,
+      actionType: 'staff_password_reset',
+      content: 'reset a staff password at a station on their behalf',
+    })
 
     return NextResponse.json({ ok: true, tempPassword })
   } catch {

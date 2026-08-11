@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess, canAdministerStation } from '@/lib/stationAccess'
 
 // GET — station manager lists invites for a station
 export async function GET(request) {
@@ -17,15 +18,11 @@ export async function GET(request) {
 
     const supabase = getAdminClient()
 
-    // Verify user owns this station
-    const { data: station } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('id', orgId)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
+    // Owner or platform admin. Not ordinary staff: the invite list names everyone with
+    // access to the station, which is the owner's business and an admin's, not a member's.
+    // A read, so nothing is logged.
+    const { ok, via } = await hasStationAccess(user, orgId)
+    if (!ok || !canAdministerStation(via)) {
       return NextResponse.json({ error: 'Station not found' }, { status: 404 })
     }
 

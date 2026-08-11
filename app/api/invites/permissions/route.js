@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess, canAdministerStation } from '@/lib/stationAccess'
+import { logStationAssist } from '@/lib/adminActivity'
 
 const VALID_PAGES = [
   'daily-sales', 'product-receipt', 'lodgements', 'lube', 'customer-payments',
@@ -40,14 +42,10 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Invite not found' }, { status: 404 })
     }
 
-    const { data: station } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('id', invite.org_id)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
+    // Owner or platform admin. Emphatically NOT ordinary staff: this route sets which pages
+    // a member may see, so letting a member reach it would let them widen their own access.
+    const { ok, via } = await hasStationAccess(user, invite.org_id)
+    if (!ok || !canAdministerStation(via)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -59,6 +57,12 @@ export async function PATCH(request) {
     if (error) {
       return NextResponse.json({ error: 'Failed to update permissions' }, { status: 500 })
     }
+
+    await logStationAssist({
+      user, via, orgId: invite.org_id, request,
+      actionType: 'permissions_changed',
+      content: 'changed a staff member\'s page permissions on their behalf',
+    })
 
     return NextResponse.json({ ok: true, visible_pages: filtered })
   } catch {
