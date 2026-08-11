@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
-import { useLiveQuery } from 'dexie-react-hooks'
-import { Inbox, RefreshCw, Loader2, CheckCheck } from 'lucide-react'
+import { Inbox, RefreshCw, Loader2, CheckCheck, ChevronLeft, ChevronRight } from 'lucide-react'
 import { db } from '@/lib/db'
 import { fmtDate } from '@/lib/formatDate'
+import useStationUnread from '@/lib/useStationUnread'
 import { EmptyState, OUTLINE } from '@/components/ui'
 
 /**
@@ -19,10 +19,9 @@ import { EmptyState, OUTLINE } from '@/components/ui'
  * This shows the activity, in the shape store-portal's Messages inbox uses: a typed chip, a
  * one-line summary, tap to expand, read/unread.
  *
- * READ STATE IS PER DEVICE, in localStorage. station_messages has no read column, and
- * adding one means a migration applied by hand on production — which is a bad trade for a
- * marker that only affects what this screen bolds. If read state ever needs to follow a
- * user across devices, that is the point to add the column.
+ * The list and the read state come from useStationUnread, which the sidebar item and the
+ * header bell also read — see that file for why read state is per device. This screen owns
+ * only the presentation: paging, expanding, and the refresh button.
  */
 
 // Chip label + tint per action_type. Unknown types fall back to a neutral "Activity".
@@ -40,7 +39,9 @@ const TYPE_META = {
 }
 const FALLBACK = { label: 'Activity', chip: 'bg-subtle text-content-muted' }
 
-const readKey = (stationId) => `stationNotificationsRead:${stationId}`
+// Matches the account ledger's pager. A station that has been running a while accumulates
+// thousands of activity rows, and rendering all of them is a slow screen nobody scrolls.
+const PAGE_SIZE = 20
 
 export default function NotificationsPage() {
   const params = useParams()
@@ -48,35 +49,23 @@ export default function NotificationsPage() {
 
   const [refreshing, setRefreshing] = useState(false)
   const [expanded, setExpanded] = useState(null)
-  const [read, setRead] = useState(() => new Set())
+  const [page, setPage] = useState(0)
 
+  const { notices, unread, read, markRead, markAllRead } = useStationUnread(stationId)
+
+  const totalPages = Math.max(1, Math.ceil(notices.length / PAGE_SIZE))
+
+  // Switching station, or refreshing into a shorter list, must not strand the reader on a
+  // page that no longer exists.
+  useEffect(() => { setPage(0) }, [stationId])
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(readKey(stationId))
-      setRead(new Set(raw ? JSON.parse(raw) : []))
-    } catch { /* private mode: everything simply reads as unread */ }
-  }, [stationId])
+    setPage((p) => Math.min(p, totalPages - 1))
+  }, [totalPages])
 
-  const persist = useCallback((next) => {
-    setRead(next)
-    try { localStorage.setItem(readKey(stationId), JSON.stringify([...next])) } catch {}
-  }, [stationId])
-
-  const rows = useLiveQuery(
-    () => stationId
-      ? db.stationMessages.where('orgId').equals(stationId).sortBy('createdAt')
-      : [],
-    [stationId],
-    []
+  const paged = useMemo(
+    () => notices.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
+    [notices, page]
   )
-
-  // Activity only. Any legacy typed messages stay in the table but are not an inbox item.
-  const notices = useMemo(
-    () => (rows || []).filter((r) => r.type === 'activity' && !r.deletedAt).reverse(),
-    [rows]
-  )
-
-  const unread = notices.filter((n) => !read.has(n.id)).length
 
   const refresh = async () => {
     setRefreshing(true)
@@ -102,10 +91,8 @@ export default function NotificationsPage() {
 
   const open = (n) => {
     setExpanded(expanded === n.id ? null : n.id)
-    if (!read.has(n.id)) persist(new Set([...read, n.id]))
+    markRead(n.id)
   }
-
-  const markAllRead = () => persist(new Set(notices.map((n) => n.id)))
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-8 py-8">
@@ -135,7 +122,7 @@ export default function NotificationsPage() {
         </EmptyState>
       ) : (
         <div className="border-card border-primary-500/40 dark:border-primary-400/40 divide-y divide-line">
-          {notices.map((n) => {
+          {paged.map((n) => {
             const meta = TYPE_META[n.actionType] || FALLBACK
             const isRead = read.has(n.id)
             const isOpen = expanded === n.id
@@ -164,6 +151,28 @@ export default function NotificationsPage() {
               </button>
             )
           })}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            onClick={() => setPage((p) => p - 1)}
+            disabled={page === 0}
+            className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed ${OUTLINE} hover:bg-primary-500/20`}
+          >
+            <ChevronLeft className="w-4 h-4" /> Prev
+          </button>
+          <span className="text-sm text-content-muted">
+            Page {page + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= totalPages - 1}
+            className={`flex items-center gap-1 px-3 py-1.5 text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed ${OUTLINE} hover:bg-primary-500/20`}
+          >
+            Next <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
     </div>

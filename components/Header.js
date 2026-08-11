@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft, Home, Loader2, Menu } from 'lucide-react'
+import { ChevronLeft, Home, Loader2, Menu, Bell } from 'lucide-react'
+import useStationUnread from '@/lib/useStationUnread'
 import { OUTLINE } from '@/components/ui'
 
 // Map paths to page titles. Back always uses router.back().
@@ -76,15 +77,18 @@ export default function Header({ onMenu }) {
   // Reset spinner when route changes
   useEffect(() => { setNavigating(false) }, [pathname])
 
+  // Derived above the auth early-return: useStationUnread is a hook, so it cannot sit after
+  // a conditional return. It no-ops on a null station.
+  const stationMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)/)
+  const stationId = stationMatch ? stationMatch[1] : searchParams.get('org_id')
+  const { unread } = useStationUnread(stationId)
+
   const isAuth = pathname.startsWith('/auth')
   if (isAuth) return null
 
   const title = getTitle(pathname)
   const isDashboardHome = pathname === '/dashboard'
 
-  // Derive station home link
-  const stationMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)/)
-  const stationId = stationMatch ? stationMatch[1] : searchParams.get('org_id')
   const homeHref = stationId ? `/dashboard/stations/${stationId}` : '/dashboard'
   const isAlreadyHome = pathname === homeHref
 
@@ -114,16 +118,35 @@ export default function Header({ onMenu }) {
           <span className="text-sm font-semibold text-content">{title || 'Dashboard'}</span>
         </div>
 
-        {/* OUTLINE is the design system's control look. Padding and text size are left
-            exactly as they were so the header's 14-unit row does not shift. */}
-        <Link
-          href={homeHref}
-          onClick={handleHomeClick}
-          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
-        >
-          {navigating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Home className="w-4 h-4" />}
-          <span>Home</span>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Below lg only: at lg and up the sidebar's Notifications row carries the badge,
+              and two of them on one screen would be a second thing to keep in sync. */}
+          {stationId && (
+            <Link
+              href={`/dashboard/stations/${stationId}/notifications`}
+              aria-label={unread > 0 ? `Notifications (${unread} unread)` : 'Notifications'}
+              className={`lg:hidden relative flex items-center justify-center w-9 h-9 ${OUTLINE} hover:bg-primary-500/20`}
+            >
+              <Bell className="w-4 h-4" />
+              {unread > 0 && (
+                <span aria-hidden className="absolute -top-1.5 -right-1.5 min-w-[1.1rem] h-[1.1rem] px-1 flex items-center justify-center text-[10px] font-semibold bg-accent-600 text-white rounded-full">
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              )}
+            </Link>
+          )}
+
+          {/* OUTLINE is the design system's control look. Padding and text size are left
+              exactly as they were so the header's 14-unit row does not shift. */}
+          <Link
+            href={homeHref}
+            onClick={handleHomeClick}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
+          >
+            {navigating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Home className="w-4 h-4" />}
+            <span>Home</span>
+          </Link>
+        </div>
       </div>
     </header>
   )

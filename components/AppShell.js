@@ -59,7 +59,7 @@ export default function AppShell({ children }) {
 
   const isAuth = pathname.startsWith('/auth')
   const isHome = pathname === '/'
-  const isAdmin = pathname.startsWith('/admin')
+  const isAdmin = pathname.startsWith('/admin')
 
   // Auth pages + homepage: no shell, just content
   if (isAuth || isHome) return <>{children}</>
@@ -73,11 +73,20 @@ export default function AppShell({ children }) {
     </div>
   )
 
+  // Station pages: sidebar column + content column. The sidebar is `shrink-0` and lives in
+  // normal flow, so this has to be a row, and the content column needs min-w-0 or a wide
+  // report table pushes the sidebar off screen instead of scrolling inside its own column.
+  // StationSidebar reads useSearchParams, so it gets the same Suspense boundary as Header.
   return (
-    <div className="flex flex-col min-h-screen">
-      <Suspense fallback={null}><NavigationLoader /></Suspense>
-      <Suspense fallback={null}><Header /></Suspense>
-      <main className="flex-1">{children}</main>
+    <div className="flex min-h-screen">
+      <Suspense fallback={null}>
+        <StationSidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      </Suspense>
+      <div className="flex flex-col flex-1 min-w-0">
+        <Suspense fallback={null}><NavigationLoader /></Suspense>
+        <Suspense fallback={null}><Header onMenu={() => setDrawerOpen(true)} /></Suspense>
+        <main className="flex-1">{children}</main>
+      </div>
     </div>
   )
 }

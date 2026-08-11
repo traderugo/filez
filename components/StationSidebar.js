@@ -6,6 +6,7 @@ import { usePathname, useSearchParams, useParams, useRouter } from 'next/navigat
 import { Fuel, Home, LogOut, PanelLeftClose, PanelLeft, X, Bell, Settings } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buildStationNav } from '@/lib/stationNav'
+import useStationUnread from '@/lib/useStationUnread'
 import ThemeToggle from '@/components/ThemeToggle'
 
 /**
@@ -34,6 +35,8 @@ export default function StationSidebar({ open, onClose }) {
 
   // The station is in the path on the hub, and in ?org_id= on every entry and report screen.
   const stationId = params?.stationId || searchParams.get('org_id') || ''
+
+  const { unread } = useStationUnread(stationId)
 
   const [collapsed, setCollapsed] = useState(false)
   const [station, setStation] = useState(null)
@@ -123,8 +126,21 @@ export default function StationSidebar({ open, onClose }) {
           {current && !iconOnly && (
             <span aria-hidden className="absolute left-0 top-0 bottom-0 w-1 bg-primary-600 dark:bg-primary-400" />
           )}
-          <Icon className="w-4 h-4 shrink-0" fill="currentColor" />
+          <span className="relative shrink-0">
+            <Icon className="w-4 h-4 shrink-0" fill="currentColor" />
+            {/* Collapsed to icons there is no room for a count, so the badge degrades to a
+                dot: it still says "something is new", which is the part that matters at
+                72px wide. */}
+            {link.badge > 0 && iconOnly && (
+              <span aria-hidden className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent-600" />
+            )}
+          </span>
           {!iconOnly && <span className="truncate">{link.label}</span>}
+          {link.badge > 0 && !iconOnly && (
+            <span className="ml-auto min-w-[1.1rem] h-[1.1rem] px-1 flex items-center justify-center text-[10px] font-semibold bg-accent-600 text-white rounded-full shrink-0">
+              {link.badge > 99 ? '99+' : link.badge}
+            </span>
+          )}
         </Link>
       </li>
     )
@@ -178,7 +194,7 @@ export default function StationSidebar({ open, onClose }) {
           <h2 className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wide text-content-faint">Station</h2>
         )}
         <ul>
-          {item({ href: `${home}/notifications`, icon: Bell, label: 'Notifications', allowed: true, pageKey: 'notifications' })}
+          {item({ href: `${home}/notifications`, icon: Bell, label: 'Notifications', allowed: true, pageKey: 'notifications', badge: unread })}
           {item({ href: `${home}/settings`, icon: Settings, label: 'Settings', allowed: true, pageKey: 'settings' })}
         </ul>
       </div>
