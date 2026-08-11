@@ -3,12 +3,14 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
+import StationSidebar from './StationSidebar'
 
 import NavigationLoader from './NavigationLoader'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function AppShell({ children }) {
   const [user, setUser] = useState(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -36,8 +38,16 @@ export default function AppShell({ children }) {
           })
         })
       })
-      // Clear stale API caches from old service workers
-      caches.delete('apis').catch(() => {})
+      // Caches left behind by the old worker. Until the runtimeCaching fix in
+      // next.config.mjs, a top-level `runtimeCaching` key was silently ignored and the
+      // worker ran next-pwa's default cache, which stored page documents, RSC payloads and
+      // API responses. The new worker never reads these, so every existing install is
+      // carrying dead weight (and a stale copy of the app) until they are removed.
+      // Safe to drop this list once the fix has been live long enough for everyone to
+      // have loaded the app at least once.
+      for (const name of ['apis', 'pages', 'pages-rsc', 'pages-rsc-prefetch', 'next-data', 'others']) {
+        caches.delete(name).catch(() => {})
+      }
     }
   }, [])
 
