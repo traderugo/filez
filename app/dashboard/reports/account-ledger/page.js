@@ -27,7 +27,7 @@ const PAGE_SIZE = 15
 
 export default function AccountLedgerPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <AccountLedgerContent />
     </Suspense>
   )
@@ -317,11 +317,11 @@ function AccountLedgerContent() {
     }).catch(() => {})
   }
 
-  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
-  const hdr = 'bg-blue-600 text-white font-bold text-sm'
+  const hdr = 'bg-primary-500 text-white font-bold text-sm'
 
-  if (!orgId) return <div className="p-6 text-gray-500">No station selected.</div>
+  if (!orgId) return <div className="p-6 text-content-muted">No station selected.</div>
 
   return (
     <AccessGate orgId={orgId} pageKey="report-account-ledger">
@@ -332,7 +332,7 @@ function AccountLedgerContent() {
         {!formMode && (
           <button
             onClick={openCreate}
-            className="flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700"
+            className="flex items-center gap-1 text-sm text-primary-600 font-medium hover:text-primary-700"
           >
             <Plus className="w-4 h-4" /> New Account
           </button>
@@ -341,33 +341,33 @@ function AccountLedgerContent() {
 
       {/* Account form (create or edit) */}
       {formMode && (
-        <div className="border border-gray-300 p-4 mb-4 bg-gray-50">
+        <div className="border border-line p-4 mb-4 bg-subtle">
           <h3 className="text-sm font-semibold mb-3">{formMode === 'edit' ? 'Edit Account' : 'Create Account'}</h3>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="flex-1 min-w-[140px]">
-              <label className="block text-xs text-gray-500 mb-1">Name</label>
+              <label className="block text-xs text-content-muted mb-1">Name</label>
               <input
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="Account name"
                 maxLength={200}
-                className="w-full px-2.5 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2.5 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div className="w-32">
-              <label className="block text-xs text-gray-500 mb-1">Phone</label>
+              <label className="block text-xs text-content-muted mb-1">Phone</label>
               <input
                 type="tel"
                 value={formPhone}
                 onChange={(e) => setFormPhone(e.target.value)}
                 placeholder="Optional"
                 maxLength={20}
-                className="w-full px-2.5 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2.5 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div className="w-32">
-              <label className="block text-xs text-gray-500 mb-1">Opening Bal</label>
+              <label className="block text-xs text-content-muted mb-1">Opening Bal</label>
               <input
                 type="number"
                 value={formBalance}
@@ -375,40 +375,40 @@ function AccountLedgerContent() {
                 placeholder="0"
                 min="0"
                 step="0.01"
-                className="w-full px-2.5 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-2.5 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <button
               onClick={handleSaveForm}
               disabled={formSaving}
-              className="flex items-center gap-1 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-1 bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
             >
               {formSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Save
             </button>
             <button
               onClick={closeForm}
-              className="px-4 py-2 border border-gray-300 text-sm text-gray-600 hover:bg-gray-100"
+              className="px-4 py-2 border border-line text-sm text-content-muted hover:bg-subtle"
             >
               Cancel
             </button>
           </div>
-          {formError && <p className="text-sm text-red-600 mt-2">{formError}</p>}
+          {formError && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{formError}</p>}
         </div>
       )}
 
       {/* Controls */}
       <div className="shrink-0 flex flex-wrap gap-3 items-end mb-4">
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">From</label>
-          <DateInput value={startDate} onChange={setStartDate} className="w-36 px-2 py-2 border border-gray-300 text-sm font-medium" />
+          <label className="block text-xs font-medium text-content-muted mb-1">From</label>
+          <DateInput value={startDate} onChange={setStartDate} className="w-36 px-2 py-2 border border-line text-sm font-medium" />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 mb-1">To</label>
-          <DateInput value={endDate} onChange={setEndDate} className="w-36 px-2 py-2 border border-gray-300 text-sm font-medium" />
+          <label className="block text-xs font-medium text-content-muted mb-1">To</label>
+          <DateInput value={endDate} onChange={setEndDate} className="w-36 px-2 py-2 border border-line text-sm font-medium" />
         </div>
         <div className="min-w-[200px]">
-          <label className="block text-xs font-medium text-gray-500 mb-1">Account (select up to 10)</label>
+          <label className="block text-xs font-medium text-content-muted mb-1">Account (select up to 10)</label>
           <SearchableSelect
             value={selectedAccounts.length === 0 ? '__all__' : ''}
             onChange={handleAccountChange}
@@ -420,7 +420,7 @@ function AccountLedgerContent() {
               {selectedLabels.map(s => (
                 <span
                   key={s.id}
-                  className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 cursor-pointer hover:bg-blue-200"
+                  className="inline-flex items-center gap-1 bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 cursor-pointer hover:bg-primary-200"
                   onClick={() => handleAccountChange(s.id)}
                 >
                   {s.name}
@@ -433,9 +433,9 @@ function AccountLedgerContent() {
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-gray-200">
+      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-line">
         {creditCustomers.length === 0 && !formMode && (
-          <p className="text-gray-500 text-sm p-4">No credit customers configured.</p>
+          <p className="text-content-muted text-sm p-4">No credit customers configured.</p>
         )}
 
         {/* Multiple accounts — merged journal */}
@@ -452,7 +452,7 @@ function AccountLedgerContent() {
         {selectedAccounts.length === 0 && pagedData.length > 0 && (
           <div className="p-2">
             {/* Grand totals summary */}
-            <table className="w-full border-collapse border border-gray-200 mb-4">
+            <table className="w-full border-collapse border border-line mb-4">
               <thead>
                 <tr className={hdr}>
                   <th className={cell + ' text-left'}>All Accounts ({sortedAll.length})</th>
@@ -464,7 +464,7 @@ function AccountLedgerContent() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="bg-gray-50 font-bold">
+                <tr className="bg-subtle font-bold">
                   <td className={cell}>Totals</td>
                   <td className={cellR}>{fmtBal(totals.openingBalance)}</td>
                   <td className={cellR}>{fmt(totals.totalDebit)}</td>
@@ -476,9 +476,9 @@ function AccountLedgerContent() {
             </table>
 
             {/* Account list */}
-            <table className="w-full border-collapse border border-gray-200">
+            <table className="w-full border-collapse border border-line">
               <thead>
-                <tr className="bg-gray-100 text-sm font-semibold">
+                <tr className="bg-subtle text-sm font-semibold">
                   <th className={cell + ' text-left'}>Account</th>
                   <th className={cell + ' text-right'}>Opening Bal</th>
                   <th className={cell + ' text-right'}>Sales</th>
@@ -492,9 +492,9 @@ function AccountLedgerContent() {
                     <tr
                       key={acct.id}
                       onClick={() => handleAccountChange(acct.id)}
-                      className="cursor-pointer hover:bg-blue-50"
+                      className="cursor-pointer hover:bg-primary-50"
                     >
-                      <td className={cell + ' text-blue-600 font-medium'}>{acct.name}</td>
+                      <td className={cell + ' text-primary-600 font-medium'}>{acct.name}</td>
                       <td className={cellR}>{fmtBal(acct.openingBalance)}</td>
                       <td className={cellR}>{acct.totalDebit ? fmt(acct.totalDebit) : ''}</td>
                       <td className={cellR}>{acct.totalCredit ? fmt(acct.totalCredit) : ''}</td>
@@ -508,10 +508,10 @@ function AccountLedgerContent() {
                             title="Track in Station Value"
                             className="w-3.5 h-3.5 accent-green-600 cursor-pointer"
                           />
-                          <button onClick={() => openEdit(creditCustomers.find(c => c.id === acct.id))} className="text-gray-400 hover:text-blue-600 p-0.5">
+                          <button onClick={() => openEdit(creditCustomers.find(c => c.id === acct.id))} className="text-content-faint hover:text-primary-600 p-0.5">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => handleDelete(acct.id)} className="text-gray-400 hover:text-red-600 p-0.5">
+                          <button onClick={() => handleDelete(acct.id)} className="text-content-faint hover:text-red-600 dark:text-red-400 p-0.5">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -531,7 +531,7 @@ function AccountLedgerContent() {
                 >
                   <ChevronLeft className="w-4 h-4" /> Prev
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-content-muted">
                   Page {page + 1} of {totalPages}
                 </span>
                 <button
@@ -558,14 +558,14 @@ function AccountLedgerContent() {
 }
 
 function JournalTable({ data, startDate, endDate }) {
-  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
-  const hdr = 'bg-blue-600 text-white font-bold text-sm'
+  const hdr = 'bg-primary-500 text-white font-bold text-sm'
 
   return (
     <div>
       <h2 className="text-sm font-bold mb-2">{data.name}</h2>
-      <table className="w-full border-collapse border border-gray-200">
+      <table className="w-full border-collapse border border-line">
         <thead>
           <tr className={hdr}>
             <th className={cell + ' text-left w-24'}>Date</th>
@@ -577,7 +577,7 @@ function JournalTable({ data, startDate, endDate }) {
         </thead>
         <tbody>
           {/* Opening balance */}
-          <tr className="bg-gray-50 font-semibold">
+          <tr className="bg-subtle font-semibold">
             <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
             <td className={cell}>Opening Balance</td>
             <td className={cellR}></td>
@@ -598,14 +598,14 @@ function JournalTable({ data, startDate, endDate }) {
 
           {data.rows.length === 0 && (
             <tr>
-              <td colSpan={5} className={cell + ' text-center text-gray-400 italic'}>
+              <td colSpan={5} className={cell + ' text-center text-content-faint italic'}>
                 No transactions in this period
               </td>
             </tr>
           )}
 
           {/* Closing balance / totals */}
-          <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
+          <tr className="bg-subtle font-bold border-t-2 border-line">
             <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
             <td className={cell}>Closing Balance</td>
             <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
@@ -620,9 +620,9 @@ function JournalTable({ data, startDate, endDate }) {
 
 function MergedJournalTable({ data, startDate, endDate }) {
   const [page, setPage] = useState(0)
-  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
-  const hdr = 'bg-blue-600 text-white font-bold text-sm'
+  const hdr = 'bg-primary-500 text-white font-bold text-sm'
 
   const totalPages = Math.ceil(data.rows.length / PAGE_SIZE)
   const pagedRows = data.rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -632,7 +632,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
       <h2 className="text-sm font-bold mb-2">
         {data.names.length <= 3 ? data.names.join(' & ') : `${data.names.slice(0, 3).join(', ')} + ${data.names.length - 3} more`}
       </h2>
-      <table className="w-full border-collapse border border-gray-200">
+      <table className="w-full border-collapse border border-line">
         <thead>
           <tr className={hdr}>
             <th className={cell + ' text-left w-24'}>Date</th>
@@ -645,7 +645,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
         </thead>
         <tbody>
           {page === 0 && (
-            <tr className="bg-gray-50 font-semibold">
+            <tr className="bg-subtle font-semibold">
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Opening Balance</td>
@@ -658,7 +658,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           {pagedRows.map((row, i) => (
             <tr key={`${row.id}-${i}`}>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
-              <td className={cell + ' text-xs text-gray-500'}>{row.account}</td>
+              <td className={cell + ' text-xs text-content-muted'}>{row.account}</td>
               <td className={cell}>{row.particulars}</td>
               <td className={cellR}>{row.debit ? fmt(row.debit) : ''}</td>
               <td className={cellR}>{row.credit ? fmt(row.credit) : ''}</td>
@@ -668,14 +668,14 @@ function MergedJournalTable({ data, startDate, endDate }) {
 
           {data.rows.length === 0 && (
             <tr>
-              <td colSpan={6} className={cell + ' text-center text-gray-400 italic'}>
+              <td colSpan={6} className={cell + ' text-center text-content-faint italic'}>
                 No transactions in this period
               </td>
             </tr>
           )}
 
           {page === totalPages - 1 && (
-            <tr className="bg-gray-50 font-bold border-t-2 border-gray-300">
+            <tr className="bg-subtle font-bold border-t-2 border-line">
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Closing Balance</td>
@@ -696,7 +696,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-content-muted">
             Page {page + 1} of {totalPages}
           </span>
           <button
@@ -714,7 +714,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
 
 function StationValueSection({ data, startDate, endDate }) {
   const [page, setPage] = useState(0)
-  const cell = 'border border-gray-200 px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
   const cellR = cell + ' text-right'
   const hdr = 'bg-green-700 text-white font-bold text-sm'
 
@@ -724,11 +724,11 @@ function StationValueSection({ data, startDate, endDate }) {
   return (
     <div className="mt-8 p-2 border-t-2 border-green-600">
       <h2 className="text-sm font-bold mb-1">Station Value</h2>
-      <p className="text-xs text-gray-500 mb-3">
+      <p className="text-xs text-content-muted mb-3">
         Tracking {data.accountCount} account{data.accountCount !== 1 ? 's' : ''}. Outstanding: {fmtBal(data.closingBalance)}
       </p>
 
-      <table className="w-full border-collapse border border-gray-200">
+      <table className="w-full border-collapse border border-line">
         <thead>
           <tr className={hdr}>
             <th className={cell + ' text-left w-24'}>Date</th>
@@ -741,7 +741,7 @@ function StationValueSection({ data, startDate, endDate }) {
         </thead>
         <tbody>
           {page === 0 && (
-            <tr className="bg-gray-50 font-semibold">
+            <tr className="bg-subtle font-semibold">
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Opening Balance</td>
@@ -754,7 +754,7 @@ function StationValueSection({ data, startDate, endDate }) {
           {pagedRows.map((row, i) => (
             <tr key={`${row.id}-${i}`}>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
-              <td className={cell + ' text-xs text-gray-500'}>{row.account}</td>
+              <td className={cell + ' text-xs text-content-muted'}>{row.account}</td>
               <td className={cell}>{row.particulars}</td>
               <td className={cellR}>{row.debit ? fmt(row.debit) : ''}</td>
               <td className={cellR}>{row.credit ? fmt(row.credit) : ''}</td>
@@ -764,14 +764,14 @@ function StationValueSection({ data, startDate, endDate }) {
 
           {data.rows.length === 0 && (
             <tr>
-              <td colSpan={6} className={cell + ' text-center text-gray-400 italic'}>
+              <td colSpan={6} className={cell + ' text-center text-content-faint italic'}>
                 No transactions in this period
               </td>
             </tr>
           )}
 
           {(totalPages <= 1 || page === totalPages - 1) && (
-            <tr className="bg-green-50 font-bold border-t-2 border-green-300">
+            <tr className="bg-green-50 dark:bg-green-950/40 font-bold border-t-2 border-green-300">
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Closing Balance</td>
@@ -792,7 +792,7 @@ function StationValueSection({ data, startDate, endDate }) {
           >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-content-muted">
             Page {page + 1} of {totalPages}
           </span>
           <button

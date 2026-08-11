@@ -18,7 +18,7 @@ function fmt(n) {
 
 export default function ProductReceivedReportPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <ProductReceivedReportContent />
     </Suspense>
   )
@@ -210,11 +210,11 @@ function ProductReceivedReportContent() {
   }
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
   }
 
-  const hdr = 'bg-blue-600 text-white'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-2 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
@@ -224,21 +224,21 @@ function ProductReceivedReportContent() {
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Header + date range */}
       <div className="flex items-center justify-between py-3 shrink-0">
-        <h1 className="text-lg font-bold text-gray-900">Product Received</h1>
+        <h1 className="text-lg font-bold text-content">Product Received</h1>
         <div className="flex items-center gap-2">
-          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
-          <span className="text-sm text-gray-400">to</span>
-          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
+          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <span className="text-sm text-content-faint">to</span>
+          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
           <button
             onClick={handleGenerate}
             disabled={!startDate || !endDate || startDate > endDate}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
           >
             Generate
           </button>
           <Link
             href={`/dashboard/reports/dip-calculator?org_id=${orgId}`}
-            className="flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex items-center gap-1.5 px-4 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
           >
             <Calculator className="w-4 h-4" />
             Dip Calculator
@@ -247,18 +247,18 @@ function ProductReceivedReportContent() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-gray-200">
+      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-line">
         {!generated ? (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+            <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
           </div>
         ) : !deliveries ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
           </div>
         ) : deliveries.rows.length === 0 ? (
           <div className="flex items-center justify-center py-20">
-            <p className="text-gray-400 text-sm">No product receipts found in this date range.</p>
+            <p className="text-content-faint text-sm">No product receipts found in this date range.</p>
           </div>
         ) : (
           <table className="w-full text-xs border-collapse min-w-[900px]">
@@ -280,9 +280,9 @@ function ProductReceivedReportContent() {
             </thead>
             <tbody>
               {deliveries.rows.map((row, i) => {
-                const shortageColor = row.shortage > 0 ? 'text-red-600 font-medium' : row.shortage < 0 ? 'text-green-600 font-medium' : ''
+                const shortageColor = row.shortage > 0 ? 'text-red-600 dark:text-red-400 font-medium' : row.shortage < 0 ? 'text-green-600 dark:text-green-400 font-medium' : ''
                 return (
-                  <tr key={i} className="hover:bg-blue-50/40">
+                  <tr key={i} className="hover:bg-primary-50/40">
                     <td className={`${cellR} whitespace-nowrap`}>{row.dischargeDate ? fmtDate(row.dischargeDate) : '—'}</td>
                     <td className={`${cellR} whitespace-nowrap`}>{row.loadingDate ? fmtDate(row.loadingDate) : '—'}</td>
                     <td className={cell}>{row.product}</td>
@@ -309,7 +309,7 @@ function ProductReceivedReportContent() {
                         )}
                         <Link
                           href={`/dashboard/reports/dip-calculator?org_id=${orgId}&cU1=${row.chartHighUllage1}&cU2=${row.chartHighUllage2}&cU3=${row.chartHighUllage3}&cL1=${row.chartLiquidHeight1}&cL2=${row.chartLiquidHeight2}&cL3=${row.chartLiquidHeight3}&dU1=${row.depotUllage1}&dU2=${row.depotUllage2}&dU3=${row.depotUllage3}&dL1=${row.depotLiquidHeight1}&dL2=${row.depotLiquidHeight2}&dL3=${row.depotLiquidHeight3}&sU1=${row.stationUllage1}&sU2=${row.stationUllage2}&sU3=${row.stationUllage3}&sL1=${row.stationLiquidHeight1}&sL2=${row.stationLiquidHeight2}&sL3=${row.stationLiquidHeight3}&hV1=${row.highVol1}&hV2=${row.highVol2}&hV3=${row.highVol3}&lV1=${row.lowVol1}&lV2=${row.lowVol2}&lV3=${row.lowVol3}&hU1=${row.chartHighUllage1}&hU2=${row.chartHighUllage2}&hU3=${row.chartHighUllage3}&lU1=${row.chartLowUllage1}&lU2=${row.chartLowUllage2}&lU3=${row.chartLowUllage3}`}
-                          className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700"
+                          className="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700"
                           title="Dip Calculator"
                         >
                           <Calculator className="w-3.5 h-3.5" />
@@ -321,12 +321,12 @@ function ProductReceivedReportContent() {
               })}
             </tbody>
             <tfoot>
-              <tr className="font-bold bg-blue-50">
+              <tr className="font-bold bg-primary-50">
                 <td className={cell} colSpan={3}>Total ({deliveries.rows.length} deliveries)</td>
                 <td className={cellR}>{fmt(deliveries.totalLoaded)}</td>
                 <td className={cellR}>{fmt(deliveries.totalSupplied)}</td>
                 <td className={cell} colSpan={4}></td>
-                <td className={`${cellR} ${deliveries.totalShortage > 0 ? 'text-red-600' : deliveries.totalShortage < 0 ? 'text-green-600' : ''}`}>
+                <td className={`${cellR} ${deliveries.totalShortage > 0 ? 'text-red-600 dark:text-red-400' : deliveries.totalShortage < 0 ? 'text-green-600 dark:text-green-400' : ''}`}>
                   {fmt(deliveries.totalShortage)}
                 </td>
                 <td className={cell}></td>

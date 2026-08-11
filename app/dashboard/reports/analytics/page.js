@@ -38,7 +38,7 @@ function fmtDay(s) {
 
 export default function AnalyticsPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <AnalyticsContent />
     </Suspense>
   )
@@ -145,7 +145,7 @@ function AnalyticsContent() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -153,7 +153,7 @@ function AnalyticsContent() {
   if (!orgId) {
     return (
       <div className="max-w-4xl px-4 sm:px-8 py-8">
-        <p className="text-base text-gray-500">No station selected.</p>
+        <p className="text-base text-content-muted">No station selected.</p>
       </div>
     )
   }
@@ -163,13 +163,13 @@ function AnalyticsContent() {
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-end py-3">
           <div className="flex items-center gap-2">
-            <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
-            <span className="text-sm text-gray-400">to</span>
-            <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
+            <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+            <span className="text-sm text-content-faint">to</span>
+            <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
             <button
               onClick={handleGenerate}
               disabled={generating || !startDate || !endDate || startDate > endDate || dateRangeDays > 92}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
             >
               {generating && <Loader2 className="w-4 h-4 animate-spin" />}
               {generating ? 'Generating...' : 'Generate'}
@@ -184,11 +184,11 @@ function AnalyticsContent() {
           <AnalyticsBody report={report} startDate={reportStart} endDate={reportEnd} />
         ) : generated ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
           </div>
         ) : (
           <div className="flex items-center justify-center py-20">
-            <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+            <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
           </div>
         )}
       </div>
@@ -198,10 +198,10 @@ function AnalyticsContent() {
 
 function KpiTile({ label, value, sub, accent }) {
   return (
-    <div className="border border-gray-200 bg-white px-3 py-2.5">
-      <div className="text-[11px] text-gray-500 uppercase tracking-wide">{label}</div>
-      <div className={`text-lg font-bold ${accent || 'text-gray-900'}`}>{value}</div>
-      {sub && <div className="text-[11px] text-gray-400">{sub}</div>}
+    <div className="border border-line bg-surface px-3 py-2.5">
+      <div className="text-[11px] text-content-muted uppercase tracking-wide">{label}</div>
+      <div className={`text-lg font-bold ${accent || 'text-content'}`}>{value}</div>
+      {sub && <div className="text-[11px] text-content-faint">{sub}</div>}
     </div>
   )
 }
@@ -210,10 +210,10 @@ function FuelStatTable({ fuelTypes, columns, totalRow, fuelRows }) {
   const showPerFuel = fuelTypes.length > 1
   const rowKeys = showPerFuel ? ['TOTAL', ...fuelTypes] : ['TOTAL']
   return (
-    <div className="border border-gray-200 bg-white overflow-x-auto mb-4">
+    <div className="border border-line bg-surface overflow-x-auto mb-4">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-gray-50 text-gray-500 text-[11px] uppercase tracking-wide">
+          <tr className="bg-subtle text-content-muted text-[11px] uppercase tracking-wide">
             <th className="px-3 py-2 text-left font-medium w-20"></th>
             {columns.map(c => (
               <th key={c.key} className="px-3 py-2 text-right font-medium whitespace-nowrap">{c.label}</th>
@@ -225,12 +225,12 @@ function FuelStatTable({ fuelTypes, columns, totalRow, fuelRows }) {
             const isTotal = rk === 'TOTAL'
             const data = isTotal ? totalRow : fuelRows[rk] || {}
             return (
-              <tr key={rk} className={isTotal ? 'border-b-2 border-gray-200' : i > 1 ? 'border-t border-gray-100' : ''}>
-                <td className={`px-3 py-2 ${isTotal ? 'font-bold text-gray-900' : 'font-semibold'}`} style={!isTotal ? { color: FUEL_COLORS[rk] } : {}}>
+              <tr key={rk} className={isTotal ? 'border-b-2 border-line' : i > 1 ? 'border-t border-line' : ''}>
+                <td className={`px-3 py-2 ${isTotal ? 'font-bold text-content' : 'font-semibold'}`} style={!isTotal ? { color: FUEL_COLORS[rk] } : {}}>
                   {rk}
                 </td>
                 {columns.map(c => (
-                  <td key={c.key} className={`px-3 py-2 text-right whitespace-nowrap ${isTotal ? 'font-bold text-gray-900' : 'text-gray-700'} ${c.accent ? c.accent(data[c.key]) : ''}`}>
+                  <td key={c.key} className={`px-3 py-2 text-right whitespace-nowrap ${isTotal ? 'font-bold text-content' : 'text-content-strong'} ${c.accent ? c.accent(data[c.key]) : ''}`}>
                     {c.format(data[c.key])}
                   </td>
                 ))}
@@ -247,8 +247,8 @@ function Section({ title, blurb, children }) {
   return (
     <section className="mb-8">
       <div className="mb-3 border-l-4 border-blue-600 pl-3">
-        <h2 className="text-base font-bold text-gray-900">{title}</h2>
-        <p className="text-xs text-gray-500 mt-0.5">{blurb}</p>
+        <h2 className="text-base font-bold text-content">{title}</h2>
+        <p className="text-xs text-content-muted mt-0.5">{blurb}</p>
       </div>
       {children}
     </section>
@@ -260,8 +260,8 @@ function AnalyticsBody({ report, startDate, endDate }) {
 
   const fuelMixData = fuelTypes.map(ft => ({ name: ft, value: fuelMix[ft] || 0 }))
 
-  const ovshAccent = summary.netOvsh < 0 ? 'text-red-600' : summary.netOvsh > 0 ? 'text-green-600' : ''
-  const pendingAccent = summary.pendingLodgement > 0 ? 'text-amber-600' : ''
+  const ovshAccent = summary.netOvsh < 0 ? 'text-red-600 dark:text-red-400' : summary.netOvsh > 0 ? 'text-green-600 dark:text-green-400' : ''
+  const pendingAccent = summary.pendingLodgement > 0 ? 'text-amber-600 dark:text-amber-400' : ''
 
   const naira = (v) => v == null ? '' : '₦' + fmt(v)
   const liters = (v) => v == null ? '' : fmt(v) + ' L'
@@ -487,10 +487,10 @@ function AnalyticsBody({ report, startDate, endDate }) {
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="border border-gray-200 bg-white p-3 mb-4">
+    <div className="border border-line bg-surface p-3 mb-4">
       <div className="mb-2">
-        <h3 className="text-sm font-bold text-gray-900">{title}</h3>
-        {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
+        <h3 className="text-sm font-bold text-content">{title}</h3>
+        {subtitle && <p className="text-xs text-content-muted mt-0.5">{subtitle}</p>}
       </div>
       {children}
     </div>

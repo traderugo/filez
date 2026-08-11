@@ -21,7 +21,7 @@ function fmtDec(n) {
 
 export default function LubeReportPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <LubeReportContent />
     </Suspense>
   )
@@ -243,11 +243,11 @@ function LubeReportContent() {
   }
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
   }
 
-  const hdr = 'bg-blue-600 text-white'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-2 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
@@ -257,15 +257,15 @@ function LubeReportContent() {
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
       {/* Header + date range */}
       <div className="flex items-center justify-between py-3 shrink-0">
-        <h1 className="text-lg font-bold text-gray-900">Lube Report</h1>
+        <h1 className="text-lg font-bold text-content">Lube Report</h1>
         <div className="flex items-center gap-2">
-          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
-          <span className="text-sm text-gray-400">to</span>
-          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
+          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <span className="text-sm text-content-faint">to</span>
+          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
           <button
             onClick={handleGenerate}
             disabled={!startDate || !endDate || startDate > endDate}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
           >
             Generate
           </button>
@@ -273,10 +273,10 @@ function LubeReportContent() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-10 border border-gray-200">
+      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-10 border border-line">
         {!generated ? (
           <div className="flex items-center justify-center py-20">
-            <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+            <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
           </div>
         ) : activeTab === 'daily-log' ? (
           <DailyLogTable data={dailyLog} cell={cell} cellR={cellR} hdr={hdr} />
@@ -286,7 +286,7 @@ function LubeReportContent() {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 border-t border-gray-200 bg-white flex">
+      <div className="shrink-0 border-t border-line bg-surface flex">
         {[
           { key: 'daily-log', label: 'Daily Lube Log' },
           { key: 'summary', label: 'Stock Summary' },
@@ -294,7 +294,7 @@ function LubeReportContent() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-xs font-medium border-r border-gray-200 ${activeTab === tab.key ? 'bg-blue-50 text-blue-700 border-b-2 border-b-blue-600' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            className={`px-4 py-2 text-xs font-medium border-r border-line ${activeTab === tab.key ? 'bg-primary-50 text-primary-700 border-b-2 border-b-blue-600' : 'text-content-muted hover:text-content-strong hover:bg-subtle'}`}
           >
             {tab.label}
           </button>
@@ -307,8 +307,8 @@ function LubeReportContent() {
 }
 
 function DailyLogTable({ data, cell, cellR, hdr }) {
-  if (!data) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-  if (data.rows.length === 0) return <div className="flex items-center justify-center py-20"><p className="text-gray-400 text-sm">No lube sales or lodgements in this date range.</p></div>
+  if (!data) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
+  if (data.rows.length === 0) return <div className="flex items-center justify-center py-20"><p className="text-content-faint text-sm">No lube sales or lodgements in this date range.</p></div>
 
   let prevDate = null
 
@@ -327,7 +327,7 @@ function DailyLogTable({ data, cell, cellR, hdr }) {
       </thead>
       <tbody>
         {/* Opening balance row */}
-        <tr className="bg-gray-50 font-medium">
+        <tr className="bg-subtle font-medium">
           <td className={cell} colSpan={5}>Opening Balance</td>
           <td className={cellR}>{fmtDec(data.openingBalance)}</td>
           <td className={cell}></td>
@@ -336,7 +336,7 @@ function DailyLogTable({ data, cell, cellR, hdr }) {
           const showDate = row.date !== prevDate
           prevDate = row.date
           return (
-            <tr key={i} className="hover:bg-blue-50/40">
+            <tr key={i} className="hover:bg-primary-50/40">
               <td className={`${cellR} whitespace-nowrap`}>{showDate ? fmtDate(row.date) : ''}</td>
               <td className={cell}>{row.product || (row.lodgement > 0 ? 'Lodgement' : '')}</td>
               <td className={cellR}>{row.qtyOut > 0 ? fmt(row.qtyOut) : ''}</td>
@@ -349,7 +349,7 @@ function DailyLogTable({ data, cell, cellR, hdr }) {
         })}
       </tbody>
       <tfoot>
-        <tr className="font-bold bg-blue-50">
+        <tr className="font-bold bg-primary-50">
           <td className={cell} colSpan={3}>Total</td>
           <td className={cellR}>{fmtDec(data.totalAmount)}</td>
           <td className={cellR}>{fmtDec(data.totalLodgement)}</td>
@@ -362,8 +362,8 @@ function DailyLogTable({ data, cell, cellR, hdr }) {
 }
 
 function SummaryTable({ data, cell, cellR, hdr }) {
-  if (!data) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-  if (data.rows.length === 0) return <div className="flex items-center justify-center py-20"><p className="text-gray-400 text-sm">No lube products configured.</p></div>
+  if (!data) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
+  if (data.rows.length === 0) return <div className="flex items-center justify-center py-20"><p className="text-content-faint text-sm">No lube products configured.</p></div>
 
   return (
     <table className="w-full text-xs border-collapse min-w-[900px]">
@@ -383,10 +383,10 @@ function SummaryTable({ data, cell, cellR, hdr }) {
       <tbody>
         {data.rows.map((row) => {
           const varianceColor = row.variance !== null
-            ? row.variance < 0 ? 'text-red-600 font-medium' : row.variance > 0 ? 'text-green-600 font-medium' : ''
+            ? row.variance < 0 ? 'text-red-600 dark:text-red-400 font-medium' : row.variance > 0 ? 'text-green-600 dark:text-green-400 font-medium' : ''
             : ''
           return (
-            <tr key={row.sn} className="hover:bg-blue-50/40">
+            <tr key={row.sn} className="hover:bg-primary-50/40">
               <td className={`${cell} text-center`}>{row.sn}</td>
               <td className={cell}>{row.product}</td>
               <td className={cellR}>{fmt(row.opening)}</td>
@@ -401,7 +401,7 @@ function SummaryTable({ data, cell, cellR, hdr }) {
         })}
       </tbody>
       <tfoot>
-        <tr className="font-bold bg-blue-50">
+        <tr className="font-bold bg-primary-50">
           <td className={cell} colSpan={2}>Total</td>
           <td className={cellR}>{fmt(data.totals.opening)}</td>
           <td className={cellR}>{fmt(data.totals.sold)}</td>
@@ -409,7 +409,7 @@ function SummaryTable({ data, cell, cellR, hdr }) {
           <td className={cellR}>{fmt(data.totals.received)}</td>
           <td className={cellR}>{fmt(data.totals.expectedClosing)}</td>
           <td className={cellR}>{data.totals.actualClosing !== null ? fmt(data.totals.actualClosing) : '—'}</td>
-          <td className={`${cellR} ${data.totals.variance !== null ? (data.totals.variance < 0 ? 'text-red-600' : data.totals.variance > 0 ? 'text-green-600' : '') : ''}`}>
+          <td className={`${cellR} ${data.totals.variance !== null ? (data.totals.variance < 0 ? 'text-red-600 dark:text-red-400' : data.totals.variance > 0 ? 'text-green-600 dark:text-green-400' : '') : ''}`}>
             {data.totals.variance !== null ? fmt(data.totals.variance) : '—'}
           </td>
         </tr>

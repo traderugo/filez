@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 export default function DipCalculatorPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <DipCalculatorContent />
     </Suspense>
   )
@@ -78,8 +78,8 @@ function DipCalculatorContent() {
     }
   }, [calc])
 
-  const hdr = 'bg-blue-600 text-white'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-2 py-1 text-xs whitespace-nowrap`
   const cellR = `${cell} text-right`
   const valCls = `${cellR}`
@@ -87,16 +87,16 @@ function DipCalculatorContent() {
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[900px] mx-auto px-4 sm:px-6">
       <div className="shrink-0 py-4 flex items-center gap-2">
-        <h1 className="text-lg font-bold text-gray-900 mr-auto">Dip Calculator</h1>
+        <h1 className="text-lg font-bold text-content mr-auto">Dip Calculator</h1>
         <Link
           href={`/dashboard/reports/product-received?org_id=${orgId}`}
-          className="px-4 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="px-4 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
         >
           Back
         </Link>
       </div>
 
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-gray-200">
+      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-line">
         {/* ─── Readings ─── */}
         <table className="w-full border-collapse min-w-0">
           <thead>
@@ -106,7 +106,7 @@ function DipCalculatorContent() {
               <th className={`${cell} ${hdr} text-center`} colSpan={2}>DEPOT</th>
               <th className={`${cell} ${hdr} text-center`} colSpan={2}>STATION</th>
             </tr>
-            <tr className="bg-blue-50">
+            <tr className="bg-primary-50">
               <th className={`${cell} text-center w-10`}>#</th>
               <th className={`${cell} text-center`}>Ullage</th>
               <th className={`${cell} text-center`}>Liquid Ht</th>
@@ -119,7 +119,7 @@ function DipCalculatorContent() {
           <tbody>
             {rows.map((r, i) => (
               <tr key={i}>
-                <td className={`${cell} text-center font-medium bg-gray-50`}>{i + 1}</td>
+                <td className={`${cell} text-center font-medium bg-subtle`}>{i + 1}</td>
                 <td className={valCls}>{fmt(r.chartUllage)}</td>
                 <td className={valCls}>{fmt(r.chartLH)}</td>
                 <td className={valCls}>{fmt(r.depotUllage)}</td>
@@ -147,13 +147,13 @@ function DipCalculatorContent() {
           <tbody>
             {rows.map((r, i) => (
               <tr key={i}>
-                <td className={`${cell} text-center font-medium bg-gray-50 w-10`}>{i + 1}</td>
+                <td className={`${cell} text-center font-medium bg-subtle w-10`}>{i + 1}</td>
                 <td className={valCls}>{fmt(r.highVol)}</td>
                 <td className={valCls}>{fmt(r.lowVol)}</td>
                 <td className={valCls}>{fmt(r.highUllage)}</td>
                 <td className={valCls}>{fmt(r.lowUllage)}</td>
-                <td className={`${cellR} bg-gray-50 font-medium`}>{fmt(calc[i].ullageMF)}</td>
-                <td className={`${cellR} bg-gray-50 font-medium`}>{fmt(calc[i].lhMF)}</td>
+                <td className={`${cellR} bg-subtle font-medium`}>{fmt(calc[i].ullageMF)}</td>
+                <td className={`${cellR} bg-subtle font-medium`}>{fmt(calc[i].lhMF)}</td>
               </tr>
             ))}
           </tbody>
@@ -168,7 +168,7 @@ function DipCalculatorContent() {
               <th className={`${cell} ${hdr} text-center`} colSpan={2}>CHART TO STATION</th>
               <th className={`${cell} ${hdr} text-center`} colSpan={2}>CHART TO DEPOT</th>
             </tr>
-            <tr className="bg-blue-50">
+            <tr className="bg-primary-50">
               <th className={`${cell} text-center w-10`}>#</th>
               <th className={`${cell} text-center`}>Ullage Diff</th>
               <th className={`${cell} text-center`}>Vol</th>
@@ -181,7 +181,7 @@ function DipCalculatorContent() {
           <tbody>
             {calc.map((c, i) => (
               <tr key={i}>
-                <td className={`${cell} text-center font-medium bg-gray-50`}>{i + 1}</td>
+                <td className={`${cell} text-center font-medium bg-subtle`}>{i + 1}</td>
                 <td className={cellR}>{fmt(c.dsUDiff)}</td>
                 <td className={cellR}>{fmt(c.dsUVol)}</td>
                 <td className={cellR}>{fmt(c.csUDiff)}</td>
@@ -190,7 +190,7 @@ function DipCalculatorContent() {
                 <td className={cellR}>{fmt(c.cdUVol)}</td>
               </tr>
             ))}
-            <tr className="font-bold bg-blue-50">
+            <tr className="font-bold bg-primary-50">
               <td className={cell}>TOTAL</td>
               <td className={cellR}>{fmt(totals.dsUDiff)}</td>
               <td className={cellR}>{fmt(totals.dsUVol)}</td>
@@ -211,7 +211,7 @@ function DipCalculatorContent() {
               <th className={`${cell} ${hdr} text-center`} colSpan={2}>CHART TO STATION</th>
               <th className={`${cell} ${hdr} text-center`} colSpan={2}>CHART TO DEPOT</th>
             </tr>
-            <tr className="bg-blue-50">
+            <tr className="bg-primary-50">
               <th className={`${cell} text-center w-10`}>#</th>
               <th className={`${cell} text-center`}>Liquid Ht Diff</th>
               <th className={`${cell} text-center`}>Vol</th>
@@ -224,7 +224,7 @@ function DipCalculatorContent() {
           <tbody>
             {calc.map((c, i) => (
               <tr key={i}>
-                <td className={`${cell} text-center font-medium bg-gray-50`}>{i + 1}</td>
+                <td className={`${cell} text-center font-medium bg-subtle`}>{i + 1}</td>
                 <td className={cellR}>{fmt(c.dsLDiff)}</td>
                 <td className={cellR}>{fmt(c.dsLVol)}</td>
                 <td className={cellR}>{fmt(c.csLDiff)}</td>
@@ -233,7 +233,7 @@ function DipCalculatorContent() {
                 <td className={cellR}>{fmt(c.cdLVol)}</td>
               </tr>
             ))}
-            <tr className="font-bold bg-blue-50">
+            <tr className="font-bold bg-primary-50">
               <td className={cell}>TOTAL</td>
               <td className={cellR}>{fmt(totals.dsLDiff)}</td>
               <td className={cellR}>{fmt(totals.dsLVol)}</td>

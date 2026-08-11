@@ -343,7 +343,7 @@ export default function ChatPage() {
               <div key={item.id}>
                 {showDateSep && (
                   <div className="flex justify-center my-3">
-                    <span className="bg-primary-50 text-blue-500 text-xs px-3 py-0.5">{blockDate}</span>
+                    <span className="bg-primary-50 text-primary-500 text-xs px-3 py-0.5">{blockDate}</span>
                   </div>
                 )}
                 <button
@@ -378,7 +378,7 @@ export default function ChatPage() {
               {/* Date separator */}
               {showDateSep && (
                 <div className="flex justify-center my-3">
-                  <span className="bg-primary-50 text-blue-500 text-xs px-3 py-0.5">{msgDate}</span>
+                  <span className="bg-primary-50 text-primary-500 text-xs px-3 py-0.5">{msgDate}</span>
                 </div>
               )}
 
@@ -407,7 +407,7 @@ export default function ChatPage() {
                       isDeleted
                         ? 'bg-subtle text-content-faint italic border border-line'
                         : isMe
-                          ? 'bg-primary-100 text-blue-900'
+                          ? 'bg-primary-100 text-primary-900 dark:text-primary-100'
                           : 'bg-slate-100 text-content'
                     }`}>
                       {!isMe && !isDeleted && (
@@ -417,7 +417,7 @@ export default function ChatPage() {
                         ? `Message deleted · ${fmtTime(msg.deletedAt)}`
                         : <MessageContent content={msg.content} currentUserName={user?.name} isMe={isMe} />
                       }
-                      <p className={`text-[10px] mt-1.5 ${isDeleted ? 'text-content-faint' : isMe ? 'text-blue-500' : 'text-content-faint'}`}>{fmtTime(msg.createdAt)}</p>
+                      <p className={`text-[10px] mt-1.5 ${isDeleted ? 'text-content-faint' : isMe ? 'text-primary-500' : 'text-content-faint'}`}>{fmtTime(msg.createdAt)}</p>
                     </div>
                   </div>
                 </div>

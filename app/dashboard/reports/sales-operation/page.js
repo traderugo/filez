@@ -17,7 +17,7 @@ function fmt(n) {
 
 export default function SalesOperationPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <SalesOperationContent />
     </Suspense>
   )
@@ -156,7 +156,7 @@ function SalesOperationContent() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -164,7 +164,7 @@ function SalesOperationContent() {
   if (!orgId) {
     return (
       <div className="max-w-4xl px-4 sm:px-8 py-8">
-        <p className="text-base text-gray-500">No station selected.</p>
+        <p className="text-base text-content-muted">No station selected.</p>
       </div>
     )
   }
@@ -180,18 +180,18 @@ function SalesOperationContent() {
               <DateInput
                 value={startDate}
                 onChange={setStartDate}
-                className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-2 py-2 border border-line text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
-              <span className="text-sm text-gray-400">to</span>
+              <span className="text-sm text-content-faint">to</span>
               <DateInput
                 value={endDate}
                 onChange={setEndDate}
-                className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-2 py-2 border border-line text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <button
                 onClick={handleGenerate}
                 disabled={generating || !startDate || !endDate || startDate > endDate}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
               >
                 {generating && <Loader2 className="w-4 h-4 animate-spin" />}
                 {generating ? 'Generating...' : 'Generate'}
@@ -212,43 +212,43 @@ function SalesOperationContent() {
 
           {!generated ? (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+              <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
             </div>
           ) : !report ? (
             <div className="flex justify-center py-20">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
             </div>
           ) : !activeSheet ? (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-gray-400 text-sm">No sheets in this range.</p>
+              <p className="text-content-faint text-sm">No sheets in this range.</p>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-300">
+            <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-line">
               <SalesOperationGrid sheet={activeSheet} stationName={stationName} />
             </div>
           )}
 
           {generated && report?.sheets?.length > 0 && (
             <>
-              <div className="flex overflow-x-auto shrink-0 border-t border-blue-200 md:hidden">
+              <div className="flex overflow-x-auto shrink-0 border-t border-primary-500/40 md:hidden">
                 {report.sheets.map(s => {
                   const isActive = s.sheetName === activeSheetName
                   return (
                     <button
                       key={s.sheetName}
                       onClick={() => setActiveSheetName(s.sheetName)}
-                      className={`px-2 py-1.5 text-xs font-medium border-r border-blue-200 shrink-0 ${isActive ? 'bg-blue-600 text-white' : 'bg-white text-blue-600'}`}
+                      className={`px-2 py-1.5 text-xs font-medium border-r border-primary-500/40 shrink-0 ${isActive ? 'bg-primary-500 text-white' : 'bg-surface text-primary-600'}`}
                     >
                       {s.sheetName}
                     </button>
                   )
                 })}
               </div>
-              <div className="hidden md:flex items-center justify-center shrink-0 border-t border-blue-200">
+              <div className="hidden md:flex items-center justify-center shrink-0 border-t border-primary-500/40">
                 <button
                   onClick={() => setTabOffset(Math.max(0, tabOffset - 1))}
                   disabled={tabOffset <= 0}
-                  className="p-1.5 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1.5 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -259,7 +259,7 @@ function SalesOperationContent() {
                       <button
                         key={s.sheetName}
                         onClick={() => setActiveSheetName(s.sheetName)}
-                        className={`px-3 py-1.5 text-sm font-medium border-r border-blue-200 ${isActive ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 hover:bg-blue-50'}`}
+                        className={`px-3 py-1.5 text-sm font-medium border-r border-primary-500/40 ${isActive ? 'bg-primary-500 text-white' : 'bg-surface text-primary-600 hover:bg-primary-50'}`}
                       >
                         {s.sheetName}
                       </button>
@@ -269,7 +269,7 @@ function SalesOperationContent() {
                 <button
                   onClick={() => setTabOffset(Math.min(Math.max(0, report.sheets.length - TAB_COUNT), tabOffset + 1))}
                   disabled={tabOffset >= report.sheets.length - TAB_COUNT}
-                  className="p-1.5 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="p-1.5 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>

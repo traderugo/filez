@@ -28,7 +28,7 @@ const SUB_REPORTS = [
 
 export default function AuditReportPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <AuditReportContent />
     </Suspense>
   )
@@ -258,7 +258,7 @@ function AuditReportContent() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -266,7 +266,7 @@ function AuditReportContent() {
   if (!orgId) {
     return (
       <div className="max-w-4xl px-4 sm:px-8 py-8">
-        <p className="text-base text-gray-500">No station selected.</p>
+        <p className="text-base text-content-muted">No station selected.</p>
       </div>
     )
   }
@@ -278,13 +278,13 @@ function AuditReportContent() {
       {/* Header + date range */}
       <div className="flex items-center justify-end py-3 shrink-0">
         <div className="flex items-center gap-2">
-          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
-          <span className="text-sm text-gray-400">to</span>
-          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
+          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <span className="text-sm text-content-faint">to</span>
+          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
           <button
             onClick={handleGenerate}
             disabled={generating || !startDate || !endDate || startDate > endDate || dateRangeDays > 32}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
           >
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
@@ -307,12 +307,12 @@ function AuditReportContent() {
 
       {/* Report content */}
       {report ? (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-gray-200">
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-line">
           {!canAccessTab(activeTab) ? (
             <div className="flex items-center justify-center py-20">
-              <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded max-w-md">
+              <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-100 rounded max-w-md">
                 <ShieldX className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-red-700 dark:text-red-300">
                   You don&apos;t have permission to view this report. Contact the station owner to update your access.
                 </p>
               </div>
@@ -345,31 +345,31 @@ function AuditReportContent() {
         </div>
       ) : generated ? (
         <div className="flex-1 flex justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
         </div>
       ) : (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+          <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
         </div>
       )}
 
       {/* Sub-report tabs (bottom, Excel-style) */}
       {generated && report && (
-        <div className="flex overflow-x-auto shrink-0 border-t border-blue-200 bg-gray-50">
+        <div className="flex overflow-x-auto shrink-0 border-t border-primary-500/40 bg-subtle">
           {SUB_REPORTS.map(tab => {
             const allowed = canAccessTab(tab.key)
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-1.5 text-sm font-medium border-r border-blue-200 shrink-0 whitespace-nowrap transition-colors ${
+                className={`px-4 py-1.5 text-sm font-medium border-r border-primary-500/40 shrink-0 whitespace-nowrap transition-colors ${
                   activeTab === tab.key
                     ? allowed
-                      ? 'bg-white text-blue-600 border-t-2 border-t-blue-600 -mt-px'
-                      : 'bg-white text-red-400 border-t-2 border-t-red-400 -mt-px'
+                      ? 'bg-surface text-primary-600 border-t-2 border-t-blue-600 -mt-px'
+                      : 'bg-surface text-red-400 border-t-2 border-t-red-400 -mt-px'
                     : allowed
-                      ? 'bg-gray-50 text-gray-500 hover:bg-white hover:text-blue-600'
-                      : 'bg-gray-50 text-gray-300'
+                      ? 'bg-subtle text-content-muted hover:bg-surface hover:text-primary-600'
+                      : 'bg-subtle text-content-faint'
                 }`}
               >
                 {tab.label}
@@ -390,9 +390,9 @@ function SalesCashPosition({ report, startDate, endDate }) {
   const { salesCash, fuelTypes } = report
   if (!salesCash) return null
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const subHdr = 'bg-primary-50 text-primary-600'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
@@ -400,7 +400,7 @@ function SalesCashPosition({ report, startDate, endDate }) {
 
   return (
     <div className="min-w-[700px] pb-4 px-[10%]">
-      <h2 className="text-base font-bold text-gray-900 mb-1">
+      <h2 className="text-base font-bold text-content mb-1">
         Cash/Sales Reconciliation — {formatDate(startDate)} to {formatDate(endDate)}
       </h2>
 
@@ -564,7 +564,7 @@ function MeterGroup({ row, rowIdx, totalRows, cell, cellR }) {
 function CashReconciliation({ data, startDate, endDate, hdr, subHdr, cell, cellR }) {
   const formatDate = fmtDate
 
-  const overshortColor = data.overshort < 0 ? 'text-red-600' : data.overshort > 0 ? 'text-green-600' : ''
+  const overshortColor = data.overshort < 0 ? 'text-red-600 dark:text-red-400' : data.overshort > 0 ? 'text-green-600 dark:text-green-400' : ''
   // Note: negative = station owes (debt), positive = station overpaid
 
   return (
@@ -614,12 +614,12 @@ function LodgementSheet({ report }) {
   const posOnly = banks.filter(b => b.lodgement_type === 'pos')
   const transferOnly = banks.filter(b => b.lodgement_type === 'transfer')
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const subHdr = 'bg-primary-50 text-primary-600'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
-  const cellEmpty = `${bdr} px-1.5 py-1 whitespace-nowrap bg-gray-50`
+  const cellEmpty = `${bdr} px-1.5 py-1 whitespace-nowrap bg-subtle`
 
   // fmtDate imported from @/lib/formatDate
 
@@ -699,7 +699,7 @@ function LodgementSheet({ report }) {
                 <td className={cellR}>{fmt(tTransfer)}</td>
                 <td className={cellR}>{fmt(cashSales)}</td>
                 <td className={cellR}>{fmt(row.actual)}</td>
-                <td className={`${cellR} font-bold ${row.ovsh > 0 ? 'text-green-600' : row.ovsh < 0 ? 'text-red-600' : ''}`}>
+                <td className={`${cellR} font-bold ${row.ovsh > 0 ? 'text-green-600 dark:text-green-400' : row.ovsh < 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
                   {fmtOvsh(row.ovsh)}
                 </td>
                 <td className={`${cellR} whitespace-nowrap`}>{row.dateLodged ? fmtDate(row.dateLodged) : ''}</td>
@@ -725,7 +725,7 @@ function LodgementSheet({ report }) {
                 <td className={cellR}>{fmt(gTransfer)}</td>
                 <td className={cellR}>{fmt(gCash)}</td>
                 <td className={cellR}>{fmt(totals.actual)}</td>
-                <td className={`${cellR} ${totals.ovsh > 0 ? 'text-green-600' : totals.ovsh < 0 ? 'text-red-600' : ''}`}>
+                <td className={`${cellR} ${totals.ovsh > 0 ? 'text-green-600 dark:text-green-400' : totals.ovsh < 0 ? 'text-red-600 dark:text-red-400' : ''}`}>
                   {fmtOvsh(totals.ovsh)}
                 </td>
                 <td className={cell}></td>
@@ -746,9 +746,9 @@ function StockPosition({ report }) {
 
   if (!stockPosition) return null
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const subHdr = 'bg-primary-50 text-primary-600'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
@@ -756,7 +756,7 @@ function StockPosition({ report }) {
 
   const ovshColor = (v) => {
     if (v == null || v === 0) return ''
-    return v < 0 ? 'text-red-600' : 'text-green-600'
+    return v < 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
   }
 
   const fuelData = stockPosition[activeFuel]
@@ -775,8 +775,8 @@ function StockPosition({ report }) {
             onClick={() => setActiveFuel(ft)}
             className={`px-4 py-1.5 text-sm font-medium border ${
               activeFuel === ft
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-blue-900 border-blue-200 hover:bg-blue-50'
+                ? 'bg-primary-500 text-white border-blue-600'
+                : 'bg-surface text-primary-900 dark:text-primary-100 border-primary-500/40 hover:bg-primary-50'
             }`}
           >
             {ft}
@@ -839,8 +839,8 @@ function StockSummary({ report, startDate, endDate }) {
 
   // fmtDate imported from @/lib/formatDate
 
-  const hdr = 'bg-blue-600 text-white font-bold'
-  const cell = 'border border-blue-200 px-3 py-1.5 text-sm'
+  const hdr = 'bg-primary-500 text-white font-bold'
+  const cell = 'border border-primary-500/40 px-3 py-1.5 text-sm'
   const cellR = cell + ' text-right'
 
   const fmtOvsh = (n) => {
@@ -867,7 +867,7 @@ function StockSummary({ report, startDate, endDate }) {
 
         return (
           <div key={ft} className="mb-6">
-            <table className="w-full border-collapse border border-blue-200">
+            <table className="w-full border-collapse border border-primary-500/40">
               <thead>
                 <tr className={hdr}>
                   <th className={cell + ' text-left w-[65%]'}>{ft} STOCK POSITION</th>
@@ -938,9 +938,9 @@ function ConsumptionReport({ report, startDate, endDate }) {
 
   // fmtDate imported from @/lib/formatDate
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-900'
-  const cell = 'border border-blue-200 px-2 py-1 text-sm'
+  const hdr = 'bg-primary-500 text-white'
+  const subHdr = 'bg-primary-50 text-primary-900 dark:text-primary-100'
+  const cell = 'border border-primary-500/40 px-2 py-1 text-sm'
   const cellR = cell + ' text-right'
 
   const data = consumptionReport[activeFuel]
@@ -958,8 +958,8 @@ function ConsumptionReport({ report, startDate, endDate }) {
             onClick={() => setActiveFuel(ft)}
             className={`px-4 py-1.5 text-sm font-medium border ${
               activeFuel === ft
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-blue-900 border-blue-200 hover:bg-blue-50'
+                ? 'bg-primary-500 text-white border-blue-600'
+                : 'bg-surface text-primary-900 dark:text-primary-100 border-primary-500/40 hover:bg-primary-50'
             }`}
           >
             {ft}
@@ -968,7 +968,7 @@ function ConsumptionReport({ report, startDate, endDate }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-blue-200 text-sm">
+        <table className="w-full border-collapse border border-primary-500/40 text-sm">
           <thead>
             <tr className={hdr}>
               <th className={cell + ' text-left'}>Date</th>
@@ -983,7 +983,7 @@ function ConsumptionReport({ report, startDate, endDate }) {
             {rows.map(row => {
               const hasAnyValue = row.hasData || customers.some(c => row.customerQtys[c.id]) || row.pourBack
               return (
-                <tr key={row.date} className={hasAnyValue ? '' : 'text-gray-400'}>
+                <tr key={row.date} className={hasAnyValue ? '' : 'text-content-faint'}>
                   <td className={`${cellR} whitespace-nowrap`}>
                     {fmtDate(row.date)}
                   </td>
@@ -1011,7 +1011,7 @@ function ConsumptionReport({ report, startDate, endDate }) {
       </div>
 
       {customers.length === 0 && (
-        <p className="text-sm text-gray-400 text-center py-8">
+        <p className="text-sm text-content-faint text-center py-8">
           No consumption entries for {activeFuel} in this period.
         </p>
       )}
@@ -1025,7 +1025,7 @@ function VarianceBadge({ actual, estimate }) {
   const diff = estimate - actual
   if (diff === 0) return null
   return (
-    <span className={`text-xs font-medium ${diff > 0 ? 'text-green-600' : 'text-red-600'}`}>
+    <span className={`text-xs font-medium ${diff > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
       {diff > 0 ? '+' : ''}{fmt(diff)}
     </span>
   )
@@ -1033,32 +1033,32 @@ function VarianceBadge({ actual, estimate }) {
 
 function CalcRow({ label, actual, estimate, editable, onChange }) {
   return (
-    <div className="border-b border-gray-100 py-2">
+    <div className="border-b border-line py-2">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs text-gray-500 font-medium">{label}</span>
+        <span className="text-xs text-content-muted font-medium">{label}</span>
         <VarianceBadge actual={actual} estimate={estimate} />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-gray-50 rounded px-2.5 py-1.5">
-          <span className="text-[10px] text-gray-400 uppercase">Actual</span>
-          <p className="text-sm font-medium text-gray-800">{fmt(actual)}</p>
+        <div className="bg-subtle rounded px-2.5 py-1.5">
+          <span className="text-[10px] text-content-faint uppercase">Actual</span>
+          <p className="text-sm font-medium text-content">{fmt(actual)}</p>
         </div>
         {editable ? (
-          <div className="bg-yellow-50 rounded px-2.5 py-0.5">
-            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
+          <div className="bg-yellow-50 dark:bg-yellow-950/40 rounded px-2.5 py-0.5">
+            <span className="text-[10px] text-content-faint uppercase">Estimate</span>
             <input
               type="number"
               value={estimate}
               onChange={(e) => onChange(e.target.value)}
               onFocus={(e) => e.target.select()}
               step="0.01"
-              className="w-full text-sm font-medium text-gray-800 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="w-full text-sm font-medium text-content bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>
         ) : (
-          <div className="bg-gray-50 rounded px-2.5 py-1.5">
-            <span className="text-[10px] text-gray-400 uppercase">Estimate</span>
-            <p className="text-sm font-medium text-gray-800">{fmt(estimate)}</p>
+          <div className="bg-subtle rounded px-2.5 py-1.5">
+            <span className="text-[10px] text-content-faint uppercase">Estimate</span>
+            <p className="text-sm font-medium text-content">{fmt(estimate)}</p>
           </div>
         )}
       </div>
@@ -1124,10 +1124,10 @@ function CalculatorReport({ report, startDate, endDate }) {
 
   return (
     <div className="pb-4 max-w-lg mx-auto">
-      <h2 className="text-base font-bold text-gray-900 mb-0.5">
+      <h2 className="text-base font-bold text-content mb-0.5">
         Calculator — {formatDate(startDate)} to {formatDate(endDate)}
       </h2>
-      <p className="text-xs text-gray-400 mb-4">
+      <p className="text-xs text-content-faint mb-4">
         Yellow fields are editable. Resets on next generation.
       </p>
 
@@ -1169,8 +1169,8 @@ function CalculatorReport({ report, startDate, endDate }) {
 
         return (
           <div key={ft} className="mb-5">
-            <div className="bg-blue-600 text-white px-3 py-1.5 text-sm font-bold rounded-t">{ft}</div>
-            <div className="border border-t-0 border-gray-200 rounded-b px-3">
+            <div className="bg-primary-500 text-white px-3 py-1.5 text-sm font-bold rounded-t">{ft}</div>
+            <div className="border border-t-0 border-line rounded-b px-3">
               {rows.map((row, i) => {
                 const actual = row.field ? actuals[row.field] : row.actual
                 const estimate = row.field ? (est[row.field] || 0) : row.estimate
@@ -1192,8 +1192,8 @@ function CalculatorReport({ report, startDate, endDate }) {
 
       {/* Cash / Lodgement section */}
       <div className="mb-5">
-        <div className="bg-blue-600 text-white px-3 py-1.5 text-sm font-bold rounded-t">Cash / Lodgement</div>
-        <div className="border border-t-0 border-gray-200 rounded-b px-3">
+        <div className="bg-primary-500 text-white px-3 py-1.5 text-sm font-bold rounded-t">Cash / Lodgement</div>
+        <div className="border border-t-0 border-line rounded-b px-3">
           {(() => {
             const cr = salesCash.cashReconciliation || {}
             const actualBankDeposit = cr.totalLodgement || 0
@@ -1291,9 +1291,9 @@ function ProductReceived({ receipts, tanks, startDate, endDate }) {
     return { rows, totals }
   }, [receipts, tankFuel, startDate, endDate])
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const subHdr = 'bg-primary-50 text-primary-600'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
@@ -1327,13 +1327,13 @@ function ProductReceived({ receipts, tanks, startDate, endDate }) {
         <tbody>
           {deliveries.rows.length === 0 ? (
             <tr>
-              <td colSpan={2 + fuelTypes.length * 2} className={`${cell} text-center text-gray-400 py-8`}>
+              <td colSpan={2 + fuelTypes.length * 2} className={`${cell} text-center text-content-faint py-8`}>
                 No product receipts found in this period.
               </td>
             </tr>
           ) : (
             deliveries.rows.map((row, i) => (
-              <tr key={i} className="hover:bg-blue-50/40">
+              <tr key={i} className="hover:bg-primary-50/40">
                 <td className={`${cellR}`}>{row.loadedDate ? fmtDate(row.loadedDate) : '—'}</td>
                 <td className={`${cellR}`}>{row.entryDate ? fmtDate(row.entryDate) : '—'}</td>
                 {fuelTypes.map(ft => (

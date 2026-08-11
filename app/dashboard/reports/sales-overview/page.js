@@ -22,7 +22,7 @@ function fmtDec(n) {
 
 export default function SalesOverviewPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <SalesOverviewContent />
     </Suspense>
   )
@@ -115,7 +115,7 @@ function SalesOverviewContent() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -123,7 +123,7 @@ function SalesOverviewContent() {
   if (!orgId) {
     return (
       <div className="max-w-4xl px-4 sm:px-8 py-8">
-        <p className="text-base text-gray-500">No station selected.</p>
+        <p className="text-base text-content-muted">No station selected.</p>
       </div>
     )
   }
@@ -133,13 +133,13 @@ function SalesOverviewContent() {
       <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-end py-3 shrink-0">
           <div className="flex items-center gap-2">
-            <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
-            <span className="text-sm text-gray-400">to</span>
-            <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-gray-300 text-sm font-medium" />
+            <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+            <span className="text-sm text-content-faint">to</span>
+            <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
             <button
               onClick={handleGenerate}
               disabled={generating || !startDate || !endDate || startDate > endDate || dateRangeDays > 32}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
             >
               {generating && <Loader2 className="w-4 h-4 animate-spin" />}
               {generating ? 'Generating...' : 'Generate'}
@@ -151,18 +151,18 @@ function SalesOverviewContent() {
         )}
 
         {report ? (
-          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-gray-200">
+          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-line">
             <div className="px-4 sm:px-8 py-4">
               <SalesTable report={report} startDate={reportStart} endDate={reportEnd} />
             </div>
           </div>
         ) : generated ? (
           <div className="flex-1 flex justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+            <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
           </div>
         )}
       </div>
@@ -173,9 +173,9 @@ function SalesOverviewContent() {
 function SalesTable({ report, startDate, endDate }) {
   const { fuelTypes, rows, totals } = report
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const subHdr = 'bg-primary-50 text-primary-600'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
@@ -190,7 +190,7 @@ function SalesTable({ report, startDate, endDate }) {
 
   return (
     <div className="min-w-[900px] pb-4">
-      <h2 className="text-base font-bold text-gray-900 mb-2">
+      <h2 className="text-base font-bold text-content mb-2">
         Sales Overview — {fmtDate(startDate)} to {fmtDate(endDate)}
       </h2>
 
@@ -231,7 +231,7 @@ function SalesTable({ report, startDate, endDate }) {
         </thead>
         <tbody>
           {rows.map(row => (
-            <tr key={row.date} className={row.hasEntry ? '' : 'text-gray-400'}>
+            <tr key={row.date} className={row.hasEntry ? '' : 'text-content-faint'}>
               <td className={cellR}>{dayOf(row.date)}</td>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(row.date)}</td>
               {fuelTypes.map(ft => {

@@ -17,7 +17,7 @@ function fmt(n) {
 
 export default function SummaryPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <SummaryContent />
     </Suspense>
   )
@@ -150,16 +150,16 @@ function SummaryContent() {
   }
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+    return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
   }
 
   if (!orgId) {
-    return <div className="max-w-4xl px-4 sm:px-8 py-8"><p className="text-base text-gray-500">No station selected.</p></div>
+    return <div className="max-w-4xl px-4 sm:px-8 py-8"><p className="text-base text-content-muted">No station selected.</p></div>
   }
 
-  const hdr = 'bg-blue-600 text-white'
-  const subHdr = 'bg-blue-50 text-blue-600'
-  const bdr = 'border border-blue-200'
+  const hdr = 'bg-primary-500 text-white'
+  const subHdr = 'bg-primary-50 text-primary-600'
+  const bdr = 'border border-primary-500/40'
   const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
 
@@ -173,18 +173,18 @@ function SummaryContent() {
           <DateInput
             value={startDate}
             onChange={setStartDate}
-            className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-2 py-2 border border-line text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
-          <span className="text-sm text-gray-400">to</span>
+          <span className="text-sm text-content-faint">to</span>
           <DateInput
             value={endDate}
             onChange={setEndDate}
-            className="px-2 py-2 border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-2 py-2 border border-line text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           <button
             onClick={handleGenerate}
             disabled={generating || !startDate || !endDate || startDate > endDate}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
           >
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
@@ -202,9 +202,9 @@ function SummaryContent() {
           >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
-          <span className="text-sm text-gray-600 font-medium">
+          <span className="text-sm text-content-muted font-medium">
             {fmtDate(dayReport.date)}
-            <span className="text-gray-400 ml-1">({dayIndex + 1} of {totalDays})</span>
+            <span className="text-content-faint ml-1">({dayIndex + 1} of {totalDays})</span>
           </span>
           <button
             onClick={goNext}
@@ -219,18 +219,18 @@ function SummaryContent() {
       {/* Content */}
       {!generated ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Select a date range and click Generate.</p>
+          <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
         </div>
       ) : !report ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
         </div>
       ) : !dayReport ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">No data for this period.</p>
+          <p className="text-content-faint text-sm">No data for this period.</p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-gray-200 px-1 sm:px-[15%]">
+        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-line px-1 sm:px-[15%]">
           {/* 1. Closing Meter Readings per entry */}
           {dayReport.entryGroups.map((group, groupIdx) => (
             <div key={group.entryIndex} className="mb-4">
@@ -338,13 +338,13 @@ function SummaryContent() {
                 <tr key={row.bankId}>
                   <td className={cell}>
                     <span className="font-bold">{row.bankName}{row.terminalId ? ` - ${row.terminalId}` : ''}</span>
-                    <span className="text-xs text-gray-400 ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
+                    <span className="text-xs text-content-faint ml-1">({row.lodgementType === 'bank_deposit' ? 'deposit' : row.lodgementType})</span>
                   </td>
                   <td className={cellR}>{fmt(row.deposited)}</td>
                 </tr>
               ))}
               {dayReport.lodgement.totalAll === 0 && (
-                <tr><td colSpan={2} className={`${cell} text-gray-400`}>No lodgements</td></tr>
+                <tr><td colSpan={2} className={`${cell} text-content-faint`}>No lodgements</td></tr>
               )}
               {dayReport.lodgement.totalAll > 0 && (
                 <tr className={`${subHdr} font-bold`}>
@@ -444,13 +444,13 @@ function ClosingReadings({ fuelType, rows, totals, dayTotals, cell, cellR, subHd
         </tr>
       ))}
       {dayTotals ? (
-        <tr className="bg-gray-50 font-bold">
+        <tr className="bg-subtle font-bold">
           <td className={cell} colSpan={2}>
             {fmt(dispensed)} &minus; {fmt(adjustment)} = {fmt(actual)}
           </td>
         </tr>
       ) : (
-        <tr className="bg-gray-50 font-bold">
+        <tr className="bg-subtle font-bold">
           <td className={cell} colSpan={2}>
             Dispensed: {fmt(totals.dispensed)}
           </td>

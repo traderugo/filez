@@ -20,10 +20,10 @@ import { initialSync } from '@/lib/initialSync'
 import { supabase } from '@/lib/supabaseClient'
 import { OUTLINE } from '@/components/ui'
 
-// design-exception: literal white, because this pip sits ON a filled coloured button, where
-// a surface token would resolve to the page background and vanish. Same reason IconChip has
-// an "onColor" variant. rounded-full is intended — the square-corner rule exempts pills.
-const COUNT_PIP = 'bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center'
+// Literal white, because this pip sits ON a filled coloured button, where a surface token
+// would resolve to the page background and vanish. Same reason IconChip has an "onColor"
+// variant. rounded-full is intended — the square-corner rule exempts pills.
+const COUNT_PIP = 'bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center' // design-exception
 
 const ENTRY_PAGE_OPTIONS = [
   { key: 'daily-sales', label: 'Daily Sales' },
@@ -486,7 +486,7 @@ export default function StationPage() {
                 onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
                 className={`flex flex-col gap-2 border p-4 transition-colors ${
                   allowed
-                    ? 'border-line hover:border-primary-500/40 hover:bg-blue-50/50'
+                    ? 'border-line hover:border-primary-500/40 hover:bg-primary-50/50'
                     : 'border-line opacity-50'
                 }`}
               >
@@ -514,7 +514,7 @@ export default function StationPage() {
                 onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
                 className={`flex flex-col gap-2 border p-4 transition-colors ${
                   allowed
-                    ? 'border-line hover:border-primary-500/40 hover:bg-blue-50/50'
+                    ? 'border-line hover:border-primary-500/40 hover:bg-primary-50/50'
                     : 'border-line opacity-50'
                 }`}
               >
@@ -534,7 +534,7 @@ export default function StationPage() {
         <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Chat</h2>
         <Link
           href={`/dashboard/stations/${stationId}/chat`}
-          className="flex items-center gap-3 border border-line p-4 hover:border-primary-500/40 hover:bg-blue-50/50 transition-colors"
+          className="flex items-center gap-3 border border-line p-4 hover:border-primary-500/40 hover:bg-primary-50/50 transition-colors"
         >
           <MessagesSquare className="w-5 h-5 text-primary-600 flex-shrink-0" />
           <div className="flex-1">
@@ -786,7 +786,7 @@ export default function StationPage() {
               ) : (
                 <Link
                   href={`/dashboard/stations/${stationId}/settings`}
-                  className="flex items-center gap-3 border border-line p-3 hover:border-primary-500/40 hover:bg-blue-50/50 transition-colors"
+                  className="flex items-center gap-3 border border-line p-3 hover:border-primary-500/40 hover:bg-primary-50/50 transition-colors"
                 >
                   <Settings className="w-5 h-5 text-content-muted flex-shrink-0" />
                   <div className="flex-1">

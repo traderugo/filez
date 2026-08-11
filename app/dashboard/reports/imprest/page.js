@@ -17,7 +17,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 export default function ImprestPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <ImprestContent />
     </Suspense>
   )
@@ -309,7 +309,7 @@ function ImprestContent() {
   }
 
   if (!orgId) {
-    return <div className="text-center py-20 text-gray-400">No station selected</div>
+    return <div className="text-center py-20 text-content-faint">No station selected</div>
   }
 
   return (
@@ -317,19 +317,19 @@ function ImprestContent() {
       {({ isOwner }) => (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Imprest / Petty Cash</h1>
+        <h1 className="text-xl font-bold text-content">Imprest / Petty Cash</h1>
         {period && (
           <div className="flex items-center gap-2">
-            <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+            <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1.5 px-3 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">
               <Plus className="w-4 h-4" /> Add Entry
             </button>
             {isOwner && (
-            <button onClick={handleExcelExport} disabled={exporting || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-40">
+            <button onClick={handleExcelExport} disabled={exporting || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-line text-sm font-medium hover:bg-subtle disabled:opacity-40">
               <Download className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Excel'}
             </button>
             )}
             {isOwner && (
-            <button onClick={handlePdfExport} disabled={exportingPdf || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 text-sm font-medium hover:bg-gray-50 disabled:opacity-40">
+            <button onClick={handlePdfExport} disabled={exportingPdf || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-line text-sm font-medium hover:bg-subtle disabled:opacity-40">
               <FileImage className="w-4 h-4" /> {exportingPdf ? 'Exporting...' : 'Receipts PDF'}
             </button>
             )}
@@ -338,59 +338,59 @@ function ImprestContent() {
       </div>
 
       {subBlocked && (
-        <div className="bg-amber-50 border border-amber-200 px-4 py-3 mb-4 flex items-start gap-3">
-          <Lock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-4 py-3 mb-4 flex items-start gap-3">
+          <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-amber-800 font-medium">Subscribe to add entries</p>
-            <p className="text-xs text-amber-600 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
+            <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
           </div>
-          <a href="/dashboard/subscribe" className="flex-shrink-0 bg-blue-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-blue-700">Subscribe</a>
+          <a href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</a>
         </div>
       )}
 
       {/* Month / Year selector */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border border-gray-300 px-3 py-2 text-sm">
+        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border border-line px-3 py-2 text-sm">
           {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
         </select>
-        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} min={2020} max={2099} className="border border-gray-300 px-3 py-2 text-sm w-24" />
+        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} min={2020} max={2099} className="border border-line px-3 py-2 text-sm w-24" />
       </div>
 
       {loadingPeriod ? (
-        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+        <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-content-faint" /></div>
       ) : (
         <>
           {/* Period setup */}
-          <div className="border border-gray-300 divide-y divide-gray-300 mb-6">
-            <div className="px-3 py-1.5 bg-gray-50">
-              <span className="text-xs font-medium text-gray-500">Period Settings</span>
+          <div className="border border-line divide-y divide-line mb-6">
+            <div className="px-3 py-1.5 bg-subtle">
+              <span className="text-xs font-medium text-content-muted">Period Settings</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-line">
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Imprest Amount (₦)</label>
-                <input type="number" value={imprestAmount} onChange={e => setImprestAmount(e.target.value)} placeholder="e.g. 130000" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Imprest Amount (₦)</label>
+                <input type="number" value={imprestAmount} onChange={e => setImprestAmount(e.target.value)} placeholder="e.g. 130000" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Custodian Name</label>
-                <input type="text" value={custodianName} onChange={e => setCustodianName(e.target.value)} placeholder="Petty cash custodian" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Custodian Name</label>
+                <input type="text" value={custodianName} onChange={e => setCustodianName(e.target.value)} placeholder="Petty cash custodian" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
+            <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-line">
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Form Number</label>
-                <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Form Number</label>
+                <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Prepared By</label>
-                <input type="text" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Name of preparer" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Prepared By</label>
+                <input type="text" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Name of preparer" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Paid By (Approver)</label>
-              <input type="text" value={paidBy} onChange={e => setPaidBy(e.target.value)} placeholder="Manager / approver name" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+              <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Paid By (Approver)</label>
+              <input type="text" value={paidBy} onChange={e => setPaidBy(e.target.value)} placeholder="Manager / approver name" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
             </div>
             <div className="px-3 py-2.5">
-              <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
+              <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-40">
                 {savingPeriod ? 'Saving...' : period ? 'Update Period' : 'Create Period'}
               </button>
             </div>
@@ -398,19 +398,19 @@ function ImprestContent() {
 
           {/* Summary */}
           {period && (
-            <div className="border border-gray-300 divide-y divide-gray-300 mb-6">
-              <div className="grid grid-cols-3 divide-x divide-gray-300">
+            <div className="border border-line divide-y divide-line mb-6">
+              <div className="grid grid-cols-3 divide-x divide-line">
                 <div className="px-3 py-3 text-center">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Imprest</p>
-                  <p className="text-lg font-bold text-gray-900 mt-1">₦{fmt(imprestAmt)}</p>
+                  <p className="text-xs text-content-faint uppercase tracking-wide">Imprest</p>
+                  <p className="text-lg font-bold text-content mt-1">₦{fmt(imprestAmt)}</p>
                 </div>
                 <div className="px-3 py-3 text-center">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Total Spent</p>
+                  <p className="text-xs text-content-faint uppercase tracking-wide">Total Spent</p>
                   <p className="text-lg font-bold text-orange-700 mt-1">₦{fmt(totalSpent)}</p>
                 </div>
                 <div className="px-3 py-3 text-center">
-                  <p className="text-xs text-gray-400 uppercase tracking-wide">Balance</p>
-                  <p className={`text-lg font-bold mt-1 ${balance >= 0 ? 'text-green-700' : 'text-red-700'}`}>₦{fmt(balance)}</p>
+                  <p className="text-xs text-content-faint uppercase tracking-wide">Balance</p>
+                  <p className={`text-lg font-bold mt-1 ${balance >= 0 ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}`}>₦{fmt(balance)}</p>
                 </div>
               </div>
             </div>
@@ -418,20 +418,20 @@ function ImprestContent() {
 
           {/* Entry form */}
           {showForm && period && (
-            <div className="border border-gray-300 divide-y divide-gray-300 mb-6">
-              <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50">
-                <span className="text-xs font-medium text-gray-500">{editingId ? 'Edit Entry' : 'New Entry'}</span>
-                <button onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+            <div className="border border-line divide-y divide-line mb-6">
+              <div className="flex items-center justify-between px-3 py-1.5 bg-subtle">
+                <span className="text-xs font-medium text-content-muted">{editingId ? 'Edit Entry' : 'New Entry'}</span>
+                <button onClick={resetForm} className="text-content-faint hover:text-content-muted"><X className="w-4 h-4" /></button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-300">
+              <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-line">
                 <div>
-                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-                  <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+                  <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Date</label>
+                  <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
                 </div>
                 <div className="relative" ref={suggestionsRef}>
-                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Beneficiary</label>
+                  <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Beneficiary</label>
                   <div className="flex items-center px-3 py-2.5">
-                    <Search className="w-3.5 h-3.5 text-gray-400 mr-2 flex-shrink-0" />
+                    <Search className="w-3.5 h-3.5 text-content-faint mr-2 flex-shrink-0" />
                     <input
                       type="text"
                       value={beneficiaryQuery}
@@ -442,9 +442,9 @@ function ImprestContent() {
                     />
                   </div>
                   {showSuggestions && filteredCustomers.length > 0 && (
-                    <div className="absolute z-50 mt-0 left-0 right-0 bg-white border border-gray-200 shadow-lg max-h-48 overflow-y-auto">
+                    <div className="absolute z-50 mt-0 left-0 right-0 bg-surface border border-line shadow-lg max-h-48 overflow-y-auto">
                       {filteredCustomers.map(c => (
-                        <button key={c.id} type="button" onClick={() => { setFormBeneficiary(c.name); setBeneficiaryQuery(c.name); setShowSuggestions(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100 last:border-0">
+                        <button key={c.id} type="button" onClick={() => { setFormBeneficiary(c.name); setBeneficiaryQuery(c.name); setShowSuggestions(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 border-b border-line last:border-0">
                           {c.name}
                         </button>
                       ))}
@@ -453,42 +453,42 @@ function ImprestContent() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Transaction Details</label>
-                <input type="text" value={formDetails} onChange={e => setFormDetails(e.target.value)} placeholder="What was the expense for?" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Transaction Details</label>
+                <input type="text" value={formDetails} onChange={e => setFormDetails(e.target.value)} placeholder="What was the expense for?" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
-              <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div className="grid grid-cols-2 divide-x divide-line">
                 <div>
-                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount (₦)</label>
-                  <input type="number" value={formAmount} onChange={e => setFormAmount(e.target.value)} placeholder="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                  <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Amount (₦)</label>
+                  <input type="number" value={formAmount} onChange={e => setFormAmount(e.target.value)} placeholder="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Account Code</label>
-                  <input type="text" value={formAccountCode} onChange={e => setFormAccountCode(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                  <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Account Code</label>
+                  <input type="text" value={formAccountCode} onChange={e => setFormAccountCode(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div className="grid grid-cols-2 divide-x divide-line">
                 <div>
-                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">PCV Number</label>
-                  <input type="text" value={formPcv} onChange={e => setFormPcv(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                  <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">PCV Number</label>
+                  <input type="text" value={formPcv} onChange={e => setFormPcv(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Receipt Image</label>
+                  <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Receipt Image</label>
                   <div className="flex items-center gap-2 px-3 py-2.5">
-                    <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-300 text-sm hover:bg-gray-50 disabled:opacity-40">
+                    <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-3 py-1.5 border border-line text-sm hover:bg-subtle disabled:opacity-40">
                       <Camera className="w-4 h-4" /> {uploading ? 'Uploading...' : 'Upload'}
                     </button>
                     {formImageUrl && (
-                      <a href={formImageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 underline truncate max-w-[120px]">View</a>
+                      <a href={formImageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 underline truncate max-w-[120px]">View</a>
                     )}
                     <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
                   </div>
                 </div>
               </div>
               <div className="px-3 py-2.5 flex items-center gap-2">
-                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount || subBlocked} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-40">
+                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount || subBlocked} className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-40">
                   {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
                 </button>
-                <button onClick={resetForm} className="px-4 py-2 border border-gray-300 text-sm font-medium hover:bg-gray-50">Cancel</button>
+                <button onClick={resetForm} className="px-4 py-2 border border-line text-sm font-medium hover:bg-subtle">Cancel</button>
               </div>
             </div>
           )}
@@ -496,38 +496,38 @@ function ImprestContent() {
           {/* Entries */}
           {period && (
             loadingEntries ? (
-              <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+              <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-content-faint" /></div>
             ) : entries.length === 0 ? (
-              <div className="text-center py-10 text-gray-400 text-sm">No entries yet for {MONTHS[month - 1]} {year}</div>
+              <div className="text-center py-10 text-content-faint text-sm">No entries yet for {MONTHS[month - 1]} {year}</div>
             ) : (
               <div className="space-y-3">
                 {entries.map((e, i) => (
-                  <div key={e.id} className="border border-gray-300 divide-y divide-gray-300">
-                    <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
-                      <span className="text-sm font-medium text-gray-500">#{i + 1} · {fmtDate(e.entry_date)}</span>
+                  <div key={e.id} className="border border-line divide-y divide-line">
+                    <div className="flex items-center justify-between px-3 py-2 bg-subtle">
+                      <span className="text-sm font-medium text-content-muted">#{i + 1} · {fmtDate(e.entry_date)}</span>
                       <div className="flex items-center gap-1">
                         {e.receipt_image_url && (
-                          <a href={e.receipt_image_url} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-400 hover:text-blue-600"><FileImage className="w-5 h-5" /></a>
+                          <a href={e.receipt_image_url} target="_blank" rel="noopener noreferrer" className="p-2 text-content-faint hover:text-primary-600"><FileImage className="w-5 h-5" /></a>
                         )}
-                        <button onClick={() => startEdit(e)} className="p-2 text-gray-400 hover:text-blue-600"><Pencil className="w-5 h-5" /></button>
-                        <button onClick={() => handleDelete(e.id)} className="p-2 text-gray-400 hover:text-red-600"><Trash2 className="w-5 h-5" /></button>
+                        <button onClick={() => startEdit(e)} className="p-2 text-content-faint hover:text-primary-600"><Pencil className="w-5 h-5" /></button>
+                        <button onClick={() => handleDelete(e.id)} className="p-2 text-content-faint hover:text-red-600 dark:text-red-400"><Trash2 className="w-5 h-5" /></button>
                       </div>
                     </div>
                     <div className="px-3 py-2.5">
-                      <p className="text-sm font-medium text-gray-900">{e.beneficiary}</p>
-                      {e.transaction_details && <p className="text-sm text-gray-500 mt-0.5">{e.transaction_details}</p>}
+                      <p className="text-sm font-medium text-content">{e.beneficiary}</p>
+                      {e.transaction_details && <p className="text-sm text-content-muted mt-0.5">{e.transaction_details}</p>}
                     </div>
                     <div className="px-3 py-2">
-                      <p className="text-xs text-gray-400 uppercase tracking-wide">Amount</p>
-                      <p className="text-base font-bold text-gray-900 mt-0.5">₦{fmt(e.amount)}</p>
+                      <p className="text-xs text-content-faint uppercase tracking-wide">Amount</p>
+                      <p className="text-base font-bold text-content mt-0.5">₦{fmt(e.amount)}</p>
                     </div>
                   </div>
                 ))}
 
                 {/* Total */}
-                <div className="border border-gray-300 bg-gray-50 px-3 py-2.5 flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-700">Total</span>
-                  <span className="text-base font-bold text-gray-900">₦{fmt(totalSpent)}</span>
+                <div className="border border-line bg-subtle px-3 py-2.5 flex items-center justify-between">
+                  <span className="text-sm font-bold text-content-strong">Total</span>
+                  <span className="text-base font-bold text-content">₦{fmt(totalSpent)}</span>
                 </div>
               </div>
             )
