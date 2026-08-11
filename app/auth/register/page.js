@@ -6,6 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Loader2, Mail, Lock, User, Phone } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
+import { LABEL } from '@/components/ui'
+import { AUTH_INPUT, AUTH_SUBMIT, AUTH_LINK } from '../authStyles'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' })
@@ -66,15 +68,15 @@ export default function RegisterPage() {
     <div className="max-w-sm mx-auto px-4 py-20">
       <div className="text-center mb-8">
         <Image src="/icon-192.png" alt="StationMGR" width={48} height={48} className="mx-auto mb-3 rounded-lg" />
-        <h1 className="text-2xl font-bold text-gray-900">Create an account</h1>
-        <p className="text-sm text-gray-500 mt-1">Sign up to manage your station</p>
+        <h1 className="text-2xl font-bold text-content">Create an account</h1>
+        <p className="text-sm text-content-muted mt-1">Sign up to manage your station</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+          <label className={LABEL}>Full name</label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
             <input
               type="text"
               required
@@ -82,44 +84,44 @@ export default function RegisterPage() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="John Doe"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={AUTH_INPUT}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className={LABEL}>Email</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
             <input
               type="email"
               required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="you@example.com"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={AUTH_INPUT}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Phone number</label>
+          <label className={LABEL}>Phone number</label>
           <div className="relative">
-            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
             <input
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="08012345678"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={AUTH_INPUT}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <label className={LABEL}>Password</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
             <input
               type="password"
               required
@@ -128,15 +130,15 @@ export default function RegisterPage() {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               placeholder="Min. 8 characters"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={AUTH_INPUT}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
+          <label className={LABEL}>Confirm password</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
             <input
               type="password"
               required
@@ -145,26 +147,26 @@ export default function RegisterPage() {
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
               placeholder="Repeat your password"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={AUTH_INPUT}
             />
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          className={`w-full py-2.5 font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${AUTH_SUBMIT}`}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Sign up
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-6">
+      <p className="text-center text-sm text-content-muted mt-6">
         Already have an account?{' '}
-        <Link href="/auth/login" className="text-blue-600 hover:underline">Log in</Link>
+        <Link href="/auth/login" className={AUTH_LINK}>Log in</Link>
       </p>
     </div>
   )

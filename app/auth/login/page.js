@@ -6,6 +6,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Mail, Lock, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
+import { LABEL } from '@/components/ui'
+import { AUTH_INPUT, AUTH_SUBMIT, AUTH_LINK } from '../authStyles'
 
 const ERROR_MESSAGES = {
   callback_failed: 'Email verification failed. Please try again or request a new link.',
@@ -80,36 +82,36 @@ function LoginForm() {
     <div className="max-w-sm mx-auto px-4 py-20">
       <div className="text-center mb-8">
         <Image src="/icon-192.png" alt="StationMGR" width={48} height={48} className="mx-auto mb-3 rounded-lg" />
-        <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-        <p className="text-sm text-gray-500 mt-1">Sign in with your email and password</p>
+        <h1 className="text-2xl font-bold text-content">Welcome back</h1>
+        <p className="text-sm text-content-muted mt-1">Sign in with your email and password</p>
       </div>
 
       {urlError && ERROR_MESSAGES[urlError] && (
-        <div className="bg-red-50 border border-red-200 px-4 py-3 mb-4 text-sm text-red-800">
+        <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 px-4 py-3 mb-4 text-sm text-red-800 dark:text-red-200">
           {ERROR_MESSAGES[urlError]}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className={LABEL}>Email</label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={AUTH_INPUT}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <label className={LABEL}>Password</label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
             <input
               type="password"
               required
@@ -118,35 +120,35 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Your password"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={AUTH_INPUT}
             />
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          className={`w-full py-2.5 font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${AUTH_SUBMIT}`}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Sign in
         </button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-6">
-        <Link href="/auth/forgot-password" className="text-blue-600 hover:underline">Forgot password?</Link>
+      <p className="text-center text-sm text-content-muted mt-6">
+        <Link href="/auth/forgot-password" className={AUTH_LINK}>Forgot password?</Link>
       </p>
 
-      <p className="text-center text-sm text-gray-500 mt-3">
+      <p className="text-center text-sm text-content-muted mt-3">
         Don&apos;t have an account?{' '}
-        <Link href="/auth/register" className="text-blue-600 hover:underline">Sign up</Link>
+        <Link href="/auth/register" className={AUTH_LINK}>Sign up</Link>
       </p>
 
-      <p className="text-center text-xs text-gray-400 mt-3">
+      <p className="text-center text-xs text-content-faint mt-3">
         Admin?{' '}
-        <Link href="/auth/admin-login" className="text-blue-600 hover:underline">Use magic link</Link>
+        <Link href="/auth/admin-login" className={AUTH_LINK}>Use magic link</Link>
       </p>
     </div>
   )
