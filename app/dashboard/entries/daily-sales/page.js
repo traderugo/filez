@@ -424,15 +424,15 @@ export default function DailySalesFormPage() {
     }
   }
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
 
   if (locked) return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="text-center py-16">
-        <AlertTriangle className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Station Not Configured</h2>
-        <p className="text-sm text-gray-500 mb-4">Set up your station in Settings before creating entries.</p>
-        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Go to Settings</Link>
+        <AlertTriangle className="w-8 h-8 text-content-faint mx-auto mb-3" />
+        <h2 className="text-lg font-semibold text-content mb-1">Station Not Configured</h2>
+        <p className="text-sm text-content-muted mb-4">Set up your station in Settings before creating entries.</p>
+        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600">Go to Settings</Link>
       </div>
     </div>
   )
@@ -448,11 +448,11 @@ export default function DailySalesFormPage() {
       <div className="flex items-center justify-end mb-6 gap-2">
           {isEditing && editDate && (
             <>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
             </>
           )}
-          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
+          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="flex items-center gap-1 text-sm text-content-muted border border-line px-3 py-2 font-medium hover:bg-subtle">
             <List className="w-4 h-4" /> View Entries
           </Link>
       </div>
@@ -469,62 +469,62 @@ export default function DailySalesFormPage() {
         }
       }}>
         {/* Shared date */}
-        <div className="border border-gray-300 mb-4">
-          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Date</label>
-          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+        <div className="border border-line mb-4">
+          <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Date</label>
+          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
         </div>
 
         {/* Entry tabs */}
-        <div className="flex items-center border-b border-gray-300 mb-0">
+        <div className="flex items-center border-b border-line mb-0">
           {entries.map((entry, idx) => (
             <button
               key={entry._key}
               type="button"
               onClick={() => setActiveTab(idx)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === idx ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+              className={`px-4 py-2 text-sm font-medium border-b-2 ${activeTab === idx ? 'border-blue-600 text-primary-600' : 'border-transparent text-content-muted hover:text-content-strong'}`}
             >
               Entry {idx + 1}
             </button>
           ))}
-          <button type="button" onClick={addEntry} className="px-3 py-2 text-blue-600 hover:text-blue-700">
+          <button type="button" onClick={addEntry} className="px-3 py-2 text-primary-600 hover:text-primary-700">
             <Plus className="w-4 h-4" />
           </button>
         </div>
 
         {/* Active entry form */}
         {current && (
-          <div className="border border-gray-300 border-t-0 divide-y divide-gray-300">
+          <div className="border border-line border-t-0 divide-y divide-line">
             {entries.length > 1 && (
-              <div className="flex justify-end px-3 py-1.5 bg-gray-50">
-                <button type="button" onClick={() => removeEntry(activeTab)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700">
+              <div className="flex justify-end px-3 py-1.5 bg-subtle">
+                <button type="button" onClick={() => removeEntry(activeTab)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-300">
                   <Trash2 className="w-3.5 h-3.5" /> Remove Entry {activeTab + 1}
                 </button>
               </div>
             )}
 
-            <div className="bg-gray-50 px-2 py-1">
-              <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>
+            <div className="bg-subtle px-2 py-1">
+              <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-gray-300">
+            <div className="grid grid-cols-3 divide-x divide-line">
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">PMS</label>
-                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">PMS</label>
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">AGO</label>
-                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">AGO</label>
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">DPK</label>
-                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">DPK</label>
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
             </div>
 
             {current.nozzleReadings.length > 0 && (
               <>
-                <div className="bg-gray-50 px-2 py-1">
-                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Nozzle Readings</span>
-                  <span className="text-xs text-gray-400 ml-2">— leave blank to use prev. day closing</span>
+                <div className="bg-subtle px-2 py-1">
+                  <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Nozzle Readings</span>
+                  <span className="text-xs text-content-faint ml-2">— leave blank to use prev. day closing</span>
                 </div>
                 {current.nozzleReadings.map((r, idx) => {
                   const consHasValue = Number(r.consumption) > 0
@@ -537,9 +537,9 @@ export default function DailySalesFormPage() {
                     : null
                   return (
                     <div key={r.pump_id}>
-                      <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-gray-300">
+                      <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-line">
                         <div>
-                          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">{r.label}</label>
+                          <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">{r.label}</label>
                           <input
                             type="text" inputMode="decimal" enterKeyHint="next"
                             value={r.closing_meter}
@@ -547,28 +547,28 @@ export default function DailySalesFormPage() {
                             step="0.01"
                             min="0"
                             placeholder={prevClosing[r.pump_id] != null ? String(prevClosing[r.pump_id]) : ''}
-                            className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50"
+                            className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Cons.</label>
+                          <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Cons.</label>
                           {/* px on the wrapper leaves a non-tappable gutter so leaving this
                               field does not land focus on the pour-back input beside it. */}
                           <div className="flex items-center px-1.5">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'consumption')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'consumption')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
                             {consHasValue && (
-                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'consumption' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${consCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={consCustName || 'Attach account'}>
+                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'consumption' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${consCustName ? 'text-primary-600' : 'text-content-faint hover:text-content-muted'}`} title={consCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
                               </button>
                             )}
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">P.B.</label>
+                          <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">P.B.</label>
                           <div className="flex items-center px-1.5">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'pour_back')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'pour_back')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
                             {pbHasValue && (
-                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'pour_back' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${pbCustName ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`} title={pbCustName || 'Attach account'}>
+                              <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'pour_back' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${pbCustName ? 'text-primary-600' : 'text-content-faint hover:text-content-muted'}`} title={pbCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
                               </button>
                             )}
@@ -577,8 +577,8 @@ export default function DailySalesFormPage() {
                       </div>
                       {(consCustName || pbCustName) && (
                         <div className="px-2 pb-0.5 -mt-0.5 space-x-2">
-                          {consCustName && <span className="text-xs text-blue-600">Cons: {consCustName}</span>}
-                          {pbCustName && <span className="text-xs text-blue-600">P.B.: {pbCustName}</span>}
+                          {consCustName && <span className="text-xs text-primary-600">Cons: {consCustName}</span>}
+                          {pbCustName && <span className="text-xs text-primary-600">P.B.: {pbCustName}</span>}
                         </div>
                       )}
                     </div>
@@ -589,24 +589,24 @@ export default function DailySalesFormPage() {
 
             {nozzles.length === 0 && (
               <div className="px-2 py-3">
-                <p className="text-sm text-yellow-700">No nozzles found. Check your station setup or refresh.</p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">No nozzles found. Check your station setup or refresh.</p>
               </div>
             )}
 
             {current.tankReadings.length > 0 && (
               <>
-                <div className="bg-gray-50 px-2 py-1.5 flex items-center justify-between">
-                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">UGT Closing Stock</span>
+                <div className="bg-subtle px-2 py-1.5 flex items-center justify-between">
+                  <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">UGT Closing Stock</span>
                   <Toggle checked={current.closeOfBusiness} onChange={(v) => updateEntry(activeTab, 'closeOfBusiness', v)} label="Final entry" />
                 </div>
                 {current.closeOfBusiness && current.tankReadings.map((r, idx) => (
-                  <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-gray-300">
-                    <div className="flex items-center px-3 py-2.5 bg-gray-50/50">
-                      <span className="text-xs text-gray-600">{r.label}</span>
+                  <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-line">
+                    <div className="flex items-center px-3 py-2.5 bg-subtle/50">
+                      <span className="text-xs text-content-muted">{r.label}</span>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Litres</label>
-                      <input type="text" inputMode="decimal" enterKeyHint="next" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" placeholder={prevTankClosing[r.tank_id] != null ? String(prevTankClosing[r.tank_id]) : ''} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                      <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Litres</label>
+                      <input type="text" inputMode="decimal" enterKeyHint="next" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" placeholder={prevTankClosing[r.tank_id] != null ? String(prevTankClosing[r.tank_id]) : ''} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
                     </div>
                   </div>
                 ))}
@@ -615,33 +615,33 @@ export default function DailySalesFormPage() {
 
             {tanks.length === 0 && (
               <div className="px-2 py-3">
-                <p className="text-sm text-yellow-700">No tanks found. Check your station setup or refresh.</p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300">No tanks found. Check your station setup or refresh.</p>
               </div>
             )}
 
             <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-              <textarea data-skip-enter value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+              <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Notes</label>
+              <textarea data-skip-enter value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50 resize-none" />
             </div>
           </div>
         )}
 
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>}
 
         {!subLoading && !isSubscribed && (
-          <div className="bg-amber-50 border border-amber-200 px-4 py-3 mt-3 flex items-start gap-3">
-            <Lock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-4 py-3 mt-3 flex items-start gap-3">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-amber-800 font-medium">Subscribe to add entries</p>
-              <p className="text-xs text-amber-600 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
             </div>
-            <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-blue-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-blue-700">Subscribe</Link>
+            <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</Link>
           </div>
         )}
 
         <div className="flex gap-2 mt-3">
-          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
-          <button type="submit" disabled={saving || saved || (!subLoading && !isSubscribed)} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="ml-auto px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">Cancel</Link>
+          <button type="submit" disabled={saving || saved || (!subLoading && !isSubscribed)} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600'}`}>
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {saved && <Check className="w-4 h-4" />}
             {saved ? 'Saved!' : isEditing ? 'Update' : 'Save All'}
@@ -652,23 +652,23 @@ export default function DailySalesFormPage() {
       {/* Danger zone — outside the <form> so the button can never submit it. Only offered
           when a saved day is open: there is nothing to delete on a fresh entry. */}
       {isEditing && loadedDate && (
-        <div className="mt-10 border border-red-200 bg-red-50/50">
-          <div className="px-4 py-3 border-b border-red-200">
-            <h3 className="text-sm font-semibold text-red-800 flex items-center gap-2">
+        <div className="mt-10 border border-red-200 dark:border-red-900/50 bg-red-50/50">
+          <div className="px-4 py-3 border-b border-red-200 dark:border-red-900/50">
+            <h3 className="text-sm font-semibold text-red-800 dark:text-red-200 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" /> Delete this day
             </h3>
           </div>
           <div className="px-4 py-3">
-            <p className="text-sm text-gray-700 mb-4">
+            <p className="text-sm text-content-strong mb-4">
               Permanently deletes the {originalIds.length} {originalIds.length === 1 ? 'entry' : 'entries'} for{' '}
-              <span className="font-semibold text-gray-900">{fmtDate(loadedDate)}</span> so the day can be entered again from
+              <span className="font-semibold text-content">{fmtDate(loadedDate)}</span> so the day can be entered again from
               scratch. This cannot be undone and every report covering the date will change. Lodgements, receipts and lube are untouched.
             </p>
-            {deleteError && <p className="text-sm text-red-600 mb-3">{deleteError}</p>}
+            {deleteError && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{deleteError}</p>}
             <button
               type="button"
               onClick={() => { setDeleteError(''); setConfirmDelete(true) }}
-              className="flex items-center gap-2 border border-red-300 text-red-700 px-4 py-2 text-sm font-medium hover:bg-red-100"
+              className="flex items-center gap-2 border border-red-300 text-red-700 dark:text-red-300 px-4 py-2 text-sm font-medium hover:bg-red-100 dark:bg-red-900/30"
             >
               <Trash2 className="w-4 h-4" /> Delete all entries for this day
             </button>
@@ -678,17 +678,17 @@ export default function DailySalesFormPage() {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4" onClick={() => (deletingDay ? null : setConfirmDelete(false))}>
-          <div className="bg-white w-full sm:max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-gray-200">
-              <h3 className="text-sm font-semibold text-gray-900">Delete {fmtDate(loadedDate)}?</h3>
+          <div className="bg-surface w-full sm:max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-line">
+              <h3 className="text-sm font-semibold text-content">Delete {fmtDate(loadedDate)}?</h3>
             </div>
             <div className="p-4">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-content-muted mb-4">
                 {originalIds.length} {originalIds.length === 1 ? 'entry' : 'entries'} will be permanently deleted. This cannot be undone.
               </p>
-              {deleteError && <p className="text-sm text-red-600 mb-3">{deleteError}</p>}
+              {deleteError && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{deleteError}</p>}
               <div className="flex gap-2">
-                <button type="button" onClick={() => setConfirmDelete(false)} disabled={deletingDay} className="flex-1 border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                <button type="button" onClick={() => setConfirmDelete(false)} disabled={deletingDay} className="flex-1 border border-line px-3 py-2 text-sm font-medium text-content-strong hover:bg-subtle disabled:opacity-50">
                   Cancel
                 </button>
                 <button type="button" onClick={deleteWholeDay} disabled={deletingDay} className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white px-3 py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50">
@@ -718,20 +718,20 @@ export default function DailySalesFormPage() {
         }
         return (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setConsModal(null)}>
-            <div className="bg-white w-full sm:max-w-md max-h-[55vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 flex-shrink-0">
+            <div className="bg-surface w-full sm:max-w-md max-h-[55vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-line flex-shrink-0">
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-900">{heading}</h3>
-                  <p className="text-xs text-gray-500">{r.label} · {Number(litres) || 0}L</p>
+                  <h3 className="text-sm font-semibold text-content">{heading}</h3>
+                  <p className="text-xs text-content-muted">{r.label} · {Number(litres) || 0}L</p>
                 </div>
-                <button type="button" onClick={() => setConsModal(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                <button type="button" onClick={() => setConsModal(null)} className="text-content-faint hover:text-content-muted p-1">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="overflow-y-auto divide-y divide-gray-100">
+              <div className="overflow-y-auto divide-y divide-line">
                 {defaultAccounts.length === 0 ? (
-                  <p className="px-4 py-6 text-sm text-gray-500 text-center">
+                  <p className="px-4 py-6 text-sm text-content-muted text-center">
                     No default accounts set up for this station yet.
                   </p>
                 ) : defaultAccounts.map((c) => {
@@ -741,7 +741,7 @@ export default function DailySalesFormPage() {
                       key={c.id}
                       type="button"
                       onClick={() => pick(c.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm ${selected ? 'bg-blue-50 text-blue-800 font-medium' : 'text-gray-800 hover:bg-gray-50'}`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm ${selected ? 'bg-primary-50 text-primary-800 font-medium' : 'text-content hover:bg-subtle'}`}
                     >
                       <span className="flex-1">{c.name || 'Unnamed'}</span>
                       {selected && <Check className="w-4 h-4 flex-shrink-0" />}
@@ -751,9 +751,9 @@ export default function DailySalesFormPage() {
               </div>
 
               {currentValue && (
-                <div className="px-4 py-2 border-t border-gray-200 flex-shrink-0"
+                <div className="px-4 py-2 border-t border-line flex-shrink-0"
                      style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}>
-                  <button type="button" onClick={() => pick('')} className="text-sm text-red-600 hover:text-red-700">
+                  <button type="button" onClick={() => pick('')} className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:text-red-300">
                     Remove account
                   </button>
                 </div>

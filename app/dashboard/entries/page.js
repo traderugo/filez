@@ -14,19 +14,19 @@ const entries = [
 export default function EntriesIndexPage() {
   return (
     <div className="max-w-2xl px-4 sm:px-8 py-8">
-      <p className="text-sm text-gray-500 mb-8">Select an entry type to view or create records.</p>
+      <p className="text-sm text-content-muted mb-8">Select an entry type to view or create records.</p>
 
       <div className="grid gap-3">
         {entries.map(({ href, label, desc, icon: Icon }) => (
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-3 border border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+            className="flex items-center gap-3 border border-line p-4 hover:border-primary-500/40 hover:bg-primary-50/50 transition-colors"
           >
-            <Icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <Icon className="w-5 h-5 text-primary-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-gray-900">{label}</p>
-              <p className="text-xs text-gray-500">{desc}</p>
+              <p className="text-sm font-medium text-content">{label}</p>
+              <p className="text-xs text-content-muted">{desc}</p>
             </div>
           </Link>
         ))}

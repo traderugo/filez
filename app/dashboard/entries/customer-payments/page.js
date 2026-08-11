@@ -191,15 +191,15 @@ export default function CustomerPaymentsFormPage() {
     }
   }
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
 
   if (locked) return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="text-center py-16">
-        <AlertTriangle className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Station Not Configured</h2>
-        <p className="text-sm text-gray-500 mb-4">Set up your station in Settings before creating entries.</p>
-        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700">Go to Settings</Link>
+        <AlertTriangle className="w-8 h-8 text-content-faint mx-auto mb-3" />
+        <h2 className="text-lg font-semibold text-content mb-1">Station Not Configured</h2>
+        <p className="text-sm text-content-muted mb-4">Set up your station in Settings before creating entries.</p>
+        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600">Go to Settings</Link>
       </div>
     </div>
   )
@@ -213,35 +213,35 @@ export default function CustomerPaymentsFormPage() {
       <div className="flex items-center justify-end mb-6 gap-2">
           {isEditing && editDate && (
             <>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/customer-payments?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/customer-payments?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-gray-600 border border-gray-300 px-2 py-2 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/customer-payments?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/customer-payments?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
             </>
           )}
-          <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="flex items-center gap-1 text-sm text-gray-600 border border-gray-300 px-3 py-2 font-medium hover:bg-gray-50">
+          <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="flex items-center gap-1 text-sm text-content-muted border border-line px-3 py-2 font-medium hover:bg-subtle">
             <List className="w-4 h-4" /> View Entries
           </Link>
       </div>
 
       <form onSubmit={handleSubmit}>
         {/* Shared date */}
-        <div className="border border-gray-300 mb-4">
-          <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Transaction Date</label>
-          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-blue-50" />
+        <div className="border border-line mb-4">
+          <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Transaction Date</label>
+          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
         </div>
 
         {/* Entry cards */}
         {entries.map((entry, idx) => (
-          <div key={entry._key} className="border border-gray-300 divide-y divide-gray-300 mb-3">
-            <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50">
-              <span className="text-xs font-medium text-gray-500">Entry {idx + 1}</span>
+          <div key={entry._key} className="border border-line divide-y divide-line mb-3">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-subtle">
+              <span className="text-xs font-medium text-content-muted">Entry {idx + 1}</span>
               {entries.length > 1 && (
-                <button type="button" onClick={() => removeEntry(idx)} className="text-red-400 hover:text-red-600">
+                <button type="button" onClick={() => removeEntry(idx)} className="text-red-400 hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
             <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Account</label>
+              <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Account</label>
               <SearchableSelect
                 value={entry.customerId}
                 onChange={(val) => updateEntry(idx, 'customerId', val)}
@@ -249,43 +249,43 @@ export default function CustomerPaymentsFormPage() {
                 placeholder="Select account"
               />
             </div>
-            <div className="grid grid-cols-2 divide-x divide-gray-300">
+            <div className="grid grid-cols-2 divide-x divide-line">
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Amount Paid</label>
-                <input type="number" value={entry.amountPaid} onChange={(e) => updateEntry(idx, 'amountPaid', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Amount Paid</label>
+                <input type="number" value={entry.amountPaid} onChange={(e) => updateEntry(idx, 'amountPaid', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Sales Amount</label>
-                <input type="number" value={entry.salesAmount} onChange={(e) => updateEntry(idx, 'salesAmount', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50" />
+                <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Sales Amount</label>
+                <input type="number" value={entry.salesAmount} onChange={(e) => updateEntry(idx, 'salesAmount', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 px-2 pt-1 uppercase tracking-wide">Notes</label>
-              <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-blue-50 resize-none" />
+              <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Notes</label>
+              <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50 resize-none" />
             </div>
           </div>
         ))}
 
-        <button type="button" onClick={addEntry} className="flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700 mb-4">
+        <button type="button" onClick={addEntry} className="flex items-center gap-1 text-sm text-primary-600 font-medium hover:text-primary-700 mb-4">
           <Plus className="w-4 h-4" /> Add Entry
         </button>
 
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>}
 
         {!subLoading && !isSubscribed && (
-          <div className="bg-amber-50 border border-amber-200 px-4 py-3 mt-3 flex items-start gap-3">
-            <Lock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-4 py-3 mt-3 flex items-start gap-3">
+            <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-amber-800 font-medium">Subscribe to add entries</p>
-              <p className="text-xs text-amber-600 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
+              <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
             </div>
-            <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-blue-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-blue-700">Subscribe</Link>
+            <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</Link>
           </div>
         )}
 
         <div className="flex gap-2 mt-3">
-          <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="ml-auto px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">Cancel</Link>
-          <button type="submit" disabled={saving || saved || (!subLoading && !isSubscribed)} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+          <Link href={`/dashboard/entries/customer-payments/list?${qs}`} className="ml-auto px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">Cancel</Link>
+          <button type="submit" disabled={saving || saved || (!subLoading && !isSubscribed)} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600'}`}>
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {saved && <Check className="w-4 h-4" />}
             {saved ? 'Saved!' : isEditing ? 'Update' : 'Save All'}
