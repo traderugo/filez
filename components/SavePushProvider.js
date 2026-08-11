@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react'
 import { Cloud, Loader2, AlertTriangle } from 'lucide-react'
 import Modal from '@/components/Modal'
+import { OUTLINE } from '@/components/ui'
 import { processQueue } from '@/lib/sync'
 
 const SavePushContext = createContext(null)
@@ -55,8 +56,8 @@ export default function SavePushProvider({ children }) {
         {status === 'error' ? (
           <>
             <div className="flex items-start gap-2 mb-5">
-              <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-gray-600">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-content-muted">
                 Couldn&apos;t reach the server. Your entry is saved on this device and will sync
                 automatically once you&apos;re back online.
               </p>
@@ -64,7 +65,7 @@ export default function SavePushProvider({ children }) {
             <div className="flex justify-end">
               <button
                 onClick={proceed}
-                className="px-4 py-2 text-sm font-medium bg-gray-900 text-white hover:bg-gray-800"
+                className={`px-4 py-2 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
               >
                 Continue
               </button>
@@ -72,21 +73,24 @@ export default function SavePushProvider({ children }) {
           </>
         ) : (
           <>
-            <p className="text-sm text-gray-600 mb-5">
+            <p className="text-sm text-content-muted mb-5">
               Your entry is saved on this device. Push it to the server now?
             </p>
+            {/* Later is the quiet variant and Push now the emphasised one. They used to be a
+                gray-bordered box beside a solid blue fill, which read as equal weight; the
+                system separates them by how hard the outline is drawn. Padding unchanged. */}
             <div className="flex justify-end gap-2">
               <button
                 onClick={proceed}
                 disabled={status === 'pushing'}
-                className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-content-muted hover:text-content hover:bg-subtle transition-all disabled:opacity-50"
               >
                 Later
               </button>
               <button
                 onClick={handlePushNow}
                 disabled={status === 'pushing'}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-2 border-primary-600 dark:border-primary-400 bg-primary-500/20 text-primary-800 dark:text-primary-100 transition-all hover:bg-primary-500/30 disabled:opacity-50"
               >
                 {status === 'pushing' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
                 Push now
