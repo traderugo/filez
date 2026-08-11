@@ -103,7 +103,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -118,27 +118,27 @@ export default function DashboardPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <InstallPWABanner />
 
-      <h1 className="text-xl font-bold text-gray-900 mb-1 mt-4">Welcome, {profile?.name}</h1>
-      <p className="text-sm text-gray-500 mb-8">{profile?.email}</p>
+      <h1 className="text-xl font-bold text-content mb-1 mt-4">Welcome, {profile?.name}</h1>
+      <p className="text-sm text-content-muted mb-8">{profile?.email}</p>
 
       {/* Pending station invites (staff) */}
       {invites.length > 0 && (
         <div className="mb-8 space-y-3">
           {invites.map((inv) => (
-            <div key={inv.id} className="border border-blue-200 bg-blue-50 p-4">
+            <div key={inv.id} className="border border-primary-500/40 bg-primary-50 p-4">
               <div className="flex items-start gap-3">
-                <Building2 className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <Building2 className="w-5 h-5 text-primary-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-content">
                     You&apos;ve been invited to join <strong>{inv.organizations?.name}</strong>
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-content-muted mt-1">
                     Accept to access this station&apos;s reports and data.
                   </p>
                   <button
                     onClick={() => acceptInvite(inv.id)}
                     disabled={accepting === inv.id}
-                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                    className="mt-3 flex items-center gap-1 px-3 py-1.5 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
                   >
                     {accepting === inv.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                     Accept
@@ -153,17 +153,17 @@ export default function DashboardPage() {
       {/* My Stations */}
       <section className="mb-8">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">My Stations</h2>
+          <h2 className="text-sm font-semibold text-content uppercase tracking-wide">My Stations</h2>
           <button
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium"
           >
             <Plus className="w-4 h-4" /> Add station
           </button>
         </div>
 
         {showAdd && (
-          <form onSubmit={addStation} className="border border-gray-200 p-4 mb-4 space-y-3">
+          <form onSubmit={addStation} className="border border-line p-4 mb-4 space-y-3">
             <input
               type="text"
               required
@@ -171,19 +171,19 @@ export default function DashboardPage() {
               placeholder="Station name (e.g. MRS Lekki Phase 1)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               autoFocus
             />
             <div className="flex gap-2">
               <button
                 type="submit"
                 disabled={adding}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center gap-2 bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
               >
                 {adding && <Loader2 className="w-4 h-4 animate-spin" />}
                 Create station
               </button>
-              <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-50">
+              <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">
                 Cancel
               </button>
             </div>
@@ -192,22 +192,22 @@ export default function DashboardPage() {
 
         {stations.length === 0 && !showAdd ? (
           <div className="text-center py-8">
-            <Fuel className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No stations yet. Create one to get started.</p>
+            <Fuel className="w-8 h-8 text-content-faint mx-auto mb-2" />
+            <p className="text-sm text-content-muted">No stations yet. Create one to get started.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {stations.map((station) => (
-              <Link key={station.id} href={`/dashboard/stations/${station.id}`} className="flex items-center gap-3 p-3 border border-gray-200 hover:bg-gray-50 transition-colors">
-                <Fuel className="w-5 h-5 text-blue-600 flex-shrink-0" />
+              <Link key={station.id} href={`/dashboard/stations/${station.id}`} className="flex items-center gap-3 p-3 border border-line hover:bg-subtle transition-colors">
+                <Fuel className="w-5 h-5 text-primary-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-gray-900">{station.name}</span>
-                  {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
+                  <span className="text-sm font-semibold text-content">{station.name}</span>
+                  {station.location && <p className="text-xs text-content-muted">{station.location}</p>}
                   {!station.onboarding_complete && (
                     <p className="text-xs text-orange-600 font-medium mt-0.5">Setup required</p>
                   )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-content-faint flex-shrink-0" />
               </Link>
             ))}
           </div>
@@ -217,16 +217,16 @@ export default function DashboardPage() {
       {/* Member Stations (joined via invite) */}
       {memberStations.length > 0 && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Stations I&apos;ve Joined</h2>
+          <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Stations I&apos;ve Joined</h2>
           <div className="space-y-2">
             {memberStations.map((station) => (
-              <Link key={station.id} href={`/dashboard/stations/${station.id}`} className="flex items-center gap-3 p-3 border border-gray-200 hover:bg-gray-50 transition-colors">
-                <Fuel className="w-5 h-5 text-green-600 flex-shrink-0" />
+              <Link key={station.id} href={`/dashboard/stations/${station.id}`} className="flex items-center gap-3 p-3 border border-line hover:bg-subtle transition-colors">
+                <Fuel className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-gray-900">{station.name}</span>
-                  {station.location && <p className="text-xs text-gray-500">{station.location}</p>}
+                  <span className="text-sm font-semibold text-content">{station.name}</span>
+                  {station.location && <p className="text-xs text-content-muted">{station.location}</p>}
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-content-faint flex-shrink-0" />
               </Link>
             ))}
           </div>
@@ -235,20 +235,20 @@ export default function DashboardPage() {
 
       {/* Quick links */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Quick Links</h2>
+        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Quick Links</h2>
         <div className="grid grid-cols-2 gap-2">
-          <Link href="/dashboard/subscribe" className="flex items-center gap-3 p-3 border border-gray-200 hover:bg-gray-50 transition-colors">
-            <CreditCard className="w-5 h-5 text-blue-600 flex-shrink-0" />
-            <span className="text-sm font-medium text-gray-700">Subscribe</span>
+          <Link href="/dashboard/subscribe" className="flex items-center gap-3 p-3 border border-line hover:bg-subtle transition-colors">
+            <CreditCard className="w-5 h-5 text-primary-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-content-strong">Subscribe</span>
           </Link>
-          <Link href="/dashboard/feedback" className="flex items-center gap-3 p-3 border border-gray-200 hover:bg-gray-50 transition-colors">
-            <MessageSquare className="w-5 h-5 text-blue-600 flex-shrink-0" />
-            <span className="text-sm font-medium text-gray-700">Feedback</span>
+          <Link href="/dashboard/feedback" className="flex items-center gap-3 p-3 border border-line hover:bg-subtle transition-colors">
+            <MessageSquare className="w-5 h-5 text-primary-600 flex-shrink-0" />
+            <span className="text-sm font-medium text-content-strong">Feedback</span>
           </Link>
           {isAdmin && (
-            <Link href="/admin" className="flex items-center gap-3 p-3 border border-gray-200 hover:bg-gray-50 transition-colors">
-              <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
-              <span className="text-sm font-medium text-gray-700">Admin</span>
+            <Link href="/admin" className="flex items-center gap-3 p-3 border border-line hover:bg-subtle transition-colors">
+              <Shield className="w-5 h-5 text-primary-600 flex-shrink-0" />
+              <span className="text-sm font-medium text-content-strong">Admin</span>
             </Link>
           )}
         </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
       {/* Sign out */}
       <button
         onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
-        className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle transition-colors"
       >
         <LogOut className="w-4 h-4" />
         Sign out

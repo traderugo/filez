@@ -23,10 +23,10 @@ export default function LandingPage() {
           <img src="/icon-192.png" alt="StationMGR" className="w-14 h-14" />
         </div>
 
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+        <h1 className="text-3xl sm:text-4xl font-bold text-content mb-3">
           StationMGR
         </h1>
-        <p className="text-base text-gray-500 max-w-md mx-auto">
+        <p className="text-base text-content-muted max-w-md mx-auto">
           Daily sales, lodgements, stock receipts, and reports — all in one place.
         </p>
       </div>
@@ -49,7 +49,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/auth/register"
-              className="border border-gray-300 text-gray-700 px-6 py-2.5 font-medium hover:bg-gray-50 transition-colors"
+              className="border border-line text-content-strong px-6 py-2.5 font-medium hover:bg-subtle transition-colors"
             >
               Create Account
             </Link>
@@ -57,13 +57,13 @@ export default function LandingPage() {
         )}
       </div>
 
-      <div className="border-t border-gray-200 pt-12">
+      <div className="border-t border-line pt-12">
         <div className="grid sm:grid-cols-2 gap-8">
           <div className="flex gap-3">
             <Fuel className="w-5 h-5 text-accent mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Daily Sales Entry</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="font-semibold text-content mb-1">Daily Sales Entry</h3>
+              <p className="text-sm text-content-muted">
                 Record pump readings, nozzle sales, and tank dips per shift.
               </p>
             </div>
@@ -71,8 +71,8 @@ export default function LandingPage() {
           <div className="flex gap-3">
             <ClipboardList className="w-5 h-5 text-accent mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Lodgements & Receipts</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="font-semibold text-content mb-1">Lodgements & Receipts</h3>
+              <p className="text-sm text-content-muted">
                 Track bank lodgements, product receipts, and customer payments.
               </p>
             </div>
@@ -80,8 +80,8 @@ export default function LandingPage() {
           <div className="flex gap-3">
             <BarChart3 className="w-5 h-5 text-accent mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Reports</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="font-semibold text-content mb-1">Reports</h3>
+              <p className="text-sm text-content-muted">
                 Generate daily sales reports, audit reports, and variance summaries.
               </p>
             </div>
@@ -89,8 +89,8 @@ export default function LandingPage() {
           <div className="flex gap-3">
             <Users className="w-5 h-5 text-accent mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-semibold text-gray-900 mb-1">Multi-Station Access</h3>
-              <p className="text-sm text-gray-500">
+              <h3 className="font-semibold text-content mb-1">Multi-Station Access</h3>
+              <p className="text-sm text-content-muted">
                 Invite staff, assign roles, and manage multiple stations from one account.
               </p>
             </div>

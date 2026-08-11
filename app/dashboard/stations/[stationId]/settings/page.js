@@ -22,18 +22,18 @@ const LODGEMENT_TYPES = [
 function Accordion({ icon: Icon, title, count, defaultOpen, children }) {
   const [open, setOpen] = useState(defaultOpen || false)
   return (
-    <section className="mb-2 border border-gray-200 rounded-lg overflow-hidden">
+    <section className="mb-2 border border-line rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-3 bg-subtle hover:bg-subtle transition-colors"
       >
-        <Icon className="w-4 h-4 text-blue-600 shrink-0" />
-        <span className="text-sm font-semibold text-gray-900">{title}</span>
+        <Icon className="w-4 h-4 text-primary-600 shrink-0" />
+        <span className="text-sm font-semibold text-content">{title}</span>
         {count > 0 && (
-          <span className="text-xs text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded-full">{count}</span>
+          <span className="text-xs text-content-muted bg-subtle px-1.5 py-0.5 rounded-full">{count}</span>
         )}
-        <ChevronDown className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-content-faint ml-auto transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="px-4 py-3">
@@ -244,7 +244,7 @@ export default function StationSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -260,40 +260,40 @@ export default function StationSettingsPage() {
           maxLength={200}
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </Accordion>
 
       {/* Nozzles */}
       <Accordion icon={Fuel} title="Nozzles" count={nozzles.length}>
         {nozzles.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
+          <div className="divide-y divide-line mb-3">
             {nozzles.map((n, i) => (
               <div key={i} className="flex items-center gap-2 py-3 first:pt-0">
                 <select
                   value={n.fuel_type}
                   onChange={(e) => updateNozzle(i, 'fuel_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
-                <span className="text-sm text-gray-500 w-6 text-center">{n.pump_number}</span>
+                <span className="text-sm text-content-muted w-6 text-center">{n.pump_number}</span>
                 <input
                   type="number"
                   placeholder="Opening reading"
                   min={0}
                   value={n.initial_reading || ''}
                   onChange={(e) => updateNozzle(i, 'initial_reading', Number(e.target.value))}
-                  className="flex-1 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                <button onClick={() => removeNozzle(i)} className="p-1 text-gray-400 hover:text-red-600">
+                <button onClick={() => removeNozzle(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
         )}
-        <button onClick={addNozzle} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button onClick={addNozzle} className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium">
           <Plus className="w-4 h-4" /> Add nozzle
         </button>
       </Accordion>
@@ -301,13 +301,13 @@ export default function StationSettingsPage() {
       {/* Tanks */}
       <Accordion icon={Fuel} title="Underground Tanks" count={tanks.length}>
         {tanks.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
+          <div className="divide-y divide-line mb-3">
             {tanks.map((t, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <select
                   value={t.fuel_type}
                   onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
@@ -317,7 +317,7 @@ export default function StationSettingsPage() {
                   min={0}
                   value={t.capacity || ''}
                   onChange={(e) => updateTank(i, 'capacity', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <input
                   type="number"
@@ -325,16 +325,16 @@ export default function StationSettingsPage() {
                   min={0}
                   value={t.opening_stock || ''}
                   onChange={(e) => updateTank(i, 'opening_stock', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                <button onClick={() => removeTank(i)} className="p-1 text-gray-400 hover:text-red-600">
+                <button onClick={() => removeTank(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
         )}
-        <button onClick={addTank} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button onClick={addTank} className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium">
           <Plus className="w-4 h-4" /> Add tank
         </button>
       </Accordion>
@@ -342,18 +342,18 @@ export default function StationSettingsPage() {
       {/* Tank to Nozzle Mapping */}
       {nozzles.length > 0 && tanks.length > 0 && (
         <Accordion icon={ArrowRight} title="Tank to Nozzle Mapping" count={Object.keys(mappings).length}>
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-line">
             {nozzles.map((n, i) => {
               const key = `${n.fuel_type}-${n.pump_number}`
               const sameFuelTanks = tanks.filter((t) => t.fuel_type === n.fuel_type)
               return (
                 <div key={i} className="flex items-center gap-3 py-3 first:pt-0">
-                  <span className="flex-1 text-sm font-medium text-gray-900">{n.fuel_type} {n.pump_number}</span>
-                  <ArrowRight className="w-4 h-4 text-gray-400" />
+                  <span className="flex-1 text-sm font-medium text-content">{n.fuel_type} {n.pump_number}</span>
+                  <ArrowRight className="w-4 h-4 text-content-faint" />
                   <select
                     value={mappings[key] || ''}
                     onChange={(e) => setMappings((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                    className="px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Select tank</option>
                     {sameFuelTanks.map((t, ti) => (
@@ -372,13 +372,13 @@ export default function StationSettingsPage() {
       {/* Lodgements */}
       <Accordion icon={Landmark} title="Lodgements" count={lodgements.length}>
         {lodgements.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
+          <div className="divide-y divide-line mb-3">
             {lodgements.map((l, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <select
                   value={l.lodgement_type}
                   onChange={(e) => updateLodgement(i, 'lodgement_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {LODGEMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
@@ -388,7 +388,7 @@ export default function StationSettingsPage() {
                   maxLength={100}
                   value={l.bank_name}
                   onChange={(e) => updateLodgement(i, 'bank_name', e.target.value)}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 {l.lodgement_type === 'pos' && (
                   <input
@@ -397,7 +397,7 @@ export default function StationSettingsPage() {
                     maxLength={50}
                     value={l.terminal_id}
                     onChange={(e) => updateLodgement(i, 'terminal_id', e.target.value)}
-                    className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 )}
                 <input
@@ -406,27 +406,27 @@ export default function StationSettingsPage() {
                   min={0}
                   value={l.opening_balance || ''}
                   onChange={(e) => updateLodgement(i, 'opening_balance', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                <button onClick={() => removeLodgement(i)} className="p-1 text-gray-400 hover:text-red-600">
+                <button onClick={() => removeLodgement(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
         )}
-        <button onClick={addLodgement} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button onClick={addLodgement} className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium">
           <Plus className="w-4 h-4" /> Add lodgement
         </button>
       </Accordion>
 
       {/* Lube Products */}
       <Accordion icon={Droplets} title="Lube Products" count={lubeProducts.length}>
-        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
+        <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 p-2 rounded mb-3">
           Opening stock values are automatically adjusted when old entries (&gt;3 months) are consolidated to keep current balances accurate.
         </p>
         {lubeProducts.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
+          <div className="divide-y divide-line mb-3">
             {lubeProducts.map((lp, i) => (
               <div key={i} className="flex items-center gap-2 flex-wrap py-3 first:pt-0">
                 <input
@@ -435,7 +435,7 @@ export default function StationSettingsPage() {
                   maxLength={200}
                   value={lp.product_name}
                   onChange={(e) => updateLubeProduct(i, 'product_name', e.target.value)}
-                  className="flex-1 min-w-[120px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 min-w-[120px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <input
                   type="number"
@@ -444,7 +444,7 @@ export default function StationSettingsPage() {
                   step="0.01"
                   value={lp.unit_price || ''}
                   onChange={(e) => updateLubeProduct(i, 'unit_price', Number(e.target.value))}
-                  className="w-24 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-24 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <input
                   type="number"
@@ -452,27 +452,27 @@ export default function StationSettingsPage() {
                   min={0}
                   value={lp.opening_stock || ''}
                   onChange={(e) => updateLubeProduct(i, 'opening_stock', Number(e.target.value))}
-                  className="w-28 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-28 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
-                <button onClick={() => removeLubeProduct(i)} className="p-1 text-gray-400 hover:text-red-600">
+                <button onClick={() => removeLubeProduct(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
         )}
-        <button onClick={addLubeProduct} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button onClick={addLubeProduct} className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium">
           <Plus className="w-4 h-4" /> Add product
         </button>
       </Accordion>
 
       {/* Accounts */}
       <Accordion icon={Users} title="Accounts" count={customers.length}>
-        <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded mb-3">
+        <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 p-2 rounded mb-3">
           Opening balances are automatically adjusted when old entries (&gt;3 months) are consolidated to keep current balances accurate.
         </p>
         {customers.length > 0 && (
-          <div className="divide-y divide-gray-200 mb-3">
+          <div className="divide-y divide-line mb-3">
             {customers.map((c, i) => {
               const isDefault = c.phone === DEFAULT_PHONE
               return (
@@ -484,7 +484,7 @@ export default function StationSettingsPage() {
                     value={c.name}
                     readOnly={isDefault}
                     onChange={(e) => updateCustomer(i, 'name', e.target.value)}
-                    className={`flex-1 min-w-[120px] px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${isDefault ? 'bg-gray-50 cursor-not-allowed' : ''}`}
+                    className={`flex-1 min-w-[120px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${isDefault ? 'bg-subtle cursor-not-allowed' : ''}`}
                   />
                   {!isDefault && (
                     <>
@@ -494,7 +494,7 @@ export default function StationSettingsPage() {
                         maxLength={20}
                         value={c.phone}
                         onChange={(e) => updateCustomer(i, 'phone', e.target.value)}
-                        className="w-32 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-32 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
                       <input
                         type="number"
@@ -503,34 +503,34 @@ export default function StationSettingsPage() {
                         step="0.01"
                         value={c.opening_balance || ''}
                         onChange={(e) => updateCustomer(i, 'opening_balance', Number(e.target.value))}
-                        className="w-32 px-2.5 py-1.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-32 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                       />
-                      <button onClick={() => removeCustomer(i)} className="p-1 text-gray-400 hover:text-red-600">
+                      <button onClick={() => removeCustomer(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </>
                   )}
                   {isDefault && (
-                    <Lock className="w-3.5 h-3.5 text-gray-400" />
+                    <Lock className="w-3.5 h-3.5 text-content-faint" />
                   )}
                 </div>
               )
             })}
           </div>
         )}
-        <button onClick={addCustomer} className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <button onClick={addCustomer} className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 font-medium">
           <Plus className="w-4 h-4" /> Add account
         </button>
       </Accordion>
 
       {/* Save */}
-      {error && <p className="text-sm text-red-600 mb-4 mt-4">{error}</p>}
-      {success && <p className="text-sm text-green-600 mb-4 mt-4">{success}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4 mt-4">{error}</p>}
+      {success && <p className="text-sm text-green-600 dark:text-green-400 mb-4 mt-4">{success}</p>}
 
       <button
         onClick={handleSave}
         disabled={saving}
-        className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 mt-4"
+        className="flex items-center gap-2 bg-primary-500 text-white px-5 py-2.5 text-sm font-medium hover:bg-primary-600 disabled:opacity-50 mt-4"
       >
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         Save changes

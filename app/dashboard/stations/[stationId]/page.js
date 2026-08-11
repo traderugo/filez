@@ -18,6 +18,12 @@ import { db } from '@/lib/db'
 import { processQueue, clearQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
 import { supabase } from '@/lib/supabaseClient'
+import { OUTLINE } from '@/components/ui'
+
+// design-exception: literal white, because this pip sits ON a filled coloured button, where
+// a surface token would resolve to the page background and vanish. Same reason IconChip has
+// an "onColor" variant. rounded-full is intended — the square-corner rule exempts pills.
+const COUNT_PIP = 'bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center'
 
 const ENTRY_PAGE_OPTIONS = [
   { key: 'daily-sales', label: 'Daily Sales' },
@@ -343,7 +349,7 @@ export default function StationPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -379,9 +385,9 @@ export default function StationPage() {
       <div className="flex items-start justify-between gap-3 mb-6">
         <div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">{station.name}</h1>
-            {station.location && <p className="text-sm text-gray-500">{station.location}</p>}
-            {station.station_group && <p className="text-xs text-gray-400">{station.station_group}</p>}
+            <h1 className="text-xl font-bold text-content">{station.name}</h1>
+            {station.location && <p className="text-sm text-content-muted">{station.location}</p>}
+            {station.station_group && <p className="text-xs text-content-faint">{station.station_group}</p>}
           </div>
         </div>
       </div>
@@ -391,18 +397,18 @@ export default function StationPage() {
         const daysSinceExpiry = differenceInDays(new Date(), new Date(subscription.end_date))
         const graceRemaining = 7 - daysSinceExpiry
         return (
-          <div className="bg-red-50 border border-red-200 px-4 py-3 mb-6 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 px-4 py-3 mb-6 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
               {graceRemaining > 0 ? (
                 <>
-                  <p className="text-sm text-red-800 font-medium">Your subscription has expired</p>
-                  <p className="text-xs text-red-600 mt-0.5">{graceRemaining} day{graceRemaining !== 1 ? 's' : ''} of grace period remaining. Subscribe now to continue adding entries.</p>
+                  <p className="text-sm text-red-800 dark:text-red-200 font-medium">Your subscription has expired</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{graceRemaining} day{graceRemaining !== 1 ? 's' : ''} of grace period remaining. Subscribe now to continue adding entries.</p>
                 </>
               ) : (
                 <>
-                  <p className="text-sm text-red-800 font-medium">Subscription &amp; grace period expired</p>
-                  <p className="text-xs text-red-600 mt-0.5">You can no longer add entries. Subscribe now to resume.</p>
+                  <p className="text-sm text-red-800 dark:text-red-200 font-medium">Subscription &amp; grace period expired</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">You can no longer add entries. Subscribe now to resume.</p>
                 </>
               )}
             </div>
@@ -419,13 +425,13 @@ export default function StationPage() {
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
             pendingCount > 0
               ? 'bg-green-600 text-white hover:bg-green-700'
-              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-surface text-content-muted border border-line hover:bg-subtle'
           }`}
         >
           {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
           Push
           {pendingCount > 0 && (
-            <span className="bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            <span className={COUNT_PIP}>
               {pendingCount > 9 ? '9+' : pendingCount}
             </span>
           )}
@@ -436,40 +442,40 @@ export default function StationPage() {
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
             pendingPullCount > 0
               ? 'bg-green-600 text-white hover:bg-green-700'
-              : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              : 'bg-surface text-content-muted border border-line hover:bg-subtle'
           }`}
         >
           {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
           Pull
           {pendingPullCount > 0 && (
-            <span className="bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            <span className={COUNT_PIP}>
               {pendingPullCount > 9 ? '9+' : pendingPullCount}
             </span>
           )}
         </button>
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-content-faint">
           {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
         </span>
         {pendingCount > 0 && (
           <button
             onClick={() => setClearConfirm(true)}
             disabled={clearing}
-            className="text-xs text-red-500 hover:text-red-700 font-medium"
+            className="text-xs text-red-500 hover:text-red-700 dark:text-red-300 font-medium"
           >
             Clear
           </button>
         )}
         {consolidationCountdown && (
-          <span className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
+          <span className="ml-auto flex items-center gap-1.5 text-xs text-content-faint">
             <Clock className="w-3.5 h-3.5" />
-            <span className="font-mono text-gray-500">{consolidationCountdown}</span>
+            <span className="font-mono text-content-muted">{consolidationCountdown}</span>
           </span>
         )}
       </div>
 
       {/* Reports */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Reports</h2>
+        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Reports</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {reportLinks.map((link) => {
             const allowed = canAccess(link.pageKey)
@@ -480,14 +486,14 @@ export default function StationPage() {
                 onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
                 className={`flex flex-col gap-2 border p-4 transition-colors ${
                   allowed
-                    ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
-                    : 'border-gray-100 opacity-50'
+                    ? 'border-line hover:border-primary-500/40 hover:bg-blue-50/50'
+                    : 'border-line opacity-50'
                 }`}
               >
-                <link.icon className={`w-5 h-5 ${allowed ? 'text-blue-600' : 'text-gray-400'}`} />
+                <link.icon className={`w-5 h-5 ${allowed ? 'text-primary-600' : 'text-content-faint'}`} />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{link.label}</p>
-                  <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
+                  <p className="text-sm font-medium text-content">{link.label}</p>
+                  <p className="text-xs text-content-muted leading-snug">{link.desc}</p>
                 </div>
               </Link>
             )
@@ -497,7 +503,7 @@ export default function StationPage() {
 
       {/* Entries */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Entries</h2>
+        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Entries</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {entryLinks.map((link) => {
             const allowed = canAccess(link.pageKey)
@@ -508,14 +514,14 @@ export default function StationPage() {
                 onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
                 className={`flex flex-col gap-2 border p-4 transition-colors ${
                   allowed
-                    ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/50'
-                    : 'border-gray-100 opacity-50'
+                    ? 'border-line hover:border-primary-500/40 hover:bg-blue-50/50'
+                    : 'border-line opacity-50'
                 }`}
               >
-                <link.icon className={`w-5 h-5 ${allowed ? 'text-blue-600' : 'text-gray-400'}`} />
+                <link.icon className={`w-5 h-5 ${allowed ? 'text-primary-600' : 'text-content-faint'}`} />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{link.label}</p>
-                  <p className="text-xs text-gray-500 leading-snug">{link.desc}</p>
+                  <p className="text-sm font-medium text-content">{link.label}</p>
+                  <p className="text-xs text-content-muted leading-snug">{link.desc}</p>
                 </div>
               </Link>
             )
@@ -525,17 +531,17 @@ export default function StationPage() {
 
       {/* Chat */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">Chat</h2>
+        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Chat</h2>
         <Link
           href={`/dashboard/stations/${stationId}/chat`}
-          className="flex items-center gap-3 border border-gray-200 p-4 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+          className="flex items-center gap-3 border border-line p-4 hover:border-primary-500/40 hover:bg-blue-50/50 transition-colors"
         >
-          <MessagesSquare className="w-5 h-5 text-blue-600 flex-shrink-0" />
+          <MessagesSquare className="w-5 h-5 text-primary-600 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">Station Chat</p>
-            <p className="text-xs text-gray-500">Messages and activity log for this station</p>
+            <p className="text-sm font-medium text-content">Station Chat</p>
+            <p className="text-xs text-content-muted">Messages and activity log for this station</p>
           </div>
-          <ChevronRight className="w-4 h-4 text-gray-300" />
+          <ChevronRight className="w-4 h-4 text-content-faint" />
         </Link>
       </section>
 
@@ -543,14 +549,14 @@ export default function StationPage() {
       <section className="mb-8 flex items-center gap-2">
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle transition-colors"
         >
           <Fuel className="w-4 h-4" />
           All Stations
         </Link>
         <button
           onClick={handleSignOut}
-          className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Sign out
@@ -565,13 +571,13 @@ export default function StationPage() {
         return (
           <section className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Subscription</h2>
+              <h2 className="text-sm font-semibold text-content uppercase tracking-wide">Subscription</h2>
               {subscription && <SubscriptionBadge status={subscription.status} />}
             </div>
 
             {subscription?.status === 'approved' ? (
               <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2 text-content-muted">
                   <Clock className="w-4 h-4" />
                   Expires {fmtDate(subscription.end_date)}
                   {daysLeft !== null && daysLeft <= 7 && (
@@ -579,33 +585,33 @@ export default function StationPage() {
                   )}
                 </div>
                 {daysLeft !== null && daysLeft <= 7 && (
-                  <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium">
+                  <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-primary-600 hover:underline text-sm font-medium">
                     <CreditCard className="w-4 h-4" /> Renew now
                   </Link>
                 )}
               </div>
             ) : subscription?.status === 'pending_payment' ? (
               <div>
-                <p className="text-sm text-yellow-700 mb-3">You have a subscription awaiting payment.</p>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">You have a subscription awaiting payment.</p>
                 <Link
                   href={`/dashboard/subscribe/pay/${subscription.id}`}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600"
                 >
                   <CreditCard className="w-4 h-4" /> Complete payment
                 </Link>
               </div>
             ) : subscription?.status === 'pending_approval' ? (
-              <p className="text-sm text-blue-700">Your payment proof is being reviewed. You&apos;ll be notified once approved.</p>
+              <p className="text-sm text-primary-700">Your payment proof is being reviewed. You&apos;ll be notified once approved.</p>
             ) : (
               <div>
-                <p className="text-sm text-gray-500 mb-3">
+                <p className="text-sm text-content-muted mb-3">
                   {subscription?.status === 'expired' ? 'Your subscription has expired.' :
                    subscription?.status === 'rejected' ? 'Your subscription was rejected.' :
                    'You don\'t have an active subscription.'}
                 </p>
                 <Link
                   href={`/dashboard/subscribe?org_id=${stationId}`}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600"
                 >
                   <CreditCard className="w-4 h-4" /> Subscribe now
                 </Link>
@@ -618,13 +624,13 @@ export default function StationPage() {
       {/* Staff (owner only) */}
       {isOwner && (
         <section className="mb-8">
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3 flex items-center gap-2">
             <UserPlus className="w-4 h-4" /> Staff
           </h2>
 
           <button
             onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInviteError('') }}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 mb-4"
+            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 mb-4"
           >
             <Plus className="w-4 h-4" /> Invite Staff
           </button>
@@ -635,19 +641,19 @@ export default function StationPage() {
                 const isExpanded = expandedStaff === inv.id
                 const pages = inv.visible_pages || []
                 return (
-                  <div key={inv.id} className="border border-gray-200">
+                  <div key={inv.id} className="border border-line">
                     {/* Staff header row */}
                     <div className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Mail className="w-4 h-4 text-blue-600" />
+                        <div className="w-8 h-8 bg-primary-50 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Mail className="w-4 h-4 text-primary-600" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900 truncate">{inv.email}</p>
+                          <p className="text-sm font-medium text-content truncate">{inv.email}</p>
                           <span className={`inline-block text-sm px-2 py-0.5 rounded-full font-medium mt-0.5 ${
-                            inv.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                            inv.status === 'declined' ? 'bg-red-100 text-red-700' :
-                            'bg-yellow-100 text-yellow-700'
+                            inv.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                            inv.status === 'declined' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                            'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
                           }`}>
                             {inv.status}
                           </span>
@@ -655,7 +661,7 @@ export default function StationPage() {
                       </div>
                       <button
                         onClick={() => setExpandedStaff(isExpanded ? null : inv.id)}
-                        className="p-2 text-gray-400 hover:text-gray-600"
+                        className="p-2 text-content-faint hover:text-content-muted"
                         title="Page access"
                       >
                         <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
@@ -664,8 +670,8 @@ export default function StationPage() {
 
                     {/* Expanded: page permissions + delete */}
                     {isExpanded && (
-                      <div className="border-t border-gray-100 px-3 py-3 bg-gray-50">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Entries</p>
+                      <div className="border-t border-line px-3 py-3 bg-subtle">
+                        <p className="text-xs font-semibold text-content-muted uppercase tracking-wide mb-2">Entries</p>
                         <div className="space-y-2 mb-3">
                           {ENTRY_PAGE_OPTIONS.map((page) => (
                             <label key={page.key} className="flex items-center gap-2 cursor-pointer">
@@ -673,13 +679,13 @@ export default function StationPage() {
                                 type="checkbox"
                                 checked={pages.includes(page.key)}
                                 onChange={() => togglePagePermission(inv.id, page.key, pages)}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                className="rounded border-line text-primary-600 focus:ring-primary-500 w-4 h-4"
                               />
-                              <span className="text-sm text-gray-700">{page.label}</span>
+                              <span className="text-sm text-content-strong">{page.label}</span>
                             </label>
                           ))}
                         </div>
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Reports</p>
+                        <p className="text-xs font-semibold text-content-muted uppercase tracking-wide mb-2">Reports</p>
                         <div className="space-y-2 mb-4">
                           {REPORT_PAGE_OPTIONS.map((page) => (
                             <div key={page.key}>
@@ -705,9 +711,9 @@ export default function StationPage() {
                                       togglePagePermission(inv.id, page.key, pages)
                                     }
                                   }}
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4"
+                                  className="rounded border-line text-primary-600 focus:ring-primary-500 w-4 h-4"
                                 />
-                                <span className="text-sm text-gray-700">{page.label}</span>
+                                <span className="text-sm text-content-strong">{page.label}</span>
                               </label>
                               {page.children && (
                                 <div className="ml-6 mt-1 space-y-1">
@@ -726,9 +732,9 @@ export default function StationPage() {
                                           setInvites((prev) => prev.map((i) => i.id === inv.id ? { ...i, visible_pages: withParent } : i))
                                           fetch('/api/invites/permissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invite_id: inv.id, visible_pages: withParent }) })
                                         }}
-                                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                                        className="rounded border-line text-primary-600 focus:ring-primary-500 w-3.5 h-3.5"
                                       />
-                                      <span className="text-xs text-gray-600">{child.label}</span>
+                                      <span className="text-xs text-content-muted">{child.label}</span>
                                     </label>
                                   ))}
                                 </div>
@@ -738,7 +744,7 @@ export default function StationPage() {
                         </div>
                         <button
                           onClick={() => setDeleteModal({ id: inv.id, email: inv.email })}
-                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 border border-red-200 rounded hover:bg-red-50"
+                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded hover:bg-red-50 dark:bg-red-950/40"
                         >
                           <Trash2 className="w-4 h-4" /> Remove Staff
                         </button>
@@ -757,14 +763,14 @@ export default function StationPage() {
         <section className="mb-8">
           <button
             onClick={() => { setShowManage(!showManage); if (!showManage) setEditName(station.name) }}
-            className="w-full flex items-center justify-between py-3 text-sm font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
+            className="w-full flex items-center justify-between py-3 text-sm font-semibold text-content-muted uppercase tracking-wide hover:text-content-strong"
           >
             Manage Station
             <ChevronDown className={`w-4 h-4 transition-transform ${showManage ? 'rotate-180' : ''}`} />
           </button>
 
           {showManage && (
-            <div className="border border-gray-200 p-4 space-y-4">
+            <div className="border border-line p-4 space-y-4">
               {!station.onboarding_complete ? (
                 <Link
                   href={`/dashboard/setup/${stationId}`}
@@ -780,42 +786,42 @@ export default function StationPage() {
               ) : (
                 <Link
                   href={`/dashboard/stations/${stationId}/settings`}
-                  className="flex items-center gap-3 border border-gray-200 p-3 hover:border-blue-300 hover:bg-blue-50/50 transition-colors"
+                  className="flex items-center gap-3 border border-line p-3 hover:border-primary-500/40 hover:bg-blue-50/50 transition-colors"
                 >
-                  <Settings className="w-5 h-5 text-gray-600 flex-shrink-0" />
+                  <Settings className="w-5 h-5 text-content-muted flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">Station Settings</p>
-                    <p className="text-sm text-gray-500">Nozzles, tanks, lodgements, products, customers</p>
+                    <p className="text-sm font-medium text-content">Station Settings</p>
+                    <p className="text-sm text-content-muted">Nozzles, tanks, lodgements, products, customers</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-content-faint" />
                 </Link>
               )}
 
-              <div className="border-t border-gray-200 pt-4" />
+              <div className="border-t border-line pt-4" />
 
               <form onSubmit={updateStation} className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-500 mb-1">Station Name</label>
+                  <label className="block text-sm text-content-muted mb-1">Station Name</label>
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     maxLength={100}
-                    className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={saving || !editName.trim()}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
                   Rename
                 </button>
               </form>
 
-              <div className="border-t border-gray-200 pt-4">
-                <p className="text-sm text-gray-500 mb-2">Permanently delete this station and all its data.</p>
+              <div className="border-t border-line pt-4">
+                <p className="text-sm text-content-muted mb-2">Permanently delete this station and all its data.</p>
                 <button
                   onClick={deleteStation}
                   className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700"
@@ -833,7 +839,7 @@ export default function StationPage() {
         <button
           onClick={leaveStation}
           disabled={leaving}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50"
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-content-strong border border-line hover:bg-subtle"
         >
           {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
           Leave Station
@@ -847,41 +853,41 @@ export default function StationPage() {
         title="Invite Staff"
       >
         <form onSubmit={addInvite} className="space-y-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-content-muted">
             Enter the email of the person you want to invite. They will see the invite on their dashboard after signing up or logging in.
           </p>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Staff Email</label>
+            <label className="block text-sm font-medium text-content-strong mb-1">Staff Email</label>
             <input
               type="email"
               placeholder="staff@email.com"
               maxLength={254}
               value={inviteEmail}
               onChange={(e) => { setInviteEmail(e.target.value); setInviteError('') }}
-              className="w-full px-3 py-2 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
               autoFocus
             />
           </div>
-          {inviteError && <p className="text-sm text-red-600">{inviteError}</p>}
+          {inviteError && <p className="text-sm text-red-600 dark:text-red-400">{inviteError}</p>}
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => { setShowInviteModal(false); setInviteError('') }}
-              className="flex-1 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex-1 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={inviting || !inviteEmail.trim()}
-              className="flex-1 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Invite
             </button>
           </div>
-          <p className="text-sm text-gray-400">
-            Not signed up yet? Share the <Link href="/auth/register" className="text-blue-600 underline">signup link</Link> with them.
+          <p className="text-sm text-content-faint">
+            Not signed up yet? Share the <Link href="/auth/register" className="text-primary-600 underline">signup link</Link> with them.
           </p>
         </form>
       </Modal>
@@ -894,11 +900,11 @@ export default function StationPage() {
       >
         {deleteModal && (
           <div className="space-y-4">
-            <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100">
+            <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/40 border border-red-100">
               <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-red-800">This action cannot be undone</p>
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm font-medium text-red-800 dark:text-red-200">This action cannot be undone</p>
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
                   You are about to remove <strong>{deleteModal.email}</strong> from this station. They will lose access immediately.
                 </p>
               </div>
@@ -907,7 +913,7 @@ export default function StationPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setDeleteModal(null)}
-                className="flex-1 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="flex-1 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
               >
                 Cancel
               </button>
@@ -927,21 +933,21 @@ export default function StationPage() {
       {/* Clear Queue Confirmation Modal */}
       <Modal open={clearConfirm} onClose={() => setClearConfirm(false)} title="Clear Pending Items?">
         <div className="space-y-3">
-          <div className="flex items-start gap-3 p-3 bg-yellow-50 border border-yellow-200">
-            <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-gray-700">
+          <div className="flex items-start gap-3 p-3 bg-yellow-50 dark:bg-yellow-950/40 border border-yellow-200">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-content-strong">
               <p className="font-medium mb-1">This will:</p>
               <ul className="list-disc ml-4 space-y-1">
                 <li>Remove all {pendingCount} pending item{pendingCount > 1 ? 's' : ''} from the queue</li>
                 <li>Delete any new entries that haven&apos;t been pushed yet</li>
               </ul>
-              <p className="mt-2 text-gray-500">You can pull from the server afterwards to restore your data.</p>
+              <p className="mt-2 text-content-muted">You can pull from the server afterwards to restore your data.</p>
             </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setClearConfirm(false)}
-              className="flex-1 py-2 border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="flex-1 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
             >
               Cancel
             </button>
@@ -961,9 +967,9 @@ export default function StationPage() {
       <Modal open={!!syncModal} onClose={() => setSyncModal(null)} title={syncModal?.title || 'Sync'}>
         <div className="space-y-2">
           {syncModal?.lines.map((line, i) => (
-            <p key={i} className="text-sm text-gray-700">{line}</p>
+            <p key={i} className="text-sm text-content-strong">{line}</p>
           ))}
-          <button onClick={() => setSyncModal(null)} className="w-full mt-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
+          <button onClick={() => setSyncModal(null)} className="w-full mt-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">
             OK
           </button>
         </div>
@@ -972,15 +978,15 @@ export default function StationPage() {
       {/* Access Denied Modal */}
       <Modal open={accessDeniedModal} onClose={() => setAccessDeniedModal(false)} title="Access Denied">
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded">
+          <div className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/40 border border-red-100 rounded">
             <ShieldX className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-red-700">
+            <p className="text-sm text-red-700 dark:text-red-300">
               You don&apos;t have permission to access this page. Contact the station owner to update your access.
             </p>
           </div>
           <button
             onClick={() => setAccessDeniedModal(false)}
-            className="w-full py-2 bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 rounded"
+            className={`w-full py-2 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20`}
           >
             OK
           </button>

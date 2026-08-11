@@ -294,27 +294,29 @@ export default function ChatPage() {
   let lastDate = null
 
   if (showSplash) {
+    // bg-canvas, not bg-white: this veils the whole page, so in dark mode a white scrim
+    // would be a flash of daylight over a dark app.
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-canvas/80 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-          <p className="text-sm text-gray-600">Please wait...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+          <p className="text-sm text-content-muted">Please wait...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-white max-w-2xl mx-auto">
+    <div className="fixed inset-x-0 bottom-0 top-14 flex flex-col bg-surface max-w-2xl mx-auto">
 
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-white shrink-0">
-        <h1 className="text-sm font-semibold text-gray-900">Station Chat</h1>
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-line bg-surface shrink-0">
+        <h1 className="text-sm font-semibold text-content">Station Chat</h1>
         <div className="flex items-center gap-3">
           <button
             onClick={fetchMessages}
             disabled={refreshing}
-            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-800 disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-content-muted hover:text-content disabled:opacity-40 transition-colors"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -323,10 +325,10 @@ export default function ChatPage() {
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-white">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-surface">
         {displayedMessages.length === 0 && (
           <div className="flex justify-center items-center h-full">
-            <p className="text-sm text-gray-400">No messages yet.</p>
+            <p className="text-sm text-content-faint">No messages yet.</p>
           </div>
         )}
 
@@ -341,22 +343,22 @@ export default function ChatPage() {
               <div key={item.id}>
                 {showDateSep && (
                   <div className="flex justify-center my-3">
-                    <span className="bg-blue-50 text-blue-500 text-xs px-3 py-0.5">{blockDate}</span>
+                    <span className="bg-primary-50 text-blue-500 text-xs px-3 py-0.5">{blockDate}</span>
                   </div>
                 )}
                 <button
                   type="button"
                   onClick={() => toggleBlock(item.id)}
-                  className="w-full flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 px-3 py-1.5 my-1 bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="w-full flex items-center gap-1.5 text-xs text-content-muted hover:text-content-strong px-3 py-1.5 my-1 bg-subtle hover:bg-subtle transition-colors"
                 >
                   {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                   <span>{item.activities.length} activity logs</span>
-                  <span className="text-gray-400">— click to {isExpanded ? 'collapse' : 'expand'}</span>
+                  <span className="text-content-faint">— click to {isExpanded ? 'collapse' : 'expand'}</span>
                 </button>
                 {isExpanded && item.activities.map(msg => (
                   <div key={msg.id} className="my-1">
-                    <p className="text-sm text-gray-500 px-3 py-1">
-                      {fmtTime(msg.createdAt)} · <span className="font-medium text-gray-600">{msg.userName}</span> {msg.content}
+                    <p className="text-sm text-content-muted px-3 py-1">
+                      {fmtTime(msg.createdAt)} · <span className="font-medium text-content-muted">{msg.userName}</span> {msg.content}
                     </p>
                   </div>
                 ))}
@@ -376,15 +378,15 @@ export default function ChatPage() {
               {/* Date separator */}
               {showDateSep && (
                 <div className="flex justify-center my-3">
-                  <span className="bg-blue-50 text-blue-500 text-xs px-3 py-0.5">{msgDate}</span>
+                  <span className="bg-primary-50 text-blue-500 text-xs px-3 py-0.5">{msgDate}</span>
                 </div>
               )}
 
               {/* Activity log */}
               {msg.type === 'activity' ? (
                 <div className="my-1">
-                  <p className="text-sm text-gray-500 px-3 py-1">
-                    {fmtTime(msg.createdAt)} · <span className="font-medium text-gray-600">{msg.userName}</span> {msg.content}
+                  <p className="text-sm text-content-muted px-3 py-1">
+                    {fmtTime(msg.createdAt)} · <span className="font-medium text-content-muted">{msg.userName}</span> {msg.content}
                   </p>
                 </div>
               ) : (
@@ -394,7 +396,7 @@ export default function ChatPage() {
                   {isMe && !isDeleted && (
                     <button
                       onClick={() => handleDelete(msg)}
-                      className="mb-5 p-1.5 text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
+                      className="mb-5 p-1.5 text-content-faint hover:text-red-400 transition-colors flex-shrink-0"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -403,19 +405,19 @@ export default function ChatPage() {
                   <div className={`flex flex-col max-w-[78%] ${isMe ? 'items-end' : 'items-start'}`}>
                     <div className={`px-4 py-2.5 text-sm leading-relaxed ${
                       isDeleted
-                        ? 'bg-gray-100 text-gray-400 italic border border-gray-200'
+                        ? 'bg-subtle text-content-faint italic border border-line'
                         : isMe
-                          ? 'bg-blue-100 text-blue-900'
-                          : 'bg-slate-100 text-gray-900'
+                          ? 'bg-primary-100 text-blue-900'
+                          : 'bg-slate-100 text-content'
                     }`}>
                       {!isMe && !isDeleted && (
-                        <p className="font-semibold text-gray-700 mb-1">{msg.userName}</p>
+                        <p className="font-semibold text-content-strong mb-1">{msg.userName}</p>
                       )}
                       {isDeleted
                         ? `Message deleted · ${fmtTime(msg.deletedAt)}`
                         : <MessageContent content={msg.content} currentUserName={user?.name} isMe={isMe} />
                       }
-                      <p className={`text-[10px] mt-1.5 ${isDeleted ? 'text-gray-400' : isMe ? 'text-blue-500' : 'text-gray-400'}`}>{fmtTime(msg.createdAt)}</p>
+                      <p className={`text-[10px] mt-1.5 ${isDeleted ? 'text-content-faint' : isMe ? 'text-blue-500' : 'text-content-faint'}`}>{fmtTime(msg.createdAt)}</p>
                     </div>
                   </div>
                 </div>
@@ -429,22 +431,22 @@ export default function ChatPage() {
 
       {/* Error */}
       {error && (
-        <div className="px-4 py-2 bg-red-50 border-t border-red-200 text-xs text-red-600 shrink-0">
+        <div className="px-4 py-2 bg-red-50 dark:bg-red-950/40 border-t border-red-200 dark:border-red-900/50 text-xs text-red-600 dark:text-red-400 shrink-0">
           {error}
         </div>
       )}
 
       {/* Input area */}
-      <div className="shrink-0 border-t border-gray-200 bg-white">
+      <div className="shrink-0 border-t border-line bg-surface">
         {/* Mention suggestions */}
         {showMentions && (
-          <div className="border-b border-gray-200 max-h-40 overflow-y-auto">
+          <div className="border-b border-line max-h-40 overflow-y-auto">
             {mentionSuggestions.map((name, i) => (
               <button
                 key={name}
                 onMouseDown={(e) => { e.preventDefault(); insertMention(name) }}
                 className={`w-full text-left px-4 py-2 text-sm ${
-                  i === activeMentionIdx ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50'
+                  i === activeMentionIdx ? 'bg-primary-50 text-primary-600 font-medium' : 'text-content-strong hover:bg-subtle'
                 }`}
               >
                 @{name}
@@ -461,12 +463,12 @@ export default function ChatPage() {
             onChange={handleMessageChange}
             onKeyDown={handleKeyDown}
             placeholder="Message... use @ to mention"
-            className="flex-1 px-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="flex-1 px-4 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-surface"
           />
           <button
             onClick={handleSend}
             disabled={sending || !message.trim()}
-            className="w-10 h-10 bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 transition-colors flex-shrink-0"
+            className="w-10 h-10 bg-primary-500 text-white flex items-center justify-center hover:bg-primary-600 disabled:opacity-40 transition-colors flex-shrink-0"
           >
             {sending
               ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -493,7 +495,7 @@ function MessageContent({ content, currentUserName, isMe }) {
               className={`font-semibold ${
                 isYou
                   ? 'bg-yellow-200 text-yellow-900 px-0.5 rounded'
-                  : 'text-blue-600'
+                  : 'text-primary-600'
               }`}
             >
               {part}

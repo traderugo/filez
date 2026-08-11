@@ -7,7 +7,7 @@ import SearchableSelect from '@/components/SearchableSelect'
 
 export default function SubscribePage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>}>
       <SubscribeContent />
     </Suspense>
   )
@@ -133,7 +133,7 @@ function SubscribeContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -144,23 +144,23 @@ function SubscribeContent() {
 
   return (
     <div className="max-w-lg px-4 sm:px-8 py-8">
-      <p className="text-sm text-gray-500 mb-8">
+      <p className="text-sm text-content-muted mb-8">
         Select your station and services to get started. You&apos;ll pay via bank transfer next.
       </p>
 
       {/* Station selector */}
       <div className="mb-6">
-        <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3 flex items-center gap-2">
           <Fuel className="w-4 h-4" /> Station
         </h2>
         {stations.length === 0 ? (
-          <p className="text-sm text-gray-500">You don&apos;t own any stations yet.</p>
+          <p className="text-sm text-content-muted">You don&apos;t own any stations yet.</p>
         ) : stations.length === 1 ? (
-          <div className="border border-blue-200 bg-blue-50 p-3 text-sm font-medium text-gray-900">
+          <div className="border border-primary-500/40 bg-primary-50 p-3 text-sm font-medium text-content">
             {stations[0].name}
           </div>
         ) : (
-          <div className="border border-gray-300">
+          <div className="border border-line">
             <SearchableSelect
               value={selectedStation}
               onChange={(val) => handleStationChange(val)}
@@ -173,22 +173,22 @@ function SubscribeContent() {
 
       {/* Subscription status for selected station */}
       {hasApproved && (
-        <div className="bg-green-50 border border-green-200 px-4 py-3 mb-6 text-sm text-green-800">
+        <div className="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/50 px-4 py-3 mb-6 text-sm text-green-800">
           This station has an active subscription (expires {subscription.end_date}).
         </div>
       )}
       {hasPendingApproval && (
-        <div className="bg-blue-50 border border-blue-200 px-4 py-3 mb-6 text-sm text-blue-800">
+        <div className="bg-primary-50 border border-primary-500/40 px-4 py-3 mb-6 text-sm text-primary-800">
           This station has a subscription awaiting admin approval.
         </div>
       )}
 
       {services.length === 0 ? (
-        <p className="text-sm text-gray-500 py-8 text-center">No services available yet.</p>
+        <p className="text-sm text-content-muted py-8 text-center">No services available yet.</p>
       ) : (
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-4 flex items-center gap-2">
+            <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-4 flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" /> Select Services
             </h2>
             <div className="space-y-2">
@@ -196,20 +196,20 @@ function SubscribeContent() {
                 <label
                   key={svc.id}
                   className={`flex items-start gap-3 border p-3 cursor-pointer transition-colors ${
-                    selectedItems[svc.id] ? 'border-blue-600 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                    selectedItems[svc.id] ? 'border-blue-600 bg-primary-50' : 'border-line hover:border-line'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={!!selectedItems[svc.id]}
                     onChange={() => toggleItem(svc.id)}
-                    className="mt-0.5 border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 border-line text-primary-600 focus:ring-primary-500"
                   />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{svc.name}</p>
-                    {svc.description && <p className="text-xs text-gray-500 mt-0.5">{svc.description}</p>}
+                    <p className="text-sm font-medium text-content">{svc.name}</p>
+                    {svc.description && <p className="text-xs text-content-muted mt-0.5">{svc.description}</p>}
                   </div>
-                  <span className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                  <span className="text-sm font-semibold text-content whitespace-nowrap">
                     {Number(svc.price).toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
                   </span>
                 </label>
@@ -220,7 +220,7 @@ function SubscribeContent() {
               <>
                 {/* Duration */}
                 <div className="mt-6">
-                  <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3 flex items-center gap-2">
                     <Calendar className="w-4 h-4" /> Duration
                   </h2>
                   <div className="flex items-center gap-3">
@@ -231,23 +231,23 @@ function SubscribeContent() {
                       value={months}
                       onChange={(e) => setMonths(e.target.value)}
                       onBlur={() => setMonths(String(monthsNum))}
-                      className="w-20 border border-gray-300 px-3 py-2 text-sm text-center font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-20 border border-line px-3 py-2 text-sm text-center font-medium focus:ring-2 focus:ring-primary-500 focus:border-blue-500"
                     />
-                    <span className="text-sm text-gray-600">month{monthsNum !== 1 ? 's' : ''}</span>
+                    <span className="text-sm text-content-muted">month{monthsNum !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
 
                 {/* Total */}
-                <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-200">
+                <div className="flex justify-between items-center mt-4 pt-3 border-t border-line">
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Total</span>
+                    <span className="text-sm font-medium text-content-strong">Total</span>
                     {monthsNum > 1 && (
-                      <span className="text-xs text-gray-400 ml-2">
+                      <span className="text-xs text-content-faint ml-2">
                         ({monthlyTotal.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })} × {monthsNum} months)
                       </span>
                     )}
                   </div>
-                  <span className="text-lg font-bold text-gray-900">
+                  <span className="text-lg font-bold text-content">
                     {total.toLocaleString('en-NG', { style: 'currency', currency: 'NGN' })}
                   </span>
                 </div>
@@ -255,12 +255,12 @@ function SubscribeContent() {
             )}
           </div>
 
-          {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
 
           <button
             type="submit"
             disabled={submitting || selectedServices.length === 0 || !selectedStation}
-            className="w-full bg-blue-600 text-white py-2.5 font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-primary-500 text-white py-2.5 font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {submitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />
