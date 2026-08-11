@@ -19,7 +19,7 @@ export default function AccessGate({ orgId, pageKey, children }) {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+        <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
       </div>
     )
   }
@@ -27,9 +27,9 @@ export default function AccessGate({ orgId, pageKey, children }) {
   if (!allowed) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-        <ShieldX className="w-10 h-10 text-gray-300 mb-3" />
-        <h2 className="text-lg font-semibold text-gray-700 mb-1">Access Restricted</h2>
-        <p className="text-sm text-gray-500 max-w-xs">
+        <ShieldX className="w-10 h-10 text-content-faint mb-3" />
+        <h2 className="text-lg font-semibold text-content mb-1">Access Restricted</h2>
+        <p className="text-sm text-content-muted max-w-xs">
           You don&apos;t have permission to view this page. Contact the station owner to update your access.
         </p>
       </div>

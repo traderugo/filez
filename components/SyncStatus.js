@@ -6,6 +6,7 @@ import { RefreshCw, Check, Cloud, Loader2 } from 'lucide-react'
 import { db } from '@/lib/db'
 import { processQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
+import { OUTLINE } from '@/components/ui'
 
 export default function SyncStatus({ orgId }) {
   const [syncing, setSyncing] = useState(false)
@@ -82,7 +83,7 @@ export default function SyncStatus({ orgId }) {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-100 disabled:opacity-50"
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
         >
           {refreshing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
           Refresh data

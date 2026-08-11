@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { RefreshCw, X } from 'lucide-react'
+import { OUTLINE } from '@/components/ui'
 
 // Surfaces a "new version" toast when the service worker updates. AppShell already
 // calls reg.update() + activates a waiting worker (SKIP_WAITING), so a new worker
@@ -23,16 +24,18 @@ export default function PWAUpdateToast() {
 
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-sm">
-      <div className="flex items-center gap-3 bg-white border border-gray-200 shadow-lg px-4 py-3">
-        <RefreshCw className="w-4 h-4 text-blue-600 flex-shrink-0" />
-        <p className="text-sm text-gray-900 flex-1">A new version is available.</p>
+      <div className="flex items-center gap-3 bg-surface border-card border-line shadow-lg px-4 py-3">
+        <RefreshCw className="w-4 h-4 text-primary-600 dark:text-primary-300 flex-shrink-0" />
+        <p className="text-sm text-content flex-1">A new version is available.</p>
+        {/* Was a solid blue fill; the system has no solid CTAs. Padding and text size are
+            unchanged, so the toast keeps its height. */}
         <button
           onClick={() => window.location.reload()}
-          className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+          className={`px-3 py-1.5 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
         >
           Refresh
         </button>
-        <button onClick={() => setShow(false)} className="p-1 text-gray-400 hover:text-gray-600">
+        <button onClick={() => setShow(false)} aria-label="Dismiss" className="p-1 text-content-faint hover:text-content-strong">
           <X className="w-4 h-4" />
         </button>
       </div>
