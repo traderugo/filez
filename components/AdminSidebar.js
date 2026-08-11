@@ -17,17 +17,19 @@ export default function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-visible border-b sm:border-b-0 sm:border-r border-gray-200 sm:w-48 sm:min-h-0 px-2 py-2 sm:py-4 bg-white">
+    <nav className="flex sm:flex-col gap-1 overflow-x-auto sm:overflow-visible border-b sm:border-b-0 sm:border-r border-line sm:w-48 sm:min-h-0 px-2 py-2 sm:py-4 bg-surface">
       {links.map(({ href, label, icon: Icon }) => {
         const active = pathname === href
         return (
           <Link
             key={href}
             href={href}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm whitespace-nowrap transition-colors ${
+            // Square, not round: the design system keeps rounded corners for pills and
+            // avatars only, so rounded-md comes off. Padding is untouched.
+            className={`flex items-center gap-2 px-3 py-2 text-sm whitespace-nowrap transition-colors ${
               active
-                ? 'bg-blue-50 text-blue-700 font-medium'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-medium'
+                : 'text-content-strong hover:bg-subtle hover:text-content'
             }`}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
