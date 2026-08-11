@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess } from '@/lib/stationAccess'
 
 export async function GET(request, { params }) {
   try {
@@ -11,17 +12,18 @@ export async function GET(request, { params }) {
     const { stationId } = await params
     const supabase = getAdminClient()
 
-    // Verify ownership
+    // Owner, accepted staff, or platform admin. This is a read, so nothing is logged:
+    // recording GETs would bury real actions under page views.
+    const { ok } = await hasStationAccess(user, stationId)
+    if (!ok) {
+      return NextResponse.json({ error: 'Station not found' }, { status: 404 })
+    }
+
     const { data: station } = await supabase
       .from('organizations')
       .select('id, name, location')
       .eq('id', stationId)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
-      return NextResponse.json({ error: 'Station not found' }, { status: 404 })
-    }
+      .maybeSingle()
 
     const [nozzlesRes, tanksRes, banksRes, lubeRes, customersRes] = await Promise.all([
       supabase
