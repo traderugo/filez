@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, Home, Loader2 } from 'lucide-react'
+import { OUTLINE } from '@/components/ui'
 
 // Map paths to page titles. Back always uses router.back().
 const PAGE_TITLES = {
@@ -95,22 +96,24 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-30 border-b border-line bg-surface">
       <div className="px-4 sm:px-6 h-14 flex items-center justify-between">
 
         <div className="flex items-center gap-2">
           {!isDashboardHome && (
-            <button onClick={() => router.back()} className="flex items-center gap-1 text-gray-700 hover:text-gray-900">
+            <button onClick={() => router.back()} className="flex items-center gap-1 text-content-strong hover:text-content">
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
-          <span className="text-sm font-semibold text-gray-900">{title || 'Dashboard'}</span>
+          <span className="text-sm font-semibold text-content">{title || 'Dashboard'}</span>
         </div>
 
+        {/* OUTLINE is the design system's control look. Padding and text size are left
+            exactly as they were so the header's 14-unit row does not shift. */}
         <Link
           href={homeHref}
           onClick={handleHomeClick}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
         >
           {navigating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Home className="w-4 h-4" />}
           <span>Home</span>
