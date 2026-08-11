@@ -165,12 +165,12 @@ export default function DateInput({ value, onChange, className = '' }) {
           onKeyDown={handleKeyDown}
           placeholder="DD-MM-YYYY"
           autoComplete="off"
-          className={`block w-full focus:outline-none ${error ? 'text-red-600' : ''}`}
+          className={`block w-full bg-transparent focus:outline-none placeholder:text-content-faint ${error ? 'text-red-600 dark:text-red-400' : 'text-content'}`}
         />
         <button
           type="button"
           onClick={() => setShowCalendar(!showCalendar)}
-          className="flex items-center px-1 text-gray-400 hover:text-gray-600"
+          className="flex items-center px-1 text-content-faint hover:text-content-strong"
           aria-label="Open calendar"
           tabIndex={-1}
         >
@@ -180,11 +180,15 @@ export default function DateInput({ value, onChange, className = '' }) {
 
       {showCalendar && (
         <div className="absolute z-50 mt-1 left-0">
+          {/* calendarClassName activates the .app-datepicker rules in globals.css, which is
+              where this popup is themed. The library ships its own stylesheet, so restyling
+              it from here would lose to load order; scoped rules there win instead. */}
           <DatePicker
             selected={value ? new Date(value + 'T00:00:00') : null}
             onChange={handleCalendarChange}
             inline
             dateFormat="dd-MM-yyyy"
+            calendarClassName="app-datepicker"
             onClickOutside={() => setShowCalendar(false)}
           />
         </div>

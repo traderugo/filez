@@ -113,23 +113,23 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
         type="button"
         disabled={disabled}
         onClick={handleOpen}
-        className="w-full px-3 py-2.5 text-base bg-transparent text-left flex items-center justify-between focus:outline-none focus:bg-blue-50 disabled:opacity-50"
+        className="w-full px-3 py-2.5 text-base bg-transparent text-left flex items-center justify-between focus:outline-none focus:bg-primary-500/10 disabled:opacity-50"
       >
-        <span className={selectedOption ? 'text-gray-900 truncate' : 'text-gray-400 truncate'}>
+        <span className={selectedOption ? 'text-content truncate' : 'text-content-faint truncate'}>
           {selectedOption ? selectedOption.label : placeholder}
-          {selectedOption?.sub && <span className="text-gray-400 text-xs ml-1">({selectedOption.sub})</span>}
+          {selectedOption?.sub && <span className="text-content-faint text-xs ml-1">({selectedOption.sub})</span>}
         </span>
-        <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0 ml-1" />
+        <ChevronDown className="w-4 h-4 text-content-faint flex-shrink-0 ml-1" />
       </button>
 
       {/* Dropdown */}
       {open && (
-        <div className={`absolute z-50 left-0 right-0 bg-white border border-gray-300 shadow-lg max-h-64 flex flex-col ${
+        <div className={`absolute z-50 left-0 right-0 bg-surface border border-line-strong shadow-lg max-h-64 flex flex-col ${
           dropUp ? 'bottom-full mb-0.5' : 'top-full mt-0.5'
         }`}>
           {/* Search input */}
-          <div className={`flex items-center border-b border-gray-200 px-2 ${dropUp ? 'order-last border-b-0 border-t' : ''}`}>
-            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <div className={`flex items-center border-b border-line px-2 ${dropUp ? 'order-last border-b-0 border-t' : ''}`}>
+            <Search className="w-4 h-4 text-content-faint flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -137,10 +137,10 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search..."
-              className="w-full px-2 py-2 text-sm focus:outline-none bg-transparent"
+              className="w-full px-2 py-2 text-sm focus:outline-none bg-transparent text-content placeholder:text-content-faint"
             />
             {search && (
-              <button type="button" onClick={() => setSearch('')} className="text-gray-400 hover:text-gray-600">
+              <button type="button" onClick={() => setSearch('')} className="text-content-faint hover:text-content-strong">
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
@@ -149,18 +149,18 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
           {/* Options list */}
           <ul ref={listRef} className="overflow-y-auto flex-1">
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-sm text-gray-400 text-center">No matches</li>
+              <li className="px-3 py-2 text-sm text-content-faint text-center">No matches</li>
             )}
             {filtered.map((opt, idx) => (
               <li
                 key={opt.value}
                 onClick={() => select(opt.value)}
                 className={`px-3 py-2 text-sm cursor-pointer flex items-center justify-between ${
-                  idx === highlightIdx ? 'bg-blue-50' : ''
-                } ${String(opt.value) === String(value) ? 'font-medium text-blue-700' : 'text-gray-800'} hover:bg-blue-50`}
+                  idx === highlightIdx ? 'bg-primary-500/10' : ''
+                } ${String(opt.value) === String(value) ? 'font-medium text-primary-700 dark:text-primary-300' : 'text-content-strong'} hover:bg-primary-500/10`}
               >
                 <span className="truncate">{opt.label}</span>
-                {opt.sub && <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{opt.sub}</span>}
+                {opt.sub && <span className="text-xs text-content-faint ml-2 flex-shrink-0">{opt.sub}</span>}
               </li>
             ))}
           </ul>

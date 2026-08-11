@@ -14,11 +14,16 @@ export default function Modal({ open, onClose, title, children }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-md p-6 shadow-lg">
+      {/* Scrim at 70%: 40% left the panel floating ambiguously over the page, and in dark
+          mode a dark panel on a dark background barely reads at all. */}
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+      {/* border-line is gray-400 in light mode, identical to what this carried before. The
+          dark override is brighter than the token: a dark panel on a dark scrim needs more
+          edge than a divider does. */}
+      <div className="relative bg-surface border-card border-line dark:border-white/30 w-full max-w-md p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+          <h3 className="text-lg font-semibold text-content">{title}</h3>
+          <button onClick={onClose} aria-label="Close" className="p-1 text-content-faint hover:text-content-strong">
             <X className="w-5 h-5" />
           </button>
         </div>
