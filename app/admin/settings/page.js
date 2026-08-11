@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus, FolderOpen } from 'lucide-react'
+import Link from 'next/link'
 import SearchableSelect from '@/components/SearchableSelect'
+import { OUTLINE } from '@/components/ui'
 
 // The design system has no solid fills; weight comes from how hard the outline is drawn.
 const SOLID_ACTION = 'border-2 border-primary-600 dark:border-primary-400 bg-primary-500/20 text-primary-800 dark:text-primary-100 transition-all hover:bg-primary-500/30'
@@ -37,7 +39,9 @@ export default function AdminSettingsPage() {
 
   const loadData = async () => {
     const [stationsRes, groupsRes] = await Promise.all([
-      fetch('/api/organizations'),
+      // Every station on the platform, not just the admin's own — this screen exists to
+      // manage everyone's.
+      fetch('/api/admin/stations'),
       fetch('/api/station-groups'),
     ])
     if (stationsRes.ok) {
@@ -338,16 +342,40 @@ export default function AdminSettingsPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="flex-1 flex items-center gap-2">
-                    <span className="text-sm font-semibold text-content">{station.name}</span>
-                    <button onClick={() => { setEditingId(station.id); setEditName(station.name) }} className="p-1 text-content-faint hover:text-content-muted">
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
+                  <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-semibold text-content truncate">{station.name}</span>
+                    {/* Whose station this is. Without it the list is a wall of names with no
+                        way to tell your own from an owner you are onboarding. */}
+                    {station.owner_name && (
+                      <span className="text-xs text-content-faint truncate">{station.owner_name}</span>
+                    )}
+                    {station.is_mine !== false && (
+                      <button onClick={() => { setEditingId(station.id); setEditName(station.name) }} className="p-1 text-content-faint hover:text-content-muted">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 )}
-                <button onClick={() => deleteStation(station.id, station.name)} disabled={busyAction === `del-station-${station.id}`} className="p-1.5 text-content-faint hover:text-red-600 dark:text-red-400 disabled:opacity-50">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+
+                {/* The way in. An admin could reach a station's setup only by typing its id
+                    into the URL; the onboarding permission is useless without a door. */}
+                <Link
+                  href={station.onboarding_complete
+                    ? `/dashboard/stations/${station.id}`
+                    : `/dashboard/setup/${station.id}`}
+                  className={`shrink-0 px-3 py-1.5 text-xs font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
+                >
+                  {station.onboarding_complete ? 'Open' : 'Run setup'}
+                </Link>
+                {/* Delete goes through the owner-gated tenant route, so on someone else's
+                    station it would silently do nothing. A button that appears to work and
+                    does not is worse than no button — and admin-wide station deletion is
+                    not something to open up by accident. */}
+                {station.is_mine !== false && (
+                  <button onClick={() => deleteStation(station.id, station.name)} disabled={busyAction === `del-station-${station.id}`} className="p-1.5 text-content-faint hover:text-red-600 dark:text-red-400 disabled:opacity-50">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               {/* Group assignment */}
