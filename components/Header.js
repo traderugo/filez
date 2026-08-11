@@ -52,8 +52,8 @@ function getTitle(pathname) {
   const settingsMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)\/settings$/)
   if (settingsMatch) return 'Settings'
 
-  const chatMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)\/chat$/)
-  if (chatMatch) return 'Chat'
+  const notifMatch = pathname.match(/^\/dashboard\/stations\/([^/]+)\/notifications$/)
+  if (notifMatch) return 'Notifications'
 
   const stationMatch = pathname.match(/^\/dashboard\/stations\/[^/]+$/)
   if (stationMatch) return 'Station'

@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, ArrowUpFromLine, ArrowDownToLine, MessagesSquare, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
+  FileText, ArrowUpFromLine, ArrowDownToLine, Bell, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -483,17 +483,17 @@ export default function StationPage() {
         </div>
       </section>
 
-      {/* Chat */}
+      {/* Notifications */}
       <section className="mb-8">
-        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Chat</h2>
+        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Notifications</h2>
         <Link
-          href={`/dashboard/stations/${stationId}/chat`}
+          href={`/dashboard/stations/${stationId}/notifications`}
           className="flex items-center gap-3 border border-line p-4 hover:border-primary-500/40 hover:bg-primary-50/50 transition-colors"
         >
-          <MessagesSquare className="w-5 h-5 text-primary-600 flex-shrink-0" />
+          <Bell className="w-5 h-5 text-primary-600 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-content">Station Chat</p>
-            <p className="text-xs text-content-muted">Messages and activity log for this station</p>
+            <p className="text-sm font-medium text-content">Notifications</p>
+            <p className="text-xs text-content-muted">Entries, staff changes and subscription events</p>
           </div>
           <ChevronRight className="w-4 h-4 text-content-faint" />
         </Link>

@@ -59,8 +59,7 @@ export default function AppShell({ children }) {
 
   const isAuth = pathname.startsWith('/auth')
   const isHome = pathname === '/'
-  const isAdmin = pathname.startsWith('/admin')
-  const isChat = pathname.endsWith('/chat')
+  const isAdmin = pathname.startsWith('/admin')
 
   // Auth pages + homepage: no shell, just content
   if (isAuth || isHome) return <>{children}</>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useParams, useRouter } from 'next/navigation'
-import { Fuel, Home, LogOut, PanelLeftClose, PanelLeft, X, MessagesSquare, Settings } from 'lucide-react'
+import { Fuel, Home, LogOut, PanelLeftClose, PanelLeft, X, Bell, Settings } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buildStationNav } from '@/lib/stationNav'
 import ThemeToggle from '@/components/ThemeToggle'
@@ -178,7 +178,7 @@ export default function StationSidebar({ open, onClose }) {
           <h2 className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wide text-content-faint">Station</h2>
         )}
         <ul>
-          {item({ href: `${home}/chat`, icon: MessagesSquare, label: 'Chat', allowed: true, pageKey: 'chat' })}
+          {item({ href: `${home}/notifications`, icon: Bell, label: 'Notifications', allowed: true, pageKey: 'notifications' })}
           {item({ href: `${home}/settings`, icon: Settings, label: 'Settings', allowed: true, pageKey: 'settings' })}
         </ul>
       </div>
