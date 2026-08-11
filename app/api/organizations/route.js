@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess } from '@/lib/stationAccess'
 import { rateLimit } from '@/lib/rateLimit'
 
 function slugify(text) {
@@ -12,8 +13,14 @@ function slugify(text) {
     .replace(/^-|-$/g, '')
 }
 
-// GET — list stations the user manages
-export async function GET() {
+// GET — list stations the user manages, or ?org_id= for one specific station.
+//
+// The single-station form exists for the setup wizard. It lists only OWNED and member
+// stations, so an admin running setup on someone's behalf found no station in the list:
+// no name, no existing location, and — the dangerous part — the `onboarding_complete`
+// guard silently never fired, so they could re-run setup over a live station's tank and
+// nozzle configuration. Asking for the station by id restores that guard for admins.
+export async function GET(request) {
   try {
     const user = await getAuthUser()
     if (!user) {
@@ -21,6 +28,17 @@ export async function GET() {
     }
 
     const supabase = getAdminClient()
+
+    const orgId = request?.url ? new URL(request.url).searchParams.get('org_id') : null
+    if (orgId) {
+      const { ok } = await hasStationAccess(user, orgId)
+      if (!ok) return NextResponse.json({ error: 'Station not found' }, { status: 404 })
+
+      const { data: station } = await supabase
+        .from('organizations').select('*').eq('id', orgId).maybeSingle()
+      // Returned under `stations` so callers can read it the same way as the list form.
+      return NextResponse.json({ stations: station ? [station] : [], memberStations: [] })
+    }
     const { data: stations } = await supabase
       .from('organizations')
       .select('*')

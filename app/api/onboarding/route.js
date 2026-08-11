@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAuthUser, getAdminClient } from '@/lib/supabaseServer'
+import { hasStationAccess } from '@/lib/stationAccess'
+import { logStationAssist } from '@/lib/adminActivity'
 import { rateLimit } from '@/lib/rateLimit'
 import { DEFAULT_ACCOUNTS, DEFAULT_PHONE, DEFAULT_LUBE_PRODUCTS } from '@/lib/defaultAccounts'
 
@@ -129,15 +131,11 @@ export async function POST(request) {
 
     const supabase = getAdminClient()
 
-    // Verify user owns this station
-    const { data: station } = await supabase
-      .from('organizations')
-      .select('id')
-      .eq('id', org_id)
-      .eq('owner_id', user.id)
-      .single()
-
-    if (!station) {
+    // Owner, accepted staff, or platform admin. It was owner-only, which meant an admin
+    // could not run setup for a station they were onboarding: the wizard loaded, five steps
+    // were filled in, and the save 404'd at the end.
+    const { ok, via } = await hasStationAccess(user, org_id)
+    if (!ok) {
       return NextResponse.json({ error: 'Station not found' }, { status: 404 })
     }
 
@@ -266,11 +264,28 @@ export async function POST(request) {
     await ensureDefaultAccounts(supabase, org_id)
     await ensureDefaultLubeProducts(supabase, org_id)
 
-    // 8. Mark onboarding as complete + ensure owner's org_id is set
+    // 8. Mark onboarding as complete + ensure the OWNER's org_id is set.
+    //
+    // This used to write org_id onto the acting user, which was the same person back when
+    // only an owner could get here. Now that an admin can run setup on someone's behalf,
+    // that would silently repoint the ADMIN's own default station at the station they were
+    // setting up. The owner is read from the station rather than assumed.
+    const { data: station } = await supabase
+      .from('organizations').select('owner_id, name').eq('id', org_id).maybeSingle()
+
     await Promise.all([
       supabase.from('organizations').update({ onboarding_complete: true }).eq('id', org_id),
-      supabase.from('users').update({ org_id }).eq('id', user.id),
+      station?.owner_id
+        ? supabase.from('users').update({ org_id }).eq('id', station.owner_id)
+        : Promise.resolve(),
     ])
+
+    // Only records something when `via` is 'admin'; a no-op for the owner and for staff.
+    await logStationAssist({
+      user, via, orgId: org_id, request,
+      actionType: 'onboarding_saved',
+      content: `ran setup for ${station?.name || 'a station'} on their behalf`,
+    })
 
     return NextResponse.json({ ok: true })
   } catch {

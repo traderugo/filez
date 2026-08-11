@@ -51,7 +51,10 @@ export default function SetupWizardPage() {
 
   useEffect(() => {
     const load = async () => {
-      const res = await fetch('/api/organizations')
+      // Ask for this station by id rather than filtering the caller's list: an admin
+      // running setup on an owner's behalf does not have it in their list, and the
+      // onboarding_complete guard below has to fire for them too.
+      const res = await fetch(`/api/organizations?org_id=${encodeURIComponent(stationId)}`)
       if (res.ok) {
         const data = await res.json()
         const station = (data.stations || []).find((s) => s.id === stationId)
