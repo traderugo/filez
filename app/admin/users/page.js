@@ -70,21 +70,21 @@ export default function AdminUsersPage() {
       <div className="max-w-2xl">
         <button
           onClick={() => setSelectedUser(null)}
-          className="text-sm text-gray-500 hover:text-gray-700 mb-4"
+          className="text-sm text-content-muted hover:text-content-strong mb-4"
         >
           &larr; Back to users
         </button>
 
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">{selectedUser.name}</h1>
-            <p className="text-sm text-gray-500">{selectedUser.email}</p>
-            {selectedUser.phone && <p className="text-sm text-gray-500">{selectedUser.phone}</p>}
+            <h1 className="text-lg font-semibold text-content">{selectedUser.name}</h1>
+            <p className="text-sm text-content-muted">{selectedUser.email}</p>
+            {selectedUser.phone && <p className="text-sm text-content-muted">{selectedUser.phone}</p>}
           </div>
           <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${
             selectedUser.email_verified
-              ? 'bg-green-50 text-green-700'
-              : 'bg-amber-50 text-amber-700'
+              ? 'bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300'
+              : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300'
           }`}>
             {selectedUser.email_verified ? <ShieldCheck className="w-3 h-3" /> : <ShieldX className="w-3 h-3" />}
             {selectedUser.email_verified ? 'Verified' : 'Unverified'}
@@ -97,7 +97,7 @@ export default function AdminUsersPage() {
             <button
               onClick={() => handleVerify(selectedUser.id, false)}
               disabled={verifying}
-              className="inline-flex items-center gap-1.5 text-sm text-amber-600 hover:text-amber-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:text-amber-300 disabled:opacity-50"
             >
               {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldX className="w-4 h-4" />}
               Revoke verification
@@ -106,7 +106,7 @@ export default function AdminUsersPage() {
             <button
               onClick={() => handleVerify(selectedUser.id, true)}
               disabled={verifying}
-              className="inline-flex items-center gap-1.5 text-sm text-green-600 hover:text-green-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:text-green-300 disabled:opacity-50"
             >
               {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
               Verify user
@@ -116,24 +116,24 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Details */}
-        <div className="border-t border-gray-200 pt-4 space-y-2 text-sm">
+        <div className="border-t border-line pt-4 space-y-2 text-sm">
           <div className="flex gap-2">
-            <span className="text-gray-500">Role:</span>
-            <span className="text-gray-900">{selectedUser.role}</span>
+            <span className="text-content-muted">Role:</span>
+            <span className="text-content">{selectedUser.role}</span>
           </div>
           <div className="flex gap-2">
-            <span className="text-gray-500">Joined:</span>
-            <span className="text-gray-900">{fmtDate(selectedUser.created_at)}</span>
+            <span className="text-content-muted">Joined:</span>
+            <span className="text-content">{fmtDate(selectedUser.created_at)}</span>
           </div>
         </div>
 
         {/* Custom field values */}
         {customData.length > 0 && (
-          <div className="border-t border-gray-200 pt-4 mt-4 space-y-1">
+          <div className="border-t border-line pt-4 mt-4 space-y-1">
             {customData.map((item, i) => (
               <div key={i} className="flex gap-2 text-sm">
-                <span className="text-gray-500">{item.label}:</span>
-                <span className="text-gray-900">{item.value}</span>
+                <span className="text-content-muted">{item.label}:</span>
+                <span className="text-content">{item.value}</span>
               </div>
             ))}
           </div>
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
     <div className="max-w-3xl">
       {unverifiedCount > 0 && (
         <div className="flex justify-end mb-4">
-          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">
+          <span className="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full font-medium">
             {unverifiedCount} pending
           </span>
         </div>
@@ -155,19 +155,19 @@ export default function AdminUsersPage() {
       {/* Search + filter */}
       <div className="flex gap-2 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-faint" />
           <input
             type="text"
             placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
         </div>
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="px-3 py-2.5 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="all">All</option>
           <option value="verified">Verified</option>
@@ -177,30 +177,30 @@ export default function AdminUsersPage() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
         </div>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-gray-500 py-8 text-center">No users found.</p>
+        <p className="text-sm text-content-muted py-8 text-center">No users found.</p>
       ) : (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-line">
           {filtered.map((user) => (
             <div
               key={user.id}
-              className="flex items-center gap-3 py-3 hover:bg-gray-50 -mx-4 px-4 cursor-pointer transition-colors"
+              className="flex items-center gap-3 py-3 hover:bg-subtle -mx-4 px-4 cursor-pointer transition-colors"
               onClick={() => selectUser(user)}
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium text-gray-900 truncate">{user.name || 'No name'}</p>
+                  <p className="text-sm font-medium text-content truncate">{user.name || 'No name'}</p>
                   {!user.email_verified && (
-                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
+                    <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">
                       PENDING
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-500">{user.email}</p>
+                <p className="text-xs text-content-muted">{user.email}</p>
               </div>
-              <span className="text-xs text-gray-400">{fmtDateShort(user.created_at)}</span>
+              <span className="text-xs text-content-faint">{fmtDateShort(user.created_at)}</span>
             </div>
           ))}
         </div>

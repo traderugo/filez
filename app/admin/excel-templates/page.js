@@ -15,6 +15,9 @@ function formatBytes(bytes) {
 
 import { fmtDate as formatDate } from '@/lib/formatDate'
 
+// The design system has no solid fills; weight comes from how hard the outline is drawn.
+const SOLID_ACTION = 'border-2 border-primary-600 dark:border-primary-400 bg-primary-500/20 text-primary-800 dark:text-primary-100 transition-all hover:bg-primary-500/30'
+
 export default function ExcelTemplatesPage() {
   const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
@@ -175,74 +178,74 @@ export default function ExcelTemplatesPage() {
         {!showUpload && (
           <button
             onClick={() => setShowUpload(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm hover:bg-blue-700 rounded"
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm ${SOLID_ACTION}`}
           >
             <Upload className="w-4 h-4" />
             Upload template
           </button>
         )}
       </div>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-content-muted mb-6">
         Manage Excel report templates. Uploaded files are stored privately and available to admins only.
       </p>
 
-      {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
 
       {/* Upload form */}
       {showUpload && (
-        <div className="border border-gray-200 rounded-lg p-4 mb-6 bg-gray-50">
+        <div className="border border-line rounded-lg p-4 mb-6 bg-subtle">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-gray-900">Upload new template</p>
-            <button onClick={resetUpload} className="text-gray-400 hover:text-gray-600">
+            <p className="text-sm font-medium text-content">Upload new template</p>
+            <button onClick={resetUpload} className="text-content-faint hover:text-content-muted">
               <X className="w-4 h-4" />
             </button>
           </div>
           <form onSubmit={handleUpload} className="space-y-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Template name <span className="text-red-500">*</span></label>
+              <label className="block text-xs text-content-muted mb-1">Template name <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Weekly Station Report"
-                className="w-full px-3 py-2 border border-gray-300 text-sm rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                 autoFocus
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Description</label>
+              <label className="block text-xs text-content-muted mb-1">Description</label>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional description"
-                className="w-full px-3 py-2 border border-gray-300 text-sm rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Excel file <span className="text-red-500">*</span></label>
+              <label className="block text-xs text-content-muted mb-1">Excel file <span className="text-red-500">*</span></label>
               <input
                 ref={fileRef}
                 type="file"
                 accept=".xlsx,.xls"
                 onChange={(e) => setFile(e.target.files[0] || null)}
-                className="w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:border file:border-gray-300 file:rounded file:text-sm file:bg-white file:text-gray-700 hover:file:bg-gray-50"
+                className="w-full text-sm text-content-muted file:mr-3 file:py-1.5 file:px-3 file:border file:border-line file:rounded file:text-sm file:bg-surface file:text-content-strong hover:file:bg-subtle"
               />
               {file && (
-                <p className="text-xs text-gray-500 mt-1">{file.name} — {formatBytes(file.size)}</p>
+                <p className="text-xs text-content-muted mt-1">{file.name} — {formatBytes(file.size)}</p>
               )}
             </div>
-            {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
+            {uploadError && <p className="text-sm text-red-600 dark:text-red-400">{uploadError}</p>}
             <div className="flex gap-2 pt-1">
               <button
                 type="submit"
                 disabled={uploading}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-sm disabled:opacity-50 ${SOLID_ACTION}`}
               >
                 {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {uploading ? 'Uploading…' : 'Upload'}
               </button>
-              <button type="button" onClick={resetUpload} className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900">
+              <button type="button" onClick={resetUpload} className="px-3 py-1.5 text-sm text-content-muted hover:text-content">
                 Cancel
               </button>
             </div>
@@ -253,15 +256,15 @@ export default function ExcelTemplatesPage() {
       {/* List */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
         </div>
       ) : templates.length === 0 ? (
-        <div className="flex flex-col items-center py-16 text-gray-400">
+        <div className="flex flex-col items-center py-16 text-content-faint">
           <FileSpreadsheet className="w-10 h-10 mb-2" />
           <p className="text-sm">No templates uploaded yet.</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-line">
           {templates.map((t) => (
             <div key={t.id} className="py-4">
               {editingId === t.id ? (
@@ -270,7 +273,7 @@ export default function ExcelTemplatesPage() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-gray-300 text-sm rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-1.5 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                     autoFocus
                   />
                   <input
@@ -278,31 +281,31 @@ export default function ExcelTemplatesPage() {
                     value={editDesc}
                     onChange={(e) => setEditDesc(e.target.value)}
                     placeholder="Description (optional)"
-                    className="w-full px-3 py-1.5 border border-gray-300 text-sm rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-1.5 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                   <div className="flex gap-2">
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
+                      className={`flex items-center gap-1 px-3 py-1.5 text-sm disabled:opacity-50 ${SOLID_ACTION}`}
                     >
                       {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                       Save
                     </button>
-                    <button type="button" onClick={() => setEditingId(null)} className="p-1.5 text-gray-400 hover:text-gray-600">
+                    <button type="button" onClick={() => setEditingId(null)} className="p-1.5 text-content-faint hover:text-content-muted">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 </form>
               ) : (
                 <div className="flex items-start gap-3">
-                  <FileSpreadsheet className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <FileSpreadsheet className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{t.name}</p>
+                    <p className="text-sm font-medium text-content">{t.name}</p>
                     {t.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">{t.description}</p>
+                      <p className="text-xs text-content-muted mt-0.5">{t.description}</p>
                     )}
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-content-faint mt-0.5">
                       {t.file_name} · {formatBytes(t.file_size)} · {formatDate(t.created_at)}
                     </p>
                   </div>
@@ -310,7 +313,7 @@ export default function ExcelTemplatesPage() {
                     <button
                       onClick={() => handleDownload(t)}
                       disabled={downloadingId === t.id}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 disabled:opacity-50"
+                      className="p-1.5 text-content-faint hover:text-primary-600 disabled:opacity-50"
                       title="Download"
                     >
                       {downloadingId === t.id
@@ -319,7 +322,7 @@ export default function ExcelTemplatesPage() {
                     </button>
                     <button
                       onClick={() => startEdit(t)}
-                      className="p-1.5 text-gray-400 hover:text-gray-600"
+                      className="p-1.5 text-content-faint hover:text-content-muted"
                       title="Edit"
                     >
                       <Pencil className="w-4 h-4" />
@@ -327,7 +330,7 @@ export default function ExcelTemplatesPage() {
                     <button
                       onClick={() => handleDelete(t.id)}
                       disabled={deletingId === t.id}
-                      className="p-1.5 text-gray-400 hover:text-red-600 disabled:opacity-50"
+                      className="p-1.5 text-content-faint hover:text-red-600 dark:text-red-400 disabled:opacity-50"
                       title="Delete"
                     >
                       {deletingId === t.id
