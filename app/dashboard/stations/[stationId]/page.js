@@ -23,7 +23,7 @@ import {
   Button, SectionHeader, RowGroup, Row,
 } from '@/components/ui'
 import {
-  ENTRY_LINKS, REPORT_SECTIONS, ALL_PAGE_KEYS, canAccessPage,
+  ENTRY_LINKS, REPORT_SECTIONS, REPORT_COLUMNS, ALL_PAGE_KEYS, canAccessPage,
   ENTRY_PERMISSION_OPTIONS as ENTRY_PAGE_OPTIONS,
   REPORT_PERMISSION_OPTIONS as REPORT_PAGE_OPTIONS,
 } from '@/lib/stationNav'
@@ -431,29 +431,36 @@ export default function StationPage() {
             lib/stationNav.js so the hub and the sidebar read one list.
 
             From lg the groups run in two columns, so a wide screen is not one narrow ribbon of
-            rows down the middle. CSS columns rather than a two-column grid on purpose: the
-            groups are different lengths, and a grid would align each row to its tallest cell
-            and leave a hole under the shorter one. Columns balance by height instead.
-            break-inside-avoid keeps a group from being split across the fold. */}
-        <div className="mt-6 lg:columns-2 lg:gap-4">
-        {reportSections.map((section) => (
-          <section key={section.title} className="mb-6 break-inside-avoid">
-            <SectionHeader>{section.title}</SectionHeader>
-            <RowGroup>
-              {section.items.map((link) => (
-                <Row
-                  key={link.href}
-                  href={link.href}
-                  label={link.label}
-                  desc={link.desc}
-                  icon={link.icon}
-                  allowed={canAccess(link.pageKey)}
-                  onBlocked={() => setAccessDeniedModal(true)}
-                />
+            rows down the middle. Which group sits in which column is declared in
+            lib/stationNav.js, not left to the layout: Sales and Stock read as a pair and share
+            a column. CSS columns balanced by height instead and split them wherever the rows
+            happened to fall, which is why this is an explicit grid.
+
+            items-start so a short column does not stretch to match a tall one. Below lg the
+            columns stack and the groups render in their declared order. */}
+        <div className="mt-6 lg:grid lg:grid-cols-2 lg:gap-x-4 lg:items-start">
+          {REPORT_COLUMNS.map((col) => (
+            <div key={col}>
+              {reportSections.filter((s) => s.column === col).map((section) => (
+                <section key={section.title} className="mt-6 lg:mt-0 lg:mb-6">
+                  <SectionHeader>{section.title}</SectionHeader>
+                  <RowGroup>
+                    {section.items.map((link) => (
+                      <Row
+                        key={link.href}
+                        href={link.href}
+                        label={link.label}
+                        desc={link.desc}
+                        icon={link.icon}
+                        allowed={canAccess(link.pageKey)}
+                        onBlocked={() => setAccessDeniedModal(true)}
+                      />
+                    ))}
+                  </RowGroup>
+                </section>
               ))}
-            </RowGroup>
-          </section>
-        ))}
+            </div>
+          ))}
         </div>
 
       {/* Staff (owner only) */}
