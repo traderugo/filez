@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { subMonths, startOfMonth, format } from 'date-fns'
 import { fmtDateShort } from '@/lib/formatDate'
+import { CARD } from '@/components/ui'
 
 export default function AdminAnalyticsPage() {
   const [stats, setStats] = useState(null)
@@ -69,7 +70,7 @@ export default function AdminAnalyticsPage() {
           { label: 'Pending', value: stats.pendingSubs, icon: TrendingUp, color: 'text-yellow-600 dark:text-yellow-400' },
           { label: 'Expired', value: stats.expiredSubs, icon: CreditCard, color: 'text-red-600 dark:text-red-400' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="border border-line p-4">
+          <div key={label} className={`p-4 ${CARD}`}>
             <div className="flex items-center gap-2 mb-1">
               <Icon className={`w-4 h-4 ${color}`} />
               <span className="text-xs text-content-muted">{label}</span>

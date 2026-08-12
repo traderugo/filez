@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { db } from '@/lib/db'
 import { fmtDate } from '@/lib/formatDate'
 import { useSubscription } from '@/lib/hooks/useSubscription'
+import { BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 export default function LubeListPage() {
   const searchParams = useSearchParams()
@@ -32,12 +33,12 @@ export default function LubeListPage() {
             <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
             <p className="text-xs text-amber-600 dark:text-amber-400">You can view existing data, but creating new entries requires an active subscription.</p>
           </div>
-          <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</Link>
+          <Link href="/dashboard/subscribe" className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium ${BTN_PRIMARY}`}>Subscribe</Link>
         </div>
       )}
       <div className="flex items-center justify-end mb-6">
         {(subscribed || subLoading) ? (
-          <Link href={`/dashboard/entries/lube?${qs}&type=${tab}`} className="flex items-center gap-1 text-sm bg-primary-500 text-white px-4 py-2 font-medium hover:bg-primary-600">
+          <Link href={`/dashboard/entries/lube?${qs}&type=${tab}`} className={`flex items-center gap-1 text-sm px-4 py-2 font-medium ${BTN_PRIMARY}`}>
             <Plus className="w-4 h-4" /> New Entry
           </Link>
         ) : (
@@ -123,7 +124,7 @@ function LubeSalesList({ orgId, qs, ready }) {
                 ))}
               </p>
             </div>
-            <Link href={`/dashboard/entries/lube?${qs}&type=sales&edit_date=${group.date}`} className="flex items-center gap-1 text-xs font-medium text-primary-600 border border-primary-500/40 px-3 py-1.5 rounded hover:bg-primary-50">
+            <Link href={`/dashboard/entries/lube?${qs}&type=sales&edit_date=${group.date}`} className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 ${BTN_FRAMED}`}>
               <Pencil className="w-3.5 h-3.5" /> Edit
             </Link>
           </div>
@@ -203,7 +204,7 @@ function LubeStockList({ orgId, qs, ready }) {
                 ))}
               </p>
             </div>
-            <Link href={`/dashboard/entries/lube?${qs}&type=stock&edit_date=${group.date}`} className="flex items-center gap-1 text-xs font-medium text-primary-600 border border-primary-500/40 px-3 py-1.5 rounded hover:bg-primary-50">
+            <Link href={`/dashboard/entries/lube?${qs}&type=stock&edit_date=${group.date}`} className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 ${BTN_FRAMED}`}>
               <Pencil className="w-3.5 h-3.5" /> Edit
             </Link>
           </div>

@@ -10,6 +10,7 @@ import { exportProductReceiptExcel } from '@/lib/exportProductReceiptExcel'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
+import { REPORT_HEAD, REPORT_LINE, OUTLINE_WITHIN, BTN_FRAMED, BTN_PRIMARY, REPORT_CARD } from '@/components/ui'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -213,8 +214,8 @@ function ProductReceivedReportContent() {
     return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
   }
 
-  const hdr = 'bg-primary-500 text-white'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-2 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
@@ -226,19 +227,19 @@ function ProductReceivedReportContent() {
       <div className="flex items-center justify-between py-3 shrink-0">
         <h1 className="text-lg font-bold text-content">Product Received</h1>
         <div className="flex items-center gap-2">
-          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={startDate} onChange={setStartDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
           <span className="text-sm text-content-faint">to</span>
-          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={endDate} onChange={setEndDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
           <button
             onClick={handleGenerate}
             disabled={!startDate || !endDate || startDate > endDate}
-            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
+            className={`px-4 py-2 text-sm font-medium disabled:opacity-50 ${BTN_PRIMARY}`}
           >
             Generate
           </button>
           <Link
             href={`/dashboard/reports/dip-calculator?org_id=${orgId}`}
-            className="flex items-center gap-1.5 px-4 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium ${BTN_FRAMED}`}
           >
             <Calculator className="w-4 h-4" />
             Dip Calculator
@@ -247,7 +248,7 @@ function ProductReceivedReportContent() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-line">
+      <div className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 ${REPORT_CARD}`}>
         {!generated ? (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
@@ -300,7 +301,7 @@ function ProductReceivedReportContent() {
                         <button
                           onClick={() => handleExport(row, i)}
                           disabled={exportingIdx !== null}
-                          className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-600 text-white text-xs font-medium hover:bg-green-700 disabled:opacity-50 rounded"
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium disabled:opacity-50 ${BTN_FRAMED}`}
                           title="Export Excel"
                         >
                           {exportingIdx === i ? <Loader2 className="w-3 h-3 animate-spin" /> : <Download className="w-3 h-3" />}
@@ -321,7 +322,7 @@ function ProductReceivedReportContent() {
               })}
             </tbody>
             <tfoot>
-              <tr className="font-bold bg-primary-50">
+              <tr className="font-bold bg-primary-50 dark:bg-primary-950/40">
                 <td className={cell} colSpan={3}>Total ({deliveries.rows.length} deliveries)</td>
                 <td className={cellR}>{fmt(deliveries.totalLoaded)}</td>
                 <td className={cellR}>{fmt(deliveries.totalSupplied)}</td>

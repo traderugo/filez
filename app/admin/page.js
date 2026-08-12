@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Loader2, Check, X, Eye, ChevronDown, ChevronUp } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { fmtDate, fmtDateShort } from '@/lib/formatDate'
+import { INPUT, BTN_DANGER } from '@/components/ui'
 
 export default function AdminSubscriptionsPage() {
   const [subs, setSubs] = useState([])
@@ -183,7 +184,7 @@ export default function AdminSubscriptionsPage() {
                         placeholder="Notes (optional)"
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className={INPUT}
                       />
                       <div className="flex gap-2">
                         <button
@@ -197,7 +198,7 @@ export default function AdminSubscriptionsPage() {
                         <button
                           onClick={() => handleAction(sub, 'reject')}
                           disabled={acting === sub.id}
-                          className="flex items-center gap-1 bg-red-600 text-white px-4 py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                          className={`flex items-center gap-1 px-4 py-2 text-sm font-medium disabled:opacity-50 ${BTN_DANGER}`}
                         >
                           <X className="w-4 h-4" /> Reject
                         </button>

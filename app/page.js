@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Fuel, ClipboardList, BarChart3, Users } from 'lucide-react'
 import Footer from '@/components/Footer'
+import { BTN_FRAMED } from '@/components/ui'
 
 export default function LandingPage() {
   const [loggedIn, setLoggedIn] = useState(false)
@@ -49,7 +50,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/auth/register"
-              className="border border-line text-content-strong px-6 py-2.5 font-medium hover:bg-subtle transition-colors"
+              className={`px-6 py-2.5 font-medium ${BTN_FRAMED}`}
             >
               Create Account
             </Link>

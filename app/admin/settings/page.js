@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus, FolderOpen } from 'lucide-react'
 import Link from 'next/link'
 import SearchableSelect from '@/components/SearchableSelect'
-import { OUTLINE } from '@/components/ui'
+import { OUTLINE, INPUT_BASE, INPUT_BARE, INPUT, BTN_FRAMED, CARD } from '@/components/ui'
 
 // The design system has no solid fills; weight comes from how hard the outline is drawn.
 const SOLID_ACTION = 'border-2 border-primary-600 dark:border-primary-400 bg-primary-500/20 text-primary-800 dark:text-primary-100 transition-all hover:bg-primary-500/30'
@@ -237,7 +237,7 @@ export default function AdminSettingsPage() {
         </h2>
 
         {groups.length > 0 && (
-          <div className="divide-y divide-line border border-line mb-4">
+          <div className={`divide-y divide-line mb-4 ${CARD}`}>
             {groups.map((g) => (
               <div key={g.id} className="flex items-center justify-between px-3 py-2.5">
                 <span className="text-sm text-content">{g.name}</span>
@@ -258,7 +258,7 @@ export default function AdminSettingsPage() {
             maxLength={100}
             value={newGroup}
             onChange={(e) => { setNewGroup(e.target.value); setGroupError('') }}
-            className="flex-1 px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={`flex-1 ${INPUT_BASE}`}
           />
           <button
             type="submit"
@@ -283,7 +283,7 @@ export default function AdminSettingsPage() {
 
       {/* Add station form */}
       {showAdd && (
-        <form onSubmit={addStation} className="border border-line p-4 mb-6 space-y-3">
+        <form onSubmit={addStation} className={`p-4 mb-6 space-y-3 ${CARD}`}>
           <input
             type="text"
             required
@@ -291,7 +291,7 @@ export default function AdminSettingsPage() {
             placeholder="Station name (e.g. MRS Lekki Phase 1)"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={INPUT}
             autoFocus
           />
           <div className="flex gap-2">
@@ -303,7 +303,7 @@ export default function AdminSettingsPage() {
               {adding && <Loader2 className="w-4 h-4 animate-spin" />}
               Create station
             </button>
-            <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className="px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">
+            <button type="button" onClick={() => { setShowAdd(false); setNewName('') }} className={`px-4 py-2 text-sm ${BTN_FRAMED}`}>
               Cancel
             </button>
           </div>
@@ -320,7 +320,7 @@ export default function AdminSettingsPage() {
       ) : (
         <div className="space-y-4">
           {stations.map((station) => (
-            <div key={station.id} className="border border-line p-4">
+            <div key={station.id} className={`p-4 ${CARD}`}>
               {/* Station name row */}
               <div className="flex items-center gap-3 mb-3">
                 <Fuel className="w-5 h-5 text-primary-600 flex-shrink-0" />
@@ -331,7 +331,7 @@ export default function AdminSettingsPage() {
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       maxLength={100}
-                      className="flex-1 px-3 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className={`flex-1 ${INPUT_BASE}`}
                       autoFocus
                     />
                     <button onClick={() => updateStation(station.id)} disabled={saving} className={`px-3 py-1.5 text-sm disabled:opacity-50 ${SOLID_ACTION}`}>
@@ -382,7 +382,7 @@ export default function AdminSettingsPage() {
               {groups.length > 0 && (
                 <div className="flex items-center gap-2 mb-3">
                   <label className="text-xs text-content-muted shrink-0">Group:</label>
-                  <div className="flex-1 border border-line bg-surface">
+                  <div className={`flex-1 ${CARD}`}>
                     <SearchableSelect
                       value={station.station_group || ''}
                       onChange={(val) => assignGroup(station.id, val)}
@@ -410,7 +410,7 @@ export default function AdminSettingsPage() {
                       maxLength={254}
                       value={inviteEmail[station.id] || ''}
                       onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
-                      className="w-full pl-8 pr-3 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className={`w-full pl-8 pr-3 py-1.5 ${INPUT_BARE}`}
                     />
                   </div>
                   <button

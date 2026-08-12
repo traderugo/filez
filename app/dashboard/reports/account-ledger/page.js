@@ -10,6 +10,7 @@ import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
+import { REPORT_HEAD, REPORT_LINE, REPORT_RULE, REPORT_TOTAL_FILL, OUTLINE_WITHIN, INPUT, BTN_PRIMARY, BTN_FRAMED, CARD_LINE, REPORT_CARD } from '@/components/ui'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -317,9 +318,9 @@ function AccountLedgerContent() {
     }).catch(() => {})
   }
 
-  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = `border ${REPORT_LINE} px-3 py-1.5 text-sm whitespace-nowrap`
   const cellR = cell + ' text-right'
-  const hdr = 'bg-primary-500 text-white font-bold text-sm'
+  const hdr = `${REPORT_HEAD} font-bold text-sm`
 
   if (!orgId) return <div className="p-6 text-content-muted">No station selected.</div>
 
@@ -341,7 +342,7 @@ function AccountLedgerContent() {
 
       {/* Account form (create or edit) */}
       {formMode && (
-        <div className="border border-line p-4 mb-4 bg-subtle">
+        <div className={`p-4 mb-4 bg-subtle ${CARD_LINE}`}>
           <h3 className="text-sm font-semibold mb-3">{formMode === 'edit' ? 'Edit Account' : 'Create Account'}</h3>
           <div className="flex flex-wrap gap-2 items-end">
             <div className="flex-1 min-w-[140px]">
@@ -352,7 +353,7 @@ function AccountLedgerContent() {
                 onChange={(e) => setFormName(e.target.value)}
                 placeholder="Account name"
                 maxLength={200}
-                className="w-full px-2.5 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={INPUT}
               />
             </div>
             <div className="w-32">
@@ -363,7 +364,7 @@ function AccountLedgerContent() {
                 onChange={(e) => setFormPhone(e.target.value)}
                 placeholder="Optional"
                 maxLength={20}
-                className="w-full px-2.5 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={INPUT}
               />
             </div>
             <div className="w-32">
@@ -375,20 +376,20 @@ function AccountLedgerContent() {
                 placeholder="0"
                 min="0"
                 step="0.01"
-                className="w-full px-2.5 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={INPUT}
               />
             </div>
             <button
               onClick={handleSaveForm}
               disabled={formSaving}
-              className="flex items-center gap-1 bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
+              className={`flex items-center gap-1 px-4 py-2 text-sm font-medium disabled:opacity-50 ${BTN_PRIMARY}`}
             >
               {formSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Save
             </button>
             <button
               onClick={closeForm}
-              className="px-4 py-2 border border-line text-sm text-content-muted hover:bg-subtle"
+              className={`px-4 py-2 text-sm ${BTN_FRAMED}`}
             >
               Cancel
             </button>
@@ -401,11 +402,11 @@ function AccountLedgerContent() {
       <div className="shrink-0 flex flex-wrap gap-3 items-end mb-4">
         <div>
           <label className="block text-xs font-medium text-content-muted mb-1">From</label>
-          <DateInput value={startDate} onChange={setStartDate} className="w-36 px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={startDate} onChange={setStartDate} className={`w-36 px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
         </div>
         <div>
           <label className="block text-xs font-medium text-content-muted mb-1">To</label>
-          <DateInput value={endDate} onChange={setEndDate} className="w-36 px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={endDate} onChange={setEndDate} className={`w-36 px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
         </div>
         <div className="min-w-[200px]">
           <label className="block text-xs font-medium text-content-muted mb-1">Account (select up to 10)</label>
@@ -420,7 +421,7 @@ function AccountLedgerContent() {
               {selectedLabels.map(s => (
                 <span
                   key={s.id}
-                  className="inline-flex items-center gap-1 bg-primary-100 text-primary-700 text-xs font-medium px-2 py-0.5 cursor-pointer hover:bg-primary-200"
+                  className="inline-flex items-center gap-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 text-xs font-medium px-2 py-0.5 cursor-pointer hover:bg-primary-200 dark:hover:bg-primary-900/50"
                   onClick={() => handleAccountChange(s.id)}
                 >
                   {s.name}
@@ -433,7 +434,7 @@ function AccountLedgerContent() {
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 border border-line">
+      <div className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-4 ${REPORT_CARD}`}>
         {creditCustomers.length === 0 && !formMode && (
           <p className="text-content-muted text-sm p-4">No credit customers configured.</p>
         )}
@@ -452,7 +453,7 @@ function AccountLedgerContent() {
         {selectedAccounts.length === 0 && pagedData.length > 0 && (
           <div className="p-2">
             {/* Grand totals summary */}
-            <table className="w-full border-collapse border border-line mb-4">
+            <table className={`w-full border-collapse border ${REPORT_LINE} mb-4`}>
               <thead>
                 <tr className={hdr}>
                   <th className={cell + ' text-left'}>All Accounts ({sortedAll.length})</th>
@@ -464,7 +465,7 @@ function AccountLedgerContent() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="bg-subtle font-bold">
+                <tr className={`${REPORT_TOTAL_FILL} font-bold`}>
                   <td className={cell}>Totals</td>
                   <td className={cellR}>{fmtBal(totals.openingBalance)}</td>
                   <td className={cellR}>{fmt(totals.totalDebit)}</td>
@@ -476,9 +477,9 @@ function AccountLedgerContent() {
             </table>
 
             {/* Account list */}
-            <table className="w-full border-collapse border border-line">
+            <table className={`w-full border-collapse border ${REPORT_LINE}`}>
               <thead>
-                <tr className="bg-subtle text-sm font-semibold">
+                <tr className={`${REPORT_HEAD} text-sm font-semibold`}>
                   <th className={cell + ' text-left'}>Account</th>
                   <th className={cell + ' text-right'}>Opening Bal</th>
                   <th className={cell + ' text-right'}>Sales</th>
@@ -492,7 +493,7 @@ function AccountLedgerContent() {
                     <tr
                       key={acct.id}
                       onClick={() => handleAccountChange(acct.id)}
-                      className="cursor-pointer hover:bg-primary-50"
+                      className="cursor-pointer hover:bg-primary-50 dark:hover:bg-primary-950/40"
                     >
                       <td className={cell + ' text-primary-600 font-medium'}>{acct.name}</td>
                       <td className={cellR}>{fmtBal(acct.openingBalance)}</td>
@@ -527,7 +528,7 @@ function AccountLedgerContent() {
                 <button
                   onClick={() => setPage(p => p - 1)}
                   disabled={page === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className={`flex items-center gap-1 px-3 py-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed ${BTN_PRIMARY}`}
                 >
                   <ChevronLeft className="w-4 h-4" /> Prev
                 </button>
@@ -537,7 +538,7 @@ function AccountLedgerContent() {
                 <button
                   onClick={() => setPage(p => p + 1)}
                   disabled={page >= totalPages - 1}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                  className={`flex items-center gap-1 px-3 py-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed ${BTN_PRIMARY}`}
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
@@ -558,14 +559,14 @@ function AccountLedgerContent() {
 }
 
 function JournalTable({ data, startDate, endDate }) {
-  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = `border ${REPORT_LINE} px-3 py-1.5 text-sm whitespace-nowrap`
   const cellR = cell + ' text-right'
-  const hdr = 'bg-primary-500 text-white font-bold text-sm'
+  const hdr = `${REPORT_HEAD} font-bold text-sm`
 
   return (
     <div>
       <h2 className="text-sm font-bold mb-2">{data.name}</h2>
-      <table className="w-full border-collapse border border-line">
+      <table className={`w-full border-collapse border ${REPORT_LINE}`}>
         <thead>
           <tr className={hdr}>
             <th className={cell + ' text-left w-24'}>Date</th>
@@ -577,7 +578,7 @@ function JournalTable({ data, startDate, endDate }) {
         </thead>
         <tbody>
           {/* Opening balance */}
-          <tr className="bg-subtle font-semibold">
+          <tr className={`${REPORT_TOTAL_FILL} font-semibold`}>
             <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
             <td className={cell}>Opening Balance</td>
             <td className={cellR}></td>
@@ -605,7 +606,7 @@ function JournalTable({ data, startDate, endDate }) {
           )}
 
           {/* Closing balance / totals */}
-          <tr className="bg-subtle font-bold border-t-2 border-line">
+          <tr className={`${REPORT_TOTAL_FILL} font-bold ${REPORT_RULE}`}>
             <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
             <td className={cell}>Closing Balance</td>
             <td className={cellR}>{data.totalDebit ? fmt(data.totalDebit) : ''}</td>
@@ -620,9 +621,9 @@ function JournalTable({ data, startDate, endDate }) {
 
 function MergedJournalTable({ data, startDate, endDate }) {
   const [page, setPage] = useState(0)
-  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = `border ${REPORT_LINE} px-3 py-1.5 text-sm whitespace-nowrap`
   const cellR = cell + ' text-right'
-  const hdr = 'bg-primary-500 text-white font-bold text-sm'
+  const hdr = `${REPORT_HEAD} font-bold text-sm`
 
   const totalPages = Math.ceil(data.rows.length / PAGE_SIZE)
   const pagedRows = data.rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
@@ -632,7 +633,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
       <h2 className="text-sm font-bold mb-2">
         {data.names.length <= 3 ? data.names.join(' & ') : `${data.names.slice(0, 3).join(', ')} + ${data.names.length - 3} more`}
       </h2>
-      <table className="w-full border-collapse border border-line">
+      <table className={`w-full border-collapse border ${REPORT_LINE}`}>
         <thead>
           <tr className={hdr}>
             <th className={cell + ' text-left w-24'}>Date</th>
@@ -645,7 +646,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
         </thead>
         <tbody>
           {page === 0 && (
-            <tr className="bg-subtle font-semibold">
+            <tr className={`${REPORT_TOTAL_FILL} font-semibold`}>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Opening Balance</td>
@@ -675,7 +676,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           )}
 
           {page === totalPages - 1 && (
-            <tr className="bg-subtle font-bold border-t-2 border-line">
+            <tr className={`${REPORT_TOTAL_FILL} font-bold ${REPORT_RULE}`}>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(endDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Closing Balance</td>
@@ -692,7 +693,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           <button
             onClick={() => setPage(p => p - 1)}
             disabled={page === 0}
-            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            className={`flex items-center gap-1 px-3 py-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed ${BTN_PRIMARY}`}
           >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
@@ -702,7 +703,7 @@ function MergedJournalTable({ data, startDate, endDate }) {
           <button
             onClick={() => setPage(p => p + 1)}
             disabled={page >= totalPages - 1}
-            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            className={`flex items-center gap-1 px-3 py-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed ${BTN_PRIMARY}`}
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>
@@ -714,21 +715,21 @@ function MergedJournalTable({ data, startDate, endDate }) {
 
 function StationValueSection({ data, startDate, endDate }) {
   const [page, setPage] = useState(0)
-  const cell = 'border border-line px-3 py-1.5 text-sm whitespace-nowrap'
+  const cell = `border ${REPORT_LINE} px-3 py-1.5 text-sm whitespace-nowrap`
   const cellR = cell + ' text-right'
-  const hdr = 'bg-green-700 text-white font-bold text-sm'
+  const hdr = `${REPORT_HEAD} font-bold text-sm`
 
   const totalPages = Math.ceil(data.rows.length / PAGE_SIZE)
   const pagedRows = data.rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
   return (
-    <div className="mt-8 p-2 border-t-2 border-green-600">
+    <div className={`mt-8 p-2 ${REPORT_RULE}`}>
       <h2 className="text-sm font-bold mb-1">Station Value</h2>
       <p className="text-xs text-content-muted mb-3">
         Tracking {data.accountCount} account{data.accountCount !== 1 ? 's' : ''}. Outstanding: {fmtBal(data.closingBalance)}
       </p>
 
-      <table className="w-full border-collapse border border-line">
+      <table className={`w-full border-collapse border ${REPORT_LINE}`}>
         <thead>
           <tr className={hdr}>
             <th className={cell + ' text-left w-24'}>Date</th>
@@ -741,7 +742,7 @@ function StationValueSection({ data, startDate, endDate }) {
         </thead>
         <tbody>
           {page === 0 && (
-            <tr className="bg-subtle font-semibold">
+            <tr className={`${REPORT_TOTAL_FILL} font-semibold`}>
               <td className={`${cellR} whitespace-nowrap`}>{fmtDate(startDate)}</td>
               <td className={cell}></td>
               <td className={cell}>Opening Balance</td>
@@ -788,7 +789,7 @@ function StationValueSection({ data, startDate, endDate }) {
           <button
             onClick={() => setPage(p => p - 1)}
             disabled={page === 0}
-            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            className={`flex items-center gap-1 px-3 py-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed ${BTN_PRIMARY}`}
           >
             <ChevronLeft className="w-4 h-4" /> Prev
           </button>
@@ -798,7 +799,7 @@ function StationValueSection({ data, startDate, endDate }) {
           <button
             onClick={() => setPage(p => p + 1)}
             disabled={page >= totalPages - 1}
-            className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white text-sm hover:bg-green-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            className={`flex items-center gap-1 px-3 py-1.5 text-sm disabled:opacity-30 disabled:cursor-not-allowed ${BTN_PRIMARY}`}
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>

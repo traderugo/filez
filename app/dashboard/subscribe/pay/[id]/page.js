@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { Building2, Upload, Loader2, CheckCircle, ArrowLeft, Trash2 } from 'lucide-react'
+import { INPUT, BTN_PRIMARY, CARD } from '@/components/ui'
 
 export default function PaymentPage() {
   const { id } = useParams()
@@ -156,7 +157,7 @@ export default function PaymentPage() {
         </p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="bg-primary-500 text-white px-6 py-2.5 text-sm font-medium hover:bg-primary-600"
+          className={`px-6 py-2.5 text-sm font-medium ${BTN_PRIMARY}`}
         >
           Back to dashboard
         </button>
@@ -179,7 +180,7 @@ export default function PaymentPage() {
       </p>
 
       {/* Bank details */}
-      <div className="border border-line p-4 mb-6">
+      <div className={`p-4 mb-6 ${CARD}`}>
         <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-4 flex items-center gap-2">
           <Building2 className="w-4 h-4" /> Bank Details
         </h2>
@@ -215,9 +216,9 @@ export default function PaymentPage() {
       </div>
 
       {/* Step 1: Verify Payment */}
-      <div className="border border-line p-4 mb-6">
+      <div className={`p-4 mb-6 ${CARD}`}>
         <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3 flex items-center gap-2">
-          <span className="w-5 h-5 bg-primary-100 text-primary-700 text-xs font-bold flex items-center justify-center">1</span>
+          <span className="w-5 h-5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 text-xs font-bold flex items-center justify-center">1</span>
           Verify Payment
         </h2>
         <p className="text-xs text-content-muted mb-3">
@@ -226,7 +227,7 @@ export default function PaymentPage() {
         <button
           onClick={handleVerifyPayment}
           disabled={verifying || verifyCooldown > 0}
-          className="w-full bg-primary-500 text-white py-2.5 font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center justify-center gap-2"
+          className={`w-full py-2.5 font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${BTN_PRIMARY}`}
         >
           {verifying ? (
             <><Loader2 className="w-4 h-4 animate-spin" />Checking...</>
@@ -240,7 +241,7 @@ export default function PaymentPage() {
           <div className={`mt-3 p-3 text-sm ${
             verifyResult.type === 'success' ? 'bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-300' :
             verifyResult.type === 'error' ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300' :
-            'bg-primary-50 text-primary-700'
+            'bg-primary-50 dark:bg-primary-950/40 text-primary-700'
           }`}>
             {verifyResult.message}
           </div>
@@ -248,11 +249,11 @@ export default function PaymentPage() {
       </div>
 
       {/* Step 2: Upload proof form (fallback) */}
-      <div className="border border-line p-4 mb-6">
+      <div className={`p-4 mb-6 ${CARD}`}>
         <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-4 flex items-center gap-2">
           <Upload className="w-4 h-4" /> Or Upload Proof
         </h2>
-        <div className="mb-4 p-3 bg-primary-50 border border-primary-500/40">
+        <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-950/40 border border-primary-500/40">
           <p className="text-sm text-primary-800">
             This is an alternative to automatic verification above. Upload a screenshot or receipt of your payment and an admin will manually review and approve it. This is not instant and may take some time.
           </p>
@@ -267,7 +268,7 @@ export default function PaymentPage() {
               onChange={(e) => setReference(e.target.value)}
               placeholder="e.g. TRF-123456"
               maxLength={100}
-              className="w-full px-4 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className={INPUT}
             />
           </div>
 
@@ -292,7 +293,7 @@ export default function PaymentPage() {
           <button
             type="submit"
             disabled={uploading || !file}
-            className="w-full bg-primary-500 text-white py-2.5 font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center justify-center gap-2"
+            className={`w-full py-2.5 font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${BTN_PRIMARY}`}
           >
             {uploading && <Loader2 className="w-4 h-4 animate-spin" />}
             Submit proof

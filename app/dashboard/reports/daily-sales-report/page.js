@@ -10,6 +10,7 @@ import { buildDailyReport } from '@/lib/buildDailyReport'
 import { exportDailyReportExcel } from '@/lib/exportDailyReportExcel'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
+import { REPORT_HEAD, REPORT_SUBHEAD, REPORT_LINE, OUTLINE_WITHIN, BTN_FRAMED, BTN_PRIMARY, CARD_HOVER, CARD, REPORT_CARD } from '@/components/ui'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -211,9 +212,9 @@ function DailySalesReportContent() {
 
   const qs = `org_id=${orgId}`
 
-  const hdr = 'bg-primary-500 text-white'
-  const subHdr = 'bg-primary-50 text-primary-600'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const subHdr = REPORT_SUBHEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-1 py-0.5`
   const cellR = `${cell} text-right`
 
@@ -236,18 +237,18 @@ function DailySalesReportContent() {
           <DateInput
             value={startDate}
             onChange={setStartDate}
-            className="px-2 py-2 border border-line text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`}
           />
           <span className="text-sm text-content-faint">to</span>
           <DateInput
             value={endDate}
             onChange={setEndDate}
-            className="px-2 py-2 border border-line text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`}
           />
           <button
             onClick={handleGenerate}
             disabled={generating || !startDate || !endDate || startDate > endDate}
-            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
+            className={`px-4 py-2 text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 ${BTN_PRIMARY}`}
           >
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
@@ -255,7 +256,7 @@ function DailySalesReportContent() {
           <button
             onClick={() => setShowEditModal(true)}
             disabled={!report || !currentDayReport}
-            className="px-3 py-2 border border-line text-content-strong text-sm font-medium hover:bg-subtle disabled:opacity-50 flex items-center gap-1.5"
+            className={`px-3 py-2 text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 ${BTN_FRAMED}`}
             title="Edit entries for this day"
           >
             <Pencil className="w-4 h-4" />
@@ -265,7 +266,7 @@ function DailySalesReportContent() {
           <button
             onClick={handleExport}
             disabled={exporting || !report}
-            className="px-3 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1.5"
+            className={`px-3 py-2 text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 ${BTN_FRAMED}`}
             title="Export to Excel"
           >
             {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
@@ -285,7 +286,7 @@ function DailySalesReportContent() {
           <Loader2 className="w-6 h-6 animate-spin text-content-faint" />
         </div>
       ) : currentDayReport && (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 border border-line">
+        <div className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 mb-3 ${REPORT_CARD}`}>
 
           <div className="grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6 pb-4 min-w-[700px]">
             {/* ===== LEFT: DAILY SALES OPERATION ===== */}
@@ -506,7 +507,7 @@ function DailySalesReportContent() {
                   <button
                     key={dr.date}
                     onClick={() => setViewDate(dr.date)}
-                    className={`px-2 py-1.5 text-sm font-medium border-r border-primary-500/40 ${isActive ? 'bg-primary-500 text-white' : dr.hasEntry ? 'bg-surface text-primary-600 hover:bg-primary-50' : 'bg-subtle text-content-faint hover:bg-subtle'}`}
+                    className={`px-2 py-1.5 text-sm font-medium border-r border-primary-500/40 ${isActive ? 'bg-primary-500 text-white' : dr.hasEntry ? 'bg-surface text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-950/40' : 'bg-subtle text-content-faint hover:bg-subtle'}`}
                   >
                     {d.getDate()}
                   </button>
@@ -531,7 +532,7 @@ function DailySalesReportContent() {
           onClick={() => setShowEditModal(false)}
         >
           <div
-            className="bg-surface w-full max-w-sm shadow-xl"
+            className="bg-surface w-full max-w-sm shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-line">
@@ -549,19 +550,19 @@ function DailySalesReportContent() {
             <div className="p-3 flex flex-col gap-2">
               <Link
                 href={`/dashboard/entries/daily-sales?${qs}&edit_date=${viewDate}`}
-                className="flex items-center gap-2 px-3 py-3 border border-line hover:bg-primary-50 hover:border-primary-500/40 text-sm font-medium text-content"
+                className={`flex items-center gap-2 px-3 py-3 text-sm font-medium text-content ${CARD} ${CARD_HOVER}`}
               >
                 <Pencil className="w-4 h-4 text-primary-600" /> Daily Sales
               </Link>
               <Link
                 href={`/dashboard/entries/lodgements?${qs}&edit_date=${viewDate}`}
-                className="flex items-center gap-2 px-3 py-3 border border-line hover:bg-primary-50 hover:border-primary-500/40 text-sm font-medium text-content"
+                className={`flex items-center gap-2 px-3 py-3 text-sm font-medium text-content ${CARD} ${CARD_HOVER}`}
               >
                 <Pencil className="w-4 h-4 text-primary-600" /> Lodgements
               </Link>
               <Link
                 href={`/dashboard/entries/product-receipt?${qs}&edit_date=${viewDate}`}
-                className="flex items-center gap-2 px-3 py-3 border border-line hover:bg-primary-50 hover:border-primary-500/40 text-sm font-medium text-content"
+                className={`flex items-center gap-2 px-3 py-3 text-sm font-medium text-content ${CARD} ${CARD_HOVER}`}
               >
                 <Pencil className="w-4 h-4 text-primary-600" /> Product Receipt
               </Link>
@@ -610,7 +611,7 @@ function FuelGroup({ rows, totals, cell, cellR }) {
         </tr>
       ))}
       {/* Subtotal row */}
-      <tr className="bg-primary-50 font-bold">
+      <tr className="bg-primary-50 dark:bg-primary-950/40 font-bold">
         <td className={cell}></td>
         <td className={cellR}></td>
         <td className={cellR}></td>

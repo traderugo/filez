@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Loader2, Search, ShieldCheck, ShieldX } from 'lucide-react'
 import { fmtDate, fmtDateShort } from '@/lib/formatDate'
+import { INPUT_BASE, INPUT_BARE } from '@/components/ui'
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([])
@@ -161,13 +162,13 @@ export default function AdminUsersPage() {
             placeholder="Search users..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={`w-full pl-10 pr-4 py-2.5 ${INPUT_BARE}`}
           />
         </div>
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="px-3 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className={INPUT_BASE}
         >
           <option value="all">All</option>
           <option value="verified">Verified</option>

@@ -9,6 +9,7 @@ import { buildSalesOverviewReport } from '@/lib/buildSalesOverviewReport'
 import { fmtDate } from '@/lib/formatDate'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
+import { REPORT_HEAD, REPORT_SUBHEAD, REPORT_LINE, OUTLINE_WITHIN, BTN_PRIMARY, REPORT_CARD } from '@/components/ui'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -133,13 +134,13 @@ function SalesOverviewContent() {
       <div className="flex flex-col h-[calc(100dvh-3.5rem)] max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-end py-3 shrink-0">
           <div className="flex items-center gap-2">
-            <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+            <DateInput value={startDate} onChange={setStartDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
             <span className="text-sm text-content-faint">to</span>
-            <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
+            <DateInput value={endDate} onChange={setEndDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
             <button
               onClick={handleGenerate}
               disabled={generating || !startDate || !endDate || startDate > endDate || dateRangeDays > 32}
-              className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
+              className={`px-4 py-2 text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 ${BTN_PRIMARY}`}
             >
               {generating && <Loader2 className="w-4 h-4 animate-spin" />}
               {generating ? 'Generating...' : 'Generate'}
@@ -151,7 +152,7 @@ function SalesOverviewContent() {
         )}
 
         {report ? (
-          <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-line">
+          <div className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 ${REPORT_CARD}`}>
             <div className="px-4 sm:px-8 py-4">
               <SalesTable report={report} startDate={reportStart} endDate={reportEnd} />
             </div>
@@ -173,9 +174,9 @@ function SalesOverviewContent() {
 function SalesTable({ report, startDate, endDate }) {
   const { fuelTypes, rows, totals } = report
 
-  const hdr = 'bg-primary-500 text-white'
-  const subHdr = 'bg-primary-50 text-primary-600'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const subHdr = REPORT_SUBHEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 

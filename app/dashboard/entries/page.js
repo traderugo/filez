@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users } from 'lucide-react'
+import { CARD_HOVER, CARD } from '@/components/ui'
 
 const entries = [
   { href: '/dashboard/entries/daily-sales', label: 'Daily Sales', desc: 'Nozzle readings, stock, and pricing', icon: FileSpreadsheet },
@@ -21,7 +22,7 @@ export default function EntriesIndexPage() {
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-3 border border-line p-4 hover:border-primary-500/40 hover:bg-primary-50/50 transition-colors"
+            className={`flex items-center gap-3 p-4 ${CARD} ${CARD_HOVER}`}
           >
             <Icon className="w-5 h-5 text-primary-600 flex-shrink-0" />
             <div>

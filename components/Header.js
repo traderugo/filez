@@ -100,7 +100,7 @@ export default function Header({ onMenu }) {
   }
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface">
+    <header className="sticky top-0 z-30 border-b border-primary-500/40 dark:border-primary-400/40 bg-surface">
       <div className="px-4 sm:px-6 h-14 flex items-center justify-between">
 
         <div className="flex items-center gap-2">
@@ -115,7 +115,7 @@ export default function Header({ onMenu }) {
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
-          <span className="text-sm font-semibold text-content">{title || 'Dashboard'}</span>
+          <span className="text-sm font-bold text-content">{title || 'Dashboard'}</span>
         </div>
 
         <div className="flex items-center gap-2">

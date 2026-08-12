@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Mail, Loader2, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { AUTH_LINK } from '../authStyles'
+import { BTN_FRAMED } from '@/components/ui'
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams()
@@ -74,7 +75,7 @@ function VerifyEmailContent() {
       <button
         onClick={handleResend}
         disabled={resending || !email}
-        className="w-full border border-line text-content-strong py-2.5 text-sm font-medium hover:bg-subtle disabled:opacity-50 flex items-center justify-center gap-2 mb-4"
+        className={`w-full py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 mb-4 ${BTN_FRAMED}`}
       >
         {resending && <Loader2 className="w-4 h-4 animate-spin" />}
         Resend verification email

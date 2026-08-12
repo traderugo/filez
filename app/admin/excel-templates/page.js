@@ -14,6 +14,7 @@ function formatBytes(bytes) {
 }
 
 import { fmtDate as formatDate } from '@/lib/formatDate'
+import { INPUT, CARD_LINE } from '@/components/ui'
 
 // The design system has no solid fills; weight comes from how hard the outline is drawn.
 const SOLID_ACTION = 'border-2 border-primary-600 dark:border-primary-400 bg-primary-500/20 text-primary-800 dark:text-primary-100 transition-all hover:bg-primary-500/30'
@@ -193,7 +194,7 @@ export default function ExcelTemplatesPage() {
 
       {/* Upload form */}
       {showUpload && (
-        <div className="border border-line rounded-lg p-4 mb-6 bg-subtle">
+        <div className={`p-4 mb-6 bg-subtle ${CARD_LINE}`}>
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-medium text-content">Upload new template</p>
             <button onClick={resetUpload} className="text-content-faint hover:text-content-muted">
@@ -208,7 +209,7 @@ export default function ExcelTemplatesPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Weekly Station Report"
-                className="w-full px-3 py-2 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={INPUT}
                 autoFocus
               />
             </div>
@@ -219,7 +220,7 @@ export default function ExcelTemplatesPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional description"
-                className="w-full px-3 py-2 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className={INPUT}
               />
             </div>
             <div>
@@ -273,7 +274,7 @@ export default function ExcelTemplatesPage() {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-3 py-1.5 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className={INPUT}
                     autoFocus
                   />
                   <input
@@ -281,7 +282,7 @@ export default function ExcelTemplatesPage() {
                     value={editDesc}
                     onChange={(e) => setEditDesc(e.target.value)}
                     placeholder="Description (optional)"
-                    className="w-full px-3 py-1.5 border border-line text-sm rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className={INPUT}
                   />
                   <div className="flex gap-2">
                     <button

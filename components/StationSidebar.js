@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { buildStationNav } from '@/lib/stationNav'
 import useStationUnread from '@/lib/useStationUnread'
 import ThemeToggle from '@/components/ThemeToggle'
+import { BTN_PRIMARY } from '@/components/ui'
 
 /**
  * Section switcher for the pages inside a station, so moving from Daily Sales to Lodgements
@@ -124,7 +125,7 @@ export default function StationSidebar({ open, onClose }) {
           }`}
         >
           {current && !iconOnly && (
-            <span aria-hidden className="absolute left-0 top-0 bottom-0 w-1 bg-primary-600 dark:bg-primary-400" />
+            <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 dark:bg-primary-400 ${BTN_PRIMARY}`} />
           )}
           <span className="relative shrink-0">
             <Icon className="w-4 h-4 shrink-0" fill="currentColor" />

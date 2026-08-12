@@ -7,6 +7,7 @@ import { Plus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { fmtDate } from '@/lib/formatDate'
+import { BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 export default function DailySalesListPage() {
   const searchParams = useSearchParams()
@@ -55,7 +56,7 @@ export default function DailySalesListPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="flex items-center justify-end mb-6">
-        <Link href={`/dashboard/entries/daily-sales?${qs}`} className="flex items-center gap-1 text-sm bg-primary-500 text-white px-4 py-2 font-medium hover:bg-primary-600">
+        <Link href={`/dashboard/entries/daily-sales?${qs}`} className={`flex items-center gap-1 text-sm px-4 py-2 font-medium ${BTN_PRIMARY}`}>
           <Plus className="w-4 h-4" /> New Entry
         </Link>
       </div>
@@ -83,7 +84,7 @@ export default function DailySalesListPage() {
                       {group.entries.some(e => e.closeOfBusiness || e.close_of_business) && <span className="ml-1 text-green-600 dark:text-green-400 font-medium">(COB)</span>}
                     </p>
                   </div>
-                  <Link href={`/dashboard/entries/daily-sales?${qs}&edit_date=${group.date}`} className="flex items-center gap-1 text-xs font-medium text-primary-600 border border-primary-500/40 px-3 py-1.5 rounded hover:bg-primary-50">
+                  <Link href={`/dashboard/entries/daily-sales?${qs}&edit_date=${group.date}`} className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 ${BTN_FRAMED}`}>
                     <Pencil className="w-3.5 h-3.5" /> Edit
                   </Link>
                 </div>

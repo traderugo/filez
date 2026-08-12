@@ -13,6 +13,7 @@ import { useSubscription } from '@/lib/hooks/useSubscription'
 import { fmtDate } from '@/lib/formatDate'
 import { isDefaultAccount } from '@/lib/defaultAccounts'
 import { orderedCreatedAt } from '@/lib/dailySalesOrder'
+import { ENTRY_INPUT, ENTRY_DATE, ENTRY_FILL, ENTRY_LINE, ENTRY_DIVIDE, BTN_DANGER, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 function blankEntry(nozzles, tanks) {
   return {
@@ -432,7 +433,7 @@ export default function DailySalesFormPage() {
         <AlertTriangle className="w-8 h-8 text-content-faint mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-content mb-1">Station Not Configured</h2>
         <p className="text-sm text-content-muted mb-4">Set up your station in Settings before creating entries.</p>
-        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600">Go to Settings</Link>
+        <Link href={`/dashboard/stations/${orgId}/settings`} className={`inline-block px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}>Go to Settings</Link>
       </div>
     </div>
   )
@@ -448,11 +449,11 @@ export default function DailySalesFormPage() {
       <div className="flex items-center justify-end mb-6 gap-2">
           {isEditing && editDate && (
             <>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className={`flex items-center justify-center text-sm px-2 py-2 disabled:opacity-30 disabled:cursor-not-allowed ${BTN_FRAMED}`}><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/daily-sales?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className={`flex items-center justify-center text-sm px-2 py-2 disabled:opacity-30 disabled:cursor-not-allowed ${BTN_FRAMED}`}><ChevronRight className="w-4 h-4" /></button>
             </>
           )}
-          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="flex items-center gap-1 text-sm text-content-muted border border-line px-3 py-2 font-medium hover:bg-subtle">
+          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className={`flex items-center gap-1 text-sm px-3 py-2 font-medium ${BTN_FRAMED}`}>
             <List className="w-4 h-4" /> View Entries
           </Link>
       </div>
@@ -469,9 +470,9 @@ export default function DailySalesFormPage() {
         }
       }}>
         {/* Shared date */}
-        <div className="border border-line mb-4">
+        <div className={`border-card ${ENTRY_LINE} mb-4`}>
           <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Date</label>
-          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
+          <DateInput value={formDate} onChange={handleDateChange} className={ENTRY_DATE} />
         </div>
 
         {/* Entry tabs */}
@@ -493,7 +494,7 @@ export default function DailySalesFormPage() {
 
         {/* Active entry form */}
         {current && (
-          <div className="border border-line border-t-0 divide-y divide-line">
+          <div className={`border-card ${ENTRY_LINE} border-t-0 divide-y-card ${ENTRY_DIVIDE}`}>
             {entries.length > 1 && (
               <div className="flex justify-end px-3 py-1.5 bg-subtle">
                 <button type="button" onClick={() => removeEntry(activeTab)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-300">
@@ -505,18 +506,18 @@ export default function DailySalesFormPage() {
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Fuel Prices (₦/litre)</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">PMS</label>
-                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.PMS} onChange={(e) => updatePrice(activeTab, 'PMS', e.target.value)} step="0.01" min="0" placeholder="0.00" className={ENTRY_INPUT} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">AGO</label>
-                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.AGO} onChange={(e) => updatePrice(activeTab, 'AGO', e.target.value)} step="0.01" min="0" placeholder="0.00" className={ENTRY_INPUT} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">DPK</label>
-                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" inputMode="decimal" data-skip-enter value={current.prices.DPK} onChange={(e) => updatePrice(activeTab, 'DPK', e.target.value)} step="0.01" min="0" placeholder="0.00" className={ENTRY_INPUT} />
               </div>
             </div>
 
@@ -537,7 +538,7 @@ export default function DailySalesFormPage() {
                     : null
                   return (
                     <div key={r.pump_id}>
-                      <div className="grid grid-cols-[2fr_1fr_1fr] divide-x divide-line">
+                      <div className={`grid grid-cols-[2fr_1fr_1fr] divide-x-card ${ENTRY_DIVIDE}`}>
                         <div>
                           <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">{r.label}</label>
                           <input
@@ -547,7 +548,7 @@ export default function DailySalesFormPage() {
                             step="0.01"
                             min="0"
                             placeholder={prevClosing[r.pump_id] != null ? String(prevClosing[r.pump_id]) : ''}
-                            className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50"
+                            className={ENTRY_INPUT}
                           />
                         </div>
                         <div>
@@ -555,7 +556,7 @@ export default function DailySalesFormPage() {
                           {/* px on the wrapper leaves a non-tappable gutter so leaving this
                               field does not land focus on the pour-back input beside it. */}
                           <div className="flex items-center px-1.5">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'consumption')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.consumption} onChange={(e) => updateNozzleReading(activeTab, idx, 'consumption', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'consumption')} step="0.01" min="0" className={`w-full px-2 py-2.5 text-base ${ENTRY_FILL} text-content placeholder:text-content-faint focus:outline-none`} />
                             {consHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'consumption' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${consCustName ? 'text-primary-600' : 'text-content-faint hover:text-content-muted'}`} title={consCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
@@ -566,7 +567,7 @@ export default function DailySalesFormPage() {
                         <div>
                           <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">P.B.</label>
                           <div className="flex items-center px-1.5">
-                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'pour_back')} step="0.01" min="0" className="w-full px-2 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                            <input type="text" inputMode="decimal" data-skip-enter value={r.pour_back} onChange={(e) => updateNozzleReading(activeTab, idx, 'pour_back', e.target.value)} onBlur={() => maybePromptAccount(activeTab, idx, 'pour_back')} step="0.01" min="0" className={`w-full px-2 py-2.5 text-base ${ENTRY_FILL} text-content placeholder:text-content-faint focus:outline-none`} />
                             {pbHasValue && (
                               <button type="button" onClick={() => setConsModal({ entryIdx: activeTab, nozzleIdx: idx, type: 'pour_back' })} className={`flex-shrink-0 mr-1.5 p-1 rounded ${pbCustName ? 'text-primary-600' : 'text-content-faint hover:text-content-muted'}`} title={pbCustName || 'Attach account'}>
                                 <User className="w-4 h-4" />
@@ -600,13 +601,13 @@ export default function DailySalesFormPage() {
                   <Toggle checked={current.closeOfBusiness} onChange={(v) => updateEntry(activeTab, 'closeOfBusiness', v)} label="Final entry" />
                 </div>
                 {current.closeOfBusiness && current.tankReadings.map((r, idx) => (
-                  <div key={r.tank_id} className="grid grid-cols-2 divide-x divide-line">
+                  <div key={r.tank_id} className={`grid grid-cols-2 divide-x-card ${ENTRY_DIVIDE}`}>
                     <div className="flex items-center px-3 py-2.5 bg-subtle/50">
                       <span className="text-xs text-content-muted">{r.label}</span>
                     </div>
                     <div>
                       <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Litres</label>
-                      <input type="text" inputMode="decimal" enterKeyHint="next" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" placeholder={prevTankClosing[r.tank_id] != null ? String(prevTankClosing[r.tank_id]) : ''} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                      <input type="text" inputMode="decimal" enterKeyHint="next" value={r.closing_stock} onChange={(e) => updateTankReading(activeTab, idx, e.target.value)} step="0.01" min="0" placeholder={prevTankClosing[r.tank_id] != null ? String(prevTankClosing[r.tank_id]) : ''} className={ENTRY_INPUT} />
                     </div>
                   </div>
                 ))}
@@ -621,7 +622,7 @@ export default function DailySalesFormPage() {
 
             <div>
               <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Notes</label>
-              <textarea data-skip-enter value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50 resize-none" />
+              <textarea data-skip-enter value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className={`${ENTRY_INPUT} resize-none`} />
             </div>
           </div>
         )}
@@ -635,12 +636,12 @@ export default function DailySalesFormPage() {
               <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
             </div>
-            <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</Link>
+            <Link href="/dashboard/subscribe" className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium ${BTN_PRIMARY}`}>Subscribe</Link>
           </div>
         )}
 
         <div className="flex gap-2 mt-3">
-          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className="ml-auto px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">Cancel</Link>
+          <Link href={`/dashboard/entries/daily-sales/list?${qs}`} className={`ml-auto px-4 py-2 text-sm ${BTN_FRAMED}`}>Cancel</Link>
           <button type="submit" disabled={saving || saved || (!subLoading && !isSubscribed)} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600'}`}>
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {saved && <Check className="w-4 h-4" />}
@@ -678,7 +679,7 @@ export default function DailySalesFormPage() {
 
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 px-4" onClick={() => (deletingDay ? null : setConfirmDelete(false))}>
-          <div className="bg-surface w-full sm:max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-surface w-full sm:max-w-sm shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-line">
               <h3 className="text-sm font-semibold text-content">Delete {fmtDate(loadedDate)}?</h3>
             </div>
@@ -688,10 +689,10 @@ export default function DailySalesFormPage() {
               </p>
               {deleteError && <p className="text-sm text-red-600 dark:text-red-400 mb-3">{deleteError}</p>}
               <div className="flex gap-2">
-                <button type="button" onClick={() => setConfirmDelete(false)} disabled={deletingDay} className="flex-1 border border-line px-3 py-2 text-sm font-medium text-content-strong hover:bg-subtle disabled:opacity-50">
+                <button type="button" onClick={() => setConfirmDelete(false)} disabled={deletingDay} className={`flex-1 px-3 py-2 text-sm font-medium disabled:opacity-50 ${BTN_FRAMED}`}>
                   Cancel
                 </button>
-                <button type="button" onClick={deleteWholeDay} disabled={deletingDay} className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white px-3 py-2 text-sm font-medium hover:bg-red-700 disabled:opacity-50">
+                <button type="button" onClick={deleteWholeDay} disabled={deletingDay} className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium disabled:opacity-50 ${BTN_DANGER}`}>
                   {deletingDay && <Loader2 className="w-4 h-4 animate-spin" />}
                   {deletingDay ? 'Deleting…' : 'Delete day'}
                 </button>
@@ -718,7 +719,7 @@ export default function DailySalesFormPage() {
         }
         return (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setConsModal(null)}>
-            <div className="bg-surface w-full sm:max-w-md max-h-[55vh] flex flex-col shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-surface w-full sm:max-w-md max-h-[55vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-line flex-shrink-0">
                 <div>
                   <h3 className="text-sm font-semibold text-content">{heading}</h3>
@@ -741,7 +742,7 @@ export default function DailySalesFormPage() {
                       key={c.id}
                       type="button"
                       onClick={() => pick(c.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm ${selected ? 'bg-primary-50 text-primary-800 font-medium' : 'text-content hover:bg-subtle'}`}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm ${selected ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-800 font-medium' : 'text-content hover:bg-subtle'}`}
                     >
                       <span className="flex-1">{c.name || 'Unnamed'}</span>
                       {selected && <Check className="w-4 h-4 flex-shrink-0" />}

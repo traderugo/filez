@@ -7,6 +7,7 @@ import { Plus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { db } from '@/lib/db'
 import { fmtDate } from '@/lib/formatDate'
+import { BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 export default function LodgementsListPage() {
   const searchParams = useSearchParams()
@@ -59,7 +60,7 @@ export default function LodgementsListPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
       <div className="flex items-center justify-end mb-6">
-        <Link href={`/dashboard/entries/lodgements?${qs}`} className="flex items-center gap-1 text-sm bg-primary-500 text-white px-4 py-2 font-medium hover:bg-primary-600">
+        <Link href={`/dashboard/entries/lodgements?${qs}`} className={`flex items-center gap-1 text-sm px-4 py-2 font-medium ${BTN_PRIMARY}`}>
           <Plus className="w-4 h-4" /> New Entry
         </Link>
       </div>
@@ -93,7 +94,7 @@ export default function LodgementsListPage() {
                     })()}
                   </p>
                 </div>
-                <Link href={`/dashboard/entries/lodgements?${qs}&edit_date=${group.date}`} className="flex items-center gap-1 text-xs font-medium text-primary-600 border border-primary-500/40 px-3 py-1.5 rounded hover:bg-primary-50">
+                <Link href={`/dashboard/entries/lodgements?${qs}&edit_date=${group.date}`} className={`flex items-center gap-1 text-xs font-medium px-3 py-1.5 ${BTN_FRAMED}`}>
                   <Pencil className="w-3.5 h-3.5" /> Edit
                 </Link>
               </div>

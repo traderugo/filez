@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, ArrowUpFromLine, ArrowDownToLine, Bell, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
+  FileText, Bell, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -18,17 +18,17 @@ import { db } from '@/lib/db'
 import { processQueue, clearQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
 import { supabase } from '@/lib/supabaseClient'
-import { OUTLINE } from '@/components/ui'
+import StationWallet from '@/components/StationWallet'
+import ThemeToggle from '@/components/ThemeToggle'
+import {
+  OUTLINE, INPUT, BTN_DANGER, BTN_PRIMARY, BTN_FRAMED, CARD_HOVER, CARD,
+  Button, SectionHeader, RowGroup, Row, Tile, HeroTile,
+} from '@/components/ui'
 import {
   ENTRY_LINKS, REPORT_LINKS, ALL_PAGE_KEYS, canAccessPage,
   ENTRY_PERMISSION_OPTIONS as ENTRY_PAGE_OPTIONS,
   REPORT_PERMISSION_OPTIONS as REPORT_PAGE_OPTIONS,
 } from '@/lib/stationNav'
-
-// Literal white, because this pip sits ON a filled coloured button, where a surface token
-// would resolve to the page background and vanish. Same reason IconChip has an "onColor"
-// variant. rounded-full is intended — the square-corner rule exempts pills.
-const COUNT_PIP = 'bg-white/25 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center' // design-exception
 
 export default function StationPage() {
   const router = useRouter()
@@ -65,9 +65,6 @@ export default function StationPage() {
   const [saving, setSaving] = useState(false)
   const [leaving, setLeaving] = useState(false)
 
-  // Consolidation countdown
-  const [consolidationCountdown, setConsolidationCountdown] = useState('')
-
   // Sync state
   const [syncing, setSyncing] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
@@ -81,31 +78,6 @@ export default function StationPage() {
     [stationId],
     0
   )
-  const pendingPullCount = 0
-
-  useEffect(() => {
-    function getNextConsolidation() {
-      const now = new Date()
-      const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 2, 0, 0, 0))
-      let daysToAdd = (7 - now.getUTCDay()) % 7
-      if (daysToAdd === 0 && now >= next) daysToAdd = 7
-      next.setUTCDate(next.getUTCDate() + daysToAdd)
-      return next
-    }
-    function format(ms) {
-      const s = Math.floor(ms / 1000)
-      const d = Math.floor(s / 86400)
-      const h = Math.floor((s % 86400) / 3600)
-      const m = Math.floor((s % 3600) / 60)
-      const sec = s % 60
-      if (d > 0) return `${d}d ${h}h ${String(m).padStart(2, '0')}m`
-      return `${h}h ${String(m).padStart(2, '0')}m ${String(sec).padStart(2, '0')}s`
-    }
-    const tick = () => setConsolidationCountdown(format(getNextConsolidation() - new Date()))
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
 
   const handleSync = async () => {
     if (syncing) return
@@ -331,20 +303,38 @@ export default function StationPage() {
 
   const entryLinks = ENTRY_LINKS(stationId)
   const reportLinks = REPORT_LINKS(stationId)
+  // Promote the first two daily entry screens into hero tiles, as store-portal does with
+  // New Sale and Orders.
+  const [heroA, heroB, ...restEntries] = entryLinks
+  const entryHeroes = [heroA, heroB].filter(Boolean)
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-8 py-8">
+    <div className="min-h-screen bg-canvas">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-8">
 
-      {/* Station header */}
-      <div className="flex items-start justify-between gap-3 mb-6">
-        <div>
-          <div>
-            <h1 className="text-xl font-bold text-content">{station.name}</h1>
-            {station.location && <p className="text-sm text-content-muted">{station.location}</p>}
-            {station.station_group && <p className="text-xs text-content-faint">{station.station_group}</p>}
-          </div>
+        {!isOwner && (
+          <p className="text-xs text-content-faint mb-2">You&apos;re a staff member of this station.</p>
+        )}
+
+        {/* The one accent surface, in the slot store-portal's BusinessWallet occupies. It also
+            absorbs the station identity and the sync controls, which used to sit above it as a
+            bare heading and a floating button row. */}
+        <StationWallet
+          station={station}
+          pendingCount={pendingCount}
+          syncing={syncing}
+          refreshing={refreshing}
+          onPush={handleSync}
+          onPull={handleRefresh}
+          onClear={() => setClearConfirm(true)}
+        />
+
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <Button href="/dashboard" icon={Fuel} iconClass="w-5 h-5">All Stations</Button>
+          <Button href={`/dashboard/stations/${stationId}/notifications`} icon={Bell} iconClass="w-5 h-5">
+            Notifications
+          </Button>
         </div>
-      </div>
 
       {/* Expired subscription notice (non-dismissable) */}
       {isOwner && subscription?.status === 'expired' && subscription?.end_date && (() => {
@@ -366,156 +356,96 @@ export default function StationPage() {
                 </>
               )}
             </div>
-            <Link href={`/dashboard/subscribe?org_id=${stationId}`} className="flex-shrink-0 bg-red-600 text-white px-3 py-1.5 text-xs font-medium hover:bg-red-700">Subscribe</Link>
+            <Link href={`/dashboard/subscribe?org_id=${stationId}`} className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium ${BTN_DANGER}`}>Subscribe</Link>
           </div>
         )
       })()}
 
-      {/* Sync controls */}
-      <div className="mb-8 flex items-center gap-3 flex-wrap">
-        <button
-          onClick={handleSync}
-          disabled={syncing || pendingCount === 0}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
-            pendingCount > 0
-              ? 'bg-green-600 text-white hover:bg-green-700'
-              : 'bg-surface text-content-muted border border-line hover:bg-subtle'
-          }`}
-        >
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
-          Push
-          {pendingCount > 0 && (
-            <span className={COUNT_PIP}>
-              {pendingCount > 9 ? '9+' : pendingCount}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium shadow-sm transition-all disabled:opacity-40 ${
-            pendingPullCount > 0
-              ? 'bg-green-600 text-white hover:bg-green-700'
-              : 'bg-surface text-content-muted border border-line hover:bg-subtle'
-          }`}
-        >
-          {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
-          Pull
-          {pendingPullCount > 0 && (
-            <span className={COUNT_PIP}>
-              {pendingPullCount > 9 ? '9+' : pendingPullCount}
-            </span>
-          )}
-        </button>
-        <span className="text-xs text-content-faint">
-          {pendingCount === 0 ? 'All synced' : `${pendingCount} pending`}
-        </span>
-        {pendingCount > 0 && (
-          <button
-            onClick={() => setClearConfirm(true)}
-            disabled={clearing}
-            className="text-xs text-red-500 hover:text-red-700 dark:text-red-300 font-medium"
-          >
-            Clear
-          </button>
-        )}
-        {consolidationCountdown && (
-          <span className="ml-auto flex items-center gap-1.5 text-xs text-content-faint">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="font-mono text-content-muted">{consolidationCountdown}</span>
-          </span>
-        )}
-      </div>
+        {/* Expired subscription notice (non-dismissable) */}
+        {isOwner && subscription?.status === 'expired' && subscription?.end_date && (() => {
+          const daysSinceExpiry = differenceInDays(new Date(), new Date(subscription.end_date))
+          const graceRemaining = 7 - daysSinceExpiry
+          return (
+            <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 px-4 py-3 mb-4 flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                {graceRemaining > 0 ? (
+                  <>
+                    <p className="text-sm text-red-800 dark:text-red-200 font-medium">Your subscription has expired</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{graceRemaining} day{graceRemaining !== 1 ? 's' : ''} of grace period remaining. Subscribe now to continue adding entries.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-red-800 dark:text-red-200 font-medium">Subscription &amp; grace period expired</p>
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">You can no longer add entries. Subscribe now to resume.</p>
+                  </>
+                )}
+              </div>
+              <Link href={`/dashboard/subscribe?org_id=${stationId}`} className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium ${BTN_DANGER}`}>Subscribe</Link>
+            </div>
+          )
+        })()}
 
-      {/* Reports */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Reports</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {reportLinks.map((link) => {
-            const allowed = canAccess(link.pageKey)
-            return (
-              <Link
+        {/* Daily work: the first two entry screens as hero tiles, the rest as the tile grid.
+            Same shape as store-portal's dashboard, which promotes its first two daily actions
+            the same way. A destination the member cannot open stays on the board, dimmed, and
+            explains itself on tap rather than disappearing. */}
+        {entryLinks.length > 0 && (
+          <section>
+            <SectionHeader>Entries</SectionHeader>
+            {entryHeroes.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-3">
+                {entryHeroes.map((link) => (
+                  <HeroTile
+                    key={link.href}
+                    href={link.href}
+                    label={link.label}
+                    desc={link.desc}
+                    icon={link.icon}
+                    solid
+                    allowed={canAccess(link.pageKey)}
+                    onBlocked={() => setAccessDeniedModal(true)}
+                  />
+                ))}
+              </div>
+            )}
+            {restEntries.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+                {/* No desc: on a square this size the label is the whole message. The hero
+                    tiles keep theirs. */}
+                {restEntries.map((link) => (
+                  <Tile
+                    key={link.href}
+                    href={link.href}
+                    label={link.label}
+                    icon={link.icon}
+                    allowed={canAccess(link.pageKey)}
+                    onBlocked={() => setAccessDeniedModal(true)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Reports: eleven destinations, so compact rows rather than a wall of tiles —
+            store-portal's rule that secondary destinations are rows. */}
+        <section className="mt-6">
+          <SectionHeader>Reports</SectionHeader>
+          <RowGroup>
+            {reportLinks.map((link) => (
+              <Row
                 key={link.href}
                 href={link.href}
-                onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
-                className={`flex flex-col gap-2 border p-4 transition-colors ${
-                  allowed
-                    ? 'border-line hover:border-primary-500/40 hover:bg-primary-50/50'
-                    : 'border-line opacity-50'
-                }`}
-              >
-                <link.icon className={`w-5 h-5 ${allowed ? 'text-primary-600' : 'text-content-faint'}`} />
-                <div>
-                  <p className="text-sm font-medium text-content">{link.label}</p>
-                  <p className="text-xs text-content-muted leading-snug">{link.desc}</p>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* Entries */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Entries</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {entryLinks.map((link) => {
-            const allowed = canAccess(link.pageKey)
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={allowed ? undefined : (e) => { e.preventDefault(); setAccessDeniedModal(true) }}
-                className={`flex flex-col gap-2 border p-4 transition-colors ${
-                  allowed
-                    ? 'border-line hover:border-primary-500/40 hover:bg-primary-50/50'
-                    : 'border-line opacity-50'
-                }`}
-              >
-                <link.icon className={`w-5 h-5 ${allowed ? 'text-primary-600' : 'text-content-faint'}`} />
-                <div>
-                  <p className="text-sm font-medium text-content">{link.label}</p>
-                  <p className="text-xs text-content-muted leading-snug">{link.desc}</p>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      </section>
-
-      {/* Notifications */}
-      <section className="mb-8">
-        <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3">Notifications</h2>
-        <Link
-          href={`/dashboard/stations/${stationId}/notifications`}
-          className="flex items-center gap-3 border border-line p-4 hover:border-primary-500/40 hover:bg-primary-50/50 transition-colors"
-        >
-          <Bell className="w-5 h-5 text-primary-600 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-content">Notifications</p>
-            <p className="text-xs text-content-muted">Entries, staff changes and subscription events</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-content-faint" />
-        </Link>
-      </section>
-
-      {/* Dashboard + Sign out */}
-      <section className="mb-8 flex items-center gap-2">
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle transition-colors"
-        >
-          <Fuel className="w-4 h-4" />
-          All Stations
-        </Link>
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign out
-        </button>
-      </section>
+                label={link.label}
+                desc={link.desc}
+                icon={link.icon}
+                allowed={canAccess(link.pageKey)}
+                onBlocked={() => setAccessDeniedModal(true)}
+              />
+            ))}
+          </RowGroup>
+        </section>
 
       {/* Subscription (owner only) */}
       {isOwner && (() => {
@@ -535,7 +465,7 @@ export default function StationPage() {
                   <Clock className="w-4 h-4" />
                   Expires {fmtDate(subscription.end_date)}
                   {daysLeft !== null && daysLeft <= 7 && (
-                    <span className="text-orange-500 font-medium">({daysLeft} days left)</span>
+                    <span className="text-orange-500 dark:text-orange-300 font-medium">({daysLeft} days left)</span>
                   )}
                 </div>
                 {daysLeft !== null && daysLeft <= 7 && (
@@ -549,7 +479,7 @@ export default function StationPage() {
                 <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">You have a subscription awaiting payment.</p>
                 <Link
                   href={`/dashboard/subscribe/pay/${subscription.id}`}
-                  className="inline-flex items-center gap-2 bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600"
+                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}
                 >
                   <CreditCard className="w-4 h-4" /> Complete payment
                 </Link>
@@ -565,7 +495,7 @@ export default function StationPage() {
                 </p>
                 <Link
                   href={`/dashboard/subscribe?org_id=${stationId}`}
-                  className="inline-flex items-center gap-2 bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600"
+                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}
                 >
                   <CreditCard className="w-4 h-4" /> Subscribe now
                 </Link>
@@ -584,7 +514,7 @@ export default function StationPage() {
 
           <button
             onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInviteError('') }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 mb-4"
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium mb-4 ${BTN_PRIMARY}`}
           >
             <Plus className="w-4 h-4" /> Invite Staff
           </button>
@@ -595,11 +525,11 @@ export default function StationPage() {
                 const isExpanded = expandedStaff === inv.id
                 const pages = inv.visible_pages || []
                 return (
-                  <div key={inv.id} className="border border-line">
+                  <div key={inv.id} className={`${CARD}`}>
                     {/* Staff header row */}
                     <div className="flex items-center justify-between p-3">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 bg-primary-50 rounded-full flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 bg-primary-50 dark:bg-primary-950/40 rounded-full flex items-center justify-center flex-shrink-0">
                           <Mail className="w-4 h-4 text-primary-600" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -698,7 +628,7 @@ export default function StationPage() {
                         </div>
                         <button
                           onClick={() => setDeleteModal({ id: inv.id, email: inv.email })}
-                          className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 rounded hover:bg-red-50 dark:bg-red-950/40"
+                          className={`flex items-center gap-2 px-3 py-2 text-sm font-medium ${BTN_DANGER}`}
                         >
                           <Trash2 className="w-4 h-4" /> Remove Staff
                         </button>
@@ -724,23 +654,23 @@ export default function StationPage() {
           </button>
 
           {showManage && (
-            <div className="border border-line p-4 space-y-4">
+            <div className={`p-4 space-y-4 ${CARD}`}>
               {!station.onboarding_complete ? (
                 <Link
                   href={`/dashboard/setup/${stationId}`}
-                  className="flex items-center gap-3 border border-orange-200 bg-orange-50 p-3 hover:bg-orange-100 transition-colors"
+                  className="flex items-center gap-3 border border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-950/40 p-3 hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
                 >
-                  <Settings className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                  <Settings className="w-5 h-5 text-orange-600 dark:text-orange-300 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-orange-800">Set up this station</p>
-                    <p className="text-sm text-orange-600">Configure nozzles, tanks, and lodgements</p>
+                    <p className="text-sm font-medium text-orange-800 dark:text-orange-200">Set up this station</p>
+                    <p className="text-sm text-orange-600 dark:text-orange-300">Configure nozzles, tanks, and lodgements</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-orange-400" />
+                  <ChevronRight className="w-4 h-4 text-orange-400 dark:text-orange-500" />
                 </Link>
               ) : (
                 <Link
                   href={`/dashboard/stations/${stationId}/settings`}
-                  className="flex items-center gap-3 border border-line p-3 hover:border-primary-500/40 hover:bg-primary-50/50 transition-colors"
+                  className={`flex items-center gap-3 p-3 ${CARD} ${CARD_HOVER}`}
                 >
                   <Settings className="w-5 h-5 text-content-muted flex-shrink-0" />
                   <div className="flex-1">
@@ -761,13 +691,13 @@ export default function StationPage() {
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     maxLength={100}
-                    className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className={INPUT}
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={saving || !editName.trim()}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium disabled:opacity-50 ${BTN_PRIMARY}`}
                 >
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
                   Rename
@@ -778,7 +708,7 @@ export default function StationPage() {
                 <p className="text-sm text-content-muted mb-2">Permanently delete this station and all its data.</p>
                 <button
                   onClick={deleteStation}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700"
+                  className={`flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_DANGER}`}
                 >
                   <Trash2 className="w-4 h-4" /> Delete Station
                 </button>
@@ -788,17 +718,31 @@ export default function StationPage() {
         </section>
       )}
 
-      {/* Leave Station (members and owners) */}
-      <section>
+      {/* Leave / sign out, then the appearance footer — the same tail store-portal's
+          dashboard carries. */}
+      <section className="mt-8 flex items-center gap-2 flex-wrap">
         <button
           onClick={leaveStation}
           disabled={leaving}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-content-strong border border-line hover:bg-subtle"
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_FRAMED}`}
         >
           {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
           Leave Station
         </button>
+        <button
+          onClick={handleSignOut}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_FRAMED}`}
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </button>
       </section>
+
+      <div className="mt-8 pt-6 flex items-center justify-between gap-3 flex-wrap">
+        <span className="text-xs font-semibold text-content-muted uppercase tracking-wide">Appearance</span>
+        <ThemeToggle />
+      </div>
+      </div>
 
       {/* Invite Staff Modal */}
       <Modal
@@ -818,7 +762,7 @@ export default function StationPage() {
               maxLength={254}
               value={inviteEmail}
               onChange={(e) => { setInviteEmail(e.target.value); setInviteError('') }}
-              className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className={INPUT}
               autoFocus
             />
           </div>
@@ -827,14 +771,14 @@ export default function StationPage() {
             <button
               type="button"
               onClick={() => { setShowInviteModal(false); setInviteError('') }}
-              className="flex-1 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
+              className={`flex-1 py-2 text-sm font-medium ${BTN_FRAMED}`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={inviting || !inviteEmail.trim()}
-              className="flex-1 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center justify-center gap-2"
+              className={`flex-1 py-2 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${BTN_PRIMARY}`}
             >
               {inviting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               Invite
@@ -867,14 +811,14 @@ export default function StationPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setDeleteModal(null)}
-                className="flex-1 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
+                className={`flex-1 py-2 text-sm font-medium ${BTN_FRAMED}`}
               >
                 Cancel
               </button>
               <button
                 onClick={confirmRemoveInvite}
                 disabled={deleting}
-                className="flex-1 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className={`flex-1 py-2 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${BTN_DANGER}`}
               >
                 {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 Remove
@@ -901,14 +845,14 @@ export default function StationPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setClearConfirm(false)}
-              className="flex-1 py-2 border border-line text-sm font-medium text-content-strong hover:bg-subtle"
+              className={`flex-1 py-2 text-sm font-medium ${BTN_FRAMED}`}
             >
               Cancel
             </button>
             <button
               onClick={handleClearQueue}
               disabled={clearing}
-              className="flex-1 py-2 bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              className={`flex-1 py-2 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${BTN_DANGER}`}
             >
               {clearing && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Clear Queue
@@ -923,7 +867,7 @@ export default function StationPage() {
           {syncModal?.lines.map((line, i) => (
             <p key={i} className="text-sm text-content-strong">{line}</p>
           ))}
-          <button onClick={() => setSyncModal(null)} className="w-full mt-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">
+          <button onClick={() => setSyncModal(null)} className={`w-full mt-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}>
             OK
           </button>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { INPUT_BASE, INPUT, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 import {
   Loader2, MapPin, Fuel, ChevronRight, ChevronLeft, Check,
   Plus, Trash2, ArrowRight, Landmark, CreditCard, Banknote,
@@ -246,7 +247,7 @@ export default function SetupWizardPage() {
             maxLength={200}
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className="w-full px-3 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className={INPUT}
             autoFocus
           />
         </div>
@@ -266,7 +267,7 @@ export default function SetupWizardPage() {
                 <select
                   value={n.fuel_type}
                   onChange={(e) => updateNozzle(i, 'fuel_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={INPUT_BASE}
                 >
                   {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
@@ -276,7 +277,7 @@ export default function SetupWizardPage() {
                   min={0}
                   value={n.initial_reading || ''}
                   onChange={(e) => updateNozzle(i, 'initial_reading', Number(e.target.value))}
-                  className="flex-1 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`flex-1 ${INPUT_BASE}`}
                 />
                 <button onClick={() => removeNozzle(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-3.5 h-3.5" />
@@ -308,7 +309,7 @@ export default function SetupWizardPage() {
                 <select
                   value={t.fuel_type}
                   onChange={(e) => updateTank(i, 'fuel_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={INPUT_BASE}
                 >
                   {FUEL_TYPES.map((f) => <option key={f} value={f}>{f}</option>)}
                 </select>
@@ -318,7 +319,7 @@ export default function SetupWizardPage() {
                   min={0}
                   value={t.capacity || ''}
                   onChange={(e) => updateTank(i, 'capacity', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`flex-1 min-w-[100px] ${INPUT_BASE}`}
                 />
                 <input
                   type="number"
@@ -326,7 +327,7 @@ export default function SetupWizardPage() {
                   min={0}
                   value={t.opening_stock || ''}
                   onChange={(e) => updateTank(i, 'opening_stock', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`flex-1 min-w-[100px] ${INPUT_BASE}`}
                 />
                 <button onClick={() => removeTank(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-3.5 h-3.5" />
@@ -369,7 +370,7 @@ export default function SetupWizardPage() {
                     <select
                       value={mappings[key] || ''}
                       onChange={(e) => setMappings((prev) => ({ ...prev, [key]: Number(e.target.value) }))}
-                      className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className={INPUT_BASE}
                     >
                       <option value="">Select tank</option>
                       {sameFuelTanks.map((t, ti) => (
@@ -400,7 +401,7 @@ export default function SetupWizardPage() {
                 <select
                   value={l.lodgement_type}
                   onChange={(e) => updateLodgement(i, 'lodgement_type', e.target.value)}
-                  className="px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={INPUT_BASE}
                 >
                   {LODGEMENT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                 </select>
@@ -410,7 +411,7 @@ export default function SetupWizardPage() {
                   maxLength={100}
                   value={l.bank_name}
                   onChange={(e) => updateLodgement(i, 'bank_name', e.target.value)}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`flex-1 min-w-[100px] ${INPUT_BASE}`}
                 />
                 {l.lodgement_type === 'pos' && (
                   <input
@@ -419,7 +420,7 @@ export default function SetupWizardPage() {
                     maxLength={50}
                     value={l.terminal_id}
                     onChange={(e) => updateLodgement(i, 'terminal_id', e.target.value)}
-                    className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className={`flex-1 min-w-[100px] ${INPUT_BASE}`}
                   />
                 )}
                 <input
@@ -428,7 +429,7 @@ export default function SetupWizardPage() {
                   min={0}
                   value={l.opening_balance || ''}
                   onChange={(e) => updateLodgement(i, 'opening_balance', Number(e.target.value))}
-                  className="flex-1 min-w-[100px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`flex-1 min-w-[100px] ${INPUT_BASE}`}
                 />
                 <button onClick={() => removeLodgement(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-3.5 h-3.5" />
@@ -463,7 +464,7 @@ export default function SetupWizardPage() {
                   maxLength={200}
                   value={lp.product_name}
                   onChange={(e) => updateLubeProduct(i, 'product_name', e.target.value)}
-                  className="flex-1 min-w-[120px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`flex-1 min-w-[120px] ${INPUT_BASE}`}
                 />
                 <input
                   type="number"
@@ -472,7 +473,7 @@ export default function SetupWizardPage() {
                   step="0.01"
                   value={lp.unit_price || ''}
                   onChange={(e) => updateLubeProduct(i, 'unit_price', Number(e.target.value))}
-                  className="w-24 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`w-24 ${INPUT_BASE}`}
                 />
                 <input
                   type="number"
@@ -480,7 +481,7 @@ export default function SetupWizardPage() {
                   min={0}
                   value={lp.opening_stock || ''}
                   onChange={(e) => updateLubeProduct(i, 'opening_stock', Number(e.target.value))}
-                  className="w-28 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`w-28 ${INPUT_BASE}`}
                 />
                 <button onClick={() => removeLubeProduct(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-3.5 h-3.5" />
@@ -515,7 +516,7 @@ export default function SetupWizardPage() {
                   maxLength={200}
                   value={c.name}
                   onChange={(e) => updateCustomer(i, 'name', e.target.value)}
-                  className="flex-1 min-w-[120px] px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`flex-1 min-w-[120px] ${INPUT_BASE}`}
                 />
                 <input
                   type="tel"
@@ -523,7 +524,7 @@ export default function SetupWizardPage() {
                   maxLength={20}
                   value={c.phone}
                   onChange={(e) => updateCustomer(i, 'phone', e.target.value)}
-                  className="w-32 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`w-32 ${INPUT_BASE}`}
                 />
                 <input
                   type="number"
@@ -532,7 +533,7 @@ export default function SetupWizardPage() {
                   step="0.01"
                   value={c.opening_balance || ''}
                   onChange={(e) => updateCustomer(i, 'opening_balance', Number(e.target.value))}
-                  className="w-32 px-2.5 py-1.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className={`w-32 ${INPUT_BASE}`}
                 />
                 <button onClick={() => removeCustomer(i)} className="p-1 text-content-faint hover:text-red-600 dark:text-red-400">
                   <Trash2 className="w-3.5 h-3.5" />
@@ -558,7 +559,7 @@ export default function SetupWizardPage() {
         {step > 1 ? (
           <button
             onClick={() => setStep((s) => s - 1)}
-            className="flex items-center gap-1 px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle"
+            className={`flex items-center gap-1 px-4 py-2 text-sm ${BTN_FRAMED}`}
           >
             <ChevronLeft className="w-4 h-4" /> Back
           </button>
@@ -570,7 +571,7 @@ export default function SetupWizardPage() {
           <button
             onClick={() => setStep((s) => s + 1)}
             disabled={!canNext()}
-            className="flex items-center gap-1 px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
+            className={`flex items-center gap-1 px-4 py-2 text-sm font-medium disabled:opacity-50 ${BTN_PRIMARY}`}
           >
             Next <ChevronRight className="w-4 h-4" />
           </button>
@@ -578,7 +579,7 @@ export default function SetupWizardPage() {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="flex items-center gap-1 px-6 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
+            className={`flex items-center gap-1 px-6 py-2 text-sm font-medium disabled:opacity-50 ${BTN_PRIMARY}`}
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             Complete Setup

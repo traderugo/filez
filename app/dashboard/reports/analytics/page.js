@@ -13,6 +13,7 @@ import { buildAnalyticsReport } from '@/lib/buildAnalyticsReport'
 import { fmtDate } from '@/lib/formatDate'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
+import { REPORT_HEAD, OUTLINE_WITHIN, BTN_PRIMARY, CARD } from '@/components/ui'
 
 const FUEL_COLORS = { PMS: '#2563eb', AGO: '#16a34a', DPK: '#f59e0b' }
 
@@ -163,13 +164,13 @@ function AnalyticsContent() {
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-end py-3">
           <div className="flex items-center gap-2">
-            <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+            <DateInput value={startDate} onChange={setStartDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
             <span className="text-sm text-content-faint">to</span>
-            <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
+            <DateInput value={endDate} onChange={setEndDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
             <button
               onClick={handleGenerate}
               disabled={generating || !startDate || !endDate || startDate > endDate || dateRangeDays > 92}
-              className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
+              className={`px-4 py-2 text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 ${BTN_PRIMARY}`}
             >
               {generating && <Loader2 className="w-4 h-4 animate-spin" />}
               {generating ? 'Generating...' : 'Generate'}
@@ -198,7 +199,7 @@ function AnalyticsContent() {
 
 function KpiTile({ label, value, sub, accent }) {
   return (
-    <div className="border border-line bg-surface px-3 py-2.5">
+    <div className={`px-3 py-2.5 ${CARD}`}>
       <div className="text-[11px] text-content-muted uppercase tracking-wide">{label}</div>
       <div className={`text-lg font-bold ${accent || 'text-content'}`}>{value}</div>
       {sub && <div className="text-[11px] text-content-faint">{sub}</div>}
@@ -210,10 +211,10 @@ function FuelStatTable({ fuelTypes, columns, totalRow, fuelRows }) {
   const showPerFuel = fuelTypes.length > 1
   const rowKeys = showPerFuel ? ['TOTAL', ...fuelTypes] : ['TOTAL']
   return (
-    <div className="border border-line bg-surface overflow-x-auto mb-4">
+    <div className={`overflow-x-auto mb-4 ${CARD}`}>
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-subtle text-content-muted text-[11px] uppercase tracking-wide">
+          <tr className={`${REPORT_HEAD} text-[11px] uppercase tracking-wide`}>
             <th className="px-3 py-2 text-left font-medium w-20"></th>
             {columns.map(c => (
               <th key={c.key} className="px-3 py-2 text-right font-medium whitespace-nowrap">{c.label}</th>
@@ -487,7 +488,7 @@ function AnalyticsBody({ report, startDate, endDate }) {
 
 function ChartCard({ title, subtitle, children }) {
   return (
-    <div className="border border-line bg-surface p-3 mb-4">
+    <div className={`p-3 mb-4 ${CARD}`}>
       <div className="mb-2">
         <h3 className="text-sm font-bold text-content">{title}</h3>
         {subtitle && <p className="text-xs text-content-muted mt-0.5">{subtitle}</p>}

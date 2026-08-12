@@ -52,17 +52,17 @@ export default function SyncStatus({ orgId }) {
   }
 
   return (
-    <div className={`flex items-center justify-between p-3 border ${allSynced ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}`}>
+    <div className={`flex items-center justify-between p-3 border ${allSynced ? 'border-green-200 dark:border-green-900/50 bg-green-50 dark:bg-green-950/40' : 'border-yellow-200 dark:border-yellow-900/50 bg-yellow-50 dark:bg-yellow-950/40'}`}>
       <div className="flex items-center gap-2">
         {allSynced ? (
           <>
-            <Check className="w-4 h-4 text-green-600" />
-            <span className="text-sm text-green-700 font-medium">All synced</span>
+            <Check className="w-4 h-4 text-green-600 dark:text-green-300" />
+            <span className="text-sm text-green-800 dark:text-green-200 font-medium">All synced</span>
           </>
         ) : (
           <>
-            <Cloud className="w-4 h-4 text-yellow-600" />
-            <span className="text-sm text-yellow-700 font-medium">
+            <Cloud className="w-4 h-4 text-yellow-600 dark:text-yellow-300" />
+            <span className="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
               {count} {count === 1 ? 'change' : 'changes'} pending
             </span>
           </>
@@ -74,7 +74,7 @@ export default function SyncStatus({ orgId }) {
           <button
             onClick={handleSyncNow}
             disabled={syncing}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-yellow-700 border border-yellow-300 hover:bg-yellow-100 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-yellow-800 dark:text-yellow-200 border border-yellow-300 dark:border-yellow-900/50 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 disabled:opacity-50"
           >
             {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Cloud className="w-3.5 h-3.5" />}
             Sync now

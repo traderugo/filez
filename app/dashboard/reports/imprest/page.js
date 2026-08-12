@@ -7,6 +7,7 @@ import { useSubscription } from '@/lib/hooks/useSubscription'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
+import { ENTRY_INPUT, ENTRY_DATE, BTN_PRIMARY, BTN_FRAMED, CARD_LINE, CARD, INPUT_BASE } from '@/components/ui'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -320,16 +321,16 @@ function ImprestContent() {
         <h1 className="text-xl font-bold text-content">Imprest / Petty Cash</h1>
         {period && (
           <div className="flex items-center gap-2">
-            <button onClick={() => { resetForm(); setShowForm(true) }} className="flex items-center gap-1.5 px-3 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600">
+            <button onClick={() => { resetForm(); setShowForm(true) }} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium ${BTN_PRIMARY}`}>
               <Plus className="w-4 h-4" /> Add Entry
             </button>
             {isOwner && (
-            <button onClick={handleExcelExport} disabled={exporting || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-line text-sm font-medium hover:bg-subtle disabled:opacity-40">
+            <button onClick={handleExcelExport} disabled={exporting || !entries.length} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium disabled:opacity-40 ${BTN_FRAMED}`}>
               <Download className="w-4 h-4" /> {exporting ? 'Exporting...' : 'Excel'}
             </button>
             )}
             {isOwner && (
-            <button onClick={handlePdfExport} disabled={exportingPdf || !entries.length} className="flex items-center gap-1.5 px-3 py-2 border border-line text-sm font-medium hover:bg-subtle disabled:opacity-40">
+            <button onClick={handlePdfExport} disabled={exportingPdf || !entries.length} className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium disabled:opacity-40 ${BTN_FRAMED}`}>
               <FileImage className="w-4 h-4" /> {exportingPdf ? 'Exporting...' : 'Receipts PDF'}
             </button>
             )}
@@ -344,16 +345,16 @@ function ImprestContent() {
             <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
           </div>
-          <a href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</a>
+          <a href="/dashboard/subscribe" className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium ${BTN_PRIMARY}`}>Subscribe</a>
         </div>
       )}
 
       {/* Month / Year selector */}
       <div className="flex items-center gap-3 mb-6 flex-wrap">
-        <select value={month} onChange={e => setMonth(Number(e.target.value))} className="border border-line px-3 py-2 text-sm">
+        <select value={month} onChange={e => setMonth(Number(e.target.value))} className={`${INPUT_BASE}`}>
           {MONTHS.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
         </select>
-        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} min={2020} max={2099} className="border border-line px-3 py-2 text-sm w-24" />
+        <input type="number" value={year} onChange={e => setYear(Number(e.target.value))} min={2020} max={2099} className={`w-24 ${INPUT_BASE}`} />
       </div>
 
       {loadingPeriod ? (
@@ -361,36 +362,36 @@ function ImprestContent() {
       ) : (
         <>
           {/* Period setup */}
-          <div className="border border-line divide-y divide-line mb-6">
+          <div className={`divide-y divide-line mb-6 ${CARD}`}>
             <div className="px-3 py-1.5 bg-subtle">
               <span className="text-xs font-medium text-content-muted">Period Settings</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-line">
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Imprest Amount (₦)</label>
-                <input type="number" value={imprestAmount} onChange={e => setImprestAmount(e.target.value)} placeholder="e.g. 130000" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="number" value={imprestAmount} onChange={e => setImprestAmount(e.target.value)} placeholder="e.g. 130000" className={ENTRY_INPUT} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Custodian Name</label>
-                <input type="text" value={custodianName} onChange={e => setCustodianName(e.target.value)} placeholder="Petty cash custodian" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={custodianName} onChange={e => setCustodianName(e.target.value)} placeholder="Petty cash custodian" className={ENTRY_INPUT} />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-line">
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Form Number</label>
-                <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={formNumber} onChange={e => setFormNumber(e.target.value)} placeholder="Optional" className={ENTRY_INPUT} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Prepared By</label>
-                <input type="text" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Name of preparer" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Name of preparer" className={ENTRY_INPUT} />
               </div>
             </div>
             <div>
               <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Paid By (Approver)</label>
-              <input type="text" value={paidBy} onChange={e => setPaidBy(e.target.value)} placeholder="Manager / approver name" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+              <input type="text" value={paidBy} onChange={e => setPaidBy(e.target.value)} placeholder="Manager / approver name" className={ENTRY_INPUT} />
             </div>
             <div className="px-3 py-2.5">
-              <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-40">
+              <button onClick={handleSavePeriod} disabled={savingPeriod || !imprestAmount || subBlocked} className={`px-4 py-2 text-sm font-medium disabled:opacity-40 ${BTN_PRIMARY}`}>
                 {savingPeriod ? 'Saving...' : period ? 'Update Period' : 'Create Period'}
               </button>
             </div>
@@ -398,7 +399,7 @@ function ImprestContent() {
 
           {/* Summary */}
           {period && (
-            <div className="border border-line divide-y divide-line mb-6">
+            <div className={`divide-y divide-line mb-6 ${CARD}`}>
               <div className="grid grid-cols-3 divide-x divide-line">
                 <div className="px-3 py-3 text-center">
                   <p className="text-xs text-content-faint uppercase tracking-wide">Imprest</p>
@@ -418,7 +419,7 @@ function ImprestContent() {
 
           {/* Entry form */}
           {showForm && period && (
-            <div className="border border-line divide-y divide-line mb-6">
+            <div className={`divide-y divide-line mb-6 ${CARD}`}>
               <div className="flex items-center justify-between px-3 py-1.5 bg-subtle">
                 <span className="text-xs font-medium text-content-muted">{editingId ? 'Edit Entry' : 'New Entry'}</span>
                 <button onClick={resetForm} className="text-content-faint hover:text-content-muted"><X className="w-4 h-4" /></button>
@@ -426,7 +427,7 @@ function ImprestContent() {
               <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-line">
                 <div>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Date</label>
-                  <DateInput value={formDate} onChange={setFormDate} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
+                  <DateInput value={formDate} onChange={setFormDate} className={ENTRY_DATE} />
                 </div>
                 <div className="relative" ref={suggestionsRef}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Beneficiary</label>
@@ -444,7 +445,7 @@ function ImprestContent() {
                   {showSuggestions && filteredCustomers.length > 0 && (
                     <div className="absolute z-50 mt-0 left-0 right-0 bg-surface border border-line shadow-lg max-h-48 overflow-y-auto">
                       {filteredCustomers.map(c => (
-                        <button key={c.id} type="button" onClick={() => { setFormBeneficiary(c.name); setBeneficiaryQuery(c.name); setShowSuggestions(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 border-b border-line last:border-0">
+                        <button key={c.id} type="button" onClick={() => { setFormBeneficiary(c.name); setBeneficiaryQuery(c.name); setShowSuggestions(false) }} className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 dark:hover:bg-primary-950/40 border-b border-line last:border-0">
                           {c.name}
                         </button>
                       ))}
@@ -454,27 +455,27 @@ function ImprestContent() {
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Transaction Details</label>
-                <input type="text" value={formDetails} onChange={e => setFormDetails(e.target.value)} placeholder="What was the expense for?" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={formDetails} onChange={e => setFormDetails(e.target.value)} placeholder="What was the expense for?" className={ENTRY_INPUT} />
               </div>
               <div className="grid grid-cols-2 divide-x divide-line">
                 <div>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Amount (₦)</label>
-                  <input type="number" value={formAmount} onChange={e => setFormAmount(e.target.value)} placeholder="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={formAmount} onChange={e => setFormAmount(e.target.value)} placeholder="0" className={ENTRY_INPUT} />
                 </div>
                 <div>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Account Code</label>
-                  <input type="text" value={formAccountCode} onChange={e => setFormAccountCode(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="text" value={formAccountCode} onChange={e => setFormAccountCode(e.target.value)} placeholder="Optional" className={ENTRY_INPUT} />
                 </div>
               </div>
               <div className="grid grid-cols-2 divide-x divide-line">
                 <div>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">PCV Number</label>
-                  <input type="text" value={formPcv} onChange={e => setFormPcv(e.target.value)} placeholder="Optional" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="text" value={formPcv} onChange={e => setFormPcv(e.target.value)} placeholder="Optional" className={ENTRY_INPUT} />
                 </div>
                 <div>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Receipt Image</label>
                   <div className="flex items-center gap-2 px-3 py-2.5">
-                    <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className="flex items-center gap-1.5 px-3 py-1.5 border border-line text-sm hover:bg-subtle disabled:opacity-40">
+                    <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading} className={`flex items-center gap-1.5 px-3 py-1.5 text-sm disabled:opacity-40 ${BTN_FRAMED}`}>
                       <Camera className="w-4 h-4" /> {uploading ? 'Uploading...' : 'Upload'}
                     </button>
                     {formImageUrl && (
@@ -485,10 +486,10 @@ function ImprestContent() {
                 </div>
               </div>
               <div className="px-3 py-2.5 flex items-center gap-2">
-                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount || subBlocked} className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-40">
+                <button onClick={handleSaveEntry} disabled={saving || !formDate || !formBeneficiary.trim() || !formAmount || subBlocked} className={`px-4 py-2 text-sm font-medium disabled:opacity-40 ${BTN_PRIMARY}`}>
                   {saving ? 'Saving...' : editingId ? 'Update' : 'Add'}
                 </button>
-                <button onClick={resetForm} className="px-4 py-2 border border-line text-sm font-medium hover:bg-subtle">Cancel</button>
+                <button onClick={resetForm} className={`px-4 py-2 text-sm font-medium ${BTN_FRAMED}`}>Cancel</button>
               </div>
             </div>
           )}
@@ -502,7 +503,7 @@ function ImprestContent() {
             ) : (
               <div className="space-y-3">
                 {entries.map((e, i) => (
-                  <div key={e.id} className="border border-line divide-y divide-line">
+                  <div key={e.id} className={`divide-y divide-line ${CARD}`}>
                     <div className="flex items-center justify-between px-3 py-2 bg-subtle">
                       <span className="text-sm font-medium text-content-muted">#{i + 1} · {fmtDate(e.entry_date)}</span>
                       <div className="flex items-center gap-1">
@@ -525,7 +526,7 @@ function ImprestContent() {
                 ))}
 
                 {/* Total */}
-                <div className="border border-line bg-subtle px-3 py-2.5 flex items-center justify-between">
+                <div className={`bg-subtle px-3 py-2.5 flex items-center justify-between ${CARD_LINE}`}>
                   <span className="text-sm font-bold text-content-strong">Total</span>
                   <span className="text-base font-bold text-content">₦{fmt(totalSpent)}</span>
                 </div>

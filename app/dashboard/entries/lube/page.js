@@ -11,6 +11,7 @@ import { lubeStockRepo } from '@/lib/repositories/lubeStock'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
 import { useSavePush } from '@/components/SavePushProvider'
+import { ENTRY_INPUT, ENTRY_DATE, ENTRY_SELECT, ENTRY_LINE, ENTRY_DIVIDE, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 function blankSalesEntry() {
   return { _key: crypto.randomUUID(), id: null, productId: '', unitSold: '', unitReceived: '', price: '', notes: '' }
@@ -62,7 +63,7 @@ export default function LubeFormPage() {
         <AlertTriangle className="w-8 h-8 text-content-faint mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-content mb-1">Station Not Configured</h2>
         <p className="text-sm text-content-muted mb-4">Set up your station in Settings before creating entries.</p>
-        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600">Go to Settings</Link>
+        <Link href={`/dashboard/stations/${orgId}/settings`} className={`inline-block px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}>Go to Settings</Link>
       </div>
     </div>
   )
@@ -78,11 +79,11 @@ export default function LubeFormPage() {
       <div className="flex items-center justify-end mb-6 gap-2">
           {isEditing && editDate && (
             <>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/lube?${qs}&edit_date=${prevDate}&type=${tab}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/lube?${qs}&edit_date=${nextDate}&type=${tab}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/lube?${qs}&edit_date=${prevDate}&type=${tab}`)} disabled={!prevDate} className={`flex items-center justify-center text-sm px-2 py-2 disabled:opacity-30 disabled:cursor-not-allowed ${BTN_FRAMED}`}><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/lube?${qs}&edit_date=${nextDate}&type=${tab}`)} disabled={!nextDate} className={`flex items-center justify-center text-sm px-2 py-2 disabled:opacity-30 disabled:cursor-not-allowed ${BTN_FRAMED}`}><ChevronRight className="w-4 h-4" /></button>
             </>
           )}
-          <Link href={`/dashboard/entries/lube/list?${qs}`} className="flex items-center gap-1 text-sm text-content-muted border border-line px-3 py-2 font-medium hover:bg-subtle">
+          <Link href={`/dashboard/entries/lube/list?${qs}`} className={`flex items-center gap-1 text-sm px-3 py-2 font-medium ${BTN_FRAMED}`}>
             <List className="w-4 h-4" /> View Entries
           </Link>
       </div>
@@ -105,7 +106,7 @@ export default function LubeFormPage() {
             <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
           </div>
-          <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</Link>
+          <Link href="/dashboard/subscribe" className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium ${BTN_PRIMARY}`}>Subscribe</Link>
         </div>
       )}
 
@@ -276,14 +277,14 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
   return (
     <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
       {/* Shared date */}
-      <div className="border border-line mb-4">
+      <div className={`border-card ${ENTRY_LINE} mb-4`}>
         <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-        <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
+        <DateInput value={formDate} onChange={handleDateChange} className={ENTRY_DATE} />
       </div>
 
       {/* Entry cards */}
       {entries.map((entry, idx) => (
-        <div key={entry._key} className="border border-line divide-y divide-line mb-3">
+        <div key={entry._key} className={`border-card ${ENTRY_LINE} divide-y-card ${ENTRY_DIVIDE} mb-3`}>
           <div className="flex items-center justify-between px-3 py-1.5 bg-subtle">
             <span className="text-xs font-medium text-content-muted">Entry {idx + 1}</span>
             {entries.length > 1 && (
@@ -299,25 +300,26 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
               onChange={(val) => updateEntry(idx, 'productId', val)}
               options={products.map((p) => ({ value: p.id, label: p.product_name }))}
               placeholder="Select product"
+              className={ENTRY_SELECT}
             />
           </div>
-          <div className="grid grid-cols-3 divide-x divide-line">
+          <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
             <div>
               <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Unit Sold</label>
-              <input type="number" value={entry.unitSold} onChange={(e) => updateEntry(idx, 'unitSold', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+              <input type="number" value={entry.unitSold} onChange={(e) => updateEntry(idx, 'unitSold', e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
             </div>
             <div>
               <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Unit Received</label>
-              <input type="number" value={entry.unitReceived} onChange={(e) => updateEntry(idx, 'unitReceived', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+              <input type="number" value={entry.unitReceived} onChange={(e) => updateEntry(idx, 'unitReceived', e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
             </div>
             <div>
               <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Price</label>
-              <input type="number" value={entry.price} onChange={(e) => updateEntry(idx, 'price', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+              <input type="number" value={entry.price} onChange={(e) => updateEntry(idx, 'price', e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
             </div>
           </div>
           <div>
             <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50 resize-none" />
+            <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className={`${ENTRY_INPUT} resize-none`} />
           </div>
         </div>
       ))}
@@ -329,7 +331,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
       {error && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>}
 
       <div className="flex gap-2 mt-3">
-        <Link href={`/dashboard/entries/lube/list?${qs}`} className="ml-auto px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">Cancel</Link>
+        <Link href={`/dashboard/entries/lube/list?${qs}`} className={`ml-auto px-4 py-2 text-sm ${BTN_FRAMED}`}>Cancel</Link>
         <button type="submit" disabled={saving || saved || subBlocked} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600'}`}>
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {saved && <Check className="w-4 h-4" />}
@@ -489,14 +491,14 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
   return (
     <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
       {/* Shared date */}
-      <div className="border border-line mb-4">
+      <div className={`border-card ${ENTRY_LINE} mb-4`}>
         <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-        <DateInput value={formDate} onChange={handleStockDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
+        <DateInput value={formDate} onChange={handleStockDateChange} className={ENTRY_DATE} />
       </div>
 
       {/* Entry cards */}
       {entries.map((entry, idx) => (
-        <div key={entry._key} className="border border-line divide-y divide-line mb-3">
+        <div key={entry._key} className={`border-card ${ENTRY_LINE} divide-y-card ${ENTRY_DIVIDE} mb-3`}>
           <div className="flex items-center justify-between px-3 py-1.5 bg-subtle">
             <span className="text-xs font-medium text-content-muted">Entry {idx + 1}</span>
             {entries.length > 1 && (
@@ -512,15 +514,16 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
               onChange={(val) => updateEntry(idx, 'productId', val)}
               options={products.map((p) => ({ value: p.id, label: p.product_name }))}
               placeholder="Select product"
+              className={ENTRY_SELECT}
             />
           </div>
           <div>
             <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Stock</label>
-            <input type="number" value={entry.stock} onChange={(e) => updateEntry(idx, 'stock', e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+            <input type="number" value={entry.stock} onChange={(e) => updateEntry(idx, 'stock', e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
           </div>
           <div>
             <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Notes</label>
-            <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50 resize-none" />
+            <textarea value={entry.notes} onChange={(e) => updateEntry(idx, 'notes', e.target.value)} rows={2} maxLength={500} className={`${ENTRY_INPUT} resize-none`} />
           </div>
         </div>
       ))}
@@ -532,7 +535,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
       {error && <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>}
 
       <div className="flex gap-2 mt-3">
-        <Link href={`/dashboard/entries/lube/list?${qs}`} className="ml-auto px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">Cancel</Link>
+        <Link href={`/dashboard/entries/lube/list?${qs}`} className={`ml-auto px-4 py-2 text-sm ${BTN_FRAMED}`}>Cancel</Link>
         <button type="submit" disabled={saving || saved || subBlocked} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600'}`}>
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           {saved && <Check className="w-4 h-4" />}

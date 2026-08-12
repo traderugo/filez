@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Star, Loader2, CheckCircle } from 'lucide-react'
+import { INPUT, BTN_PRIMARY } from '@/components/ui'
 
 export default function FeedbackPage() {
   const [rating, setRating] = useState(0)
@@ -50,7 +51,7 @@ export default function FeedbackPage() {
         <p className="text-sm text-content-muted mb-6">Your feedback has been submitted.</p>
         <button
           onClick={() => router.push('/dashboard')}
-          className="bg-primary-500 text-white px-6 py-2.5 text-sm font-medium hover:bg-primary-600"
+          className={`px-6 py-2.5 text-sm font-medium ${BTN_PRIMARY}`}
         >
           Back to dashboard
         </button>
@@ -95,7 +96,7 @@ export default function FeedbackPage() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Tell us what you think..."
-            className="w-full px-4 py-2.5 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+            className={`${INPUT} resize-none`}
           />
         </div>
 
@@ -104,7 +105,7 @@ export default function FeedbackPage() {
         <button
           type="submit"
           disabled={loading}
-          className="bg-primary-500 text-white px-6 py-2.5 font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-2"
+          className={`px-6 py-2.5 font-medium disabled:opacity-50 flex items-center gap-2 ${BTN_PRIMARY}`}
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           Submit feedback

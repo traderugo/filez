@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, ShoppingCart, ArrowRight, Fuel, Calendar } from 'lucide-react'
 import SearchableSelect from '@/components/SearchableSelect'
+import { INPUT_BASE, BTN_PRIMARY, CARD } from '@/components/ui'
 
 export default function SubscribePage() {
   return (
@@ -156,11 +157,11 @@ function SubscribeContent() {
         {stations.length === 0 ? (
           <p className="text-sm text-content-muted">You don&apos;t own any stations yet.</p>
         ) : stations.length === 1 ? (
-          <div className="border border-primary-500/40 bg-primary-50 p-3 text-sm font-medium text-content">
+          <div className="border border-primary-500/40 bg-primary-50 dark:bg-primary-950/40 p-3 text-sm font-medium text-content">
             {stations[0].name}
           </div>
         ) : (
-          <div className="border border-line">
+          <div className={`${CARD}`}>
             <SearchableSelect
               value={selectedStation}
               onChange={(val) => handleStationChange(val)}
@@ -178,7 +179,7 @@ function SubscribeContent() {
         </div>
       )}
       {hasPendingApproval && (
-        <div className="bg-primary-50 border border-primary-500/40 px-4 py-3 mb-6 text-sm text-primary-800">
+        <div className="bg-primary-50 dark:bg-primary-950/40 border border-primary-500/40 px-4 py-3 mb-6 text-sm text-primary-800">
           This station has a subscription awaiting admin approval.
         </div>
       )}
@@ -196,7 +197,7 @@ function SubscribeContent() {
                 <label
                   key={svc.id}
                   className={`flex items-start gap-3 border p-3 cursor-pointer transition-colors ${
-                    selectedItems[svc.id] ? 'border-blue-600 bg-primary-50' : 'border-line hover:border-line'
+                    selectedItems[svc.id] ? 'border-blue-600 bg-primary-50 dark:bg-primary-950/40' : 'border-line hover:border-line'
                   }`}
                 >
                   <input
@@ -231,7 +232,7 @@ function SubscribeContent() {
                       value={months}
                       onChange={(e) => setMonths(e.target.value)}
                       onBlur={() => setMonths(String(monthsNum))}
-                      className="w-20 border border-line px-3 py-2 text-sm text-center font-medium focus:ring-2 focus:ring-primary-500 focus:border-blue-500"
+                      className={`w-20 text-center font-medium ${INPUT_BASE}`}
                     />
                     <span className="text-sm text-content-muted">month{monthsNum !== 1 ? 's' : ''}</span>
                   </div>
@@ -260,7 +261,7 @@ function SubscribeContent() {
           <button
             type="submit"
             disabled={submitting || selectedServices.length === 0 || !selectedStation}
-            className="w-full bg-primary-500 text-white py-2.5 font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center justify-center gap-2"
+            className={`w-full py-2.5 font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${BTN_PRIMARY}`}
           >
             {submitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

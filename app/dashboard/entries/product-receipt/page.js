@@ -10,6 +10,7 @@ import { productReceiptsRepo } from '@/lib/repositories/productReceipts'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
 import { useSavePush } from '@/components/SavePushProvider'
+import { ENTRY_INPUT, ENTRY_DATE, ENTRY_LINE, ENTRY_DIVIDE, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 function blankEntry(tanks) {
   return {
@@ -294,7 +295,7 @@ export default function ProductReceiptFormPage() {
         <AlertTriangle className="w-8 h-8 text-content-faint mx-auto mb-3" />
         <h2 className="text-lg font-semibold text-content mb-1">Station Not Configured</h2>
         <p className="text-sm text-content-muted mb-4">Set up your station in Settings before creating entries.</p>
-        <Link href={`/dashboard/stations/${orgId}/settings`} className="inline-block bg-primary-500 text-white px-4 py-2 text-sm font-medium hover:bg-primary-600">Go to Settings</Link>
+        <Link href={`/dashboard/stations/${orgId}/settings`} className={`inline-block px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}>Go to Settings</Link>
       </div>
     </div>
   )
@@ -310,20 +311,20 @@ export default function ProductReceiptFormPage() {
       <div className="flex items-center justify-end mb-6 gap-2">
           {isEditing && editDate && (
             <>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-              <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className="flex items-center justify-center text-sm text-content-muted border border-line px-2 py-2 hover:bg-subtle disabled:opacity-30 disabled:cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${prevDate}`)} disabled={!prevDate} className={`flex items-center justify-center text-sm px-2 py-2 disabled:opacity-30 disabled:cursor-not-allowed ${BTN_FRAMED}`}><ChevronLeft className="w-4 h-4" /></button>
+              <button type="button" onClick={() => router.push(`/dashboard/entries/product-receipt?${qs}&edit_date=${nextDate}`)} disabled={!nextDate} className={`flex items-center justify-center text-sm px-2 py-2 disabled:opacity-30 disabled:cursor-not-allowed ${BTN_FRAMED}`}><ChevronRight className="w-4 h-4" /></button>
             </>
           )}
-          <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className="flex items-center gap-1 text-sm text-content-muted border border-line px-3 py-2 font-medium hover:bg-subtle">
+          <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className={`flex items-center gap-1 text-sm px-3 py-2 font-medium ${BTN_FRAMED}`}>
             <List className="w-4 h-4" /> View Entries
           </Link>
       </div>
 
       <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')) { e.preventDefault(); const fields = Array.from(e.currentTarget.querySelectorAll('input, select, textarea')); const idx = fields.indexOf(e.target); if (idx >= 0 && idx < fields.length - 1) fields[idx + 1].focus() } }}>
         {/* Shared date */}
-        <div className="border border-line mb-4">
+        <div className={`border-card ${ENTRY_LINE} mb-4`}>
           <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Entry Date</label>
-          <DateInput value={formDate} onChange={handleDateChange} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
+          <DateInput value={formDate} onChange={handleDateChange} className={ENTRY_DATE} />
         </div>
 
         {/* Entry tabs */}
@@ -345,7 +346,7 @@ export default function ProductReceiptFormPage() {
 
         {/* Active entry form */}
         {current && (
-          <div className="border border-line border-t-0 divide-y divide-line">
+          <div className={`border-card ${ENTRY_LINE} border-t-0 divide-y-card ${ENTRY_DIVIDE}`}>
             {entries.length > 1 && (
               <div className="flex justify-end px-3 py-1.5 bg-subtle">
                 <button type="button" onClick={() => removeEntry(activeTab)} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 dark:text-red-300">
@@ -354,140 +355,140 @@ export default function ProductReceiptFormPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 divide-x divide-line">
+            <div className={`grid grid-cols-2 divide-x-card ${ENTRY_DIVIDE}`}>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Loaded Date</label>
-                <DateInput value={current.loadedDate} onChange={(v) => updateEntry(activeTab, 'loadedDate', v)} className="w-full px-3 py-2.5 text-base bg-transparent focus:bg-primary-50" />
+                <DateInput value={current.loadedDate} onChange={(v) => updateEntry(activeTab, 'loadedDate', v)} className={ENTRY_DATE} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Depot Name</label>
-                <input type="text" value={current.depotName} onChange={(e) => updateEntry(activeTab, 'depotName', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={current.depotName} onChange={(e) => updateEntry(activeTab, 'depotName', e.target.value)} className={ENTRY_INPUT} />
               </div>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Driver Name</label>
-                <input type="text" value={current.driverName} onChange={(e) => updateEntry(activeTab, 'driverName', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={current.driverName} onChange={(e) => updateEntry(activeTab, 'driverName', e.target.value)} className={ENTRY_INPUT} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Waybill No.</label>
-                <input type="text" value={current.waybillNumber} onChange={(e) => updateEntry(activeTab, 'waybillNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={current.waybillNumber} onChange={(e) => updateEntry(activeTab, 'waybillNumber', e.target.value)} className={ENTRY_INPUT} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Ticket No.</label>
-                <input type="text" value={current.ticketNumber} onChange={(e) => updateEntry(activeTab, 'ticketNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="text" value={current.ticketNumber} onChange={(e) => updateEntry(activeTab, 'ticketNumber', e.target.value)} className={ENTRY_INPUT} />
               </div>
             </div>
             <div>
               <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Truck Number</label>
-              <input type="text" value={current.truckNumber} onChange={(e) => updateEntry(activeTab, 'truckNumber', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+              <input type="text" value={current.truckNumber} onChange={(e) => updateEntry(activeTab, 'truckNumber', e.target.value)} className={ENTRY_INPUT} />
             </div>
-            <div className="grid grid-cols-2 divide-x divide-line">
+            <div className={`grid grid-cols-2 divide-x-card ${ENTRY_DIVIDE}`}>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Arrival Time</label>
-                <input type="time" value={current.arrivalTime} onChange={(e) => updateEntry(activeTab, 'arrivalTime', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="time" value={current.arrivalTime} onChange={(e) => updateEntry(activeTab, 'arrivalTime', e.target.value)} className={ENTRY_INPUT} />
               </div>
               <div>
                 <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Exit Time</label>
-                <input type="time" value={current.exitTime} onChange={(e) => updateEntry(activeTab, 'exitTime', e.target.value)} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                <input type="time" value={current.exitTime} onChange={(e) => updateEntry(activeTab, 'exitTime', e.target.value)} className={ENTRY_INPUT} />
               </div>
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Station Ullage</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`stationUllage${n}`]} onChange={(e) => updateEntry(activeTab, `stationUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`stationUllage${n}`]} onChange={(e) => updateEntry(activeTab, `stationUllage${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Station Liq. Height</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`stationLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `stationLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`stationLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `stationLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Chart Highest Ullage</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`chartHighUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartHighUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`chartHighUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartHighUllage${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Chart Lowest Ullage</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`chartLowUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartLowUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`chartLowUllage${n}`]} onChange={(e) => updateEntry(activeTab, `chartLowUllage${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Chart Liq. Height</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`chartLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `chartLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`chartLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `chartLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Depot Ullage</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`depotUllage${n}`]} onChange={(e) => updateEntry(activeTab, `depotUllage${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`depotUllage${n}`]} onChange={(e) => updateEntry(activeTab, `depotUllage${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Depot Liq. Height</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`depotLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `depotLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`depotLiquidHeight${n}`]} onChange={(e) => updateEntry(activeTab, `depotLiquidHeight${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Highest Volume</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`highVol${n}`]} onChange={(e) => updateEntry(activeTab, `highVol${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`highVol${n}`]} onChange={(e) => updateEntry(activeTab, `highVol${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
             <div className="bg-subtle px-2 py-1">
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Lowest Volume</span>
             </div>
-            <div className="grid grid-cols-3 divide-x divide-line">
+            <div className={`grid grid-cols-3 divide-x-card ${ENTRY_DIVIDE}`}>
               {[1, 2, 3].map(n => (
                 <div key={n}>
                   <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Comp {n}</label>
-                  <input type="number" value={current[`lowVol${n}`]} onChange={(e) => updateEntry(activeTab, `lowVol${n}`, e.target.value)} step="0.01" min="0" className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50" />
+                  <input type="number" value={current[`lowVol${n}`]} onChange={(e) => updateEntry(activeTab, `lowVol${n}`, e.target.value)} step="0.01" min="0" className={ENTRY_INPUT} />
                 </div>
               ))}
             </div>
@@ -495,7 +496,7 @@ export default function ProductReceiptFormPage() {
               <span className="text-xs text-content-muted font-semibold uppercase tracking-wide">Volume Received Per Tank</span>
             </div>
             {tanks.map((t) => (
-              <div key={t.id} className="grid grid-cols-2 divide-x divide-line">
+              <div key={t.id} className={`grid grid-cols-2 divide-x-card ${ENTRY_DIVIDE}`}>
                 <div className="flex items-center px-3 py-2.5 bg-subtle/50">
                   <span className="text-xs text-content-muted">{t.fuel_type} Tank {t.tank_number}</span>
                 </div>
@@ -510,14 +511,14 @@ export default function ProductReceiptFormPage() {
                     step="0.01"
                     min="0"
                     placeholder="0"
-                    className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50"
+                    className={ENTRY_INPUT}
                   />
                 </div>
               </div>
             ))}
             <div>
               <label className="block text-xs text-content-faint px-2 pt-1 uppercase tracking-wide">Notes</label>
-              <textarea value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className="w-full px-3 py-2.5 text-base bg-transparent focus:outline-none focus:bg-primary-50 resize-none" />
+              <textarea value={current.notes} onChange={(e) => updateEntry(activeTab, 'notes', e.target.value)} rows={2} maxLength={500} className={`${ENTRY_INPUT} resize-none`} />
             </div>
           </div>
         )}
@@ -531,12 +532,12 @@ export default function ProductReceiptFormPage() {
               <p className="text-sm text-amber-800 dark:text-amber-200 font-medium">Subscribe to add entries</p>
               <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">You can view existing data, but creating new entries requires an active subscription.</p>
             </div>
-            <Link href="/dashboard/subscribe" className="flex-shrink-0 bg-primary-500 text-white px-3 py-1.5 text-xs font-medium hover:bg-primary-600">Subscribe</Link>
+            <Link href="/dashboard/subscribe" className={`flex-shrink-0 px-3 py-1.5 text-xs font-medium ${BTN_PRIMARY}`}>Subscribe</Link>
           </div>
         )}
 
         <div className="flex gap-2 mt-3">
-          <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className="ml-auto px-4 py-2 border border-line text-sm text-content-strong hover:bg-subtle">Cancel</Link>
+          <Link href={`/dashboard/entries/product-receipt/list?${qs}`} className={`ml-auto px-4 py-2 text-sm ${BTN_FRAMED}`}>Cancel</Link>
           <button type="submit" disabled={saving || saved || (!subLoading && !isSubscribed)} className={`flex items-center gap-2 text-white px-4 py-2 text-sm font-medium disabled:opacity-50 ${saved ? 'bg-green-600' : 'bg-primary-500 hover:bg-primary-600'}`}>
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             {saved && <Check className="w-4 h-4" />}

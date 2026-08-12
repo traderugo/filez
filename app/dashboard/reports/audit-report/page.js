@@ -10,6 +10,7 @@ import { exportAuditExcel } from '@/lib/exportAuditExcel'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
+import { REPORT_HEAD, REPORT_SUBHEAD, REPORT_LINE, OUTLINE_WITHIN, BTN_FRAMED, BTN_PRIMARY, REPORT_CARD } from '@/components/ui'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -278,13 +279,13 @@ function AuditReportContent() {
       {/* Header + date range */}
       <div className="flex items-center justify-end py-3 shrink-0">
         <div className="flex items-center gap-2">
-          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={startDate} onChange={setStartDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
           <span className="text-sm text-content-faint">to</span>
-          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={endDate} onChange={setEndDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
           <button
             onClick={handleGenerate}
             disabled={generating || !startDate || !endDate || startDate > endDate || dateRangeDays > 32}
-            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50 flex items-center gap-1.5"
+            className={`px-4 py-2 text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 ${BTN_PRIMARY}`}
           >
             {generating && <Loader2 className="w-4 h-4 animate-spin" />}
             {generating ? 'Generating...' : 'Generate'}
@@ -293,7 +294,7 @@ function AuditReportContent() {
             <button
               onClick={handleExport}
               disabled={exporting}
-              className="px-4 py-2 bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 flex items-center gap-1.5"
+              className={`px-4 py-2 text-sm font-medium disabled:opacity-50 flex items-center gap-1.5 ${BTN_FRAMED}`}
             >
               {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               Export
@@ -307,7 +308,7 @@ function AuditReportContent() {
 
       {/* Report content */}
       {report ? (
-        <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 border border-line">
+        <div className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 ${REPORT_CARD}`}>
           {!canAccessTab(activeTab) ? (
             <div className="flex items-center justify-center py-20">
               <div className="flex items-start gap-3 p-4 bg-red-50 dark:bg-red-950/40 border border-red-100 rounded max-w-md">
@@ -390,9 +391,9 @@ function SalesCashPosition({ report, startDate, endDate }) {
   const { salesCash, fuelTypes } = report
   if (!salesCash) return null
 
-  const hdr = 'bg-primary-500 text-white'
-  const subHdr = 'bg-primary-50 text-primary-600'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const subHdr = REPORT_SUBHEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
@@ -614,9 +615,9 @@ function LodgementSheet({ report }) {
   const posOnly = banks.filter(b => b.lodgement_type === 'pos')
   const transferOnly = banks.filter(b => b.lodgement_type === 'transfer')
 
-  const hdr = 'bg-primary-500 text-white'
-  const subHdr = 'bg-primary-50 text-primary-600'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const subHdr = REPORT_SUBHEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
   const cellEmpty = `${bdr} px-1.5 py-1 whitespace-nowrap bg-subtle`
@@ -746,9 +747,9 @@ function StockPosition({ report }) {
 
   if (!stockPosition) return null
 
-  const hdr = 'bg-primary-500 text-white'
-  const subHdr = 'bg-primary-50 text-primary-600'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const subHdr = REPORT_SUBHEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-1.5 py-1`
   const cellR = `${cell} text-right`
 
@@ -776,7 +777,7 @@ function StockPosition({ report }) {
             className={`px-4 py-1.5 text-sm font-medium border ${
               activeFuel === ft
                 ? 'bg-primary-500 text-white border-blue-600'
-                : 'bg-surface text-primary-900 dark:text-primary-100 border-primary-500/40 hover:bg-primary-50'
+                : 'bg-surface text-primary-900 dark:text-primary-100 border-primary-500/40 hover:bg-primary-50 dark:hover:bg-primary-950/40'
             }`}
           >
             {ft}
@@ -839,8 +840,8 @@ function StockSummary({ report, startDate, endDate }) {
 
   // fmtDate imported from @/lib/formatDate
 
-  const hdr = 'bg-primary-500 text-white font-bold'
-  const cell = 'border border-primary-500/40 px-3 py-1.5 text-sm'
+  const hdr = `${REPORT_HEAD} font-bold`
+  const cell = `border ${REPORT_LINE} px-3 py-1.5 text-sm`
   const cellR = cell + ' text-right'
 
   const fmtOvsh = (n) => {
@@ -938,9 +939,9 @@ function ConsumptionReport({ report, startDate, endDate }) {
 
   // fmtDate imported from @/lib/formatDate
 
-  const hdr = 'bg-primary-500 text-white'
-  const subHdr = 'bg-primary-50 text-primary-900 dark:text-primary-100'
-  const cell = 'border border-primary-500/40 px-2 py-1 text-sm'
+  const hdr = REPORT_HEAD
+  const subHdr = REPORT_SUBHEAD
+  const cell = `border ${REPORT_LINE} px-2 py-1 text-sm`
   const cellR = cell + ' text-right'
 
   const data = consumptionReport[activeFuel]
@@ -959,7 +960,7 @@ function ConsumptionReport({ report, startDate, endDate }) {
             className={`px-4 py-1.5 text-sm font-medium border ${
               activeFuel === ft
                 ? 'bg-primary-500 text-white border-blue-600'
-                : 'bg-surface text-primary-900 dark:text-primary-100 border-primary-500/40 hover:bg-primary-50'
+                : 'bg-surface text-primary-900 dark:text-primary-100 border-primary-500/40 hover:bg-primary-50 dark:hover:bg-primary-950/40'
             }`}
           >
             {ft}
@@ -1039,12 +1040,12 @@ function CalcRow({ label, actual, estimate, editable, onChange }) {
         <VarianceBadge actual={actual} estimate={estimate} />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-subtle rounded px-2.5 py-1.5">
+        <div className="bg-subtle px-2.5 py-1.5">
           <span className="text-[10px] text-content-faint uppercase">Actual</span>
           <p className="text-sm font-medium text-content">{fmt(actual)}</p>
         </div>
         {editable ? (
-          <div className="bg-yellow-50 dark:bg-yellow-950/40 rounded px-2.5 py-0.5">
+          <div className="bg-yellow-50 dark:bg-yellow-950/40 px-2.5 py-0.5">
             <span className="text-[10px] text-content-faint uppercase">Estimate</span>
             <input
               type="number"
@@ -1056,7 +1057,7 @@ function CalcRow({ label, actual, estimate, editable, onChange }) {
             />
           </div>
         ) : (
-          <div className="bg-subtle rounded px-2.5 py-1.5">
+          <div className="bg-subtle px-2.5 py-1.5">
             <span className="text-[10px] text-content-faint uppercase">Estimate</span>
             <p className="text-sm font-medium text-content">{fmt(estimate)}</p>
           </div>
@@ -1169,8 +1170,8 @@ function CalculatorReport({ report, startDate, endDate }) {
 
         return (
           <div key={ft} className="mb-5">
-            <div className="bg-primary-500 text-white px-3 py-1.5 text-sm font-bold rounded-t">{ft}</div>
-            <div className="border border-t-0 border-line rounded-b px-3">
+            <div className={`px-3 py-1.5 text-sm font-bold ${REPORT_HEAD}`}>{ft}</div>
+            <div className={`border border-t-0 ${REPORT_LINE} px-3`}>
               {rows.map((row, i) => {
                 const actual = row.field ? actuals[row.field] : row.actual
                 const estimate = row.field ? (est[row.field] || 0) : row.estimate
@@ -1192,8 +1193,8 @@ function CalculatorReport({ report, startDate, endDate }) {
 
       {/* Cash / Lodgement section */}
       <div className="mb-5">
-        <div className="bg-primary-500 text-white px-3 py-1.5 text-sm font-bold rounded-t">Cash / Lodgement</div>
-        <div className="border border-t-0 border-line rounded-b px-3">
+        <div className={`px-3 py-1.5 text-sm font-bold ${REPORT_HEAD}`}>Cash / Lodgement</div>
+        <div className={`border border-t-0 ${REPORT_LINE} px-3`}>
           {(() => {
             const cr = salesCash.cashReconciliation || {}
             const actualBankDeposit = cr.totalLodgement || 0
@@ -1291,9 +1292,9 @@ function ProductReceived({ receipts, tanks, startDate, endDate }) {
     return { rows, totals }
   }, [receipts, tankFuel, startDate, endDate])
 
-  const hdr = 'bg-primary-500 text-white'
-  const subHdr = 'bg-primary-50 text-primary-600'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const subHdr = REPORT_SUBHEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-1.5 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 

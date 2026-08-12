@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { BTN_PRIMARY } from '@/components/ui'
 
 export default function OfflinePage() {
   const router = useRouter()
@@ -40,7 +41,7 @@ export default function OfflinePage() {
       </p>
       <button
         onClick={() => window.location.reload()}
-        className="px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded hover:bg-primary-600"
+        className={`px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}
       >
         Retry
       </button>

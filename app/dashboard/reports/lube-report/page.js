@@ -8,6 +8,7 @@ import { db } from '@/lib/db'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
+import { REPORT_HEAD, REPORT_LINE, REPORT_TOTAL_FILL, OUTLINE_WITHIN, BTN_PRIMARY, REPORT_CARD } from '@/components/ui'
 
 function fmt(n) {
   if (n == null || isNaN(n)) return ''
@@ -246,8 +247,8 @@ function LubeReportContent() {
     return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-content-faint" /></div>
   }
 
-  const hdr = 'bg-primary-500 text-white'
-  const bdr = 'border border-primary-500/40'
+  const hdr = REPORT_HEAD
+  const bdr = `border ${REPORT_LINE}`
   const cell = `${bdr} px-2 py-1 whitespace-nowrap`
   const cellR = `${cell} text-right`
 
@@ -259,13 +260,13 @@ function LubeReportContent() {
       <div className="flex items-center justify-between py-3 shrink-0">
         <h1 className="text-lg font-bold text-content">Lube Report</h1>
         <div className="flex items-center gap-2">
-          <DateInput value={startDate} onChange={setStartDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={startDate} onChange={setStartDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
           <span className="text-sm text-content-faint">to</span>
-          <DateInput value={endDate} onChange={setEndDate} className="px-2 py-2 border border-line text-sm font-medium" />
+          <DateInput value={endDate} onChange={setEndDate} className={`px-2 py-2 text-sm font-medium ${OUTLINE_WITHIN}`} />
           <button
             onClick={handleGenerate}
             disabled={!startDate || !endDate || startDate > endDate}
-            className="px-4 py-2 bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 disabled:opacity-50"
+            className={`px-4 py-2 text-sm font-medium disabled:opacity-50 ${BTN_PRIMARY}`}
           >
             Generate
           </button>
@@ -273,7 +274,7 @@ function LubeReportContent() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-10 border border-line">
+      <div className={`flex-1 overflow-y-auto overflow-x-auto min-h-0 pb-10 ${REPORT_CARD}`}>
         {!generated ? (
           <div className="flex items-center justify-center py-20">
             <p className="text-content-faint text-sm">Select a date range and click Generate.</p>
@@ -294,7 +295,7 @@ function LubeReportContent() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-xs font-medium border-r border-line ${activeTab === tab.key ? 'bg-primary-50 text-primary-700 border-b-2 border-b-blue-600' : 'text-content-muted hover:text-content-strong hover:bg-subtle'}`}
+            className={`px-4 py-2 text-xs font-medium border-r border-line ${activeTab === tab.key ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 border-b-2 border-b-blue-600' : 'text-content-muted hover:text-content-strong hover:bg-subtle'}`}
           >
             {tab.label}
           </button>
@@ -327,7 +328,7 @@ function DailyLogTable({ data, cell, cellR, hdr }) {
       </thead>
       <tbody>
         {/* Opening balance row */}
-        <tr className="bg-subtle font-medium">
+        <tr className={`${REPORT_TOTAL_FILL} font-medium`}>
           <td className={cell} colSpan={5}>Opening Balance</td>
           <td className={cellR}>{fmtDec(data.openingBalance)}</td>
           <td className={cell}></td>
@@ -349,7 +350,7 @@ function DailyLogTable({ data, cell, cellR, hdr }) {
         })}
       </tbody>
       <tfoot>
-        <tr className="font-bold bg-primary-50">
+        <tr className="font-bold bg-primary-50 dark:bg-primary-950/40">
           <td className={cell} colSpan={3}>Total</td>
           <td className={cellR}>{fmtDec(data.totalAmount)}</td>
           <td className={cellR}>{fmtDec(data.totalLodgement)}</td>
@@ -401,7 +402,7 @@ function SummaryTable({ data, cell, cellR, hdr }) {
         })}
       </tbody>
       <tfoot>
-        <tr className="font-bold bg-primary-50">
+        <tr className="font-bold bg-primary-50 dark:bg-primary-950/40">
           <td className={cell} colSpan={2}>Total</td>
           <td className={cellR}>{fmt(data.totals.opening)}</td>
           <td className={cellR}>{fmt(data.totals.sold)}</td>

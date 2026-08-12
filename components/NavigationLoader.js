@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { BTN_FRAMED } from '@/components/ui'
 
 export default function NavigationLoader() {
   const [progress, setProgress] = useState(0)
@@ -92,7 +93,7 @@ export default function NavigationLoader() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] bg-transparent pointer-events-none">
       <div
-        className="h-full bg-green-600 transition-all duration-300 ease-out"
+        className={`h-full transition-all duration-300 ease-out ${BTN_FRAMED}`}
         style={{ width: `${progress}%` }}
       />
     </div>

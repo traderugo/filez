@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, Check, X, Pencil, ToggleLeft, ToggleRight, Fuel, Droplets, Users } from 'lucide-react'
+import { INPUT } from '@/components/ui'
 
 // The design system has no solid fills; weight comes from how hard the outline is drawn.
 const SOLID_ACTION = 'border-2 border-primary-600 dark:border-primary-400 bg-primary-500/20 text-primary-800 dark:text-primary-100 transition-all hover:bg-primary-500/30'
@@ -118,7 +119,7 @@ export default function AdminServicesPage() {
                         min="0"
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full px-3 py-2 border border-line text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className={INPUT}
                         autoFocus
                       />
                     </div>
