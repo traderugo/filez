@@ -10,6 +10,16 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all') // all, verified, unverified
+
+  // Honour ?filter= so the "accounts waiting to be verified" banner on /admin can link
+  // straight to them. Read from window rather than useSearchParams: that hook would drag this
+  // page into a Suspense boundary for one optional query string.
+  useEffect(() => {
+    try {
+      const f = new URLSearchParams(window.location.search).get('filter')
+      if (f === 'verified' || f === 'unverified' || f === 'all') setFilter(f)
+    } catch { /* ignore */ }
+  }, [])
   const [selectedUser, setSelectedUser] = useState(null)
 
   // Verify

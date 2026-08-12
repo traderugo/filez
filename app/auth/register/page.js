@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import WhatsAppSupport from '@/components/WhatsAppSupport'
 import Image from 'next/image'
 import { Loader2, Mail, Lock, User, Phone } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
@@ -168,6 +169,14 @@ export default function RegisterPage() {
         Already have an account?{' '}
         <Link href="/auth/login" className={AUTH_LINK}>Log in</Link>
       </p>
+
+      <div className="mt-6 pt-6 border-t border-line text-center">
+        <p className="text-xs text-content-muted mb-3">Stuck, or need your account approved?</p>
+        <WhatsAppSupport
+          label="Message us on WhatsApp"
+          message="Hello, I am signing up for StationMGR and need some help."
+        />
+      </div>
     </div>
   )
 }

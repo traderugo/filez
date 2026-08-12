@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, Check, X, Eye, ChevronDown, ChevronUp } from 'lucide-react'
+import Link from 'next/link'
+import { Loader2, Check, X, Eye, ChevronDown, ChevronUp, UserPlus } from 'lucide-react'
 import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { fmtDate, fmtDateShort } from '@/lib/formatDate'
 import { INPUT, BTN_DANGER } from '@/components/ui'
@@ -13,6 +14,10 @@ export default function AdminSubscriptionsPage() {
   const [expandedId, setExpandedId] = useState(null)
   const [notes, setNotes] = useState('')
   const [acting, setActing] = useState(null)
+  // Accounts that have signed up but are not verified yet. Nothing runs when someone
+  // registers (signUp happens client-side, so there is no server hook to notify from), which
+  // is how a signup sat unnoticed. This puts the count where an admin already looks.
+  const [unverified, setUnverified] = useState(0)
 
   const loadSubs = async () => {
     const res = await fetch(`/api/admin/subscriptions?status=${filter}`)
@@ -22,6 +27,21 @@ export default function AdminSubscriptionsPage() {
     }
     setLoading(false)
   }
+
+  // Counted from the admin users list rather than a new endpoint: it already returns
+  // email_verified for every account, and one more route for a number would be a second place
+  // for the definition of "waiting" to drift.
+  useEffect(() => {
+    fetch('/api/admin/users')
+      .then((r) => (r.ok ? r.json() : null))
+      // The route returns a bare array, not { users }. Both shapes are handled so this
+      // does not silently read zero if that ever changes.
+      .then((d) => {
+        const list = Array.isArray(d) ? d : (d?.users || [])
+        setUnverified(list.filter((u) => !u.email_verified).length)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -48,6 +68,22 @@ export default function AdminSubscriptionsPage() {
 
   return (
     <div className="max-w-3xl">
+
+      {/* Only when there are any: a permanent "0 waiting" line is furniture people stop
+          seeing, which is the failure this is meant to prevent. */}
+      {unverified > 0 && (
+        <Link
+          href="/admin/users?filter=unverified"
+          className="flex items-center gap-2.5 px-4 py-3 mb-6 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 hover:border-amber-400 dark:hover:border-amber-700 transition-colors"
+        >
+          <UserPlus className="w-4 h-4 text-amber-600 dark:text-amber-300 shrink-0" />
+          <p className="flex-1 text-sm text-amber-800 dark:text-amber-200">
+            <span className="font-semibold">{unverified}</span>{' '}
+            {unverified === 1 ? 'account is' : 'accounts are'} waiting to be verified.
+          </p>
+          <span className="text-xs font-semibold text-amber-800 dark:text-amber-200 underline shrink-0">Review</span>
+        </Link>
+      )}
 
       {/* Filter tabs */}
       <div className="flex gap-1 mb-6 border-b border-line overflow-x-auto">
