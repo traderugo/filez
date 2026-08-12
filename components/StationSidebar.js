@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabaseClient'
 import { buildStationNav } from '@/lib/stationNav'
 import useStationUnread from '@/lib/useStationUnread'
 import ThemeToggle from '@/components/ThemeToggle'
-import { BTN_PRIMARY } from '@/components/ui'
 
 /**
  * Section switcher for the pages inside a station, so moving from Daily Sales to Lodgements
@@ -124,11 +123,15 @@ export default function StationSidebar({ open, onClose }) {
                 : 'text-content-strong hover:bg-subtle hover:text-content'
           }`}
         >
+          {/* Accent rail marks the current section. A plain 1px-wide fill: it is a marker, not
+              a control, so it takes none of the button chrome. */}
           {current && !iconOnly && (
-            <span aria-hidden className={`absolute left-0 top-0 bottom-0 w-1 dark:bg-primary-400 ${BTN_PRIMARY}`} />
+            <span aria-hidden className="absolute left-0 top-0 bottom-0 w-1 bg-primary-600 dark:bg-primary-400" />
           )}
           <span className="relative shrink-0">
-            <Icon className="w-4 h-4 shrink-0" fill="currentColor" />
+            {/* Regular stroked Lucide glyphs. No fill="currentColor": that attribute turns
+                each icon into a silhouette, which both apps used to do and no longer do. */}
+            <Icon className={`w-5 h-5 shrink-0 ${current ? '' : 'text-content-faint'}`} />
             {/* Collapsed to icons there is no room for a count, so the badge degrades to a
                 dot: it still says "something is new", which is the part that matters at
                 72px wide. */}
@@ -174,7 +177,7 @@ export default function StationSidebar({ open, onClose }) {
             iconOnly ? 'justify-center w-10' : 'px-3 w-full'
           }`}
         >
-          <Home className="w-4 h-4 shrink-0" fill="currentColor" />
+          <Home className="w-4 h-4 shrink-0" />
           {!iconOnly && <span>Station home</span>}
         </Link>
       </div>
@@ -247,22 +250,29 @@ export default function StationSidebar({ open, onClose }) {
         {footer}
       </aside>
 
-      {/* Below lg: overlay drawer. */}
+      {/* Below lg: overlay drawer, matching store-portal's. Kept mounted so it slides rather
+          than appears, and it opens from the LEFT, the same edge the desktop column occupies
+          and the edge the hamburger sits on. The two never co-exist (lg:hidden vs
+          hidden lg:flex), so no one sees the nav on both edges. */}
       {open && (
-        <div className="lg:hidden fixed inset-0 z-40 flex">
-          <div className="absolute inset-0 bg-black/70" onClick={onClose} />
-          <aside className="relative flex flex-col w-72 max-w-[85vw] h-full bg-surface border-r border-line">
-            <div className="flex items-center justify-between shrink-0">
-              {identity}
-              <button onClick={onClose} aria-label="Close menu" className="p-3 text-content-faint hover:text-content">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            {nav}
-            {footer}
-          </aside>
-        </div>
+        <div className="lg:hidden fixed inset-0 z-40 bg-black/40" onClick={onClose} aria-hidden />
       )}
+      <aside
+        className={`lg:hidden fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] flex flex-col bg-surface border-r border-line transition-transform duration-300 ease-in-out ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        aria-hidden={!open}
+        {...(!open && { inert: '' })}
+      >
+        <div className="flex items-center justify-between shrink-0">
+          {identity}
+          <button onClick={onClose} aria-label="Close menu" className="p-3 text-content-faint hover:text-content">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {nav}
+        {footer}
+      </aside>
     </>
   )
 }
