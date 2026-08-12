@@ -167,14 +167,18 @@ export default function StationSidebar({ open, onClose }) {
 
   const nav = (
     <nav className="flex-1 overflow-y-auto py-2">
-      {/* Home leads, as the one emphasised destination. */}
-      <div className={`mb-4 ${iconOnly ? 'flex justify-center' : 'px-1'}`}>
+      {/* Home leads, as the one emphasised destination. Expanded it runs to 70% of the rail
+          and sits centred, so it reads as a single deliberate control rather than another
+          full-bleed row like the nav items under it. Its contents are centred too, or the
+          icon and label would huddle at the left of a box with a wide empty right side.
+          Collapsed it is already a centred 40px square, so that branch is unchanged. */}
+      <div className="mb-4 flex justify-center">
         <Link
           href={home}
           onClick={() => onClose?.()}
           title={iconOnly ? 'Station home' : undefined}
-          className={`flex items-center gap-2 py-2 text-sm font-semibold border-2 border-primary-500/40 dark:border-primary-400/40 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 transition-all ${
-            iconOnly ? 'justify-center w-10' : 'px-3 w-full'
+          className={`flex items-center gap-2 py-2 text-sm font-semibold border-2 border-primary-500/40 dark:border-primary-400/40 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 transition-all justify-center ${
+            iconOnly ? 'w-10' : 'px-3 w-[70%]'
           }`}
         >
           <Home className="w-4 h-4 shrink-0" />
