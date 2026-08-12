@@ -22,7 +22,7 @@ import StationWallet from '@/components/StationWallet'
 import ThemeToggle from '@/components/ThemeToggle'
 import {
   OUTLINE, INPUT, BTN_DANGER, BTN_PRIMARY, BTN_FRAMED, CARD_HOVER, CARD,
-  Button, SectionHeader, RowGroup, Row, Tile, HeroTile,
+  Button, SectionHeader, RowGroup, Row,
 } from '@/components/ui'
 import {
   ENTRY_LINKS, REPORT_LINKS, ALL_PAGE_KEYS, canAccessPage,
@@ -303,10 +303,6 @@ export default function StationPage() {
 
   const entryLinks = ENTRY_LINKS(stationId)
   const reportLinks = REPORT_LINKS(stationId)
-  // Promote the first two daily entry screens into hero tiles, as store-portal does with
-  // New Sale and Orders.
-  const [heroA, heroB, ...restEntries] = entryLinks
-  const entryHeroes = [heroA, heroB].filter(Boolean)
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -386,45 +382,41 @@ export default function StationPage() {
           )
         })()}
 
-        {/* Daily work: the first two entry screens as hero tiles, the rest as the tile grid.
-            Same shape as store-portal's dashboard, which promotes its first two daily actions
-            the same way. A destination the member cannot open stays on the board, dimmed, and
-            explains itself on tap rather than disappearing. */}
+        {/* Entries keep their original tile: a rectangular card sized by its content, icon
+            above the label and its one-line description, two up on a phone and three from sm.
+            Not the square Tile/HeroTile the store-portal launcher uses. Only the colours moved
+            to the shared system. A destination the member cannot open stays on the board,
+            dimmed, and explains itself on tap rather than disappearing. */}
         {entryLinks.length > 0 && (
           <section>
             <SectionHeader>Entries</SectionHeader>
-            {entryHeroes.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-2 sm:mb-3">
-                {entryHeroes.map((link) => (
-                  <HeroTile
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {entryLinks.map((link) => {
+                const allowed = canAccess(link.pageKey)
+                const cls = `flex flex-col gap-2 p-4 ${CARD} ${allowed ? CARD_HOVER : 'opacity-50'}`
+                const inner = (
+                  <>
+                    <link.icon className={`w-5 h-5 ${allowed ? 'text-primary-600 dark:text-primary-300' : 'text-content-faint'}`} />
+                    <div>
+                      <p className="text-sm font-medium text-content">{link.label}</p>
+                      <p className="text-xs text-content-muted leading-snug">{link.desc}</p>
+                    </div>
+                  </>
+                )
+                return allowed ? (
+                  <Link key={link.href} href={link.href} className={cls}>{inner}</Link>
+                ) : (
+                  <button
                     key={link.href}
-                    href={link.href}
-                    label={link.label}
-                    desc={link.desc}
-                    icon={link.icon}
-                    solid
-                    allowed={canAccess(link.pageKey)}
-                    onBlocked={() => setAccessDeniedModal(true)}
-                  />
-                ))}
-              </div>
-            )}
-            {restEntries.length > 0 && (
-              <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
-                {/* No desc: on a square this size the label is the whole message. The hero
-                    tiles keep theirs. */}
-                {restEntries.map((link) => (
-                  <Tile
-                    key={link.href}
-                    href={link.href}
-                    label={link.label}
-                    icon={link.icon}
-                    allowed={canAccess(link.pageKey)}
-                    onBlocked={() => setAccessDeniedModal(true)}
-                  />
-                ))}
-              </div>
-            )}
+                    type="button"
+                    onClick={() => setAccessDeniedModal(true)}
+                    className={`${cls} text-left w-full`}
+                  >
+                    {inner}
+                  </button>
+                )
+              })}
+            </div>
           </section>
         )}
 
