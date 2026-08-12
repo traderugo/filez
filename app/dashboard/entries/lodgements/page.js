@@ -9,6 +9,7 @@ import { db } from '@/lib/db'
 import { lodgementsRepo } from '@/lib/repositories/lodgements'
 import DateInput from '@/components/DateInput'
 import { useSavePush } from '@/components/SavePushProvider'
+import { orderedCreatedAt, byCreatedAt } from '@/lib/entryOrder'
 import { ENTRY_INPUT, ENTRY_DATE, ENTRY_LINE, ENTRY_DIVIDE, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 /** What distinguishes two accounts at the same bank: the POS terminal, or the type. */
@@ -76,7 +77,7 @@ export default function LodgementsFormPage() {
         }
       } else if (editDate) {
         const all = await db.lodgements.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === editDate)
+        const dateEntries = all.filter(e => e.entryDate === editDate).sort(byCreatedAt)
         if (dateEntries.length > 0 && !cancelled) {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
@@ -93,7 +94,7 @@ export default function LodgementsFormPage() {
         // Create mode: auto-load existing entries for today's date
         const today = new Date().toISOString().split('T')[0]
         const all = await db.lodgements.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === today)
+        const dateEntries = all.filter(e => e.entryDate === today).sort(byCreatedAt)
         if (dateEntries.length > 0 && !cancelled) {
           setOriginalIds(dateEntries.map(e => e.id))
           setEntries(dateEntries.map(e => ({
@@ -123,7 +124,7 @@ export default function LodgementsFormPage() {
     setFormDate(newDate)
     if (editId || editDate || !orgId || !newDate) return
     const all = await db.lodgements.where('orgId').equals(orgId).toArray()
-    const dateEntries = all.filter(e => e.entryDate === newDate)
+    const dateEntries = all.filter(e => e.entryDate === newDate).sort(byCreatedAt)
     if (dateEntries.length > 0) {
       setOriginalIds(dateEntries.map(e => e.id))
       setEntries(dateEntries.map(e => ({
@@ -181,6 +182,7 @@ export default function LodgementsFormPage() {
 
     try {
       const now = new Date().toISOString()
+      const nowMs = Date.now()
       const currentIds = entries.filter(e => e.id).map(e => e.id)
 
       if (isEditing) {
@@ -190,7 +192,7 @@ export default function LodgementsFormPage() {
         }
       }
 
-      for (const entry of entries) {
+      for (const [i, entry] of entries.entries()) {
         const record = {
           id: entry.id || crypto.randomUUID(),
           orgId,
@@ -207,7 +209,9 @@ export default function LodgementsFormPage() {
           const existing = await lodgementsRepo.getById(entry.id)
           await lodgementsRepo.update({ ...existing, ...record })
         } else {
-          record.createdAt = now
+          // Distinct, increasing createdAt by position so a multi-entry save keeps its
+          // order when the day is reopened (the loader sorts by createdAt).
+          record.createdAt = orderedCreatedAt(nowMs, i)
           await lodgementsRepo.create(record)
         }
       }

@@ -12,7 +12,7 @@ import { useSavePush } from '@/components/SavePushProvider'
 import { useSubscription } from '@/lib/hooks/useSubscription'
 import { fmtDate } from '@/lib/formatDate'
 import { isDefaultAccount } from '@/lib/defaultAccounts'
-import { orderedCreatedAt } from '@/lib/dailySalesOrder'
+import { orderedCreatedAt, byCreatedAt } from '@/lib/entryOrder'
 import { ENTRY_INPUT, ENTRY_DATE, ENTRY_FILL, ENTRY_LINE, ENTRY_DIVIDE, BTN_DANGER, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 function blankEntry(nozzles, tanks) {
@@ -153,7 +153,7 @@ export default function DailySalesFormPage() {
         const all = await db.dailySales.where('orgId').equals(orgId).toArray()
         const dateEntries = all
           .filter(e => (e.entryDate || e.entry_date) === editDate)
-          .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0))
+          .sort(byCreatedAt)
         if (dateEntries.length > 0 && !cancelled) {
           setFormDate(editDate)
           setLoadedDate(editDate)
@@ -167,7 +167,7 @@ export default function DailySalesFormPage() {
         const all = await db.dailySales.where('orgId').equals(orgId).toArray()
         const dateEntries = all
           .filter(e => (e.entryDate || e.entry_date) === today)
-          .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0))
+          .sort(byCreatedAt)
         if (dateEntries.length > 0 && !cancelled) {
           setOriginalIds(dateEntries.map(e => e.id))
           const built = dateEntries.map(e => entryFromRecord(e, noz, tnk))
@@ -234,7 +234,7 @@ export default function DailySalesFormPage() {
     const all = await db.dailySales.where('orgId').equals(orgId).toArray()
     const dateEntries = all
       .filter(e => (e.entryDate || e.entry_date) === newDate)
-      .sort((a, b) => new Date(a.createdAt || a.created_at || 0) - new Date(b.createdAt || b.created_at || 0))
+      .sort(byCreatedAt)
     if (dateEntries.length > 0) {
       setOriginalIds(dateEntries.map(e => e.id))
       setEntries(dateEntries.map(e => entryFromRecord(e, nozzles, tanks)))

@@ -11,6 +11,7 @@ import { lubeStockRepo } from '@/lib/repositories/lubeStock'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
 import { useSavePush } from '@/components/SavePushProvider'
+import { orderedCreatedAt, byCreatedAt } from '@/lib/entryOrder'
 import { ENTRY_INPUT, ENTRY_DATE, ENTRY_SELECT, ENTRY_LINE, ENTRY_DIVIDE, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 function blankSalesEntry() {
@@ -150,7 +151,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
         }
       } else if (editDate) {
         const all = await db.lubeSales.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === editDate)
+        const dateEntries = all.filter(e => e.entryDate === editDate).sort(byCreatedAt)
         if (dateEntries.length > 0) {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
@@ -167,7 +168,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
         // Create mode: auto-load existing entries for today's date
         const today = new Date().toISOString().split('T')[0]
         const all = await db.lubeSales.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === today)
+        const dateEntries = all.filter(e => e.entryDate === today).sort(byCreatedAt)
         if (dateEntries.length > 0) {
           setOriginalIds(dateEntries.map(e => e.id))
           setEntries(dateEntries.map(e => ({
@@ -190,7 +191,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
     setFormDate(newDate)
     if (editId || editDate || !orgId || !newDate) return
     const all = await db.lubeSales.where('orgId').equals(orgId).toArray()
-    const dateEntries = all.filter(e => e.entryDate === newDate)
+    const dateEntries = all.filter(e => e.entryDate === newDate).sort(byCreatedAt)
     if (dateEntries.length > 0) {
       setOriginalIds(dateEntries.map(e => e.id))
       setEntries(dateEntries.map(e => ({
@@ -231,6 +232,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
 
     try {
       const now = new Date().toISOString()
+      const nowMs = Date.now()
       const currentIds = entries.filter(e => e.id).map(e => e.id)
 
       if (isEditing) {
@@ -240,7 +242,7 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
         }
       }
 
-      for (const entry of entries) {
+      for (const [i, entry] of entries.entries()) {
         const record = {
           id: entry.id || crypto.randomUUID(),
           orgId,
@@ -257,7 +259,9 @@ function LubeSalesForm({ products, qs, orgId, editId, editDate, subBlocked }) {
           const existing = await lubeSalesRepo.getById(entry.id)
           await lubeSalesRepo.update({ ...existing, ...record })
         } else {
-          record.createdAt = now
+          // Distinct, increasing createdAt by position so a multi-entry save keeps its
+          // order when the day is reopened (the loader sorts by createdAt).
+          record.createdAt = orderedCreatedAt(nowMs, i)
           await lubeSalesRepo.create(record)
         }
       }
@@ -370,7 +374,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
         }
       } else if (editDate) {
         const all = await db.lubeStock.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === editDate)
+        const dateEntries = all.filter(e => e.entryDate === editDate).sort(byCreatedAt)
         if (dateEntries.length > 0) {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
@@ -385,7 +389,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
         // Create mode: auto-load existing entries for today's date
         const today = new Date().toISOString().split('T')[0]
         const all = await db.lubeStock.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === today)
+        const dateEntries = all.filter(e => e.entryDate === today).sort(byCreatedAt)
         if (dateEntries.length > 0) {
           setOriginalIds(dateEntries.map(e => e.id))
           setEntries(dateEntries.map(e => ({
@@ -406,7 +410,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
     setFormDate(newDate)
     if (editId || editDate || !orgId || !newDate) return
     const all = await db.lubeStock.where('orgId').equals(orgId).toArray()
-    const dateEntries = all.filter(e => e.entryDate === newDate)
+    const dateEntries = all.filter(e => e.entryDate === newDate).sort(byCreatedAt)
     if (dateEntries.length > 0) {
       setOriginalIds(dateEntries.map(e => e.id))
       setEntries(dateEntries.map(e => ({
@@ -447,6 +451,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
 
     try {
       const now = new Date().toISOString()
+      const nowMs = Date.now()
       const currentIds = entries.filter(e => e.id).map(e => e.id)
 
       if (isEditing) {
@@ -456,7 +461,7 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
         }
       }
 
-      for (const entry of entries) {
+      for (const [i, entry] of entries.entries()) {
         const record = {
           id: entry.id || crypto.randomUUID(),
           orgId,
@@ -471,7 +476,9 @@ function LubeStockForm({ products, qs, orgId, editId, editDate, subBlocked }) {
           const existing = await lubeStockRepo.getById(entry.id)
           await lubeStockRepo.update({ ...existing, ...record })
         } else {
-          record.createdAt = now
+          // Distinct, increasing createdAt by position so a multi-entry save keeps its
+          // order when the day is reopened (the loader sorts by createdAt).
+          record.createdAt = orderedCreatedAt(nowMs, i)
           await lubeStockRepo.create(record)
         }
       }

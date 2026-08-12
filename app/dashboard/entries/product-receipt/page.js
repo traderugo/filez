@@ -10,6 +10,7 @@ import { productReceiptsRepo } from '@/lib/repositories/productReceipts'
 import DateInput from '@/components/DateInput'
 import SearchableSelect from '@/components/SearchableSelect'
 import { useSavePush } from '@/components/SavePushProvider'
+import { orderedCreatedAt, byCreatedAt } from '@/lib/entryOrder'
 import { ENTRY_INPUT, ENTRY_DATE, ENTRY_LINE, ENTRY_DIVIDE, BTN_PRIMARY, BTN_FRAMED } from '@/components/ui'
 
 function blankEntry(tanks) {
@@ -144,7 +145,7 @@ export default function ProductReceiptFormPage() {
         }
       } else if (editDate) {
         const all = await db.productReceipts.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === editDate)
+        const dateEntries = all.filter(e => e.entryDate === editDate).sort(byCreatedAt)
         if (dateEntries.length > 0 && !cancelled) {
           setFormDate(editDate)
           setOriginalIds(dateEntries.map(e => e.id))
@@ -154,7 +155,7 @@ export default function ProductReceiptFormPage() {
         // Create mode: auto-load existing entries for today's date
         const today = new Date().toISOString().split('T')[0]
         const all = await db.productReceipts.where('orgId').equals(orgId).toArray()
-        const dateEntries = all.filter(e => e.entryDate === today)
+        const dateEntries = all.filter(e => e.entryDate === today).sort(byCreatedAt)
         if (dateEntries.length > 0 && !cancelled) {
           setOriginalIds(dateEntries.map(e => e.id))
           setEntries(groupRecordsIntoEntries(dateEntries, tnk))
@@ -180,7 +181,7 @@ export default function ProductReceiptFormPage() {
     setFormDate(newDate)
     if (editId || editDate || !orgId || !newDate) return
     const all = await db.productReceipts.where('orgId').equals(orgId).toArray()
-    const dateEntries = all.filter(e => e.entryDate === newDate)
+    const dateEntries = all.filter(e => e.entryDate === newDate).sort(byCreatedAt)
     if (dateEntries.length > 0) {
       setOriginalIds(dateEntries.map(e => e.id))
       setEntries(groupRecordsIntoEntries(dateEntries, tanks))
@@ -215,6 +216,10 @@ export default function ProductReceiptFormPage() {
 
     try {
       const now = new Date().toISOString()
+      const nowMs = Date.now()
+      // One record per tank, so the counter runs across the whole save rather than
+      // per entry: records come back grouped by entry, tanks in order within each.
+      let seq = 0
 
       // Delete all old records when editing
       if (isEditing) {
@@ -270,7 +275,7 @@ export default function ProductReceiptFormPage() {
             arrivalTime: entry.arrivalTime || '',
             exitTime: entry.exitTime || '',
             notes: entry.notes,
-            createdAt: now,
+            createdAt: orderedCreatedAt(nowMs, seq++),
             updatedAt: now,
           }
           await productReceiptsRepo.create(record)
