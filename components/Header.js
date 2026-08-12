@@ -12,7 +12,7 @@ const PAGE_TITLES = {
   // Dashboard
   '/dashboard': 'Dashboard',
   '/dashboard/subscribe': 'Subscribe',
-  '/dashboard/feedback': 'Feedback',
+  '/dashboard/feedback': 'Help & feedback',
 
   // Entries
   '/dashboard/entries': 'Entries',

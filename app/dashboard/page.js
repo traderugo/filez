@@ -254,7 +254,7 @@ export default function DashboardPage() {
         </Link>
         <Link href="/dashboard/feedback" className={`inline-flex items-center gap-2 p-3 text-sm font-medium text-content-strong ${CARD} ${CARD_HOVER} ${CARD_TILE}`}>
           <span className={`w-8 h-8 flex items-center justify-center ${CARD_ICON}`}><MessageSquare className="w-4 h-4 text-white" /></span>
-          Send feedback
+          Help &amp; feedback
         </Link>
         {isAdmin && (
           <Link href="/admin" className={`inline-flex items-center gap-2 p-3 text-sm font-medium text-content-strong ${CARD} ${CARD_HOVER} ${CARD_TILE}`}>
