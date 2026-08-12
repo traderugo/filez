@@ -78,21 +78,29 @@ export default function StationWallet({
         )}
       </div>
 
-      <div className="relative border-t border-white/30 px-3 py-2 flex items-center gap-2 flex-wrap">
-        <button onClick={onPush} disabled={syncing || allSynced} className={btn}>
-          {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
-          Push
-          {pendingCount > 0 && <span className={COUNT_PIP}>{pendingCount > 9 ? '9+' : pendingCount}</span>}
-        </button>
-        <button onClick={onPull} disabled={refreshing} className={btn}>
-          {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
-          Pull
-        </button>
-        {pendingCount > 0 && (
-          <button onClick={onClear} className="ml-auto text-xs font-semibold text-white/80 hover:text-white underline">
-            Clear queue
+      {/* Same split as store-portal's SyncStatus strip: the quiet control on the left, the two
+          sync buttons together on the right. No "N pending" text beside Clear, unlike store's
+          version, because this card already carries that count as its hero figure just above.
+          justify-between keeps the buttons at the right edge even when Clear is absent. */}
+      <div className="relative border-t border-white/30 px-3 py-2 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 min-w-0">
+          {pendingCount > 0 && (
+            <button onClick={onClear} className="text-xs font-semibold text-white/80 hover:text-white underline">
+              Clear queue
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button onClick={onPush} disabled={syncing || allSynced} className={btn}>
+            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpFromLine className="w-4 h-4" />}
+            Push
+            {pendingCount > 0 && <span className={COUNT_PIP}>{pendingCount > 9 ? '9+' : pendingCount}</span>}
           </button>
-        )}
+          <button onClick={onPull} disabled={refreshing} className={btn}>
+            {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowDownToLine className="w-4 h-4" />}
+            Pull
+          </button>
+        </div>
       </div>
     </div>
   )
