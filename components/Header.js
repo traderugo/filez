@@ -113,13 +113,17 @@ export default function Header({ onMenu }) {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Below lg only: at lg and up the sidebar's Notifications row carries the badge,
-              and two of them on one screen would be a second thing to keep in sync. */}
+          {/* Shown at every width. It used to be lg:hidden, on the grounds that the sidebar's
+              Notifications row already carries the badge above lg, which left the bell simply
+              absent on desktop. The duplication is fine: both read the same useStationUnread
+              hook, so the two counts cannot drift, and the sidebar's copy is a row in a list
+              while this is the persistent alert. */}
           {stationId && (
             <Link
               href={`/dashboard/stations/${stationId}/notifications`}
               aria-label={unread > 0 ? `Notifications (${unread} unread)` : 'Notifications'}
-              className={`lg:hidden relative flex items-center justify-center w-9 h-9 ${OUTLINE} hover:bg-primary-500/20`}
+              title="Notifications"
+              className={`relative flex items-center justify-center w-9 h-9 ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
             >
               <Bell className="w-4 h-4" />
               {unread > 0 && (
