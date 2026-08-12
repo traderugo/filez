@@ -46,3 +46,18 @@ public/sw.js.map
 public/workbox-*.js
 public/workbox-*.js.map
 public/swe-worker-*.js
+
+# Excel lock files, written beside a workbook while it is open. Only the lock files: excel/
+# itself is tracked deliberately (2243 reference workbooks and comparison scripts).
+~$*
+
+# next-pwa fallback bundle, generated on build alongside the workers ignored above
+public/fallback-*.js
+
+# Scratch analysis scripts and their inputs. The underscore prefix is the convention here;
+# scripts/generate-icons.js and generateExtendedTemplate.js are real and stay tracked.
+# _lodgements_tmp.tsv in particular holds live lodgement data and should not be committed.
+scripts/_*
+
+# Editor atomic-write leftovers, e.g. page.js.tmp.6600.1774719328381
+*.tmp.*
