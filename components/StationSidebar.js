@@ -251,15 +251,16 @@ export default function StationSidebar({ open, onClose }) {
       </aside>
 
       {/* Below lg: overlay drawer, matching store-portal's. Kept mounted so it slides rather
-          than appears, and it opens from the LEFT, the same edge the desktop column occupies
-          and the edge the hamburger sits on. The two never co-exist (lg:hidden vs
-          hidden lg:flex), so no one sees the nav on both edges. */}
+          than appears, and it opens from the RIGHT, meeting the hamburger, which sits on the
+          right of the header because the left is the back button's and two navigation
+          controls should not sit adjacent. The desktop column stays on the left; the two
+          never co-exist (lg:hidden vs hidden lg:flex), so no one sees the nav on both edges. */}
       {open && (
         <div className="lg:hidden fixed inset-0 z-40 bg-black/40" onClick={onClose} aria-hidden />
       )}
       <aside
-        className={`lg:hidden fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] flex flex-col bg-surface border-r border-line transition-transform duration-300 ease-in-out ${
-          open ? 'translate-x-0' : '-translate-x-full'
+        className={`lg:hidden fixed top-0 right-0 z-50 h-full w-80 max-w-[85vw] flex flex-col bg-surface border-l border-line transition-transform duration-300 ease-in-out ${
+          open ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-hidden={!open}
         {...(!open && { inert: '' })}

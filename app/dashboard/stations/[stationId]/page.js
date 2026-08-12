@@ -327,10 +327,14 @@ export default function StationPage() {
           <Button href="/dashboard" icon={Fuel} iconClass="w-5 h-5">All Stations</Button>
           {/* Notifications is not here: the sidebar carries the bell, with its unread badge,
               on every screen. This slot goes to the subscription instead, which is where the
-              status block that used to sit at the foot of this page now lives. */}
-          <Button href={`/dashboard/subscribe?org_id=${stationId}`} icon={CreditCard} iconClass="w-5 h-5">
-            Subscription
-          </Button>
+              status block that used to sit at the foot of this page now lives.
+              Owner only, as that block always was. A staff member reaching the subscribe page
+              directly still sees nothing to buy, since it lists owned stations only. */}
+          {isOwner && (
+            <Button href={`/dashboard/subscribe?org_id=${stationId}`} icon={CreditCard} iconClass="w-5 h-5">
+              Subscription
+            </Button>
+          )}
         </div>
 
       {/* Expired subscription notice (non-dismissable) */}

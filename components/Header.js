@@ -104,12 +104,6 @@ export default function Header({ onMenu }) {
       <div className="px-4 sm:px-6 h-14 flex items-center justify-between">
 
         <div className="flex items-center gap-2">
-          {/* Below lg only: at lg and up the sidebar is a permanent column. */}
-          {onMenu && (
-            <button onClick={onMenu} aria-label="Open menu" className="lg:hidden p-1 -ml-1 text-content-strong hover:text-content">
-              <Menu className="w-5 h-5" />
-            </button>
-          )}
           {!isDashboardHome && (
             <button onClick={() => router.back()} className="flex items-center gap-1 text-content-strong hover:text-content">
               <ChevronLeft className="w-5 h-5" />
@@ -146,6 +140,21 @@ export default function Header({ onMenu }) {
             {navigating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Home className="w-4 h-4" />}
             <span>Home</span>
           </Link>
+
+          {/* Below lg only: at lg and up the sidebar is a permanent column. It sits at this
+              end of the bar, matching store-portal, because the drawer opens from the right
+              and the left is the back button's. Two navigation controls should not be
+              adjacent. */}
+          {onMenu && (
+            <button
+              onClick={onMenu}
+              aria-label="Open menu"
+              title="Menu"
+              className={`lg:hidden flex items-center justify-center w-9 h-9 ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </header>
