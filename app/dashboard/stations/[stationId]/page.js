@@ -53,6 +53,8 @@ export default function StationPage() {
   // Staff page access
   const [visiblePages, setVisiblePages] = useState(ALL_PAGE_KEYS) // default: all visible
   const [accessDeniedModal, setAccessDeniedModal] = useState(false)
+  // A platform admin in someone else's station: not the owner, not a member.
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
   // Staff tapping Subscription: the button is shown to everyone, but only an owner can act.
   const [ownerOnlyModal, setOwnerOnlyModal] = useState(false)
 
@@ -145,23 +147,33 @@ export default function StationPage() {
 
   useEffect(() => {
     const load = async () => {
+      // Asked for by id, which routes through hasStationAccess and so admits owners, accepted
+      // members AND platform admins. The list form returns only owned + member stations, so an
+      // admin found nothing here, was pushed to /dashboard, and pushed on to /admin from
+      // there: a closed loop with no way into any station. The setup wizard and the sidebar
+      // already used the by-id form; this brings the hub in line.
       const [orgRes, userRes] = await Promise.all([
-        fetch('/api/organizations'),
+        fetch(`/api/organizations?org_id=${encodeURIComponent(stationId)}`),
         fetch('/api/auth/me'),
       ])
       if (!orgRes.ok) { router.push('/dashboard'); return }
       const data = await orgRes.json()
-      const owned = (data.stations || []).find((st) => st.id === stationId)
-      const member = (data.memberStations || []).find((st) => st.id === stationId)
-      const s = owned || member
+      const s = (data.stations || [])[0]
       if (!s) { router.push('/dashboard'); return }
-      setStation(s)
-      setIsOwner(!!owned)
 
-      if (userRes.ok) {
-        const userData = await userRes.json()
-        setUser(userData.user)
-      }
+      const me = userRes.ok ? (await userRes.json()).user : null
+      setUser(me)
+      setStation(s)
+
+      // Ownership comes from the row, not from which array it arrived in. The by-id form
+      // returns the station under `stations` whoever is asking, so the old `!!owned` would
+      // have made every admin an owner and handed them Staff, Manage Station, rename and
+      // delete on a station that is not theirs.
+      const owned = !!me?.id && s.owner_id === me.id
+      setIsOwner(owned)
+      // Access was granted, so the viewer is the owner, an accepted member, or an admin.
+      // Knowing which of the last two matters: the controls below act on membership.
+      setIsPlatformAdmin(!owned && me?.role === 'admin')
 
       if (owned) {
         const [invRes, dashRes] = await Promise.all([
@@ -471,7 +483,15 @@ export default function StationPage() {
         />
 
         <div className="flex items-center justify-between gap-2 mb-4">
-          <Button href="/dashboard" icon={Fuel} iconClass="w-5 h-5">All Stations</Button>
+          {/* /dashboard redirects an admin to /admin, so for them this button flashed through
+              two redirects to land somewhere it did not name. Point it where it goes. */}
+          <Button
+            href={isPlatformAdmin ? '/admin/settings' : '/dashboard'}
+            icon={Fuel}
+            iconClass="w-5 h-5"
+          >
+            {isPlatformAdmin ? 'All Stations (admin)' : 'All Stations'}
+          </Button>
           {/* Notifications is not here: the sidebar carries the bell, with its unread badge,
               on every screen. This slot goes to the subscription instead, which is where the
               status block that used to sit at the foot of this page now lives.
@@ -697,6 +717,11 @@ export default function StationPage() {
       {/* Leave / sign out, then the appearance footer — the same tail store-portal's
           dashboard carries. */}
       <section className="mt-8 flex items-center gap-2 flex-wrap">
+        {/* Not for a platform admin: leaving goes through the membership route, so on a
+            station they were never invited to it would do nothing at all. The same reasoning
+            already keeps Delete off other people's stations on the admin screen. A button
+            that appears to work and does not is worse than no button. */}
+        {!isPlatformAdmin && (
         <button
           onClick={leaveStation}
           disabled={leaving}
@@ -705,6 +730,7 @@ export default function StationPage() {
           {leaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
           Leave Station
         </button>
+        )}
         <button
           onClick={handleSignOut}
           className={`flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_FRAMED}`}

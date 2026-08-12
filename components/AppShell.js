@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
 import StationSidebar from './StationSidebar'
 import Footer from './Footer'
+import AdminViewingBanner from './AdminViewingBanner'
 
 import NavigationLoader from './NavigationLoader'
 import { supabase } from '@/lib/supabaseClient'
@@ -94,6 +95,9 @@ export default function AppShell({ children }) {
       <div className="flex flex-col flex-1 min-w-0">
         <Suspense fallback={null}><NavigationLoader /></Suspense>
         <Suspense fallback={null}><Header onMenu={() => setDrawerOpen(true)} /></Suspense>
+        {/* Reads useSearchParams, so it shares the Suspense boundary the header needs.
+            Renders nothing unless a platform admin is inside a station they do not own. */}
+        <Suspense fallback={null}><AdminViewingBanner /></Suspense>
         <main className="flex-1">{children}</main>
         {!isReport && <Footer app />}
       </div>
