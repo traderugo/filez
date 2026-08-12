@@ -130,15 +130,18 @@ export default function Header({ onMenu }) {
             </Link>
           )}
 
-          {/* OUTLINE is the design system's control look. Padding and text size are left
-              exactly as they were so the header's 14-unit row does not shift. */}
+          {/* Icon-only, matching store-portal: the label was buying width from the page title
+              for a destination the house icon already names, and the hamburger shares this end
+              of the bar. w-9 h-9 so the two read as a matched pair. The name moves to
+              aria-label and title, so it is still announced and still hoverable. */}
           <Link
             href={homeHref}
             onClick={handleHomeClick}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
+            aria-label="Home"
+            title="Home"
+            className={`flex items-center justify-center w-9 h-9 ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
           >
             {navigating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Home className="w-4 h-4" />}
-            <span>Home</span>
           </Link>
 
           {/* Below lg only: at lg and up the sidebar is a permanent column. It sits at this
