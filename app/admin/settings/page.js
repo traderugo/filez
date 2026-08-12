@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, Fragment } from 'react'
-import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus, FolderOpen, ChevronRight, ChevronDown, ExternalLink } from 'lucide-react'
+import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus, FolderOpen, ChevronRight, ChevronDown, ExternalLink, Gift } from 'lucide-react'
+import Modal from '@/components/Modal'
 import Link from 'next/link'
 import SearchableSelect from '@/components/SearchableSelect'
 import {
@@ -18,6 +19,12 @@ export default function AdminSettingsPage() {
   // list are tall, and several open at once turns the table back into the wall of
   // cards it replaced.
   const [expanded, setExpanded] = useState(null)
+  // Grant subscription: { station } while the modal is open.
+  const [grantFor, setGrantFor] = useState(null)
+  const [grantMonths, setGrantMonths] = useState('1')
+  const [granting, setGranting] = useState(false)
+  const [grantError, setGrantError] = useState('')
+  const [grantDone, setGrantDone] = useState('')
   const [loading, setLoading] = useState(true)
 
   // Add station
@@ -230,6 +237,35 @@ export default function AdminSettingsPage() {
    * the result was ignored entirely, which is why an assignment that saved nothing still
    * looked like it had worked until the page was reloaded.
    */
+
+  /**
+   * Grant a station every service for a number of months, without payment.
+   *
+   * The list is refreshed afterwards rather than patched locally: the grant writes a
+   * subscription, its items and a station message server-side, and guessing at that from here
+   * would be a second, drifting copy of the same truth.
+   */
+  const grantSubscription = async () => {
+    if (!grantFor) return
+    setGranting(true)
+    setGrantError('')
+    const res = await fetch('/api/admin/grant-subscription', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ org_id: grantFor.id, months: Number(grantMonths) }),
+    })
+    const data = await res.json().catch(() => ({}))
+    setGranting(false)
+    if (!res.ok) {
+      setGrantError(data.error || 'Failed to grant the subscription')
+      return
+    }
+    setGrantFor(null)
+    setGrantMonths('1')
+    setGrantDone(data.message || 'Subscription granted.')
+    loadData()
+  }
+
   const assignGroup = async (stationId, groupId) => {
     const previous = stations.find((s) => s.id === stationId)?.station_group ?? null
     const name = groups.find((g) => g.id === groupId)?.name || null
@@ -344,6 +380,9 @@ export default function AdminSettingsPage() {
       )}
 
       {/* Station list */}
+      {grantDone && (
+        <p className="text-sm text-green-700 dark:text-green-300 mb-3">{grantDone}</p>
+      )}
       {/* A table, not a card per station: this screen exists to compare stations against each
           other, and stacked panels made that impossible. Uses the report chrome so it reads as
           the same furniture as every other dense table in the app. Management that cannot fit
@@ -439,6 +478,13 @@ export default function AdminSettingsPage() {
                             {station.onboarding_complete ? 'Open' : 'Run setup'}
                             <ExternalLink className="w-3 h-3" />
                           </Link>
+                          <button
+                            onClick={() => { setGrantFor(station); setGrantMonths('1'); setGrantError(''); setGrantDone('') }}
+                            title="Grant subscription"
+                            className="p-1.5 text-content-faint hover:text-primary-600 dark:hover:text-primary-300"
+                          >
+                            <Gift className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => { setEditingId(station.id); setEditName(station.name) }}
                             title="Rename"
@@ -537,6 +583,60 @@ export default function AdminSettingsPage() {
           </table>
         </div>
       )}
+
+      {/* Grant subscription. Says plainly what it does, because it bypasses payment entirely
+          and the admin should not have to infer that from a duration box. */}
+      <Modal
+        open={!!grantFor}
+        onClose={() => { if (!granting) { setGrantFor(null); setGrantError('') } }}
+        title="Grant subscription"
+      >
+        {grantFor && (
+          <div className="space-y-4">
+            <p className="text-sm text-content-muted">
+              Give <span className="font-semibold text-content">{grantFor.name}</span> every
+              service free of charge. No payment is taken and nothing needs approving: the
+              station is active as soon as you confirm, and its owner is told.
+            </p>
+
+            <div>
+              <label htmlFor="grant-months" className="block text-sm font-semibold text-content mb-1.5">
+                Months
+              </label>
+              <input
+                id="grant-months"
+                type="number"
+                min={1}
+                max={24}
+                value={grantMonths}
+                onChange={(e) => { setGrantMonths(e.target.value); setGrantError('') }}
+                className={INPUT}
+              />
+              <p className="text-xs text-content-muted mt-1">Between 1 and 24.</p>
+            </div>
+
+            {grantError && <p className="text-sm text-red-600 dark:text-red-400">{grantError}</p>}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setGrantFor(null); setGrantError('') }}
+                disabled={granting}
+                className={`flex-1 py-2 text-sm font-medium disabled:opacity-50 ${BTN_FRAMED}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={grantSubscription}
+                disabled={granting}
+                className={`flex-1 py-2 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 ${SOLID_ACTION}`}
+              >
+                {granting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Gift className="w-4 h-4" />}
+                Grant
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
