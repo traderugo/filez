@@ -2,8 +2,11 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, ShoppingCart, ArrowRight, Fuel, Calendar } from 'lucide-react'
+import { Loader2, ShoppingCart, ArrowRight, Fuel, Calendar, Clock } from 'lucide-react'
+import { differenceInDays } from 'date-fns'
 import SearchableSelect from '@/components/SearchableSelect'
+import SubscriptionBadge from '@/components/SubscriptionBadge'
+import { fmtDate } from '@/lib/formatDate'
 import { INPUT_BASE, BTN_PRIMARY, CARD } from '@/components/ui'
 
 export default function SubscribePage() {
@@ -140,6 +143,9 @@ function SubscribeContent() {
   }
 
   // Show active subscription info
+  const daysLeft = subscription?.end_date
+    ? differenceInDays(new Date(subscription.end_date), new Date())
+    : null
   const hasApproved = subscription?.status === 'approved'
   const hasPendingApproval = subscription?.status === 'pending_approval'
 
@@ -172,16 +178,37 @@ function SubscribeContent() {
         )}
       </div>
 
-      {/* Subscription status for selected station */}
-      {hasApproved && (
-        <div className="bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-900/50 px-4 py-3 mb-6 text-sm text-green-800">
-          This station has an active subscription (expires {subscription.end_date}).
-        </div>
-      )}
-      {hasPendingApproval && (
-        <div className="bg-primary-50 dark:bg-primary-950/40 border border-primary-500/40 px-4 py-3 mb-6 text-sm text-primary-800">
-          This station has a subscription awaiting admin approval.
-        </div>
+      {/* Current subscription for the selected station. This block used to sit at the foot of
+          the station hub; it belongs on the page the Subscription button now opens.
+          No "Subscribe now" call to action, unlike the hub's version: the form below IS that
+          action. No pending_payment branch either, because that status redirects to the pay
+          page above before this renders. */}
+      {subscription && (
+        <section className={`p-4 mb-6 ${CARD}`}>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-semibold text-content uppercase tracking-wide">Current subscription</h2>
+            <SubscriptionBadge status={subscription.status} />
+          </div>
+          {hasApproved ? (
+            <div className="flex items-center gap-2 text-sm text-content-muted">
+              <Clock className="w-4 h-4" />
+              Expires {fmtDate(subscription.end_date)}
+              {daysLeft !== null && daysLeft <= 7 && (
+                <span className="text-orange-500 dark:text-orange-300 font-medium">({daysLeft} days left)</span>
+              )}
+            </div>
+          ) : hasPendingApproval ? (
+            <p className="text-sm text-content-muted">
+              Your payment proof is being reviewed. You&apos;ll be notified once approved.
+            </p>
+          ) : (
+            <p className="text-sm text-content-muted">
+              {subscription.status === 'expired' ? 'Your subscription has expired.' :
+               subscription.status === 'rejected' ? 'Your subscription was rejected.' :
+               'You don\'t have an active subscription.'}
+            </p>
+          )}
+        </section>
       )}
 
       {services.length === 0 ? (

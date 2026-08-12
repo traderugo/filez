@@ -4,16 +4,14 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Loader2, Fuel, Settings, UserPlus, Mail, LogOut, Clock,
+  Loader2, Fuel, Settings, UserPlus, Mail, LogOut,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, Bell, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
+  FileText, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
-import SubscriptionBadge from '@/components/SubscriptionBadge'
 import { differenceInDays } from 'date-fns'
-import { fmtDate } from '@/lib/formatDate'
 import { db } from '@/lib/db'
 import { processQueue, clearQueue } from '@/lib/sync'
 import { initialSync } from '@/lib/initialSync'
@@ -327,8 +325,11 @@ export default function StationPage() {
 
         <div className="flex items-center justify-between gap-2 mb-4">
           <Button href="/dashboard" icon={Fuel} iconClass="w-5 h-5">All Stations</Button>
-          <Button href={`/dashboard/stations/${stationId}/notifications`} icon={Bell} iconClass="w-5 h-5">
-            Notifications
+          {/* Notifications is not here: the sidebar carries the bell, with its unread badge,
+              on every screen. This slot goes to the subscription instead, which is where the
+              status block that used to sit at the foot of this page now lives. */}
+          <Button href={`/dashboard/subscribe?org_id=${stationId}`} icon={CreditCard} iconClass="w-5 h-5">
+            Subscription
           </Button>
         </div>
 
@@ -438,64 +439,6 @@ export default function StationPage() {
             ))}
           </RowGroup>
         </section>
-
-      {/* Subscription (owner only) */}
-      {isOwner && (() => {
-        const daysLeft = subscription?.end_date
-          ? differenceInDays(new Date(subscription.end_date), new Date())
-          : null
-        return (
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-content uppercase tracking-wide">Subscription</h2>
-              {subscription && <SubscriptionBadge status={subscription.status} />}
-            </div>
-
-            {subscription?.status === 'approved' ? (
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-content-muted">
-                  <Clock className="w-4 h-4" />
-                  Expires {fmtDate(subscription.end_date)}
-                  {daysLeft !== null && daysLeft <= 7 && (
-                    <span className="text-orange-500 dark:text-orange-300 font-medium">({daysLeft} days left)</span>
-                  )}
-                </div>
-                {daysLeft !== null && daysLeft <= 7 && (
-                  <Link href="/dashboard/subscribe" className="inline-flex items-center gap-1 text-primary-600 hover:underline text-sm font-medium">
-                    <CreditCard className="w-4 h-4" /> Renew now
-                  </Link>
-                )}
-              </div>
-            ) : subscription?.status === 'pending_payment' ? (
-              <div>
-                <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">You have a subscription awaiting payment.</p>
-                <Link
-                  href={`/dashboard/subscribe/pay/${subscription.id}`}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}
-                >
-                  <CreditCard className="w-4 h-4" /> Complete payment
-                </Link>
-              </div>
-            ) : subscription?.status === 'pending_approval' ? (
-              <p className="text-sm text-primary-700">Your payment proof is being reviewed. You&apos;ll be notified once approved.</p>
-            ) : (
-              <div>
-                <p className="text-sm text-content-muted mb-3">
-                  {subscription?.status === 'expired' ? 'Your subscription has expired.' :
-                   subscription?.status === 'rejected' ? 'Your subscription was rejected.' :
-                   'You don\'t have an active subscription.'}
-                </p>
-                <Link
-                  href={`/dashboard/subscribe?org_id=${stationId}`}
-                  className={`inline-flex items-center gap-2 px-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}
-                >
-                  <CreditCard className="w-4 h-4" /> Subscribe now
-                </Link>
-              </div>
-            )}
-          </section>
-        )
-      })()}
 
       {/* Staff (owner only) */}
       {isOwner && (
