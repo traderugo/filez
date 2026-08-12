@@ -2,7 +2,8 @@
  * Premeval brand mark: the lowercase "p" with an orange dot. Self-contained SVG.
  *
  * variant: 'full' (blue p + orange dot, default)
- *          'icon' (blue rounded square + white p and dot, for app icons and auth screens)
+ *          'icon' (blue p + orange dot on a white card, for app icons and anywhere the mark
+ *                  needs to carry its own background)
  *          'dark' (white p + orange dot, for dark backgrounds)
  *
  * Colours are sampled from wacart/public/icons/logo-dp.png, which is the current mark.

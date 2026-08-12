@@ -21,11 +21,13 @@ export default function Footer({ app = false }) {
         )}
         <span>&copy; {new Date().getFullYear()} StationMGR</span>
 
-        {/* One mark in both themes. The blue "p" and its orange dot are the brand's own
-            colours, not palette tokens, so they stay put rather than swapping with the theme. */}
+        {/* The `icon` variant: the mark on its own white card, which is the artwork's own
+            framing. It carries its background with it, so one copy reads on both themes and
+            no dark-mode swap is needed. A shade larger than the bare mark was, because the
+            card holds roughly 14% air around the glyph. */}
         <span className="flex items-center gap-1.5 mt-1">
           Powered by
-          <PremevalLogo className="w-4 h-4" />
+          <PremevalLogo variant="icon" className="w-5 h-5" />
           <span className="font-semibold text-content-muted">Premeval Digital</span>
         </span>
       </div>
