@@ -23,7 +23,7 @@ import {
   Button, SectionHeader, RowGroup, Row,
 } from '@/components/ui'
 import {
-  ENTRY_LINKS, REPORT_LINKS, ALL_PAGE_KEYS, canAccessPage,
+  ENTRY_LINKS, REPORT_SECTIONS, ALL_PAGE_KEYS, canAccessPage,
   ENTRY_PERMISSION_OPTIONS as ENTRY_PAGE_OPTIONS,
   REPORT_PERMISSION_OPTIONS as REPORT_PAGE_OPTIONS,
 } from '@/lib/stationNav'
@@ -300,7 +300,7 @@ export default function StationPage() {
   const canAccess = (pageKey) => canAccessPage(pageKey, { isOwner, visiblePages })
 
   const entryLinks = ENTRY_LINKS(stationId)
-  const reportLinks = REPORT_LINKS(stationId)
+  const reportSections = REPORT_SECTIONS(stationId)
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -425,24 +425,28 @@ export default function StationPage() {
           </section>
         )}
 
-        {/* Reports: eleven destinations, so compact rows rather than a wall of tiles —
-            store-portal's rule that secondary destinations are rows. */}
-        <section className="mt-6">
-          <SectionHeader>Reports</SectionHeader>
-          <RowGroup>
-            {reportLinks.map((link) => (
-              <Row
-                key={link.href}
-                href={link.href}
-                label={link.label}
-                desc={link.desc}
-                icon={link.icon}
-                allowed={canAccess(link.pageKey)}
-                onBlocked={() => setAccessDeniedModal(true)}
-              />
-            ))}
-          </RowGroup>
-        </section>
+        {/* Reports, grouped by domain: compact rows rather than a wall of tiles, which is
+            store-portal's rule for secondary destinations, and one RowGroup per group, which
+            is how its reports hub lays the same catalog out. The grouping lives in
+            lib/stationNav.js so the hub and the sidebar read one list. */}
+        {reportSections.map((section) => (
+          <section key={section.title} className="mt-6">
+            <SectionHeader>{section.title}</SectionHeader>
+            <RowGroup>
+              {section.items.map((link) => (
+                <Row
+                  key={link.href}
+                  href={link.href}
+                  label={link.label}
+                  desc={link.desc}
+                  icon={link.icon}
+                  allowed={canAccess(link.pageKey)}
+                  onBlocked={() => setAccessDeniedModal(true)}
+                />
+              ))}
+            </RowGroup>
+          </section>
+        ))}
 
       {/* Staff (owner only) */}
       {isOwner && (
