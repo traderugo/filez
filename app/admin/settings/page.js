@@ -36,6 +36,8 @@ export default function AdminSettingsPage() {
   const [newGroup, setNewGroup] = useState('')
   const [addingGroup, setAddingGroup] = useState(false)
   const [groupError, setGroupError] = useState('')
+  // { stationId, message }: an assignment failure belongs beside the row it happened on.
+  const [assignError, setAssignError] = useState(null)
 
   const loadData = async () => {
     const [stationsRes, groupsRes] = await Promise.all([
@@ -198,26 +200,50 @@ export default function AdminSettingsPage() {
       })
       if (res.ok) {
         setGroups((prev) => prev.filter((g) => g.id !== id))
+        // Mirrors ON DELETE SET NULL, which is what actually unsets them server-side now.
         if (deleted) {
           setStations((prev) => prev.map((s) =>
             s.station_group === deleted.name ? { ...s, station_group: null } : s
           ))
         }
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setGroupError(data.error || 'Failed to delete group')
       }
     } finally {
       setBusyAction(null)
     }
   }
 
-  const assignGroup = async (stationId, groupName) => {
+  /**
+   * Assign or clear a station's group.
+   *
+   * The optimistic update is kept, because the dropdown should not lag a round trip, but the
+   * response is now checked and the previous value put back when the write fails. Previously
+   * the result was ignored entirely, which is why an assignment that saved nothing still
+   * looked like it had worked until the page was reloaded.
+   */
+  const assignGroup = async (stationId, groupId) => {
+    const previous = stations.find((s) => s.id === stationId)?.station_group ?? null
+    const name = groups.find((g) => g.id === groupId)?.name || null
+    setAssignError(null)
     setStations((prev) => prev.map((s) =>
-      s.id === stationId ? { ...s, station_group: groupName || null } : s
+      s.id === stationId ? { ...s, station_group: name } : s
     ))
-    await fetch('/api/station-groups', {
+
+    const res = await fetch('/api/station-groups', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ station_id: stationId, group_name: groupName || null }),
+      body: JSON.stringify({ station_id: stationId, group_id: groupId || null }),
     })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      setStations((prev) => prev.map((s) =>
+        s.id === stationId ? { ...s, station_group: previous } : s
+      ))
+      setAssignError({ stationId, message: data.error || 'Could not change the group. Try again.' })
+    }
   }
 
   if (loading) {
@@ -384,13 +410,16 @@ export default function AdminSettingsPage() {
                   <label className="text-xs text-content-muted shrink-0">Group:</label>
                   <div className={`flex-1 ${CARD}`}>
                     <SearchableSelect
-                      value={station.station_group || ''}
+                      value={groups.find((g) => g.name === station.station_group)?.id || ''}
                       onChange={(val) => assignGroup(station.id, val)}
-                      options={[{ value: '', label: 'None' }, ...groups.map((g) => ({ value: g.name, label: g.name }))]}
+                      options={[{ value: '', label: 'None' }, ...groups.map((g) => ({ value: g.id, label: g.name }))]}
                       placeholder="None"
                     />
                   </div>
                 </div>
+              )}
+              {assignError?.stationId === station.id && (
+                <p className="text-xs text-red-600 dark:text-red-400 mb-3">{assignError.message}</p>
               )}
 
               {/* Invite staff by email */}

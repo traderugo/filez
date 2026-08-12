@@ -35,13 +35,13 @@ export async function GET(request) {
       if (!ok) return NextResponse.json({ error: 'Station not found' }, { status: 404 })
 
       const { data: station } = await supabase
-        .from('organizations').select('*').eq('id', orgId).maybeSingle()
+        .from('organizations').select('*, station_groups(name)').eq('id', orgId).maybeSingle()
       // Returned under `stations` so callers can read it the same way as the list form.
-      return NextResponse.json({ stations: station ? [station] : [], memberStations: [] })
+      return NextResponse.json({ stations: station ? [withGroupName(station)] : [], memberStations: [] })
     }
     const { data: stations } = await supabase
       .from('organizations')
-      .select('*')
+      .select('*, station_groups(name)')
       .eq('owner_id', user.id)
       .order('created_at')
 
@@ -58,10 +58,24 @@ export async function GET(request) {
       .filter(Boolean)
       .filter(org => !ownedIds.has(org.id))
 
-    return NextResponse.json({ stations: stations || [], memberStations })
+    return NextResponse.json({ stations: (stations || []).map(withGroupName), memberStations })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
+}
+
+/**
+ * Flatten the embedded group onto the shape callers already read.
+ *
+ * organizations still carries the old station_group TEXT column, which migration 054 left in
+ * place but application code no longer writes. Returning the row untouched would hand callers
+ * that stale text; this replaces it with the joined name, so `station_group` keeps meaning
+ * "the group's name" and nothing downstream had to change.
+ */
+function withGroupName(station) {
+  if (!station) return station
+  const { station_groups, ...rest } = station
+  return { ...rest, station_group: station_groups?.name || null }
 }
 
 // POST — create a new station

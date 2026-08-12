@@ -25,7 +25,9 @@ export async function GET() {
     const supabase = getAdminClient()
     const { data: stations } = await supabase
       .from('organizations')
-      .select('id, name, slug, location, station_group, onboarding_complete, owner_id, created_at')
+      // station_group_id is the link; the embedded name is what the screen shows. The old
+      // station_group text column is no longer read (migration 054).
+      .select('id, name, slug, location, station_group_id, station_groups(name), onboarding_complete, owner_id, created_at')
       .order('created_at', { ascending: false })
 
     // The owner's name/email, so the screen can say whose station it is rather than
@@ -41,6 +43,10 @@ export async function GET() {
     return NextResponse.json({
       stations: (stations || []).map((s) => ({
         ...s,
+        // Flattened back to `station_group` so every consumer keeps reading one field for the
+        // group's name, whether it came from the old text column or this join.
+        station_group: s.station_groups?.name || null,
+        station_groups: undefined,
         owner_name: owners[s.owner_id]?.name || owners[s.owner_id]?.email || '',
         // Rename and delete still go through the owner-gated tenant route, so the screen
         // must know which stations those controls can actually act on.
