@@ -21,17 +21,11 @@ export default function Footer({ app = false }) {
         )}
         <span>&copy; {new Date().getFullYear()} StationMGR</span>
 
-        {/*
-          Two copies of the mark, one shown per theme. The default variant is the blue "p",
-          which reads on a light panel; `dark` is the white "p" with the same orange dot, for
-          the dark surface. A single copy would have to pick one and be wrong in the other
-          theme, and the mark's colours are deliberately its own constants rather than the UI
-          palette, so they cannot be swapped with a token.
-        */}
+        {/* One mark in both themes. The blue "p" and its orange dot are the brand's own
+            colours, not palette tokens, so they stay put rather than swapping with the theme. */}
         <span className="flex items-center gap-1.5 mt-1">
           Powered by
-          <PremevalLogo className="w-4 h-4 dark:hidden" />
-          <PremevalLogo variant="dark" className="w-4 h-4 hidden dark:block" />
+          <PremevalLogo className="w-4 h-4" />
           <span className="font-semibold text-content-muted">Premeval Digital</span>
         </span>
       </div>
