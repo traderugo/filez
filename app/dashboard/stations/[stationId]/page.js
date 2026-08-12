@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  Loader2, Fuel, Settings, UserPlus, Mail, LogOut,
+  Loader2, Fuel, Settings, Mail, LogOut,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
   FileText, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
@@ -302,6 +302,151 @@ export default function StationPage() {
   const entryLinks = ENTRY_LINKS(stationId)
   const reportSections = REPORT_SECTIONS(stationId)
 
+  /**
+   * Staff, as a box in the second report column rather than a full-width band below the grid.
+   * That column holds one short group, so it had a tall empty run beside Sales and Stock; this
+   * fills it, and a bordered box makes Staff read as a peer of the RowGroups around it rather
+   * than a loose stack of controls.
+   */
+  const staffSection = isOwner ? (
+    <section className="mt-6 lg:mt-0 lg:mb-6">
+      <SectionHeader>Staff</SectionHeader>
+      <div className={`p-3 ${CARD}`}>
+          <button
+            onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInviteError('') }}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium mb-4 ${BTN_PRIMARY}`}
+          >
+            <Plus className="w-4 h-4" /> Invite Staff
+          </button>
+
+          {/* Rows inside the box, not cards. Each invite carried its own CARD, which nested a
+              bordered box inside a bordered box once Staff became one. Divided rows are what
+              RowGroup does beside this. The negative margins let the run meet the box's edges,
+              with a rule above it separating the list from the Invite button. */}
+          {invites.length > 0 && (
+            <div className="-mx-3 -mb-3 border-t-2 border-primary-500/40 dark:border-primary-400/40 divide-y divide-line">
+              {invites.map((inv) => {
+                const isExpanded = expandedStaff === inv.id
+                const pages = inv.visible_pages || []
+                return (
+                  <div key={inv.id}>
+                    {/* Staff header row */}
+                    <div className="flex items-center justify-between p-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-8 h-8 bg-primary-50 dark:bg-primary-950/40 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Mail className="w-4 h-4 text-primary-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-content truncate">{inv.email}</p>
+                          <span className={`inline-block text-sm px-2 py-0.5 rounded-full font-medium mt-0.5 ${
+                            inv.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                            inv.status === 'declined' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                            'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                          }`}>
+                            {inv.status}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setExpandedStaff(isExpanded ? null : inv.id)}
+                        className="p-2 text-content-faint hover:text-content-muted"
+                        title="Page access"
+                      >
+                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
+
+                    {/* Expanded: page permissions + delete */}
+                    {isExpanded && (
+                      <div className="border-t border-line px-3 py-3 bg-subtle">
+                        <p className="text-xs font-semibold text-content-muted uppercase tracking-wide mb-2">Entries</p>
+                        <div className="space-y-2 mb-3">
+                          {ENTRY_PAGE_OPTIONS.map((page) => (
+                            <label key={page.key} className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={pages.includes(page.key)}
+                                onChange={() => togglePagePermission(inv.id, page.key, pages)}
+                                className="rounded border-line text-primary-600 focus:ring-primary-500 w-4 h-4"
+                              />
+                              <span className="text-sm text-content-strong">{page.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        <p className="text-xs font-semibold text-content-muted uppercase tracking-wide mb-2">Reports</p>
+                        <div className="space-y-2 mb-4">
+                          {REPORT_PAGE_OPTIONS.map((page) => (
+                            <div key={page.key}>
+                              <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={page.children
+                                    ? page.children.every(c => pages.includes(c.key))
+                                    : pages.includes(page.key)
+                                  }
+                                  ref={page.children ? (el) => {
+                                    if (el) el.indeterminate = page.children.some(c => pages.includes(c.key)) && !page.children.every(c => pages.includes(c.key))
+                                  } : undefined}
+                                  onChange={() => {
+                                    if (page.children) {
+                                      const allChecked = page.children.every(c => pages.includes(c.key))
+                                      const childKeys = page.children.map(c => c.key)
+                                      const base = pages.filter(p => !childKeys.includes(p) && p !== page.key)
+                                      const updated = allChecked ? base : [...base, page.key, ...childKeys]
+                                      setInvites((prev) => prev.map((i) => i.id === inv.id ? { ...i, visible_pages: updated } : i))
+                                      fetch('/api/invites/permissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invite_id: inv.id, visible_pages: updated }) })
+                                    } else {
+                                      togglePagePermission(inv.id, page.key, pages)
+                                    }
+                                  }}
+                                  className="rounded border-line text-primary-600 focus:ring-primary-500 w-4 h-4"
+                                />
+                                <span className="text-sm text-content-strong">{page.label}</span>
+                              </label>
+                              {page.children && (
+                                <div className="ml-6 mt-1 space-y-1">
+                                  {page.children.map((child) => (
+                                    <label key={child.key} className="flex items-center gap-2 cursor-pointer">
+                                      <input
+                                        type="checkbox"
+                                        checked={pages.includes(child.key)}
+                                        onChange={() => {
+                                          const updated = pages.includes(child.key)
+                                            ? pages.filter(p => p !== child.key)
+                                            : [...pages, child.key]
+                                          // Also ensure parent key is present if any child is checked
+                                          const hasChild = page.children.some(c => updated.includes(c.key))
+                                          const withParent = hasChild && !updated.includes(page.key) ? [...updated, page.key] : hasChild ? updated : updated.filter(p => p !== page.key)
+                                          setInvites((prev) => prev.map((i) => i.id === inv.id ? { ...i, visible_pages: withParent } : i))
+                                          fetch('/api/invites/permissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invite_id: inv.id, visible_pages: withParent }) })
+                                        }}
+                                        className="rounded border-line text-primary-600 focus:ring-primary-500 w-3.5 h-3.5"
+                                      />
+                                      <span className="text-xs text-content-muted">{child.label}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => setDeleteModal({ id: inv.id, email: inv.email })}
+                          className={`flex items-center gap-2 px-3 py-2 text-sm font-medium ${BTN_DANGER}`}
+                        >
+                          <Trash2 className="w-4 h-4" /> Remove Staff
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+      </div>
+    </section>
+  ) : null
+
   return (
     <div className="min-h-screen bg-canvas">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-8">
@@ -459,146 +604,10 @@ export default function StationPage() {
                   </RowGroup>
                 </section>
               ))}
+              {col === 2 && staffSection}
             </div>
           ))}
         </div>
-
-      {/* Staff (owner only) */}
-      {isOwner && (
-        <section className="mb-8">
-          <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3 flex items-center gap-2">
-            <UserPlus className="w-4 h-4" /> Staff
-          </h2>
-
-          <button
-            onClick={() => { setShowInviteModal(true); setInviteEmail(''); setInviteError('') }}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium mb-4 ${BTN_PRIMARY}`}
-          >
-            <Plus className="w-4 h-4" /> Invite Staff
-          </button>
-
-          {invites.length > 0 && (
-            <div className="space-y-2">
-              {invites.map((inv) => {
-                const isExpanded = expandedStaff === inv.id
-                const pages = inv.visible_pages || []
-                return (
-                  <div key={inv.id} className={`${CARD}`}>
-                    {/* Staff header row */}
-                    <div className="flex items-center justify-between p-3">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 bg-primary-50 dark:bg-primary-950/40 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Mail className="w-4 h-4 text-primary-600" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-content truncate">{inv.email}</p>
-                          <span className={`inline-block text-sm px-2 py-0.5 rounded-full font-medium mt-0.5 ${
-                            inv.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                            inv.status === 'declined' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
-                            'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                          }`}>
-                            {inv.status}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setExpandedStaff(isExpanded ? null : inv.id)}
-                        className="p-2 text-content-faint hover:text-content-muted"
-                        title="Page access"
-                      >
-                        <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                      </button>
-                    </div>
-
-                    {/* Expanded: page permissions + delete */}
-                    {isExpanded && (
-                      <div className="border-t border-line px-3 py-3 bg-subtle">
-                        <p className="text-xs font-semibold text-content-muted uppercase tracking-wide mb-2">Entries</p>
-                        <div className="space-y-2 mb-3">
-                          {ENTRY_PAGE_OPTIONS.map((page) => (
-                            <label key={page.key} className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={pages.includes(page.key)}
-                                onChange={() => togglePagePermission(inv.id, page.key, pages)}
-                                className="rounded border-line text-primary-600 focus:ring-primary-500 w-4 h-4"
-                              />
-                              <span className="text-sm text-content-strong">{page.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                        <p className="text-xs font-semibold text-content-muted uppercase tracking-wide mb-2">Reports</p>
-                        <div className="space-y-2 mb-4">
-                          {REPORT_PAGE_OPTIONS.map((page) => (
-                            <div key={page.key}>
-                              <label className="flex items-center gap-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={page.children
-                                    ? page.children.every(c => pages.includes(c.key))
-                                    : pages.includes(page.key)
-                                  }
-                                  ref={page.children ? (el) => {
-                                    if (el) el.indeterminate = page.children.some(c => pages.includes(c.key)) && !page.children.every(c => pages.includes(c.key))
-                                  } : undefined}
-                                  onChange={() => {
-                                    if (page.children) {
-                                      const allChecked = page.children.every(c => pages.includes(c.key))
-                                      const childKeys = page.children.map(c => c.key)
-                                      const base = pages.filter(p => !childKeys.includes(p) && p !== page.key)
-                                      const updated = allChecked ? base : [...base, page.key, ...childKeys]
-                                      setInvites((prev) => prev.map((i) => i.id === inv.id ? { ...i, visible_pages: updated } : i))
-                                      fetch('/api/invites/permissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invite_id: inv.id, visible_pages: updated }) })
-                                    } else {
-                                      togglePagePermission(inv.id, page.key, pages)
-                                    }
-                                  }}
-                                  className="rounded border-line text-primary-600 focus:ring-primary-500 w-4 h-4"
-                                />
-                                <span className="text-sm text-content-strong">{page.label}</span>
-                              </label>
-                              {page.children && (
-                                <div className="ml-6 mt-1 space-y-1">
-                                  {page.children.map((child) => (
-                                    <label key={child.key} className="flex items-center gap-2 cursor-pointer">
-                                      <input
-                                        type="checkbox"
-                                        checked={pages.includes(child.key)}
-                                        onChange={() => {
-                                          const updated = pages.includes(child.key)
-                                            ? pages.filter(p => p !== child.key)
-                                            : [...pages, child.key]
-                                          // Also ensure parent key is present if any child is checked
-                                          const hasChild = page.children.some(c => updated.includes(c.key))
-                                          const withParent = hasChild && !updated.includes(page.key) ? [...updated, page.key] : hasChild ? updated : updated.filter(p => p !== page.key)
-                                          setInvites((prev) => prev.map((i) => i.id === inv.id ? { ...i, visible_pages: withParent } : i))
-                                          fetch('/api/invites/permissions', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invite_id: inv.id, visible_pages: withParent }) })
-                                        }}
-                                        className="rounded border-line text-primary-600 focus:ring-primary-500 w-3.5 h-3.5"
-                                      />
-                                      <span className="text-xs text-content-muted">{child.label}</span>
-                                    </label>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <button
-                          onClick={() => setDeleteModal({ id: inv.id, email: inv.email })}
-                          className={`flex items-center gap-2 px-3 py-2 text-sm font-medium ${BTN_DANGER}`}
-                        >
-                          <Trash2 className="w-4 h-4" /> Remove Staff
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </section>
-      )}
 
       {/* Manage Station (owner only) */}
       {isOwner && (

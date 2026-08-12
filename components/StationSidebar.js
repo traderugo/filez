@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Home, LogOut, PanelLeftClose, PanelLeft, X, Bell, Settings } from 'lucide-react'
+import { Home, LogOut, PanelLeftClose, PanelLeft, X, Settings } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buildStationNav } from '@/lib/stationNav'
-import useStationUnread from '@/lib/useStationUnread'
 import ThemeToggle from '@/components/ThemeToggle'
 
 /**
@@ -36,8 +35,6 @@ export default function StationSidebar({ open, onClose }) {
 
   // The station is in the path on the hub, and in ?org_id= on every entry and report screen.
   const stationId = params?.stationId || searchParams.get('org_id') || ''
-
-  const { unread } = useStationUnread(stationId)
 
   const [collapsed, setCollapsed] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
@@ -205,8 +202,11 @@ export default function StationSidebar({ open, onClose }) {
         {!iconOnly && (
           <h2 className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wide text-content-faint">Station</h2>
         )}
+        {/* No Notifications row: the header's bell shows at every width now and carries the
+            unread badge, so a second entry point to the same screen was one more thing on the
+            page saying what the bell already says. `item` keeps its badge support, which is a
+            general capability of the row rather than something Notifications owned. */}
         <ul>
-          {item({ href: `${home}/notifications`, icon: Bell, label: 'Notifications', allowed: true, pageKey: 'notifications', badge: unread })}
           {item({ href: `${home}/settings`, icon: Settings, label: 'Settings', allowed: true, pageKey: 'settings' })}
         </ul>
       </div>
