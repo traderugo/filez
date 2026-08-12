@@ -1,16 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus, FolderOpen } from 'lucide-react'
+import { useState, useEffect, Fragment } from 'react'
+import { Loader2, Plus, Trash2, Pencil, X, Fuel, Mail, UserPlus, FolderOpen, ChevronRight, ChevronDown, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import SearchableSelect from '@/components/SearchableSelect'
-import { OUTLINE, INPUT_BASE, INPUT_BARE, INPUT, BTN_FRAMED, CARD } from '@/components/ui'
+import {
+  OUTLINE, INPUT_BASE, INPUT_BARE, INPUT, BTN_FRAMED, CARD,
+  REPORT_CARD, REPORT_HEAD, REPORT_LINE,
+} from '@/components/ui'
 
 // The design system has no solid fills; weight comes from how hard the outline is drawn.
 const SOLID_ACTION = 'border-2 border-primary-600 dark:border-primary-400 bg-primary-500/20 text-primary-800 dark:text-primary-100 transition-all hover:bg-primary-500/30'
 
 export default function AdminSettingsPage() {
   const [stations, setStations] = useState([])
+  // Which station's management row is open. One at a time: the invite form and staff
+  // list are tall, and several open at once turns the table back into the wall of
+  // cards it replaced.
+  const [expanded, setExpanded] = useState(null)
   const [loading, setLoading] = useState(true)
 
   // Add station
@@ -337,6 +344,11 @@ export default function AdminSettingsPage() {
       )}
 
       {/* Station list */}
+      {/* A table, not a card per station: this screen exists to compare stations against each
+          other, and stacked panels made that impossible. Uses the report chrome so it reads as
+          the same furniture as every other dense table in the app. Management that cannot fit
+          in a cell (the invite form, the staff list) lives in an expanding row beneath, one
+          station at a time. */}
       {stations.length === 0 ? (
         <div className="text-center py-12">
           <Fuel className="w-10 h-10 text-content-faint mx-auto mb-3" />
@@ -344,144 +356,185 @@ export default function AdminSettingsPage() {
           <p className="text-xs text-content-faint">Add your first station to get started.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {stations.map((station) => (
-            <div key={station.id} className={`p-4 ${CARD}`}>
-              {/* Station name row */}
-              <div className="flex items-center gap-3 mb-3">
-                <Fuel className="w-5 h-5 text-primary-600 flex-shrink-0" />
-                {editingId === station.id ? (
-                  <div className="flex-1 flex gap-2">
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      maxLength={100}
-                      className={`flex-1 ${INPUT_BASE}`}
-                      autoFocus
-                    />
-                    <button onClick={() => updateStation(station.id)} disabled={saving} className={`px-3 py-1.5 text-sm disabled:opacity-50 ${SOLID_ACTION}`}>
-                      {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-                    </button>
-                    <button onClick={() => setEditingId(null)} className="p-1.5 text-content-faint hover:text-content-muted">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex-1 flex items-center gap-2 min-w-0">
-                    <span className="text-sm font-semibold text-content truncate">{station.name}</span>
-                    {/* Whose station this is. Without it the list is a wall of names with no
-                        way to tell your own from an owner you are onboarding. */}
-                    {station.owner_name && (
-                      <span className="text-xs text-content-faint truncate">{station.owner_name}</span>
-                    )}
-                    {station.is_mine !== false && (
-                      <button onClick={() => { setEditingId(station.id); setEditName(station.name) }} className="p-1 text-content-faint hover:text-content-muted">
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* The way in. An admin could reach a station's setup only by typing its id
-                    into the URL; the onboarding permission is useless without a door. */}
-                <Link
-                  href={station.onboarding_complete
-                    ? `/dashboard/stations/${station.id}`
-                    : `/dashboard/setup/${station.id}`}
-                  className={`shrink-0 px-3 py-1.5 text-xs font-medium ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
-                >
-                  {station.onboarding_complete ? 'Open' : 'Run setup'}
-                </Link>
-                {/* Delete goes through the owner-gated tenant route, so on someone else's
-                    station it would silently do nothing. A button that appears to work and
-                    does not is worse than no button — and admin-wide station deletion is
-                    not something to open up by accident. */}
-                {station.is_mine !== false && (
-                  <button onClick={() => deleteStation(station.id, station.name)} disabled={busyAction === `del-station-${station.id}`} className="p-1.5 text-content-faint hover:text-red-600 dark:text-red-400 disabled:opacity-50">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-
-              {/* Group assignment */}
-              {groups.length > 0 && (
-                <div className="flex items-center gap-2 mb-3">
-                  <label className="text-xs text-content-muted shrink-0">Group:</label>
-                  <div className={`flex-1 ${CARD}`}>
-                    <SearchableSelect
-                      value={groups.find((g) => g.name === station.station_group)?.id || ''}
-                      onChange={(val) => assignGroup(station.id, val)}
-                      options={[{ value: '', label: 'None' }, ...groups.map((g) => ({ value: g.id, label: g.name }))]}
-                      placeholder="None"
-                    />
-                  </div>
-                </div>
-              )}
-              {assignError?.stationId === station.id && (
-                <p className="text-xs text-red-600 dark:text-red-400 mb-3">{assignError.message}</p>
-              )}
-
-              {/* Invite staff by email */}
-              <div>
-                <p className="text-xs font-medium text-content-strong mb-2 flex items-center gap-1">
-                  <UserPlus className="w-3.5 h-3.5" /> Invite Staff
-                </p>
-                <form
-                  onSubmit={(e) => { e.preventDefault(); addInvite(station.id) }}
-                  className="flex gap-2 mb-2"
-                >
-                  <div className="flex-1 relative">
-                    <Mail className="w-3.5 h-3.5 text-content-faint absolute left-2.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="email"
-                      placeholder="staff@email.com"
-                      maxLength={254}
-                      value={inviteEmail[station.id] || ''}
-                      onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
-                      className={`w-full pl-8 pr-3 py-1.5 ${INPUT_BARE}`}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={inviting === station.id || !inviteEmail[station.id]?.trim()}
-                    className={`px-3 py-1.5 text-sm disabled:opacity-50 flex items-center gap-1 ${SOLID_ACTION}`}
-                  >
-                    {inviting === station.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                    Invite
-                  </button>
-                </form>
-
-                {/* Existing invites */}
-                {(invites[station.id] || []).length > 0 && (
-                  <div className="space-y-1">
-                    {invites[station.id].map((inv) => (
-                      <div key={inv.id} className="flex items-center justify-between bg-subtle px-3 py-1.5">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-3 h-3 text-content-faint" />
-                          <span className="text-xs text-content-strong">{inv.email}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                            inv.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                            inv.status === 'declined' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
-                            'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                          }`}>
-                            {inv.status}
-                          </span>
+        <div className={`overflow-x-auto ${REPORT_CARD}`}>
+          <table className="w-full text-sm">
+            <thead className={REPORT_HEAD}>
+              <tr>
+                <th className="text-left font-semibold px-3 py-2">Station</th>
+                <th className="text-left font-semibold px-3 py-2">Owner</th>
+                <th className="text-left font-semibold px-3 py-2">Location</th>
+                {groups.length > 0 && <th className="text-left font-semibold px-3 py-2">Group</th>}
+                <th className="text-left font-semibold px-3 py-2">Status</th>
+                <th className="text-right font-semibold px-3 py-2">Staff</th>
+                <th className="px-3 py-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {stations.map((station) => {
+                const staff = invites[station.id] || []
+                const open = expanded === station.id
+                return (
+                  <Fragment key={station.id}>
+                    <tr className={`border-t ${REPORT_LINE} hover:bg-subtle transition-colors`}>
+                      <td className="px-3 py-2">
+                        {editingId === station.id ? (
+                          <div className="flex gap-2 items-center min-w-[16rem]">
+                            <input
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              maxLength={100}
+                              autoFocus
+                              className={`flex-1 ${INPUT_BASE}`}
+                            />
+                            <button onClick={() => updateStation(station.id)} disabled={saving} className={`px-3 py-1.5 text-sm disabled:opacity-50 ${SOLID_ACTION}`}>
+                              Save
+                            </button>
+                            <button onClick={() => setEditingId(null)} className="p-1.5 text-content-faint hover:text-content-muted">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setExpanded(open ? null : station.id)}
+                            aria-expanded={open}
+                            className="flex items-center gap-2 text-left min-w-0 group"
+                          >
+                            {open
+                              ? <ChevronDown className="w-4 h-4 text-content-faint shrink-0" />
+                              : <ChevronRight className="w-4 h-4 text-content-faint shrink-0" />}
+                            <Fuel className="w-4 h-4 text-primary-600 dark:text-primary-300 shrink-0" />
+                            <span className="font-semibold text-content truncate group-hover:underline">{station.name}</span>
+                          </button>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-content-muted whitespace-nowrap">{station.owner_name || '\u2014'}</td>
+                      <td className="px-3 py-2 text-content-muted whitespace-nowrap">{station.location || '\u2014'}</td>
+                      {groups.length > 0 && (
+                        <td className="px-3 py-2 min-w-[10rem]">
+                          <SearchableSelect
+                            value={groups.find((g) => g.name === station.station_group)?.id || ''}
+                            onChange={(val) => assignGroup(station.id, val)}
+                            options={[{ value: '', label: 'None' }, ...groups.map((g) => ({ value: g.id, label: g.name }))]}
+                            placeholder="None"
+                          />
+                        </td>
+                      )}
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        {station.onboarding_complete ? (
+                          <span className="text-xs font-medium text-green-700 dark:text-green-300">Ready</span>
+                        ) : (
+                          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">Setup required</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-right tabular-nums text-content-muted">{staff.length}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-end gap-1">
+                          <Link
+                            href={station.onboarding_complete
+                              ? `/dashboard/stations/${station.id}`
+                              : `/dashboard/setup/${station.id}`}
+                            className={`shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium whitespace-nowrap ${OUTLINE} hover:bg-primary-500/20 hover:border-primary-600 dark:hover:border-primary-400`}
+                          >
+                            {station.onboarding_complete ? 'Open' : 'Run setup'}
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
+                          <button
+                            onClick={() => { setEditingId(station.id); setEditName(station.name) }}
+                            title="Rename"
+                            className="p-1.5 text-content-faint hover:text-content-muted"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          {/* Delete goes through the owner-gated tenant route, so on someone
+                              else's station it would silently do nothing. A button that appears
+                              to work and does not is worse than no button, and admin-wide
+                              station deletion is not something to open up by accident. */}
+                          {station.is_mine !== false && (
+                            <button
+                              onClick={() => deleteStation(station.id, station.name)}
+                              disabled={busyAction === `del-station-${station.id}`}
+                              title="Delete"
+                              className="p-1.5 text-content-faint hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
-                        <button
-                          onClick={() => removeInvite(inv.id, station.id)}
-                          disabled={busyAction === `rm-invite-${inv.id}`}
-                          className="p-1 text-content-faint hover:text-red-600 dark:text-red-400 disabled:opacity-50"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+                      </td>
+                    </tr>
+
+                    {open && (
+                      <tr className={`border-t ${REPORT_LINE} bg-subtle`}>
+                        <td colSpan={groups.length > 0 ? 7 : 6} className="px-3 py-3">
+                          {assignError?.stationId === station.id && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mb-2">{assignError.message}</p>
+                          )}
+
+                          <p className="text-xs font-medium text-content-strong mb-2 flex items-center gap-1">
+                            <UserPlus className="w-3.5 h-3.5" /> Invite staff
+                          </p>
+                          <form
+                            onSubmit={(e) => { e.preventDefault(); addInvite(station.id) }}
+                            className="flex gap-2 mb-2 max-w-lg"
+                          >
+                            <div className="flex-1 relative">
+                              <Mail className="w-3.5 h-3.5 text-content-faint absolute left-2.5 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="email"
+                                placeholder="staff@email.com"
+                                maxLength={254}
+                                value={inviteEmail[station.id] || ''}
+                                onChange={(e) => setInviteEmail((prev) => ({ ...prev, [station.id]: e.target.value }))}
+                                className={`w-full pl-8 pr-3 py-1.5 ${INPUT_BARE}`}
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              disabled={inviting === station.id || !inviteEmail[station.id]?.trim()}
+                              className={`px-3 py-1.5 text-sm disabled:opacity-50 flex items-center gap-1 ${SOLID_ACTION}`}
+                            >
+                              {inviting === station.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+                              Invite
+                            </button>
+                          </form>
+
+                          {staff.length > 0 ? (
+                            <div className="space-y-1 max-w-lg">
+                              {staff.map((inv) => (
+                                <div key={inv.id} className="flex items-center justify-between bg-surface px-3 py-1.5">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Mail className="w-3 h-3 text-content-faint shrink-0" />
+                                    <span className="text-xs text-content-strong truncate">{inv.email}</span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
+                                      inv.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                                      inv.status === 'declined' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
+                                      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                                    }`}>
+                                      {inv.status}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() => removeInvite(inv.id, station.id)}
+                                    disabled={busyAction === `rm-invite-${inv.id}`}
+                                    className="p-1 text-content-faint hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-content-faint">No staff invited yet.</p>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
