@@ -428,9 +428,16 @@ export default function StationPage() {
         {/* Reports, grouped by domain: compact rows rather than a wall of tiles, which is
             store-portal's rule for secondary destinations, and one RowGroup per group, which
             is how its reports hub lays the same catalog out. The grouping lives in
-            lib/stationNav.js so the hub and the sidebar read one list. */}
+            lib/stationNav.js so the hub and the sidebar read one list.
+
+            From lg the groups run in two columns, so a wide screen is not one narrow ribbon of
+            rows down the middle. CSS columns rather than a two-column grid on purpose: the
+            groups are different lengths, and a grid would align each row to its tallest cell
+            and leave a hole under the shorter one. Columns balance by height instead.
+            break-inside-avoid keeps a group from being split across the fold. */}
+        <div className="mt-6 lg:columns-2 lg:gap-4">
         {reportSections.map((section) => (
-          <section key={section.title} className="mt-6">
+          <section key={section.title} className="mb-6 break-inside-avoid">
             <SectionHeader>{section.title}</SectionHeader>
             <RowGroup>
               {section.items.map((link) => (
@@ -447,6 +454,7 @@ export default function StationPage() {
             </RowGroup>
           </section>
         ))}
+        </div>
 
       {/* Staff (owner only) */}
       {isOwner && (
