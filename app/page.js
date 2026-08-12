@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Fuel, ClipboardList, BarChart3, Users } from 'lucide-react'
 import Footer from '@/components/Footer'
-import { BTN_FRAMED } from '@/components/ui'
+import { BTN_FRAMED, BTN_PRIMARY } from '@/components/ui'
 
 export default function LandingPage() {
   const [loggedIn, setLoggedIn] = useState(false)
@@ -18,6 +19,41 @@ export default function LandingPage() {
 
   return (
     <>
+    {/* The landing page gets no AppShell (see components/AppShell.js: `/` returns bare
+        children), so it carries its own bar. Same chrome as the app header, h-14 and the blue
+        rule, so arriving from the site into the dashboard is not a change of furniture.
+
+        It repeats the hero's calls to action on purpose: once the page is scrolled past the
+        fold there is otherwise no way in without scrolling back up. */}
+    <header className="sticky top-0 z-30 border-b border-primary-500/40 dark:border-primary-400/40 bg-surface">
+      <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
+        <Link href="/" className="flex items-center gap-2 min-w-0" aria-label="StationMGR home">
+          <Image src="/icon-192.png" alt="" aria-hidden width={24} height={24} className="w-6 h-6 shrink-0" />
+          <span className="text-sm font-bold text-content truncate">StationMGR</span>
+        </Link>
+
+        <nav className="flex items-center gap-2 shrink-0">
+          {loggedIn ? (
+            <Link href="/dashboard" className={`px-3 py-1.5 text-sm font-semibold ${BTN_PRIMARY}`}>
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/auth/login" className={`px-3 py-1.5 text-sm font-semibold ${BTN_FRAMED}`}>
+                Log in
+              </Link>
+              {/* Hidden on the narrowest screens: two buttons plus the wordmark do not fit a
+                  small phone, and Log in is the one a returning user needs. The hero below
+                  still offers Create Account. */}
+              <Link href="/auth/register" className={`hidden sm:inline-flex px-3 py-1.5 text-sm font-semibold ${BTN_PRIMARY}`}>
+                Create Account
+              </Link>
+            </>
+          )}
+        </nav>
+      </div>
+    </header>
+
     <div className="max-w-3xl mx-auto px-4 py-20">
       <div className="text-center mb-16">
         <div className="flex justify-center mb-5">
