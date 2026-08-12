@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams, useParams, useRouter } from 'next/navigation'
-import { Fuel, Home, LogOut, PanelLeftClose, PanelLeft, X, Bell, Settings } from 'lucide-react'
+import Image from 'next/image'
+import { Home, LogOut, PanelLeftClose, PanelLeft, X, Bell, Settings } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buildStationNav } from '@/lib/stationNav'
 import useStationUnread from '@/lib/useStationUnread'
@@ -39,7 +40,6 @@ export default function StationSidebar({ open, onClose }) {
   const { unread } = useStationUnread(stationId)
 
   const [collapsed, setCollapsed] = useState(false)
-  const [station, setStation] = useState(null)
   const [isOwner, setIsOwner] = useState(false)
   const [visiblePages, setVisiblePages] = useState(null)
   const [signingOut, setSigningOut] = useState(false)
@@ -69,9 +69,9 @@ export default function StationSidebar({ open, onClose }) {
         if (!alive) return
 
         const found = orgRes.ok ? ((await orgRes.json()).stations || [])[0] || null : null
-        setStation(found)
-        // Compared here rather than in a later setState: `station` would be the previous
-        // render's value inside this closure, so ownership would lag one load behind.
+        // Ownership is derived from `found` directly. The station itself is no longer held in
+        // state: the sidebar shows the app's brand, not the station's name, so the only thing
+        // this fetch is still for is the owner check and the permission dimming below.
         setIsOwner(!!found && !!me?.user?.id && found.owner_id === me.user.id)
 
         // Same endpoint the hub uses. Staff get visible_pages; an owner gets none, which
@@ -150,18 +150,22 @@ export default function StationSidebar({ open, onClose }) {
     )
   }
 
+  /**
+   * The app's brand, not the station's name. The station is already named by the page you are
+   * on and by the Station home button directly below this, so repeating it here spent the
+   * sidebar's one identity slot on something the screen says twice already.
+   *
+   * Mark and wordmark, the shape store-portal's header brand uses.
+   */
   const identity = iconOnly ? (
     <div className="flex items-center justify-center h-14 shrink-0">
-      <Fuel className="w-5 h-5 text-primary-600 dark:text-primary-300" />
+      <Image src="/icon-192.png" alt="StationMGR" width={24} height={24} className="w-6 h-6" />
     </div>
   ) : (
     // h-14 matches the header row exactly, so the two line up across the seam.
-    <div className="flex items-center gap-2.5 px-4 h-14 shrink-0 min-w-0">
-      <Fuel className="w-5 h-5 text-primary-600 dark:text-primary-300 shrink-0" />
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-content truncate">{station?.name || 'Station'}</p>
-        {station?.location && <p className="text-[11px] text-content-muted truncate">{station.location}</p>}
-      </div>
+    <div className="flex items-center gap-2 px-4 h-14 shrink-0 min-w-0">
+      <Image src="/icon-192.png" alt="" aria-hidden width={24} height={24} className="w-6 h-6 shrink-0" />
+      <span className="text-sm font-bold text-content truncate">StationMGR</span>
     </div>
   )
 
