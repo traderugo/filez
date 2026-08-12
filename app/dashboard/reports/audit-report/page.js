@@ -7,6 +7,8 @@ import { Loader2, Download, ShieldX } from 'lucide-react'
 import { db } from '@/lib/db'
 import { buildAuditReport } from '@/lib/buildAuditReport'
 import { exportAuditExcel } from '@/lib/exportAuditExcel'
+import { exportAuditGenericExcel } from '@/lib/exportAuditGenericExcel'
+import { isRainoilGroup } from '@/lib/exportGroup'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
@@ -70,6 +72,8 @@ function AuditReportContent() {
   const [banks, setBanks] = useState([])
   const [tanks, setTanks] = useState([])
   const [stationName, setStationName] = useState('')
+  // Selects the export format, via isRainoilGroup in lib/exportGroup.
+  const [stationGroup, setStationGroup] = useState('')
   const [allowedSubReports, setAllowedSubReports] = useState(null) // null = all (owner)
 
   const today = new Date()
@@ -110,13 +114,19 @@ function AuditReportContent() {
       setTanks(tnk)
       setLoading(false)
 
-      // Fetch station name (non-blocking, for export only)
-      fetch('/api/organizations').then(r => r.ok ? r.json() : null).then(data => {
-        if (cancelled || !data) return
-        const all = [...(data.stations || []), ...(data.memberStations || [])]
-        const match = all.find(s => s.id === orgId)
-        if (match) setStationName(match.name || '')
-      }).catch(() => {})
+      // Station name and group, for the export. Asked for by id rather than as a list: the
+      // list form returns only owned and member stations, so an admin got neither, and the
+      // by-id form routes through hasStationAccess which admits them.
+      fetch(`/api/organizations?org_id=${encodeURIComponent(orgId)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (cancelled || !data) return
+          const match = (data.stations || [])[0]
+          if (match) {
+            setStationName(match.name || '')
+            setStationGroup(match.station_group || '')
+          }
+        }).catch(() => {})
 
       // Fetch admin-uploaded template URL (non-blocking)
       fetch('/api/excel-templates?name=AUDIT+REPORT+TEMPLATE').then(r => r.ok ? r.json() : null).then(data => {
@@ -232,19 +242,33 @@ function AuditReportContent() {
         if (!proceed) { setExporting(false); return }
       }
 
-      const result = await exportAuditExcel({
-        report,
-        receipts: liveReceipts || [],
-        lubeSales: liveLubeSales || [],
-        lubeStock: liveLubeStock || [],
-        lubeProducts: liveLubeProducts || [],
-        tanks,
-        nozzles,
-        stationName,
-        startDate: reportStart,
-        endDate: reportEnd,
-        templateUrl,
-      })
+      const isRainoil = isRainoilGroup(stationGroup)
+
+      // Which workbook a station gets is decided by its group. exportAuditExcel is a replica
+      // of Rainoil's own audit pack, down to their logo and sheet numbering, so it is theirs
+      // alone; everyone else gets the plain one.
+      //
+      const result = isRainoil
+        ? await exportAuditExcel({
+            report,
+            receipts: liveReceipts || [],
+            lubeSales: liveLubeSales || [],
+            lubeStock: liveLubeStock || [],
+            lubeProducts: liveLubeProducts || [],
+            tanks,
+            nozzles,
+            stationName,
+            startDate: reportStart,
+            endDate: reportEnd,
+            templateUrl,
+          })
+        : await exportAuditGenericExcel({
+            report,
+            receipts: liveReceipts || [],
+            stationName,
+            startDate: reportStart,
+            endDate: reportEnd,
+          })
       if (result.warnings?.length) {
         alert('Export completed with warnings:\n\n' + result.warnings.join('\n'))
       }

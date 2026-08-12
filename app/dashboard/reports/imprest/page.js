@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Loader2, Plus, Trash2, Pencil, Download, FileImage, X, Camera, Search, Lock } from 'lucide-react'
 import { useSubscription } from '@/lib/hooks/useSubscription'
 import DateInput from '@/components/DateInput'
+import { isRainoilGroup } from '@/lib/exportGroup'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
 import { ENTRY_INPUT, ENTRY_DATE, BTN_PRIMARY, BTN_FRAMED, CARD_LINE, CARD, INPUT_BASE } from '@/components/ui'
@@ -70,6 +71,8 @@ function ImprestContent() {
 
   // Station name (for export)
   const [stationName, setStationName] = useState('')
+  // Selects the export format, via isRainoilGroup in lib/exportGroup.
+  const [stationGroup, setStationGroup] = useState('')
 
   // Export state
   const [exporting, setExporting] = useState(false)
@@ -82,12 +85,17 @@ function ImprestContent() {
       .then(r => r.json())
       .then(d => setCustomers(d.customers || []))
       .catch(() => {})
-    fetch('/api/organizations').then(r => r.ok ? r.json() : null).then(data => {
-      if (!data) return
-      const all = [...(data.stations || []), ...(data.memberStations || [])]
-      const match = all.find(s => s.id === orgId)
-      if (match) setStationName(match.name || '')
-    }).catch(() => {})
+    // By id, not the list form: that one returns only owned and member stations, so an admin
+    // got no station name at all. By id routes through hasStationAccess, which admits them,
+    // and carries the group the export format is chosen from.
+    fetch(`/api/organizations?org_id=${encodeURIComponent(orgId)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const match = (data?.stations || [])[0]
+        if (!match) return
+        setStationName(match.name || '')
+        setStationGroup(match.station_group || '')
+      }).catch(() => {})
   }, [orgId])
 
   // Load period when month/year changes
@@ -280,12 +288,20 @@ function ImprestContent() {
     if (exporting) return
     setExporting(true)
     try {
-      const { exportImprestExcel } = await import('@/lib/exportImprestExcel')
-      await exportImprestExcel({
+      // exportImprestExcel is a replica of Rainoil's petty cash form, theirs alone. Everyone
+      // else gets the plain sheet.
+      const args = {
         month, year, imprestAmount: imprestAmt, custodianName: period?.custodian_name || '',
         formNumber: period?.form_number || '', entries, totalSpent, balance,
         stationName, preparedBy, paidBy,
-      })
+      }
+      if (isRainoilGroup(stationGroup)) {
+        const { exportImprestExcel } = await import('@/lib/exportImprestExcel')
+        await exportImprestExcel(args)
+      } else {
+        const { exportImprestGenericExcel } = await import('@/lib/exportImprestGenericExcel')
+        await exportImprestGenericExcel(args)
+      }
     } catch (err) {
       console.error('Excel export failed:', err)
       alert('Export failed')

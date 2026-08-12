@@ -7,6 +7,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Loader2, Calculator, Download } from 'lucide-react'
 import { db } from '@/lib/db'
 import { exportProductReceiptExcel } from '@/lib/exportProductReceiptExcel'
+import { exportProductReceiptGenericExcel } from '@/lib/exportProductReceiptGenericExcel'
+import { isRainoilGroup } from '@/lib/exportGroup'
 import DateInput from '@/components/DateInput'
 import AccessGate from '@/components/AccessGate'
 import { fmtDate } from '@/lib/formatDate'
@@ -117,6 +119,23 @@ function ProductReceivedReportContent() {
 
   // Config
   const [tanks, setTanks] = useState([])
+  // Selects the export format, via isRainoilGroup in lib/exportGroup. This page never needed
+  // the station before, so this is the only reason it is fetched.
+  const [stationGroup, setStationGroup] = useState('')
+
+  useEffect(() => {
+    if (!orgId) return
+    let cancelled = false
+    fetch(`/api/organizations?org_id=${encodeURIComponent(orgId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return
+        const match = (data?.stations || [])[0]
+        if (match) setStationGroup(match.station_group || '')
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [orgId])
 
   useEffect(() => {
     if (!orgId) { setLoading(false); return }
@@ -173,7 +192,12 @@ function ProductReceivedReportContent() {
     if (exportingIdx !== null) return
     setExportingIdx(idx)
     try {
-      await exportProductReceiptExcel({
+      // exportProductReceiptExcel is a replica of Rainoil's discharge certificate, theirs
+      // alone. Everyone else gets the plain sheet, from the same figures.
+      const exportFn = isRainoilGroup(stationGroup)
+        ? exportProductReceiptExcel
+        : exportProductReceiptGenericExcel
+      await exportFn({
         product: row.product,
         truckNumber: row.truckNumber,
         driverName: row.driverName,
