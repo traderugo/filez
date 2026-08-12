@@ -7,7 +7,7 @@ import {
   Loader2, Fuel, Settings, Mail, LogOut,
   FileSpreadsheet, ClipboardList, CreditCard, Droplets, Users,
   ChevronRight, ChevronDown, BarChart3, Plus, Pencil, Trash2, AlertTriangle,
-  FileText, BookOpen, ShieldX, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
+  FileText, BookOpen, ShieldX, Lock, Truck, Wallet, TrendingUp, Boxes, LineChart, Activity
 } from 'lucide-react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import Modal from '@/components/Modal'
@@ -53,6 +53,8 @@ export default function StationPage() {
   // Staff page access
   const [visiblePages, setVisiblePages] = useState(ALL_PAGE_KEYS) // default: all visible
   const [accessDeniedModal, setAccessDeniedModal] = useState(false)
+  // Staff tapping Subscription: the button is shown to everyone, but only an owner can act.
+  const [ownerOnlyModal, setOwnerOnlyModal] = useState(false)
 
   // Subscription (owner only)
   const [subscription, setSubscription] = useState(null)
@@ -473,13 +475,20 @@ export default function StationPage() {
           {/* Notifications is not here: the sidebar carries the bell, with its unread badge,
               on every screen. This slot goes to the subscription instead, which is where the
               status block that used to sit at the foot of this page now lives.
-              Owner only, as that block always was. A staff member reaching the subscribe page
-              directly still sees nothing to buy, since it lists owned stations only. */}
-          {isOwner && (
-            <Button href={`/dashboard/subscribe?org_id=${stationId}`} icon={CreditCard} iconClass="w-5 h-5">
-              Subscription
-            </Button>
-          )}
+
+              Shown to everyone, not just the owner. Hiding it left staff with no explanation
+              for why a station they work at has no subscription anywhere on screen; a button
+              that says who to ask is more use than a missing one. For staff it opens a message
+              instead of the page, since the subscribe form lists owned stations only and would
+              be empty for them anyway. */}
+          <Button
+            href={isOwner ? `/dashboard/subscribe?org_id=${stationId}` : undefined}
+            onClick={isOwner ? undefined : () => setOwnerOnlyModal(true)}
+            icon={CreditCard}
+            iconClass="w-5 h-5"
+          >
+            Subscription
+          </Button>
         </div>
 
       {/* Expired subscription notice (non-dismissable) */}
@@ -835,6 +844,26 @@ export default function StationPage() {
             <p key={i} className="text-sm text-content-strong">{line}</p>
           ))}
           <button onClick={() => setSyncModal(null)} className={`w-full mt-4 py-2 text-sm font-medium ${BTN_PRIMARY}`}>
+            OK
+          </button>
+        </div>
+      </Modal>
+
+      {/* Owner-only Modal: staff tapped Subscription. Says who can act rather than what is
+          forbidden, because the point is to tell them where to go next. */}
+      <Modal open={ownerOnlyModal} onClose={() => setOwnerOnlyModal(false)} title="Owner only">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50">
+            <Lock className="w-5 h-5 text-amber-600 dark:text-amber-300 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              Only the station owner can view or change this station&apos;s subscription. Ask
+              them if something needs renewing.
+            </p>
+          </div>
+          <button
+            onClick={() => setOwnerOnlyModal(false)}
+            className={`w-full py-2 text-sm font-medium ${OUTLINE} hover:bg-primary-500/20`}
+          >
             OK
           </button>
         </div>

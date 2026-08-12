@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Header from './Header'
 import StationSidebar from './StationSidebar'
+import Footer from './Footer'
 
 import NavigationLoader from './NavigationLoader'
 import { supabase } from '@/lib/supabaseClient'
@@ -60,6 +61,13 @@ export default function AppShell({ children }) {
   const isAuth = pathname.startsWith('/auth')
   const isHome = pathname === '/'
   const isAdmin = pathname.startsWith('/admin')
+  /**
+   * Reports opt out of the footer. Each one is a full-height workspace sized to
+   * h-[calc(100dvh-3.5rem)], viewport minus the header, with its own bottom-pinned day tabs
+   * and sticky control bar. A footer underneath adds height past the viewport, so the page
+   * gains a scrollbar and those pinned controls fall below the fold.
+   */
+  const isReport = pathname.startsWith('/dashboard/reports')
 
   // Auth pages + homepage: no shell, just content
   if (isAuth || isHome) return <>{children}</>
@@ -70,6 +78,7 @@ export default function AppShell({ children }) {
       <Suspense fallback={null}><NavigationLoader /></Suspense>
       <Suspense fallback={null}><Header /></Suspense>
       <main className="flex-1">{children}</main>
+      <Footer app />
     </div>
   )
 
@@ -86,6 +95,7 @@ export default function AppShell({ children }) {
         <Suspense fallback={null}><NavigationLoader /></Suspense>
         <Suspense fallback={null}><Header onMenu={() => setDrawerOpen(true)} /></Suspense>
         <main className="flex-1">{children}</main>
+        {!isReport && <Footer app />}
       </div>
     </div>
   )
