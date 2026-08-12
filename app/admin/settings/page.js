@@ -297,10 +297,13 @@ export default function AdminSettingsPage() {
     )
   }
 
+  // Wide from lg: the stations table has seven columns, and the old max-w-2xl cap forced it
+  // to scroll sideways on a desktop with room to spare. Blocks that are genuinely narrow (the
+  // groups panel, the add-station form) keep their own width rather than stretching to fill it.
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl lg:max-w-6xl">
       {/* Station Groups */}
-      <section className="mb-10">
+      <section className="mb-10 max-w-2xl">
         <h2 className="text-sm font-semibold text-content uppercase tracking-wide mb-3 flex items-center gap-2">
           <FolderOpen className="w-4 h-4 text-primary-600" /> Station Groups
         </h2>
@@ -352,7 +355,7 @@ export default function AdminSettingsPage() {
 
       {/* Add station form */}
       {showAdd && (
-        <form onSubmit={addStation} className={`p-4 mb-6 space-y-3 ${CARD}`}>
+        <form onSubmit={addStation} className={`p-4 mb-6 space-y-3 max-w-2xl ${CARD}`}>
           <input
             type="text"
             required
@@ -447,8 +450,8 @@ export default function AdminSettingsPage() {
                           </button>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-content-muted whitespace-nowrap">{station.owner_name || '\u2014'}</td>
-                      <td className="px-3 py-2 text-content-muted whitespace-nowrap">{station.location || '\u2014'}</td>
+                      <td className="px-3 py-2 text-content-muted">{station.owner_name || '\u2014'}</td>
+                      <td className="px-3 py-2 text-content-muted">{station.location || '\u2014'}</td>
                       {groups.length > 0 && (
                         <td className="px-3 py-2 min-w-[10rem]">
                           <SearchableSelect
