@@ -70,24 +70,15 @@ export default function LandingPage() {
 
       <div className="flex justify-center gap-3 mb-16">
         {loggedIn ? (
-          <Link
-            href="/dashboard"
-            className="bg-accent text-white px-6 py-2.5 font-medium hover:bg-accent-600 transition-colors"
-          >
+          <Link href="/dashboard" className={`px-6 py-2.5 font-semibold ${BTN_PRIMARY}`}>
             Dashboard
           </Link>
         ) : (
           <>
-            <Link
-              href="/auth/login"
-              className="bg-accent text-white px-6 py-2.5 font-medium hover:bg-accent-600 transition-colors"
-            >
+            <Link href="/auth/login" className={`px-6 py-2.5 font-semibold ${BTN_FRAMED}`}>
               Log in
             </Link>
-            <Link
-              href="/auth/register"
-              className={`px-6 py-2.5 font-medium ${BTN_FRAMED}`}
-            >
+            <Link href="/auth/register" className={`px-6 py-2.5 font-semibold ${BTN_PRIMARY}`}>
               Create Account
             </Link>
           </>
