@@ -34,6 +34,13 @@ const ON_HOVER = 'hover:bg-white/20'
 const ON_FILL = 'bg-white/25'
 
 /**
+ * The house OUTLINE, inverted. components/ui draws every button and input as a 2px translucent
+ * blue border; on a blue column that has to be white or the sidebar looks imported from another
+ * app. Same weight, same translucency, same square corners.
+ */
+const ON_OUTLINE = 'border-2 border-white/50 bg-white/15'
+
+/**
  * Popovers are NOT blue. A menu that adopted the column's ground would read as part of the
  * column rather than as something that opened on top of it, so these keep the page's surface
  * and its normal text tokens.
@@ -124,7 +131,7 @@ export function SidebarSwitcher({ avatar, title, subtitle, options = [], current
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-haspopup="listbox"
-            className={`w-full ${ON_FILL} hover:bg-white/35 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
+            className={`w-full ${ON_OUTLINE} hover:bg-white/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
           >
             {face}
           </button>
@@ -148,7 +155,7 @@ export function SidebarSwitcher({ avatar, title, subtitle, options = [], current
           )}
         </>
       ) : (
-        <div className={`w-full ${ON_FILL}`}>{face}</div>
+        <div className={`w-full ${ON_OUTLINE}`}>{face}</div>
       )}
     </div>
   )
@@ -226,14 +233,14 @@ export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly
 export function SidebarMetaCard({ title, lines = [], value, percent, action }) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0))
   return (
-    <div className="mx-3 mb-3 shrink-0 bg-neutral-900 border border-black/30 px-3.5 py-3">
+    <div className="mx-3 mb-3 shrink-0 bg-white/15 border-2 border-white/50 px-3.5 py-3">
       <p className="text-[13px] font-bold text-white leading-tight">{title}</p>
       {lines.map((l) => (
-        <p key={l} className="text-[11px] text-neutral-400 leading-snug mt-0.5">{l}</p>
+        <p key={l} className="text-[11px] text-white/80 leading-snug mt-0.5">{l}</p>
       ))}
       {percent != null && (
         <div className="flex items-center gap-2 mt-2.5">
-          <div className="flex-1 h-1 bg-neutral-700">
+          <div className="flex-1 h-1 bg-white/30">
             <div className="h-full bg-white" style={{ width: `${pct}%` }} />
           </div>
           <span className="text-[11px] font-semibold text-white tabular-nums shrink-0">{value}</span>

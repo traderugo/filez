@@ -34,10 +34,13 @@ export default function ThemeToggle({ className = '' }) {
       onClick={toggle}
       aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={dark ? 'Light mode' : 'Dark mode'}
-      className={`flex items-center justify-center w-9 h-9 text-content-muted hover:text-content hover:bg-subtle transition-colors ${className}`}
+      className={className.includes('sidebar-row')
+        ? `w-full flex items-center gap-3 px-1 py-2 text-[13px] text-white/90 hover:text-white hover:bg-white/20 transition-colors ${className}`
+        : `flex items-center justify-center w-9 h-9 text-content-muted hover:text-content hover:bg-subtle transition-colors ${className}`}
     >
       {/* Avoid a hydration mismatch: render a stable icon until mounted. */}
-      {mounted && dark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+      {mounted && dark ? <Sun className={className.includes('sidebar-row') ? 'w-[18px] h-[18px] shrink-0' : 'w-5 h-5'} /> : <Moon className={className.includes('sidebar-row') ? 'w-[18px] h-[18px] shrink-0' : 'w-5 h-5'} />}
+      {className.includes('sidebar-row') && <span>{mounted && dark ? 'Light mode' : 'Dark mode'}</span>}
     </button>
   )
 }

@@ -174,7 +174,7 @@ export default function StationSidebar({ open, onClose }) {
       {/* Appearance and sign out sit IN the menu, at the end of it. They were behind
           a kebab in the footer, which is where controls go to not be found. */}
       <div className={`mt-5 pt-3 border-t border-white/30 ${iconOnly ? 'flex flex-col items-center gap-1' : 'px-3 space-y-1'}`}>
-        <ThemeToggle />
+        <ThemeToggle className="sidebar-row" />
         <button
           type="button"
           onClick={signOut}

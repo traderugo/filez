@@ -105,7 +105,7 @@ export default function AdminSidebar() {
           {/* Appearance and sign out sit IN the menu, at the end of it. No collapse here:
               this column has no collapsed state. */}
           <div className="mt-5 pt-3 border-t border-white/30 px-3 space-y-1">
-            <ThemeToggle />
+            <ThemeToggle className="sidebar-row" />
             <button
               type="button"
               onClick={signOut}
