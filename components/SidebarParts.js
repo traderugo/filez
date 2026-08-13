@@ -23,7 +23,7 @@ import { ChevronsUpDown, LogOut, Check } from 'lucide-react'
  */
 
 /** The ground. Blue in both themes, a shade deeper in dark so it does not glow off the page. */
-export const SIDEBAR_SURFACE = 'bg-primary-700 dark:bg-primary-900'
+export const SIDEBAR_SURFACE = 'bg-primary-800 dark:bg-primary-950'
 
 // Pitched against that ground rather than the page's tokens.
 const ON_TEXT = 'text-white'

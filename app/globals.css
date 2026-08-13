@@ -146,10 +146,10 @@ section,
    ::-webkit- rules are what Chrome and Safari read, and setting one without
    the other leaves half of everyone on the browser default.               */
 
-* { scrollbar-color: rgb(var(--primary-600)) transparent; }
+* { scrollbar-color: rgb(var(--primary-800)) transparent; }
 *::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb { background: rgb(var(--primary-600)); }
-*::-webkit-scrollbar-thumb:hover { background: rgb(var(--primary-700)); }
+*::-webkit-scrollbar-thumb { background: rgb(var(--primary-800)); }
+*::-webkit-scrollbar-thumb:hover { background: rgb(var(--primary-950)); }
 *::-webkit-scrollbar-corner { background: transparent; }
 
 /* Inside the blue column. */
