@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { ChevronsUpDown, MoreVertical, Check } from 'lucide-react'
+import { ChevronsUpDown, LogOut, Check } from 'lucide-react'
 
 /**
  * The pieces every sidebar in this app is built from.
@@ -22,16 +22,16 @@ import { ChevronsUpDown, MoreVertical, Check } from 'lucide-react'
  * are not.
  */
 
-/** The ground itself. Deeper in dark mode so the column does not glow against a dark page. */
-export const SIDEBAR_SURFACE = 'bg-primary-600 dark:bg-primary-950'
+/** The ground. Blue in both themes, a shade deeper in dark so it does not glow off the page. */
+export const SIDEBAR_SURFACE = 'bg-primary-700 dark:bg-primary-900'
 
 // Pitched against that ground rather than the page's tokens.
 const ON_TEXT = 'text-white'
-const ON_MUTED = 'text-white/70'
-const ON_FAINT = 'text-white/60'
-const ON_LINE = 'border-white/15'
-const ON_HOVER = 'hover:bg-white/10'
-const ON_FILL = 'bg-white/10'
+const ON_MUTED = 'text-white/90'
+const ON_FAINT = 'text-white/80'
+const ON_LINE = 'border-white/30'
+const ON_HOVER = 'hover:bg-white/20'
+const ON_FILL = 'bg-white/25'
 
 /**
  * Popovers are NOT blue. A menu that adopted the column's ground would read as part of the
@@ -52,12 +52,16 @@ const POPOVER = 'bg-surface border border-line shadow-lg'
  * isolation and truncated the name in the actual column — a brand that reads "StationMG…" is
  * worse than a slightly shorter one. Sized to fit the narrowest column with room to spare.
  */
+/** A white ring around the mark, so it reads as a mark rather than sinking into the blue. */
+const MARK_RING = 'ring-2 ring-white rounded-full bg-white/95 p-0.5'
+
 export function SidebarBrand({ mark, name, href = '/', iconOnly = false }) {
+  const ringed = <span className={`shrink-0 inline-flex ${MARK_RING}`}>{mark}</span>
   const inner = iconOnly ? (
-    <div className="flex items-center justify-center h-14">{mark}</div>
+    <div className="flex items-center justify-center h-14">{ringed}</div>
   ) : (
     <div className="flex items-center gap-2.5 px-4 sm:px-5 h-14 min-w-0">
-      {mark}
+      {ringed}
       <span className={`text-xl leading-none font-bold ${ON_TEXT} truncate`}>{name}</span>
     </div>
   )
@@ -120,7 +124,7 @@ export function SidebarSwitcher({ avatar, title, subtitle, options = [], current
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-haspopup="listbox"
-            className={`w-full ${ON_FILL} hover:bg-white/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
+            className={`w-full ${ON_FILL} hover:bg-white/35 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
           >
             {face}
           </button>
@@ -167,9 +171,9 @@ export function SidebarGroupLabel({ children, trailing, ...rest }) {
 /**
  * One destination.
  *
- * The active rail sits on the RIGHT edge. That is the reference's choice and it is the better
- * one here: the left edge of every row already carries the icon column, so a left rail competes
- * with it, while the right edge is empty except for the badge.
+ * The active rail sits on the LEFT edge, which is where this codebase has always put it.
+ * The reference marks the right; on a blue column the left reads better because the eye
+ * follows the column's own edge down the list.
  *
  * On blue, the current row is marked by a white rail and full-strength white text against its
  * dimmer neighbours — the primary-tinted treatment this used has no contrast to work with here.
@@ -178,9 +182,8 @@ export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly
   return (
     <li>
       <Link
-        // Blocked destinations are DIMMED rather than hidden, which is the station hub's rule:
-        // it tells a member the feature exists and who to ask, instead of leaving a hole they
-        // cannot name. The href is neutered so a middle-click cannot route around the dimming.
+        // Blocked destinations are DIMMED rather than hidden — the station hub's rule. It tells
+        // a member the feature exists and who to ask instead of leaving a hole they cannot name.
         href={disabled ? '#' : href}
         onClick={(e) => { if (disabled) { e.preventDefault(); return } onClick?.(e) }}
         aria-disabled={disabled || undefined}
@@ -190,20 +193,13 @@ export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly
           iconOnly ? 'justify-center w-10 h-10 mx-auto' : 'gap-3 pl-4 pr-3 py-2'
         } ${
           disabled
-            ? 'text-white/35 cursor-not-allowed'
+            ? 'text-white/45 cursor-not-allowed'
             : active
               ? `${ON_TEXT} font-semibold ${ON_FILL}`
               : `${ON_MUTED} ${ON_HOVER} hover:text-white`
         }`}
       >
-        <span className="relative shrink-0 flex">
-          <Icon className="w-[18px] h-[18px] flex-shrink-0" />
-          {/* Collapsed there is no room for a count, so the badge degrades to a dot: it still
-              says "something is new", which is the part that matters at 72px wide. */}
-          {badge > 0 && iconOnly && (
-            <span aria-hidden className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
-          )}
-        </span>
+        <Icon className="w-[18px] h-[18px] flex-shrink-0" />
         {!iconOnly && <span className="text-[13px] truncate flex-1">{label}</span>}
         {!iconOnly && badge > 0 && (
           <span className="shrink-0 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-red-500 tabular-nums">
@@ -211,7 +207,7 @@ export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly
           </span>
         )}
         {active && !iconOnly && (
-          <span aria-hidden className="absolute right-0 top-1 bottom-1 w-[3px] bg-white" />
+          <span aria-hidden className="absolute left-0 top-1 bottom-1 w-[3px] bg-white" />
         )}
       </Link>
     </li>
@@ -253,112 +249,36 @@ export function SidebarMetaCard({ title, lines = [], value, percent, action }) {
 /**
  * Who is signed in, and the way out.
  *
- * Appearance and collapse are VISIBLE, in their own slim row under the name. They were briefly
- * folded into the kebab alongside sign out, on the reasoning that they are occasional
- * decisions — but a control you use occasionally is not the same as one you should have to go
- * looking for, and hiding a theme toggle behind a menu means nobody finds it. The kebab keeps
- * sign out, which is the one thing that should take a deliberate extra tap.
+ * Sign out is the icon here, not a kebab. Three dots hid one deliberate action behind two taps
+ * and a guess about what was inside. Appearance and collapse live in the menu itself, at the
+ * bottom of the nav, where you can see them.
  */
-export function SidebarUserFooter({ name, subtitle, avatar, menu, controls, iconOnly = false }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('mousedown', onDown)
-    window.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      window.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
+export function SidebarUserFooter({ name, subtitle, avatar, onSignOut, iconOnly = false }) {
   return (
     <div
-      className={`border-t ${ON_LINE} shrink-0 relative`}
+      className={`border-t ${ON_LINE} shrink-0`}
       // Bottom-most element in a full-height panel, so it owns the notch clearance.
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-      ref={ref}
     >
-      <div className={`flex items-center gap-2.5 ${iconOnly ? 'justify-center px-2 py-3' : 'px-4 py-3'}`}>
-        {/* Collapsed, the avatar IS the trigger. It has to be something: the menu is the only
-            way back to Expand, so a rail without it is a one-way door — you collapse the
-            column and can never widen it again except by clearing storage. */}
-        {iconOnly ? (
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-haspopup="menu"
-            aria-label="Account options"
-            className="flex items-center justify-center hover:opacity-80 transition-opacity"
-          >
-            {avatar}
-          </button>
-        ) : (
-          <>
-            {avatar}
-            <div className="min-w-0 flex-1">
-              <p className={`text-[13px] font-semibold ${ON_TEXT} truncate leading-tight`}>{name}</p>
-              {subtitle && <p className={`text-[11px] ${ON_MUTED} truncate leading-tight mt-0.5`}>{subtitle}</p>}
-            </div>
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              aria-haspopup="menu"
-              aria-label="Account options"
-              className={`w-8 h-8 shrink-0 flex items-center justify-center ${ON_FAINT} hover:text-white ${ON_HOVER} transition-colors`}
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
-          </>
+      <div className={`flex items-center gap-2.5 ${iconOnly ? 'flex-col px-2 py-3' : 'px-4 py-3'}`}>
+        {avatar}
+        {!iconOnly && (
+          <div className="min-w-0 flex-1">
+            <p className={`text-[13px] font-semibold ${ON_TEXT} truncate leading-tight`}>{name}</p>
+            {subtitle && <p className={`text-[11px] ${ON_MUTED} truncate leading-tight mt-0.5`}>{subtitle}</p>}
+          </div>
         )}
-      </div>
-      {/* Appearance and collapse, on their own line so they are visible without opening
-          anything. Collapsed the row stacks, since 4.5rem has no width for two side by side. */}
-      {controls && (
-        <div className={`flex items-center gap-1 pb-2 ${iconOnly ? 'flex-col px-2' : 'px-3'}`}>
-          {controls}
-        </div>
-      )}
-
-      {open && (
-        // Upwards: this sits at the bottom of the viewport, so a menu below it has nowhere to
-        // go. On the collapsed rail it breaks out to a readable width rather than squeezing
-        // into 4.5rem, which would leave every label truncated to a couple of characters.
-        <div
-          role="menu"
-          // Picking something closes it, which is what a menu does. Scoped to menuitems on
-          // purpose: the appearance control sits in here too and cycles Light → Dark → System,
-          // so closing on every click inside would make its third state unreachable.
-          onClick={(e) => { if (e.target.closest('[role="menuitem"]')) setOpen(false) }}
-          className={`absolute bottom-[calc(100%-0.5rem)] z-30 py-1 ${POPOVER} ${iconOnly ? 'left-2 w-56' : 'left-3 right-3'}`}
+        <button
+          type="button"
+          onClick={onSignOut}
+          title="Sign out"
+          aria-label="Sign out"
+          className={`w-8 h-8 shrink-0 flex items-center justify-center ${ON_MUTED} hover:text-white ${ON_HOVER} transition-colors`}
         >
-          {menu}
-        </div>
-      )}
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
     </div>
-  )
-}
-
-/**
- * An icon control in the footer's visible row — appearance, collapse. Square, sized to the
- * same 32px as the kebab beside it so the bar reads as one strip.
- */
-export function SidebarIconButton({ icon: Icon, label, onClick, className = '' }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={`w-8 h-8 shrink-0 flex items-center justify-center ${ON_MUTED} hover:text-white ${ON_HOVER} transition-colors ${className}`}
-    >
-      <Icon className="w-4 h-4" />
-    </button>
   )
 }
 

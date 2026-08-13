@@ -102,13 +102,25 @@ export default function AdminSidebar() {
               />
             ))}
           </ul>
+          {/* Appearance and sign out sit IN the menu, at the end of it. No collapse here:
+              this column has no collapsed state. */}
+          <div className="mt-5 pt-3 border-t border-white/30 px-3 space-y-1">
+            <ThemeToggle />
+            <button
+              type="button"
+              onClick={signOut}
+              disabled={signingOut}
+              className="w-full flex items-center gap-3 px-1 py-2 text-[13px] text-white/90 hover:text-white hover:bg-white/20 transition-colors disabled:opacity-50"
+            >
+              <LogOut className="w-[18px] h-[18px] shrink-0" />
+              <span>Sign out</span>
+            </button>
+          </div>
         </nav>
         <SidebarUserFooter
           avatar={<SidebarAvatar name="Admin" />}
           name="Admin"
-          // Visible, not buried. No collapse here: this column has no collapsed state.
-          controls={<ThemeToggle />}
-          menu={<SidebarMenuItem icon={LogOut} onClick={signOut} disabled={signingOut} danger>Sign out</SidebarMenuItem>}
+          onSignOut={signOut}
         />
       </aside>
     </>
