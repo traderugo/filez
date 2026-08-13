@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname, useSearchParams, useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { usePathname, useSearchParams, useParams, useRouter } from 'next/navigation'
 import { Home, LogOut, PanelLeftClose, PanelLeft, X, Settings } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buildStationNav } from '@/lib/stationNav'
 import ThemeToggle from '@/components/ThemeToggle'
+import {
+  SidebarBrand, SidebarSwitcher, SidebarGroupLabel, SidebarNavRow,
+  SidebarUserFooter, SidebarMenuItem, SidebarAvatar,
+} from '@/components/SidebarParts'
 
 /**
  * Section switcher for the pages inside a station, so moving from Daily Sales to Lodgements
@@ -15,17 +18,21 @@ import ThemeToggle from '@/components/ThemeToggle'
  *
  * Two presentations of one list:
  *   lg and up → a persistent column, collapsible to icons, running the full height
- *   below lg  → an overlay drawer opened by the header's hamburger
+ *   below lg  → an overlay drawer, opened by the parent (this one is controlled)
  *
  * It renders buildStationNav(), the same source the station hub reads, so the two cannot
  * offer different destinations.
  *
+ * Built from the same parts as store-portal's sidebars, in the same six zones: brand, the
+ * station you are in (and the way to another), the menu, and who is signed in.
+ *
  * Blocked destinations are shown dimmed rather than hidden, matching the hub: that tells a
  * member the feature exists and who to ask, instead of leaving a hole they cannot name.
  *
- * Sign out lives here because the alternative is three taps into the station hub, and a way
- * out should not be something you navigate to find. The theme toggle sits in the scrolling
- * part rather than the footer so the footer stays a fixed two-button bar.
+ * NO meta card, unlike store-portal's business sidebar. That slot reports where a
+ * subscription stands, and station-portal has no endpoint that answers it — there is a
+ * subscription-check for one service at a time, but nothing that reports days remaining.
+ * An empty card would be worse than none.
  */
 export default function StationSidebar({ open, onClose }) {
   const pathname = usePathname()
@@ -40,6 +47,8 @@ export default function StationSidebar({ open, onClose }) {
   const [isOwner, setIsOwner] = useState(false)
   const [visiblePages, setVisiblePages] = useState(null)
   const [signingOut, setSigningOut] = useState(false)
+  const [user, setUser] = useState(null)
+  const [stations, setStations] = useState([])
 
   // Read AFTER mount, not in the useState initializer: this renders on the server too, and
   // localStorage does not exist there.
@@ -59,16 +68,22 @@ export default function StationSidebar({ open, onClose }) {
     let alive = true
     ;(async () => {
       try {
+        // The unscoped list, not ?org_id=: the switcher needs every station this person can
+        // reach, and the ownership check below only needs to find the current one inside it.
         const [orgRes, me] = await Promise.all([
-          fetch(`/api/organizations?org_id=${encodeURIComponent(stationId)}`),
+          fetch('/api/organizations'),
           fetch('/api/auth/me').then((r) => (r.ok ? r.json() : null)).catch(() => null),
         ])
         if (!alive) return
 
-        const found = orgRes.ok ? ((await orgRes.json()).stations || [])[0] || null : null
-        // Ownership is derived from `found` directly. The station itself is no longer held in
-        // state: the sidebar shows the app's brand, not the station's name, so the only thing
-        // this fetch is still for is the owner check and the permission dimming below.
+        const body = orgRes.ok ? await orgRes.json() : {}
+        const reachable = [...(body.stations || []), ...(body.memberStations || [])]
+        const deduped = [...new Map(reachable.map((s) => [s.id, s])).values()]
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+        setStations(deduped)
+        setUser(me?.user || null)
+
+        const found = deduped.find((s) => String(s.id) === String(stationId)) || null
         setIsOwner(!!found && !!me?.user?.id && found.owner_id === me.user.id)
 
         // Same endpoint the hub uses. Staff get visible_pages; an owner gets none, which
@@ -93,155 +108,109 @@ export default function StationSidebar({ open, onClose }) {
   // visiblePages null means "not restricted", which buildStationNav reads as owner-like.
   const sections = buildStationNav(stationId, { isOwner: isOwner || visiblePages == null, visiblePages })
   const home = `/dashboard/stations/${stationId}`
-  const iconOnly = collapsed
+  const current = stations.find((s) => String(s.id) === String(stationId))
 
-  const isCurrent = (href) => {
-    const path = href.split('?')[0]
-    return pathname === path
-  }
+  const isCurrent = (href) => pathname === href.split('?')[0]
 
-  const item = (link) => {
-    const Icon = link.icon
-    const current = isCurrent(link.href)
-    return (
-      <li key={link.href}>
-        <Link
-          href={link.allowed ? link.href : '#'}
-          onClick={(e) => { if (!link.allowed) e.preventDefault(); else onClose?.() }}
-          aria-current={current ? 'page' : undefined}
-          title={iconOnly ? link.label : undefined}
-          className={`relative flex items-center gap-2.5 py-2 text-sm transition-colors ${
-            iconOnly ? 'justify-center px-0' : 'px-3'
-          } ${
-            !link.allowed
-              ? 'text-content-faint opacity-50 cursor-not-allowed'
-              : current
-                ? 'bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 font-semibold'
-                : 'text-content-strong hover:bg-subtle hover:text-content'
-          }`}
-        >
-          {/* Accent rail marks the current section. A plain 1px-wide fill: it is a marker, not
-              a control, so it takes none of the button chrome. */}
-          {current && !iconOnly && (
-            <span aria-hidden className="absolute left-0 top-0 bottom-0 w-1 bg-primary-600 dark:bg-primary-400" />
-          )}
-          <span className="relative shrink-0">
-            {/* Regular stroked Lucide glyphs. No fill="currentColor": that attribute turns
-                each icon into a silhouette, which both apps used to do and no longer do. */}
-            <Icon className={`w-5 h-5 shrink-0 ${current ? '' : 'text-content-faint'}`} />
-            {/* Collapsed to icons there is no room for a count, so the badge degrades to a
-                dot: it still says "something is new", which is the part that matters at
-                72px wide. */}
-            {link.badge > 0 && iconOnly && (
-              <span aria-hidden className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-accent-600" />
-            )}
-          </span>
-          {!iconOnly && <span className="truncate">{link.label}</span>}
-          {link.badge > 0 && !iconOnly && (
-            <span className="ml-auto min-w-[1.1rem] h-[1.1rem] px-1 flex items-center justify-center text-[10px] font-semibold bg-accent-600 text-white rounded-full shrink-0">
-              {link.badge > 99 ? '99+' : link.badge}
-            </span>
-          )}
-        </Link>
-      </li>
-    )
-  }
-
-  /**
-   * The app's brand, not the station's name. The station is already named by the page you are
-   * on and by the Station home button directly below this, so repeating it here spent the
-   * sidebar's one identity slot on something the screen says twice already.
-   *
-   * Mark and wordmark, the shape store-portal's header brand uses.
-   */
-  const identity = iconOnly ? (
-    <div className="flex items-center justify-center h-14 shrink-0">
-      <Image src="/icon-192.png" alt="StationMGR" width={24} height={24} className="w-6 h-6" />
-    </div>
-  ) : (
-    // h-14 matches the header row exactly, so the two line up across the seam.
-    <div className="flex items-center gap-2 px-4 h-14 shrink-0 min-w-0">
-      <Image src="/icon-192.png" alt="" aria-hidden width={24} height={24} className="w-6 h-6 shrink-0" />
-      <span className="text-sm font-bold text-content truncate">StationMGR</span>
-    </div>
+  const row = (link, iconOnly) => (
+    <SidebarNavRow
+      key={link.href}
+      href={link.href}
+      label={link.label}
+      icon={link.icon}
+      active={isCurrent(link.href)}
+      badge={link.badge}
+      disabled={!link.allowed}
+      iconOnly={iconOnly}
+      onClick={() => onClose?.()}
+    />
   )
 
-  const nav = (
-    <nav className="flex-1 overflow-y-auto py-2">
-      {/* Home leads, as the one emphasised destination. Expanded it runs to 70% of the rail
-          and sits centred, so it reads as a single deliberate control rather than another
-          full-bleed row like the nav items under it. Its contents are centred too, or the
-          icon and label would huddle at the left of a box with a wide empty right side.
-          Collapsed it is already a centred 40px square, so that branch is unchanged. */}
-      <div className="mb-4 flex justify-center">
-        <Link
+  const nav = (iconOnly) => (
+    <nav className="flex-1 overflow-y-auto pb-3">
+      {/* Station home leads, ungrouped and above the first heading — the reference's own first
+          row. It was a centred outline button, which made the hub look like an action rather
+          than a place; as a row it is marked by the same rail as everything else. */}
+      <ul className="mb-4">
+        <SidebarNavRow
           href={home}
+          label="Station home"
+          icon={Home}
+          active={pathname === home}
+          iconOnly={iconOnly}
           onClick={() => onClose?.()}
-          title={iconOnly ? 'Station home' : undefined}
-          className={`flex items-center gap-2 py-2 text-sm font-semibold border-2 border-primary-500/40 dark:border-primary-400/40 bg-primary-500/10 text-primary-700 dark:text-primary-300 hover:bg-primary-500/20 transition-all justify-center ${
-            iconOnly ? 'w-10' : 'px-3 w-[70%]'
-          }`}
-        >
-          <Home className="w-4 h-4 shrink-0" />
-          {!iconOnly && <span>Station home</span>}
-        </Link>
-      </div>
+        />
+      </ul>
 
-      {sections.map((section) => (
-        <div key={section.heading} className="mb-5">
-          {!iconOnly && (
-            <h2 className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wide text-content-faint">
-              {section.heading}
-            </h2>
+      <div className="space-y-4">
+        {sections.map((section) => (
+          <div key={section.heading}>
+            {iconOnly ? (
+              <p className="text-[10px] font-semibold text-content-faint uppercase tracking-[0.12em] mb-1.5 text-center">
+                {section.heading.slice(0, 3)}
+              </p>
+            ) : (
+              <SidebarGroupLabel>{section.heading}</SidebarGroupLabel>
+            )}
+            <ul className="space-y-0.5">{section.links.map((l) => row(l, iconOnly))}</ul>
+          </div>
+        ))}
+
+        <div>
+          {iconOnly ? (
+            <p className="text-[10px] font-semibold text-content-faint uppercase tracking-[0.12em] mb-1.5 text-center">Sta</p>
+          ) : (
+            <SidebarGroupLabel>Station</SidebarGroupLabel>
           )}
-          <ul>{section.links.map(item)}</ul>
+          {/* No Notifications row: the header's bell shows at every width and carries the
+              unread badge, so a second entry point said what the bell already says. */}
+          <ul className="space-y-0.5">
+            {row({ href: `${home}/settings`, icon: Settings, label: 'Settings', allowed: true }, iconOnly)}
+          </ul>
         </div>
-      ))}
-
-      <div className="mb-5">
-        {!iconOnly && (
-          <h2 className="px-3 mb-1 text-[11px] font-semibold uppercase tracking-wide text-content-faint">Station</h2>
-        )}
-        {/* No Notifications row: the header's bell shows at every width now and carries the
-            unread badge, so a second entry point to the same screen was one more thing on the
-            page saying what the bell already says. `item` keeps its badge support, which is a
-            general capability of the row rather than something Notifications owned. */}
-        <ul>
-          {item({ href: `${home}/settings`, icon: Settings, label: 'Settings', allowed: true, pageKey: 'settings' })}
-        </ul>
-      </div>
-
-      {/* In the scrolling part, not the footer: the footer is a fixed two-button bar. */}
-      <div className={`mt-5 ${iconOnly ? 'flex justify-center' : 'px-1'}`}>
-        <ThemeToggle />
       </div>
     </nav>
   )
 
-  const footer = (
-    <div className="border-t border-line p-2 flex items-center gap-2 shrink-0">
-      <button
-        onClick={signOut}
-        disabled={signingOut}
-        title="Sign out"
-        className={`flex items-center justify-center gap-2 py-2 text-sm font-medium text-content-muted hover:text-content hover:bg-subtle transition-colors disabled:opacity-50 ${
-          iconOnly ? 'w-10 h-10' : 'flex-1'
-        }`}
-      >
-        <LogOut className="w-4 h-4 shrink-0" />
-        {!iconOnly && <span>Sign out</span>}
-      </button>
-      {/* Icon only, deliberately: a labelled Collapse costs a row of width to say what the
-          icon already says. */}
-      <button
-        onClick={toggleCollapsed}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        title={collapsed ? 'Expand' : 'Collapse'}
-        className="hidden lg:flex w-10 h-10 items-center justify-center shrink-0 text-content-muted hover:text-content hover:bg-subtle transition-colors"
-      >
-        {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-      </button>
-    </div>
+  const switcher = (iconOnly) => (
+    <SidebarSwitcher
+      iconOnly={iconOnly}
+      avatar={<SidebarAvatar name={current?.name || 'Station'} />}
+      title={current?.name || 'Station'}
+      subtitle={isOwner ? 'Owner' : 'Staff member'}
+      currentId={stationId}
+      options={stations.map((s) => ({ id: String(s.id), label: s.name }))}
+      onPick={(o) => { if (String(o.id) !== String(stationId)) router.push(`/dashboard/stations/${o.id}`) }}
+    />
+  )
+
+  const userFooter = (iconOnly, withCollapse) => (
+    <SidebarUserFooter
+      iconOnly={iconOnly}
+      avatar={<SidebarAvatar name={user?.name || user?.email} />}
+      name={user?.name || user?.email || 'Account'}
+      subtitle={user?.email && user?.name ? user.email : null}
+      menu={(
+        <>
+          <div className="px-3 py-2 border-b border-line">
+            <ThemeToggle />
+          </div>
+          {withCollapse && (
+            <SidebarMenuItem
+              icon={collapsed ? PanelLeft : PanelLeftClose}
+              onClick={toggleCollapsed}
+            >
+              {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            </SidebarMenuItem>
+          )}
+          <SidebarMenuItem icon={LogOut} onClick={signOut} disabled={signingOut} danger>Sign out</SidebarMenuItem>
+        </>
+      )}
+    />
+  )
+
+  const brandMark = (
+    <Image src="/icon-192.png" alt="" aria-hidden width={32} height={32} className="w-8 h-8 shrink-0" />
   )
 
   return (
@@ -253,9 +222,10 @@ export default function StationSidebar({ open, onClose }) {
           collapsed ? 'w-[72px]' : 'w-60'
         }`}
       >
-        {identity}
-        {nav}
-        {footer}
+        <SidebarBrand mark={brandMark} name="StationMGR" href="/dashboard" iconOnly={collapsed} />
+        {switcher(collapsed)}
+        {nav(collapsed)}
+        {userFooter(collapsed, true)}
       </aside>
 
       {/* Below lg: overlay drawer, matching store-portal's. Kept mounted so it slides rather
@@ -273,14 +243,22 @@ export default function StationSidebar({ open, onClose }) {
         aria-hidden={!open}
         {...(!open && { inert: '' })}
       >
-        <div className="flex items-center justify-between shrink-0">
-          {identity}
-          <button onClick={onClose} aria-label="Close menu" className="p-3 text-content-faint hover:text-content">
+        {/* Close rides over the brand row, flush to the same edge as the header, so the X
+            lands where the hamburger was. Same href as the column's: the two panels must
+            render the same links. */}
+        <div className="relative shrink-0">
+          <SidebarBrand mark={brandMark} name="StationMGR" href="/dashboard" />
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 text-content-faint hover:text-content hover:bg-subtle transition-colors"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
-        {nav}
-        {footer}
+        {switcher(false)}
+        {nav(false)}
+        {userFooter(false, false)}
       </aside>
     </>
   )
