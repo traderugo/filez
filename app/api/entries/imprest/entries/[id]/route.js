@@ -31,7 +31,7 @@ export async function PATCH(request, { params }) {
 
     if (dbError) return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 })
 
-    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'updated an imprest entry', actionType: 'updated_entry' })
+    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, verb: 'updated', noun: 'imprest entry', actionType: 'updated_entry' })
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

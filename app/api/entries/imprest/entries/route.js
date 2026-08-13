@@ -65,7 +65,7 @@ export async function POST(request) {
 
     if (dbError) return NextResponse.json({ error: 'Failed to save entry' }, { status: 500 })
 
-    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'added an imprest entry', actionType: 'created_entry' })
+    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, verb: 'added', noun: 'imprest entry', actionType: 'created_entry' })
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })

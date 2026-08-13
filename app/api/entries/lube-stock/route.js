@@ -64,7 +64,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Failed to create entry' }, { status: 500 })
     }
 
-    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'added a lube stock entry', actionType: 'created_entry' })
+    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, verb: 'added', noun: 'lube stock entry', actionType: 'created_entry' })
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
@@ -100,7 +100,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Failed to update entry' }, { status: 500 })
     }
 
-    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, content: 'updated a lube stock entry', actionType: 'updated_entry' })
+    await logActivity(supabase, { orgId: user.org_id, userId: user.id, userName: user.name || user.email, verb: 'updated', noun: 'lube stock entry', actionType: 'updated_entry' })
     return NextResponse.json({ entry: data })
   } catch {
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
