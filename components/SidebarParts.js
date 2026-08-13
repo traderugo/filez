@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { ChevronsUpDown, MoreVertical, Check } from 'lucide-react'
-import { CHIP_MONO } from '@/components/ui'
 
 /**
  * The pieces every sidebar in this app is built from.
@@ -13,11 +12,33 @@ import { CHIP_MONO } from '@/components/ui'
  * AdminSidebar are the same object at two scopes, and the previous pair had drifted into two
  * different layouts that happened to sit in the same place.
  *
+ * The column sits on the app's own blue, so nothing inside it can take its colour from the
+ * page's semantic tokens — text-content on a blue ground is unreadable. Everything here is
+ * pitched against that ground instead, through the ON_* constants below.
+ *
  * Square throughout, per DESIGN_SYSTEM.md. Avatars are the documented exception and stay round.
  * The reference this is modelled on rounds its switcher and meta card; matching that would have
  * left two rounded things in an otherwise square app, so the layout is matched and the corners
  * are not.
  */
+
+/** The ground itself. Deeper in dark mode so the column does not glow against a dark page. */
+export const SIDEBAR_SURFACE = 'bg-primary-600 dark:bg-primary-950'
+
+// Pitched against that ground rather than the page's tokens.
+const ON_TEXT = 'text-white'
+const ON_MUTED = 'text-white/70'
+const ON_FAINT = 'text-white/60'
+const ON_LINE = 'border-white/15'
+const ON_HOVER = 'hover:bg-white/10'
+const ON_FILL = 'bg-white/10'
+
+/**
+ * Popovers are NOT blue. A menu that adopted the column's ground would read as part of the
+ * column rather than as something that opened on top of it, so these keep the page's surface
+ * and its normal text tokens.
+ */
+const POPOVER = 'bg-surface border border-line shadow-lg'
 
 /* ── Brand ───────────────────────────────────────────────────────────────── */
 
@@ -26,6 +47,10 @@ import { CHIP_MONO } from '@/components/ui'
  * directly below, and spending the top row on it too said the same thing twice.
  *
  * h-14 matches the app header beside it, so the two bottom rules meet in one line.
+ *
+ * The wordmark is text-xl. It was briefly set to the mark's full height, which looked right in
+ * isolation and truncated the name in the actual column — a brand that reads "StationMG…" is
+ * worse than a slightly shorter one. Sized to fit the narrowest column with room to spare.
  */
 export function SidebarBrand({ mark, name, href = '/', iconOnly = false }) {
   const inner = iconOnly ? (
@@ -33,16 +58,12 @@ export function SidebarBrand({ mark, name, href = '/', iconOnly = false }) {
   ) : (
     <div className="flex items-center gap-2.5 px-4 sm:px-5 h-14 min-w-0">
       {mark}
-      {/* Set to the mark's own height rather than a body size, so the two read as one lockup
-          instead of a logo with a caption beside it. leading-none is what makes the text block
-          actually measure its font size — the default line-height would add space above and
-          below and leave the wordmark sitting shorter than the mark next to it. */}
-      <span className="text-[1.75rem] leading-none font-bold text-content truncate">{name}</span>
+      <span className={`text-xl leading-none font-bold ${ON_TEXT} truncate`}>{name}</span>
     </div>
   )
   return (
-    <div className="border-b border-line shrink-0">
-      {href ? <Link href={href} className="block hover:bg-subtle transition-colors">{inner}</Link> : inner}
+    <div className={`border-b ${ON_LINE} shrink-0`}>
+      {href ? <Link href={href} className={`block ${ON_HOVER} transition-colors`}>{inner}</Link> : inner}
     </div>
   )
 }
@@ -83,10 +104,10 @@ export function SidebarSwitcher({ avatar, title, subtitle, options = [], current
     <div className="flex items-center gap-2.5 w-full px-2.5 py-2 min-w-0">
       {avatar}
       <div className="min-w-0 flex-1 text-left">
-        <p className="text-[13px] font-bold text-content truncate leading-tight">{title}</p>
-        {subtitle && <p className="text-[11px] text-content-muted truncate leading-tight mt-0.5">{subtitle}</p>}
+        <p className={`text-[13px] font-bold ${ON_TEXT} truncate leading-tight`}>{title}</p>
+        {subtitle && <p className={`text-[11px] ${ON_MUTED} truncate leading-tight mt-0.5`}>{subtitle}</p>}
       </div>
-      {switchable && <ChevronsUpDown className="w-4 h-4 shrink-0 text-content-faint" aria-hidden />}
+      {switchable && <ChevronsUpDown className={`w-4 h-4 shrink-0 ${ON_FAINT}`} aria-hidden />}
     </div>
   )
 
@@ -99,15 +120,12 @@ export function SidebarSwitcher({ avatar, title, subtitle, options = [], current
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
             aria-haspopup="listbox"
-            className="w-full bg-subtle hover:bg-line/60 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+            className={`w-full ${ON_FILL} hover:bg-white/20 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70`}
           >
             {face}
           </button>
           {open && (
-            <ul
-              role="listbox"
-              className="absolute left-3 right-3 top-[calc(100%-0.25rem)] z-30 max-h-72 overflow-y-auto bg-surface border border-line shadow-lg py-1"
-            >
+            <ul role="listbox" className={`absolute left-3 right-3 top-[calc(100%-0.25rem)] z-30 max-h-72 overflow-y-auto py-1 ${POPOVER}`}>
               {options.map((o) => (
                 <li key={o.id}>
                   <button
@@ -126,7 +144,7 @@ export function SidebarSwitcher({ avatar, title, subtitle, options = [], current
           )}
         </>
       ) : (
-        <div className="w-full bg-subtle">{face}</div>
+        <div className={`w-full ${ON_FILL}`}>{face}</div>
       )}
     </div>
   )
@@ -136,10 +154,10 @@ export function SidebarSwitcher({ avatar, title, subtitle, options = [], current
 
 /** The uppercase heading over a group. `trailing` carries the accordion chevron where used. */
 export function SidebarGroupLabel({ children, trailing, ...rest }) {
-  const cls = 'w-full flex items-center justify-between gap-2 px-4 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-content-faint'
+  const cls = `w-full flex items-center justify-between gap-2 px-4 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] ${ON_FAINT}`
   if (!rest.onClick) return <p className={cls}>{children}</p>
   return (
-    <button type="button" className={`${cls} hover:text-content-muted transition-colors`} {...rest}>
+    <button type="button" className={`${cls} hover:text-white transition-colors`} {...rest}>
       <span>{children}</span>
       {trailing}
     </button>
@@ -152,6 +170,9 @@ export function SidebarGroupLabel({ children, trailing, ...rest }) {
  * The active rail sits on the RIGHT edge. That is the reference's choice and it is the better
  * one here: the left edge of every row already carries the icon column, so a left rail competes
  * with it, while the right edge is empty except for the badge.
+ *
+ * On blue, the current row is marked by a white rail and full-strength white text against its
+ * dimmer neighbours — the primary-tinted treatment this used has no contrast to work with here.
  */
 export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly, onClick, disabled }) {
   return (
@@ -169,14 +190,14 @@ export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly
           iconOnly ? 'justify-center w-10 h-10 mx-auto' : 'gap-3 pl-4 pr-3 py-2'
         } ${
           disabled
-            ? 'text-content-faint opacity-50 cursor-not-allowed'
+            ? 'text-white/35 cursor-not-allowed'
             : active
-              ? 'text-primary-700 dark:text-primary-300 font-semibold'
-              : 'text-content-strong hover:bg-subtle'
+              ? `${ON_TEXT} font-semibold ${ON_FILL}`
+              : `${ON_MUTED} ${ON_HOVER} hover:text-white`
         }`}
       >
         <span className="relative shrink-0 flex">
-          <Icon className={`w-[18px] h-[18px] flex-shrink-0 ${active || disabled ? '' : 'text-content-faint'}`} />
+          <Icon className="w-[18px] h-[18px] flex-shrink-0" />
           {/* Collapsed there is no room for a count, so the badge degrades to a dot: it still
               says "something is new", which is the part that matters at 72px wide. */}
           {badge > 0 && iconOnly && (
@@ -190,7 +211,7 @@ export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly
           </span>
         )}
         {active && !iconOnly && (
-          <span aria-hidden className="absolute right-0 top-1 bottom-1 w-[3px] bg-primary-600 dark:bg-primary-400" />
+          <span aria-hidden className="absolute right-0 top-1 bottom-1 w-[3px] bg-white" />
         )}
       </Link>
     </li>
@@ -203,13 +224,13 @@ export function SidebarNavRow({ href, label, icon: Icon, active, badge, iconOnly
  * The standing status block above the footer.
  *
  * Dark on every theme, exactly as in the reference, where it is the one inverted element in all
- * three variants. That inversion is doing work: it is the only thing in the column that is not
- * a destination, so it should not read as one.
+ * three variants — including the blue one. That inversion is doing work: it is the only thing
+ * in the column that is not a destination, so it should not read as one.
  */
 export function SidebarMetaCard({ title, lines = [], value, percent, action }) {
   const pct = Math.max(0, Math.min(100, Number(percent) || 0))
   return (
-    <div className="mx-3 mb-3 shrink-0 bg-neutral-900 dark:bg-black/60 border border-neutral-800 px-3.5 py-3">
+    <div className="mx-3 mb-3 shrink-0 bg-neutral-900 border border-black/30 px-3.5 py-3">
       <p className="text-[13px] font-bold text-white leading-tight">{title}</p>
       {lines.map((l) => (
         <p key={l} className="text-[11px] text-neutral-400 leading-snug mt-0.5">{l}</p>
@@ -232,11 +253,13 @@ export function SidebarMetaCard({ title, lines = [], value, percent, action }) {
 /**
  * Who is signed in, and the way out.
  *
- * The reference puts one kebab here, so sign out, appearance and collapse move behind it rather
- * than sitting as three controls in a row. They were never things you reach for mid-task; they
- * were three permanent buttons for occasional decisions.
+ * Appearance and collapse are VISIBLE, in their own slim row under the name. They were briefly
+ * folded into the kebab alongside sign out, on the reasoning that they are occasional
+ * decisions — but a control you use occasionally is not the same as one you should have to go
+ * looking for, and hiding a theme toggle behind a menu means nobody finds it. The kebab keeps
+ * sign out, which is the one thing that should take a deliberate extra tap.
  */
-export function SidebarUserFooter({ name, subtitle, avatar, menu, iconOnly = false }) {
+export function SidebarUserFooter({ name, subtitle, avatar, menu, controls, iconOnly = false }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -254,7 +277,7 @@ export function SidebarUserFooter({ name, subtitle, avatar, menu, iconOnly = fal
 
   return (
     <div
-      className="border-t border-line shrink-0 relative"
+      className={`border-t ${ON_LINE} shrink-0 relative`}
       // Bottom-most element in a full-height panel, so it owns the notch clearance.
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       ref={ref}
@@ -278,8 +301,8 @@ export function SidebarUserFooter({ name, subtitle, avatar, menu, iconOnly = fal
           <>
             {avatar}
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-content truncate leading-tight">{name}</p>
-              {subtitle && <p className="text-[11px] text-content-muted truncate leading-tight mt-0.5">{subtitle}</p>}
+              <p className={`text-[13px] font-semibold ${ON_TEXT} truncate leading-tight`}>{name}</p>
+              {subtitle && <p className={`text-[11px] ${ON_MUTED} truncate leading-tight mt-0.5`}>{subtitle}</p>}
             </div>
             <button
               type="button"
@@ -287,13 +310,21 @@ export function SidebarUserFooter({ name, subtitle, avatar, menu, iconOnly = fal
               aria-expanded={open}
               aria-haspopup="menu"
               aria-label="Account options"
-              className="w-8 h-8 shrink-0 flex items-center justify-center text-content-faint hover:text-content hover:bg-subtle transition-colors"
+              className={`w-8 h-8 shrink-0 flex items-center justify-center ${ON_FAINT} hover:text-white ${ON_HOVER} transition-colors`}
             >
               <MoreVertical className="w-4 h-4" />
             </button>
           </>
         )}
       </div>
+      {/* Appearance and collapse, on their own line so they are visible without opening
+          anything. Collapsed the row stacks, since 4.5rem has no width for two side by side. */}
+      {controls && (
+        <div className={`flex items-center gap-1 pb-2 ${iconOnly ? 'flex-col px-2' : 'px-3'}`}>
+          {controls}
+        </div>
+      )}
+
       {open && (
         // Upwards: this sits at the bottom of the viewport, so a menu below it has nowhere to
         // go. On the collapsed rail it breaks out to a readable width rather than squeezing
@@ -304,9 +335,7 @@ export function SidebarUserFooter({ name, subtitle, avatar, menu, iconOnly = fal
           // purpose: the appearance control sits in here too and cycles Light → Dark → System,
           // so closing on every click inside would make its third state unreachable.
           onClick={(e) => { if (e.target.closest('[role="menuitem"]')) setOpen(false) }}
-          className={`absolute bottom-[calc(100%-0.5rem)] z-30 bg-surface border border-line shadow-lg py-1 ${
-            iconOnly ? 'left-2 w-56' : 'left-3 right-3'
-          }`}
+          className={`absolute bottom-[calc(100%-0.5rem)] z-30 py-1 ${POPOVER} ${iconOnly ? 'left-2 w-56' : 'left-3 right-3'}`}
         >
           {menu}
         </div>
@@ -315,7 +344,25 @@ export function SidebarUserFooter({ name, subtitle, avatar, menu, iconOnly = fal
   )
 }
 
-/** A row inside the footer menu. Kept here so the three sidebars cannot style theirs differently. */
+/**
+ * An icon control in the footer's visible row — appearance, collapse. Square, sized to the
+ * same 32px as the kebab beside it so the bar reads as one strip.
+ */
+export function SidebarIconButton({ icon: Icon, label, onClick, className = '' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={`w-8 h-8 shrink-0 flex items-center justify-center ${ON_MUTED} hover:text-white ${ON_HOVER} transition-colors ${className}`}
+    >
+      <Icon className="w-4 h-4" />
+    </button>
+  )
+}
+
+/** A row inside the footer menu. Kept here so the sidebars cannot style theirs differently. */
 export function SidebarMenuItem({ icon: Icon, children, onClick, disabled, danger }) {
   return (
     <button
@@ -337,7 +384,8 @@ export function SidebarMenuItem({ icon: Icon, children, onClick, disabled, dange
 
 /**
  * Round, which is the one shape DESIGN_SYSTEM.md exempts. Most businesses have never uploaded a
- * logo, so the initial chip is the common case rather than a fallback for a broken image.
+ * logo, so the initial chip is the common case rather than a fallback for a broken image — and
+ * on blue it is a translucent white chip rather than the page's tinted one.
  */
 export function SidebarAvatar({ src, name, size = 'w-8 h-8', text = 'text-xs' }) {
   if (src) {
@@ -345,7 +393,7 @@ export function SidebarAvatar({ src, name, size = 'w-8 h-8', text = 'text-xs' })
     return <img src={src} alt="" className={`${size} shrink-0 object-cover rounded-full`} />
   }
   return (
-    <div className={`${size} ${text} shrink-0 flex items-center justify-center font-bold rounded-full ${CHIP_MONO}`} aria-hidden>
+    <div className={`${size} ${text} shrink-0 flex items-center justify-center font-bold rounded-full bg-white/20 text-white`} aria-hidden>
       {(name || '?').charAt(0).toUpperCase()}
     </div>
   )

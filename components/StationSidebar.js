@@ -9,7 +9,8 @@ import { buildStationNav } from '@/lib/stationNav'
 import ThemeToggle from '@/components/ThemeToggle'
 import {
   SidebarBrand, SidebarSwitcher, SidebarGroupLabel, SidebarNavRow,
-  SidebarUserFooter, SidebarMenuItem, SidebarAvatar,
+  SidebarUserFooter, SidebarMenuItem, SidebarAvatar, SidebarIconButton,
+  SIDEBAR_SURFACE,
 } from '@/components/SidebarParts'
 
 /**
@@ -127,7 +128,7 @@ export default function StationSidebar({ open, onClose }) {
   )
 
   const nav = (iconOnly) => (
-    <nav className="flex-1 overflow-y-auto pb-3">
+    <nav className="flex-1 overflow-y-auto sidebar-scroll pb-3">
       {/* Station home leads, ungrouped and above the first heading — the reference's own first
           row. It was a centred outline button, which made the hub look like an action rather
           than a place; as a row it is marked by the same rail as everything else. */}
@@ -190,22 +191,20 @@ export default function StationSidebar({ open, onClose }) {
       avatar={<SidebarAvatar name={user?.name || user?.email} />}
       name={user?.name || user?.email || 'Account'}
       subtitle={user?.email && user?.name ? user.email : null}
-      menu={(
+      // Visible, not buried: a theme toggle nobody can find is a theme toggle nobody uses.
+      controls={(
         <>
-          <div className="px-3 py-2 border-b border-line">
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
           {withCollapse && (
-            <SidebarMenuItem
+            <SidebarIconButton
               icon={collapsed ? PanelLeft : PanelLeftClose}
+              label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               onClick={toggleCollapsed}
-            >
-              {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            </SidebarMenuItem>
+            />
           )}
-          <SidebarMenuItem icon={LogOut} onClick={signOut} disabled={signingOut} danger>Sign out</SidebarMenuItem>
         </>
       )}
+      menu={<SidebarMenuItem icon={LogOut} onClick={signOut} disabled={signingOut} danger>Sign out</SidebarMenuItem>}
     />
   )
 
@@ -218,7 +217,7 @@ export default function StationSidebar({ open, onClose }) {
       {/* Desktop: a real column in normal flow, so collapsing it reflows the content beside
           it without any width being synced between the two. */}
       <aside
-        className={`hidden lg:flex flex-col sticky top-0 self-start h-screen shrink-0 border-r border-line bg-surface transition-[width] duration-150 ${
+        className={`hidden lg:flex flex-col sticky top-0 self-start h-screen shrink-0 border-r border-white/15 ${SIDEBAR_SURFACE} transition-[width] duration-150 ${
           collapsed ? 'w-[72px]' : 'w-60'
         }`}
       >
@@ -237,7 +236,7 @@ export default function StationSidebar({ open, onClose }) {
         <div className="lg:hidden fixed inset-0 z-40 bg-black/40" onClick={onClose} aria-hidden />
       )}
       <aside
-        className={`lg:hidden fixed top-0 right-0 z-50 h-full w-80 max-w-[85vw] flex flex-col bg-surface border-l border-line transition-transform duration-300 ease-in-out ${
+        className={`lg:hidden fixed top-0 right-0 z-50 h-full w-80 max-w-[85vw] flex flex-col ${SIDEBAR_SURFACE} border-l border-white/15 transition-transform duration-300 ease-in-out ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
         aria-hidden={!open}

@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabaseClient'
 import ThemeToggle from '@/components/ThemeToggle'
 import {
   SidebarBrand, SidebarSwitcher, SidebarGroupLabel, SidebarNavRow,
-  SidebarUserFooter, SidebarMenuItem, SidebarAvatar,
+  SidebarUserFooter, SidebarMenuItem, SidebarAvatar, SidebarIconButton,
+  SIDEBAR_SURFACE,
 } from '@/components/SidebarParts'
 
 /**
@@ -80,7 +81,7 @@ export default function AdminSidebar() {
 
       {/* sm and up: the column. Sticky under the app header, which is h-14 — the layout
           already subtracts that, so this matches it rather than running past the bottom. */}
-      <aside className="hidden sm:flex flex-col sticky top-14 self-start h-[calc(100vh-3.5rem)] shrink-0 w-60 border-r border-line bg-surface">
+      <aside className={`hidden sm:flex flex-col sticky top-14 self-start h-[calc(100vh-3.5rem)] shrink-0 w-60 border-r border-white/15 ${SIDEBAR_SURFACE}`}>
         <SidebarBrand mark={brandMark} name="StationMGR" href="/dashboard" />
         <SidebarSwitcher
           avatar={<SidebarAvatar name="Admin" />}
@@ -88,7 +89,7 @@ export default function AdminSidebar() {
           subtitle="Admin"
           options={[]}
         />
-        <nav className="flex-1 overflow-y-auto pb-3">
+        <nav className="flex-1 overflow-y-auto sidebar-scroll pb-3">
           <SidebarGroupLabel>Admin</SidebarGroupLabel>
           <ul className="space-y-0.5">
             {LINKS.map((l) => (
@@ -105,14 +106,9 @@ export default function AdminSidebar() {
         <SidebarUserFooter
           avatar={<SidebarAvatar name="Admin" />}
           name="Admin"
-          menu={(
-            <>
-              <div className="px-3 py-2 border-b border-line">
-                <ThemeToggle />
-              </div>
-              <SidebarMenuItem icon={LogOut} onClick={signOut} disabled={signingOut} danger>Sign out</SidebarMenuItem>
-            </>
-          )}
+          // Visible, not buried. No collapse here: this column has no collapsed state.
+          controls={<ThemeToggle />}
+          menu={<SidebarMenuItem icon={LogOut} onClick={signOut} disabled={signingOut} danger>Sign out</SidebarMenuItem>}
         />
       </aside>
     </>
