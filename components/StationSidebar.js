@@ -171,22 +171,10 @@ export default function StationSidebar({ open, onClose }) {
         </div>
       </div>
 
-      {/* Appearance, collapse and sign out sit IN the menu, at the end of it. They were behind
+      {/* Appearance and sign out sit IN the menu, at the end of it. They were behind
           a kebab in the footer, which is where controls go to not be found. */}
       <div className={`mt-5 pt-3 border-t border-white/30 ${iconOnly ? 'flex flex-col items-center gap-1' : 'px-3 space-y-1'}`}>
         <ThemeToggle />
-        <button
-          type="button"
-          onClick={toggleCollapsed}
-          title={iconOnly ? 'Expand sidebar' : undefined}
-          aria-label={iconOnly ? 'Expand sidebar' : undefined}
-          className={`flex items-center text-white/90 hover:text-white hover:bg-white/20 transition-colors ${
-            iconOnly ? 'justify-center w-10 h-10' : 'w-full gap-3 px-1 py-2 text-[13px]'
-          }`}
-        >
-          {collapsed ? <PanelLeft className="w-[18px] h-[18px] shrink-0" /> : <PanelLeftClose className="w-[18px] h-[18px] shrink-0" />}
-          {!iconOnly && <span>{collapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>}
-        </button>
         <button
           type="button"
           onClick={signOut}
@@ -222,7 +210,9 @@ export default function StationSidebar({ open, onClose }) {
       avatar={<SidebarAvatar name={user?.name || user?.email} />}
       name={user?.name || user?.email || 'Account'}
       subtitle={user?.email && user?.name ? user.email : null}
-      onSignOut={signOut}
+      onToggleCollapse={withCollapse ? toggleCollapsed : undefined}
+      collapsed={collapsed}
+      collapseIcons={[PanelLeftClose, PanelLeft]}
     />
   )
 

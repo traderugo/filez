@@ -120,7 +120,6 @@ export default function AdminSidebar() {
         <SidebarUserFooter
           avatar={<SidebarAvatar name="Admin" />}
           name="Admin"
-          onSignOut={signOut}
         />
       </aside>
     </>

@@ -23,7 +23,7 @@ import { ChevronsUpDown, LogOut, Check } from 'lucide-react'
  */
 
 /** The ground. Blue in both themes, a shade deeper in dark so it does not glow off the page. */
-export const SIDEBAR_SURFACE = 'bg-primary-800 dark:bg-primary-950'
+export const SIDEBAR_SURFACE = 'bg-primary-700 dark:bg-primary-800'
 
 // Pitched against that ground rather than the page's tokens.
 const ON_TEXT = 'text-white'
@@ -52,8 +52,8 @@ const POPOVER = 'bg-surface border border-line shadow-lg'
  * isolation and truncated the name in the actual column — a brand that reads "StationMG…" is
  * worse than a slightly shorter one. Sized to fit the narrowest column with room to spare.
  */
-/** A white ring around the mark, so it reads as a mark rather than sinking into the blue. */
-const MARK_RING = 'ring-2 ring-white rounded-full bg-white/95 p-0.5'
+/** A white border on the mark, square like everything else, so it does not sink into the blue. */
+const MARK_RING = 'border-2 border-white'
 
 export function SidebarBrand({ mark, name, href = '/', iconOnly = false }) {
   const ringed = <span className={`shrink-0 inline-flex ${MARK_RING}`}>{mark}</span>
@@ -253,7 +253,9 @@ export function SidebarMetaCard({ title, lines = [], value, percent, action }) {
  * and a guess about what was inside. Appearance and collapse live in the menu itself, at the
  * bottom of the nav, where you can see them.
  */
-export function SidebarUserFooter({ name, subtitle, avatar, onSignOut, iconOnly = false }) {
+export function SidebarUserFooter({ name, subtitle, avatar, onToggleCollapse, collapsed, collapseIcons = [], iconOnly = false }) {
+  const [CloseIcon, OpenIcon] = collapseIcons
+  const Chevron = collapsed ? OpenIcon : CloseIcon
   return (
     <div
       className={`border-t ${ON_LINE} shrink-0`}
@@ -268,15 +270,17 @@ export function SidebarUserFooter({ name, subtitle, avatar, onSignOut, iconOnly 
             {subtitle && <p className={`text-[11px] ${ON_MUTED} truncate leading-tight mt-0.5`}>{subtitle}</p>}
           </div>
         )}
-        <button
-          type="button"
-          onClick={onSignOut}
-          title="Sign out"
-          aria-label="Sign out"
-          className={`w-8 h-8 shrink-0 flex items-center justify-center ${ON_MUTED} hover:text-white ${ON_HOVER} transition-colors`}
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+        {onToggleCollapse && Chevron && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            className={`w-8 h-8 shrink-0 flex items-center justify-center ${ON_MUTED} hover:text-white ${ON_HOVER} transition-colors`}
+          >
+            <Chevron className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   )
