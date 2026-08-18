@@ -107,9 +107,15 @@ export async function POST(request) {
         price: item.price ?? 0,
       }))
 
+    // Roll back rather than leave a pending subscription that covers no services, matching
+    // /api/admin/grant-subscription. Without this, a failure here left an orphan
+    // pending_payment row: the next attempt hit the pending-subscription check above and got a
+    // 409, so one server error locked the owner out of subscribing at all until the row was
+    // deleted by hand. An items insert that fails has produced nothing worth keeping.
     if (rows.length > 0) {
       const { error: itemsError } = await supabase.from('subscription_items').insert(rows)
       if (itemsError) {
+        await supabase.from('subscriptions').delete().eq('id', data.id)
         return NextResponse.json({ error: 'Failed to save subscription items', debug: itemsError.message }, { status: 500 })
       }
     }
