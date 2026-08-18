@@ -217,7 +217,7 @@ export default function AdminSettingsPage() {
         // Mirrors ON DELETE SET NULL, which is what actually unsets them server-side now.
         if (deleted) {
           setStations((prev) => prev.map((s) =>
-            s.station_group === deleted.name ? { ...s, station_group: null } : s
+            s.station_group_id === deleted.id ? { ...s, station_group_id: null } : s
           ))
         }
       } else {
@@ -267,11 +267,10 @@ export default function AdminSettingsPage() {
   }
 
   const assignGroup = async (stationId, groupId) => {
-    const previous = stations.find((s) => s.id === stationId)?.station_group ?? null
-    const name = groups.find((g) => g.id === groupId)?.name || null
+    const previous = stations.find((s) => s.id === stationId)?.station_group_id ?? null
     setAssignError(null)
     setStations((prev) => prev.map((s) =>
-      s.id === stationId ? { ...s, station_group: name } : s
+      s.id === stationId ? { ...s, station_group_id: groupId || null } : s
     ))
 
     const res = await fetch('/api/station-groups', {
@@ -283,7 +282,7 @@ export default function AdminSettingsPage() {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}))
       setStations((prev) => prev.map((s) =>
-        s.id === stationId ? { ...s, station_group: previous } : s
+        s.id === stationId ? { ...s, station_group_id: previous } : s
       ))
       setAssignError({ stationId, message: data.error || 'Could not change the group. Try again.' })
     }
@@ -455,7 +454,7 @@ export default function AdminSettingsPage() {
                       {groups.length > 0 && (
                         <td className="px-3 py-2 min-w-[10rem]">
                           <SearchableSelect
-                            value={groups.find((g) => g.name === station.station_group)?.id || ''}
+                            value={station.station_group_id || ''}
                             onChange={(val) => assignGroup(station.id, val)}
                             options={[{ value: '', label: 'None' }, ...groups.map((g) => ({ value: g.id, label: g.name }))]}
                             placeholder="None"
