@@ -22,8 +22,13 @@ import { ChevronsUpDown, LogOut, Check } from 'lucide-react'
  * are not.
  */
 
-/** The ground. Blue in both themes, a shade deeper in dark so it does not glow off the page. */
-export const SIDEBAR_SURFACE = 'bg-primary-700 dark:bg-primary-800'
+/**
+ * The ground. The same blue the report table headers use (REPORT_HEAD, bg-primary-600), so the
+ * two large blue surfaces in the app read as one colour. It was primary-700/800, a shade darker
+ * in light and two in dark, which looked like a near-miss of the brand blue rather than a
+ * deliberate second tone.
+ */
+export const SIDEBAR_SURFACE = 'bg-primary-600'
 
 // Pitched against that ground rather than the page's tokens.
 const ON_TEXT = 'text-white'
