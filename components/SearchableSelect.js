@@ -1,10 +1,23 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, Search, X } from 'lucide-react'
 
 /**
  * Searchable select dropdown — replaces plain <select> for lists with many options.
+ *
+ * The list is PORTALLED to document.body and positioned `fixed`, not `absolute` inside this
+ * component. It used to be absolute, which meant any ancestor with a clipping overflow ate it:
+ * on the admin Stations table (overflow-x-auto, and setting overflow-x forces overflow-y to
+ * auto) the dropdown was clipped to the height of a one-row table cell and rendered as nothing.
+ * z-index cannot escape a clipping box, so raising it would not have helped. The symptom was a
+ * select that opened onto an empty void, indistinguishable from having no options at all.
+ *
+ * Consequences of portalling, both handled below: the list is no longer a DOM descendant of
+ * containerRef, so the outside-click check has to test it separately or picking an option would
+ * close the menu before the click landed; and fixed coordinates are viewport-relative, so they
+ * are recomputed on scroll (capture phase, to catch scrolling containers) and on resize.
  *
  * @param {Object}   props
  * @param {string}   props.value        - Currently selected value
@@ -19,9 +32,11 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
   const [search, setSearch] = useState('')
   const [highlightIdx, setHighlightIdx] = useState(0)
   const [dropUp, setDropUp] = useState(false)
+  const [coords, setCoords] = useState(null)
   const containerRef = useRef(null)
   const inputRef = useRef(null)
   const listRef = useRef(null)
+  const dropdownRef = useRef(null)
 
   const selectedOption = options.find(o => String(o.value) === String(value))
 
@@ -37,7 +52,11 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
   useEffect(() => {
     if (!open) return
     function handleClick(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
+      // The list lives in a portal, so it is not inside containerRef. Without the second test
+      // a mousedown on an option would close the menu and unmount it before the click fired.
+      const inTrigger = containerRef.current?.contains(e.target)
+      const inList = dropdownRef.current?.contains(e.target)
+      if (!inTrigger && !inList) {
         setOpen(false)
         setSearch('')
       }
@@ -61,21 +80,37 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
   // Reset highlight when filtered list changes
   useEffect(() => { setHighlightIdx(0) }, [search])
 
+  // Position for the portalled list. Viewport-relative, because the list is `fixed`.
   const recalcDrop = useCallback(() => {
     if (!containerRef.current) return
     const rect = containerRef.current.getBoundingClientRect()
     const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight
     const spaceBelow = vh - rect.bottom
-    setDropUp(spaceBelow < 280)
+    // Only flip up when there is genuinely more room above, or a select near the top of a short
+    // viewport flips into even less space than it started with.
+    const up = spaceBelow < 280 && rect.top > spaceBelow
+    setDropUp(up)
+    setCoords({
+      left: rect.left,
+      width: rect.width,
+      top: up ? undefined : rect.bottom + 2,
+      bottom: up ? vh - rect.top + 2 : undefined,
+    })
   }, [])
 
-  // Recalculate when virtual keyboard opens/closes
+  // Recalculate while open: on scroll (capture, so scrolling containers count, not just the
+  // window), on resize, and on visualViewport resize when the virtual keyboard opens.
   useEffect(() => {
-    if (!open || !window.visualViewport) return
-    const vv = window.visualViewport
+    if (!open) return
     const handler = () => recalcDrop()
-    vv.addEventListener('resize', handler)
-    return () => vv.removeEventListener('resize', handler)
+    window.addEventListener('scroll', handler, true)
+    window.addEventListener('resize', handler)
+    window.visualViewport?.addEventListener('resize', handler)
+    return () => {
+      window.removeEventListener('scroll', handler, true)
+      window.removeEventListener('resize', handler)
+      window.visualViewport?.removeEventListener('resize', handler)
+    }
   }, [open, recalcDrop])
 
   const handleOpen = () => {
@@ -122,11 +157,13 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
         <ChevronDown className="w-4 h-4 text-content-faint flex-shrink-0 ml-1" />
       </button>
 
-      {/* Dropdown */}
-      {open && (
-        <div className={`absolute z-50 left-0 right-0 bg-surface border border-line-strong shadow-lg max-h-64 flex flex-col ${
-          dropUp ? 'bottom-full mb-0.5' : 'top-full mt-0.5'
-        }`}>
+      {/* Dropdown, portalled so no ancestor overflow can clip it */}
+      {open && coords && createPortal(
+        <div
+          ref={dropdownRef}
+          style={{ position: 'fixed', left: coords.left, width: coords.width, top: coords.top, bottom: coords.bottom }}
+          className="z-50 bg-surface border border-line-strong shadow-lg max-h-64 flex flex-col"
+        >
           {/* Search input */}
           <div className={`flex items-center border-b border-line px-2 ${dropUp ? 'order-last border-b-0 border-t' : ''}`}>
             <Search className="w-4 h-4 text-content-faint flex-shrink-0" />
@@ -164,7 +201,8 @@ export default function SearchableSelect({ value, onChange, options = [], placeh
               </li>
             ))}
           </ul>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
